@@ -21,9 +21,16 @@ class Settings(BaseSettings):
     # Logging
     log_level: str = "INFO"
     
-    # Security
-    allowed_origins: str = "http://localhost:3000,http://localhost:8080"
-    allowed_hosts: str = "localhost,127.0.0.1"
+    # Security - Production values should be overridden by environment
+    allowed_origins: str = "http://localhost:3000,http://localhost:8080,http://127.0.0.1:3000,http://192.168.11.83:3000,http://192.168.11.83:8080"
+    allowed_hosts: str = "localhost,127.0.0.1,192.168.11.83,*.local,testserver"
+    
+    # Cache (Redis)
+    redis_host: str = "localhost"
+    redis_port: int = 6379
+    redis_db: int = 0
+    redis_password: str = ""
+    cache_ttl: int = 300  # 5 minutes default
 
     class Config:
         env_file = ".env"

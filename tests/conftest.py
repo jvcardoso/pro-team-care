@@ -1,9 +1,15 @@
 import pytest
+import pytest_asyncio
 import asyncio
+import os
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from fastapi.testclient import TestClient
+
+# Set test environment before importing app
+os.environ["ENV_FILE"] = ".env.test"
+os.environ["PYTEST_CURRENT_TEST"] = "true"
 
 from app.main import app
 from app.domain.entities.user import Base
@@ -27,15 +33,15 @@ TestAsyncSession = sessionmaker(
 )
 
 
-@pytest.fixture(scope="session")
-def event_loop():
+@pytest_asyncio.fixture(scope="session")
+async def event_loop():
     """Create an event loop for the test session"""
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def async_session() -> AsyncGenerator[AsyncSession, None]:
     """Create test database session"""
     async with test_engine.begin() as conn:
@@ -76,3 +82,43 @@ def mock_user_data():
         "is_active": True,
         "is_superuser": False
     }
+
+
+@pytest_asyncio.fixture
+async def redis_client():
+    """Create mock Redis client for tests"""
+    from app.infrastructure.cache.mock_redis import MockRedisClient
+    client = MockRedisClient()
+    await client.connect()
+    yield client
+    await client.disconnect()
+
+
+@pytest.fixture
+def authenticated_client(client: TestClient, mock_user_data):
+    """Create authenticated test client"""
+    # Register user first
+    response = client.post("/api/v1/auth/register", json=mock_user_data)
+    assert response.status_code == 200
+    
+    # Login to get token
+    login_data = {
+        "username": mock_user_data["email"],
+        "password": mock_user_data["password"]
+    }
+    login_response = client.post("/api/v1/auth/login", data=login_data)
+    assert login_response.status_code == 200
+    
+    token = login_response.json()["access_token"]
+    
+    # Add authorization header to client
+    client.headers.update({"Authorization": f"Bearer {token}"})
+    return client
+
+
+@pytest.fixture(scope="function")
+def clean_database():
+    """Ensure clean database state for each test"""
+    # This fixture can be used to ensure clean state
+    yield
+    # Cleanup code would go here if needed

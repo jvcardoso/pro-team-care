@@ -39,18 +39,31 @@ app = FastAPI(
 # Security middleware
 from app.infrastructure.security_middleware import SecurityHeadersMiddleware
 from app.infrastructure.rate_limiting import setup_rate_limiting
+from app.infrastructure.monitoring.middleware import setup_monitoring_middleware
 
 app.add_middleware(SecurityHeadersMiddleware)
 
 # Setup rate limiting
 rate_limiter = setup_rate_limiting(app)
 
+# Setup monitoring middleware
+setup_monitoring_middleware(app)
+
+# CORS configuration with validation
+def get_cors_origins():
+    """Get and validate CORS origins"""
+    origins = [origin.strip() for origin in settings.allowed_origins.split(",")]
+    # Filter out empty strings
+    origins = [origin for origin in origins if origin]
+    logger.info("CORS origins configured", origins=origins)
+    return origins
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.allowed_origins.split(","),
+    allow_origins=get_cors_origins(),
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With"],  # More restrictive
 )
 
 app.add_middleware(
@@ -76,9 +89,29 @@ app.include_router(api_router, prefix="/api/v1")
 @app.on_event("startup")
 async def startup_event():
     logger.info("Starting Pro Team Care API", version="1.0.0")
+    
+    # Initialize Redis connection
+    from app.infrastructure.cache.simplified_redis import simplified_redis_client
+    await simplified_redis_client.connect()
+    
+    # Start performance monitoring
+    from app.infrastructure.monitoring.metrics import performance_metrics
+    await performance_metrics.start_system_monitoring(interval=30)
+    
+    logger.info("All systems initialized")
 
 @app.on_event("shutdown")
 async def shutdown_event():
     logger.info("Shutting down Pro Team Care API")
+    
+    # Stop performance monitoring
+    from app.infrastructure.monitoring.metrics import performance_metrics
+    await performance_metrics.stop_system_monitoring()
+    
+    # Close Redis connection
+    from app.infrastructure.cache.simplified_redis import simplified_redis_client
+    await simplified_redis_client.disconnect()
+    
+    logger.info("All systems shut down gracefully")
 
 # Basic health endpoint (legacy - now handled by health router)

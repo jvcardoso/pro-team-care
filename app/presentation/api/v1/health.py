@@ -9,6 +9,7 @@ import structlog
 
 from app.infrastructure.database import get_db
 from app.infrastructure.rate_limiting import limiter
+from app.infrastructure.cache.decorators import cache_manager
 
 logger = structlog.get_logger()
 router = APIRouter()
@@ -85,10 +86,11 @@ async def detailed_health_check(request: Request, db: AsyncSession = Depends(get
     # Executar checks em paralelo
     db_check_task = asyncio.create_task(check_database(db))
     memory_check_task = asyncio.create_task(check_memory())
+    cache_check_task = asyncio.create_task(cache_manager.cache_health_check())
     
     # Aguardar todos os checks
-    db_result, memory_result = await asyncio.gather(
-        db_check_task, memory_check_task, return_exceptions=True
+    db_result, memory_result, cache_result = await asyncio.gather(
+        db_check_task, memory_check_task, cache_check_task, return_exceptions=True
     )
     
     # Tratar exceções
@@ -106,8 +108,15 @@ async def detailed_health_check(request: Request, db: AsyncSession = Depends(get
             "timestamp": datetime.utcnow().isoformat()
         }
     
+    if isinstance(cache_result, Exception):
+        cache_result = {
+            "status": "error",
+            "error": str(cache_result),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    
     # Determinar status geral
-    components_status = [db_result["status"], memory_result["status"]]
+    components_status = [db_result["status"], memory_result["status"], cache_result["status"]]
     overall_status = "healthy"
     
     if "unhealthy" in components_status or "error" in components_status:
@@ -126,7 +135,8 @@ async def detailed_health_check(request: Request, db: AsyncSession = Depends(get
         "response_time_ms": round(total_time * 1000, 2),
         "checks": {
             "database": db_result,
-            "memory": memory_result
+            "memory": memory_result,
+            "cache": cache_result
         }
     }
     
@@ -160,6 +170,27 @@ async def readiness_probe(request: Request, db: AsyncSession = Depends(get_db)) 
             status_code=503,
             detail={
                 "status": "not_ready",
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        )
+
+
+@router.get("/cache/stats")
+@limiter.limit("10/minute")
+async def cache_stats(request: Request) -> Dict[str, Any]:
+    """Estatísticas do sistema de cache"""
+    try:
+        stats = await cache_manager.get_cache_stats()
+        return {
+            "timestamp": datetime.utcnow().isoformat(),
+            "cache_stats": stats
+        }
+    except Exception as e:
+        logger.error("Cache stats failed", error=str(e))
+        raise HTTPException(
+            status_code=503,
+            detail={
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat()
             }

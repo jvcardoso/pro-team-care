@@ -46,20 +46,20 @@ class AuthUseCase:
         
         # Criar usuário
         user_entity = await self.user_repository.create({
-            "email": user_data.email,
-            "full_name": user_data.full_name,
-            "hashed_password": hashed_password,
+            "email_address": user_data.email,  # Corrigido: usar email_address
+            "password": hashed_password,       # Corrigido: usar password ao invés de hashed_password
             "is_active": user_data.is_active,
-            "is_superuser": user_data.is_superuser
+            "is_system_admin": user_data.is_superuser,  # Corrigido: mapear para is_system_admin
+            "person_id": 1  # TODO: Implementar lógica adequada para person_id
         })
         
         # Converter para modelo Pydantic
         return User(
             id=user_entity.id,
-            email=user_entity.email,
-            full_name=user_entity.full_name,
+            email=user_entity.email_address,  # Corrigido: usar email_address
+            full_name="N/A",  # TODO: Implementar mapeamento adequado ou buscar de tabela Person
             is_active=user_entity.is_active,
-            is_superuser=user_entity.is_superuser,
+            is_superuser=user_entity.is_system_admin,  # Corrigido: mapear de is_system_admin
             created_at=user_entity.created_at
         )
     
@@ -71,9 +71,9 @@ class AuthUseCase:
         
         return User(
             id=user_entity.id,
-            email=user_entity.email,
-            full_name=user_entity.full_name,
+            email=user_entity.email_address,  # Corrigido: usar email_address
+            full_name="N/A",  # TODO: Implementar mapeamento adequado ou buscar de tabela Person
             is_active=user_entity.is_active,
-            is_superuser=user_entity.is_superuser,
+            is_superuser=user_entity.is_system_admin,  # Corrigido: mapear de is_system_admin
             created_at=user_entity.created_at
         )
