@@ -2,6 +2,30 @@
 
 # Script simples para iniciar o Pro Team Care
 echo "🚀 Iniciando Pro Team Care..."
+echo "🔍 Verificando sistema..."
+
+# Verificar comandos necessários
+check_system() {
+    local missing_commands=()
+    
+    # Verificar Python
+    if ! command -v python3 >/dev/null 2>&1; then
+        missing_commands+=("python3")
+    fi
+    
+    # Verificar se temos pelo menos um comando para verificar portas
+    if ! command -v netstat >/dev/null 2>&1 && ! command -v ss >/dev/null 2>&1 && ! command -v lsof >/dev/null 2>&1; then
+        missing_commands+=("netstat/ss/lsof")
+    fi
+    
+    if [ ${#missing_commands[@]} -gt 0 ]; then
+        echo -e "${RED}❌ Comandos necessários não encontrados: ${missing_commands[*]}${NC}"
+        echo -e "${BLUE}💡 Instale com: sudo apt install net-tools python3${NC}"
+        exit 1
+    fi
+    
+    echo "✅ Sistema verificado - todos os comandos disponíveis"
+}
 
 # Cores simples
 GREEN='\033[0;32m'
@@ -14,18 +38,91 @@ PROJECT_DIR="$(pwd)"
 # Função para matar processos existentes
 kill_existing() {
     echo "🔄 Parando processos existentes..."
+    
+    # Matar processos específicos do projeto
     pkill -f "uvicorn.*app.main:app" 2>/dev/null || true
     pkill -f "vite.*--port 3000" 2>/dev/null || true
-    sleep 2
+    
+    # Matar processos nas portas específicas
+    echo "🧹 Limpando portas 3000, 3001, 3002, 8000..."
+    
+    # Função para matar processo em uma porta específica
+    kill_port() {
+        local port=$1
+        # Tentar com netstat primeiro
+        local pids=$(netstat -tulpn 2>/dev/null | grep ":$port " | awk '{print $7}' | cut -d'/' -f1 | grep -v '-' | sort -u 2>/dev/null)
+        
+        if [ ! -z "$pids" ]; then
+            for pid in $pids; do
+                if [ "$pid" != "" ] && [ "$pid" != "0" ]; then
+                    echo "  🔴 Matando processo $pid na porta $port"
+                    kill -9 $pid 2>/dev/null || true
+                fi
+            done
+        fi
+        
+        # Alternativa com ss se netstat não funcionar
+        if command -v ss >/dev/null 2>&1; then
+            local ss_pids=$(ss -tulpn 2>/dev/null | grep ":$port " | awk '{print $7}' | cut -d',' -f2 | cut -d'=' -f2 | grep -v '-' | sort -u 2>/dev/null)
+            for pid in $ss_pids; do
+                if [ "$pid" != "" ] && [ "$pid" != "0" ]; then
+                    echo "  🔴 Matando processo $pid na porta $port (ss)"
+                    kill -9 $pid 2>/dev/null || true
+                fi
+            done
+        fi
+        
+        # Alternativa com lsof se disponível
+        if command -v lsof >/dev/null 2>&1; then
+            local lsof_pids=$(lsof -ti :$port 2>/dev/null || true)
+            for pid in $lsof_pids; do
+                if [ "$pid" != "" ] && [ "$pid" != "0" ]; then
+                    echo "  🔴 Matando processo $pid na porta $port (lsof)"
+                    kill -9 $pid 2>/dev/null || true
+                fi
+            done
+        fi
+    }
+    
+    # Limpar todas as portas que vamos usar
+    kill_port 3000
+    kill_port 3001
+    kill_port 3002
+    kill_port 8000
+    
+    # Matar qualquer vite antigo de qualquer projeto
+    pkill -f "vite" 2>/dev/null || true
+    pkill -f "node.*vite" 2>/dev/null || true
+    
+    # Aguardar processos terminarem
+    sleep 3
+    
+    # Verificar se as portas estão livres
+    echo "✅ Verificando se as portas estão livres..."
+    for port in 3000 3001 3002 8000; do
+        if netstat -tulpn 2>/dev/null | grep -q ":$port "; then
+            echo "  ⚠️  Porta $port ainda ocupada"
+        else
+            echo "  ✅ Porta $port livre"
+        fi
+    done
 }
+
+# Verificar sistema antes de tudo
+check_system
+
+# Mudar para o diretório do script se necessário
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 
 # Verificar se estamos no diretório correto
 if [ ! -f "app/main.py" ]; then
-    echo -e "${RED}❌ Execute este script no diretório do projeto!${NC}"
+    echo -e "${RED}❌ Estrutura do projeto não encontrada! Verifique se está no diretório correto.${NC}"
+    echo -e "${BLUE}Diretório atual: $(pwd)${NC}"
     exit 1
 fi
 
-# Parar processos existentes
+# Parar processos existentes e limpar portas
 kill_existing
 
 # Iniciar backend
@@ -127,6 +224,35 @@ echo
 echo -e "${BLUE}📊 CONTROLE:${NC}"
 echo -e "   Para parar: ./stop_servers.sh"
 echo -e "   Logs: tail -f backend.log (se existir)"
+echo
+echo "🔬 Testando conectividade dos serviços..."
+
+# Testar backend
+echo "  🔍 Testando backend..."
+if command -v curl >/dev/null 2>&1; then
+    if curl -s http://192.168.11.83:8000/api/v1/health >/dev/null 2>&1; then
+        echo "  ✅ Backend respondendo"
+    else
+        echo "  ⚠️  Backend pode não estar respondendo ainda (aguarde alguns segundos)"
+    fi
+else
+    echo "  ℹ️  curl não disponível - teste manual: http://192.168.11.83:8000/docs"
+fi
+
+# Testar frontend se disponível
+if [ -f "frontend.pid" ]; then
+    echo "  🔍 Testando frontend..."
+    if command -v curl >/dev/null 2>&1; then
+        if curl -s http://192.168.11.83:3000 >/dev/null 2>&1; then
+            echo "  ✅ Frontend respondendo"
+        else
+            echo "  ⚠️  Frontend pode não estar respondendo ainda (aguarde alguns segundos)"
+        fi
+    else
+        echo "  ℹ️  curl não disponível - teste manual: http://192.168.11.83:3000"
+    fi
+fi
+
 echo
 echo -e "${GREEN}💡 Pressione Ctrl+C para parar todos os serviços${NC}"
 

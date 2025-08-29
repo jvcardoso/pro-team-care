@@ -1,7 +1,10 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from structlog import get_logger
+import os
 
 from config.settings import settings
 from app.presentation.api.v1.api import api_router
@@ -85,6 +88,36 @@ app.add_exception_handler(Exception, general_exception_handler)
 
 # Include API routes
 app.include_router(api_router, prefix="/api/v1")
+
+# Static files configuration for frontend
+frontend_dist_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")
+if os.path.exists(frontend_dist_path):
+    # Serve static assets (CSS, JS, images, etc.)
+    app.mount("/static", StaticFiles(directory=frontend_dist_path), name="static")
+    
+    # Serve frontend index.html for SPA routing
+    @app.get("/")
+    @app.get("/{path:path}")
+    async def serve_frontend(path: str = ""):
+        """Serve React frontend for all non-API routes"""
+        # Skip API routes
+        if path.startswith("api/") or path.startswith("docs") or path.startswith("redoc") or path.startswith("openapi.json"):
+            raise HTTPException(status_code=404, detail="Not found")
+        
+        index_path = os.path.join(frontend_dist_path, "index.html")
+        if os.path.exists(index_path):
+            return FileResponse(index_path)
+        return {"message": "Frontend not built yet. Run: cd frontend && npm run build"}
+else:
+    @app.get("/")
+    async def root():
+        """Root endpoint when frontend is not available"""
+        return {
+            "message": "Pro Team Care API",
+            "version": "1.0.0",
+            "docs": "/docs",
+            "frontend_status": "Not built. Run: cd frontend && npm run build"
+        }
 
 @app.on_event("startup")
 async def startup_event():

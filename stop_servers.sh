@@ -68,4 +68,4 @@ log_success "Todos os serviços foram parados!"
 
 echo
 echo "Para reiniciar:"
-echo "  ./start_full_stack.sh"
+echo "  ./start_simple.sh"

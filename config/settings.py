@@ -48,8 +48,9 @@ class Settings(BaseSettings):
 
     @property
     def database_url_with_schema(self) -> str:
-        """Database URL with schema parameter"""
-        return f"{self.database_url}?options=-csearch_path%3D{self.db_schema}"
+        """Database URL with schema parameter for asyncpg"""
+        # For asyncpg, we use server_settings parameter instead of options
+        return f"{self.database_url}?server_settings=search_path%3D{self.db_schema}"
 
 
 settings = Settings()
