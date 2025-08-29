@@ -1,0 +1,166 @@
+import asyncio
+from datetime import datetime
+from typing import Dict, Any
+
+from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text
+import structlog
+
+from app.infrastructure.database import get_db
+from app.infrastructure.rate_limiting import limiter
+
+logger = structlog.get_logger()
+router = APIRouter()
+
+
+async def check_database(db: AsyncSession) -> Dict[str, Any]:
+    """Verificar conectividade com banco de dados"""
+    try:
+        start_time = datetime.utcnow()
+        await db.execute(text("SELECT 1"))
+        end_time = datetime.utcnow()
+        
+        response_time = (end_time - start_time).total_seconds()
+        
+        return {
+            "status": "healthy",
+            "response_time_ms": round(response_time * 1000, 2),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error("Database health check failed", error=str(e))
+        return {
+            "status": "unhealthy",
+            "error": str(e),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+
+async def check_memory() -> Dict[str, Any]:
+    """Verificar uso de memória básico"""
+    import psutil
+    
+    try:
+        memory = psutil.virtual_memory()
+        
+        return {
+            "status": "healthy" if memory.percent < 90 else "warning",
+            "usage_percent": memory.percent,
+            "available_mb": round(memory.available / 1024 / 1024, 2),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except ImportError:
+        return {
+            "status": "unavailable",
+            "message": "psutil not installed",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+
+@router.get("/health")
+@limiter.limit("10/minute")
+async def basic_health_check(request: Request) -> Dict[str, Any]:
+    """Health check básico - mais rápido"""
+    return {
+        "status": "healthy",
+        "service": "Pro Team Care API",
+        "version": "1.0.0",
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+
+@router.get("/health/detailed")
+@limiter.limit("5/minute")
+async def detailed_health_check(request: Request, db: AsyncSession = Depends(get_db)) -> Dict[str, Any]:
+    """Health check detalhado com verificação de dependências"""
+    start_time = datetime.utcnow()
+    
+    # Executar checks em paralelo
+    db_check_task = asyncio.create_task(check_database(db))
+    memory_check_task = asyncio.create_task(check_memory())
+    
+    # Aguardar todos os checks
+    db_result, memory_result = await asyncio.gather(
+        db_check_task, memory_check_task, return_exceptions=True
+    )
+    
+    # Tratar exceções
+    if isinstance(db_result, Exception):
+        db_result = {
+            "status": "error",
+            "error": str(db_result),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    
+    if isinstance(memory_result, Exception):
+        memory_result = {
+            "status": "error", 
+            "error": str(memory_result),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    
+    # Determinar status geral
+    components_status = [db_result["status"], memory_result["status"]]
+    overall_status = "healthy"
+    
+    if "unhealthy" in components_status or "error" in components_status:
+        overall_status = "unhealthy"
+    elif "warning" in components_status:
+        overall_status = "warning"
+    
+    end_time = datetime.utcnow()
+    total_time = (end_time - start_time).total_seconds()
+    
+    response = {
+        "status": overall_status,
+        "service": "Pro Team Care API",
+        "version": "1.0.0",
+        "timestamp": datetime.utcnow().isoformat(),
+        "response_time_ms": round(total_time * 1000, 2),
+        "checks": {
+            "database": db_result,
+            "memory": memory_result
+        }
+    }
+    
+    # Log se não estiver saudável
+    if overall_status != "healthy":
+        logger.warning("Health check failed", response=response)
+    
+    return response
+
+
+@router.get("/live")
+async def liveness_probe() -> Dict[str, str]:
+    """Liveness probe para Kubernetes"""
+    return {"status": "alive"}
+
+
+@router.get("/ready")
+@limiter.limit("20/minute") 
+async def readiness_probe(request: Request, db: AsyncSession = Depends(get_db)) -> Dict[str, Any]:
+    """Readiness probe para Kubernetes"""
+    try:
+        # Verificar apenas banco - mais rápido que health detalhado
+        await db.execute(text("SELECT 1"))
+        return {
+            "status": "ready",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error("Readiness check failed", error=str(e))
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "status": "not_ready",
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        )
