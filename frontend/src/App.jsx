@@ -1,38 +1,53 @@
 import React from 'react'
-import { Routes, Route } from 'react-router-dom'
-import Layout from './components/Layout'
-import HomePage from './pages/HomePage'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { ThemeProvider } from './contexts/ThemeContext'
+import AdminLayout from './components/layout/AdminLayout'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
-import './styles/App.css'
+import LayoutDemo from './pages/LayoutDemo'
+import PacientesPage from './pages/PacientesPage'
+import ProfissionaisPage from './pages/ProfissionaisPage'
+import ConsultasPage from './pages/ConsultasPage'
 
 function App() {
   return (
-    <div className="App">
-      <Routes>
-        {/* Public routes */}
-        <Route path="/login" element={<LoginPage />} />
-        
-        {/* Protected routes with layout */}
-        <Route path="/" element={<Layout />}>
-          <Route index element={<HomePage />} />
-          <Route path="dashboard" element={<DashboardPage />} />
-        </Route>
-        
-        {/* Catch all route */}
-        <Route path="*" element={
-          <div className="min-h-screen flex items-center justify-center bg-gray-50">
-            <div className="text-center">
-              <h1 className="text-6xl font-bold text-gray-900">404</h1>
-              <p className="text-xl text-gray-600 mt-4">Página não encontrada</p>
-              <a href="/" className="mt-6 inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                Voltar ao início
-              </a>
+    <ThemeProvider>
+      <div className="h-full">
+        <Routes>
+          {/* Public routes */}
+          <Route path="/login" element={<LoginPage />} />
+          
+          {/* Redirect root to admin */}
+          <Route path="/" element={<Navigate to="/admin" replace />} />
+          
+          {/* Admin routes with AdminLTE layout */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<DashboardPage />} />
+            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="pacientes" element={<PacientesPage />} />
+            <Route path="profissionais" element={<ProfissionaisPage />} />
+            <Route path="consultas" element={<ConsultasPage />} />
+            <Route path="demo" element={<LayoutDemo />} />
+          </Route>
+          
+          {/* 404 Page */}
+          <Route path="*" element={
+            <div className="h-screen flex items-center justify-center bg-background">
+              <div className="text-center">
+                <h1 className="text-6xl font-bold text-foreground">404</h1>
+                <p className="text-xl text-muted-foreground mt-4">Página não encontrada</p>
+                <a 
+                  href="/admin" 
+                  className="mt-6 inline-block px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                >
+                  Voltar ao Dashboard
+                </a>
+              </div>
             </div>
-          </div>
-        } />
-      </Routes>
-    </div>
+          } />
+        </Routes>
+      </div>
+    </ThemeProvider>
   )
 }
 

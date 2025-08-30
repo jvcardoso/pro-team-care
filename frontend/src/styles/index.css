@@ -1,78 +1,110 @@
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
-
-/* Inter font import */
+/* ==========================================
+    GOOGLE FONTS - INTER
+    ========================================== */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-:root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+/* ==========================================
+    TAILWIND CSS
+    ========================================== */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%;
+/* ==========================================
+    CSS VARIABLES - SISTEMA DE TEMA UNIFICADO
+    ========================================== */
+
+:root {
+  /* Primary Colors - Blue Scale */
+  --color-primary-50: 239 246 255;
+  --color-primary-100: 219 234 254;
+  --color-primary-200: 191 219 254;
+  --color-primary-300: 147 197 253;
+  --color-primary-400: 96 165 250;
+  --color-primary-500: 59 130 246;
+  --color-primary-600: 37 99 235;
+  --color-primary-700: 29 78 216;
+  --color-primary-800: 30 64 175;
+  --color-primary-900: 30 58 138;
+
+  /* Secondary Colors - Gray Scale */
+  --color-secondary-50: 248 250 252;
+  --color-secondary-100: 241 245 249;
+  --color-secondary-200: 226 232 240;
+  --color-secondary-300: 203 213 225;
+  --color-secondary-400: 148 163 184;
+  --color-secondary-500: 100 116 139;
+  --color-secondary-600: 71 85 105;
+  --color-secondary-700: 51 65 85;
+  --color-secondary-800: 30 41 59;
+  --color-secondary-900: 15 23 42;
+
+  /* Theme Colors - Light Mode */
+  --color-background: 255 255 255;
+  --color-foreground: 15 23 42;
+  --color-card: 255 255 255;
+  --color-card-foreground: 15 23 42;
+  --color-border: 226 232 240;
+  --color-input: 255 255 255;
+  --color-ring: 59 130 246;
+  --color-muted: 248 250 252;
+  --color-muted-foreground: 100 116 139;
+}
+
+/* Dark Mode Variables */
+.dark {
+  --color-background: 15 23 42;
+  --color-foreground: 248 250 252;
+  --color-card: 30 41 59;
+  --color-card-foreground: 248 250 252;
+  --color-border: 51 65 85;
+  --color-input: 30 41 59;
+  --color-ring: 59 130 246;
+  --color-muted: 30 41 59;
+  --color-muted-foreground: 148 163 184;
+}
+
+/* ==========================================
+    BASE STYLES
+    ========================================== */
+
+* {
+  @apply border-border;
 }
 
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-  font-family: Inter, system-ui, sans-serif;
+  @apply bg-background text-foreground font-sans;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-#root {
-  width: 100%;
-  margin: 0;
-}
-
-/* Custom scrollbar */
+/* Scrollbar Styles */
 ::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  @apply bg-muted;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
+  @apply bg-border rounded-full;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  @apply bg-muted-foreground;
 }
 
-/* Light theme overrides */
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  
-  body {
-    color: #213547;
-    background-color: #ffffff;
-  }
-}
+/* ==========================================
+    UTILITY CLASSES
+    ========================================== */
 
-/* Custom utilities */
 .animate-fade-in {
-  animation: fadeIn 0.5s ease-in-out;
+  animation: fadeIn 0.3s ease-out;
 }
 
-.animate-slide-up {
-  animation: slideUp 0.3s ease-out;
+.animate-slide-down {
+  animation: slideDown 0.2s ease-out;
 }
 
 @keyframes fadeIn {
@@ -80,13 +112,13 @@ body {
   to { opacity: 1; }
 }
 
-@keyframes slideUp {
-  from { 
-    transform: translateY(10px); 
-    opacity: 0; 
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
   }
-  to { 
-    transform: translateY(0); 
-    opacity: 1; 
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
