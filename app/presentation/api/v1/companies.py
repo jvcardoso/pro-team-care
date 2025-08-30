@@ -1,0 +1,174 @@
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.infrastructure.database import get_db
+from app.infrastructure.repositories.company_repository import CompanyRepository
+from app.domain.models.company import (
+    CompanyCreate, CompanyUpdate, CompanyDetailed, CompanyList
+)
+
+router = APIRouter()
+
+
+async def get_company_repository(db: AsyncSession = Depends(get_db)) -> CompanyRepository:
+    """Dependency to get company repository"""
+    return CompanyRepository(db)
+
+
+@router.post("/", response_model=CompanyDetailed, status_code=status.HTTP_201_CREATED)
+async def create_company(
+    company_data: CompanyCreate,
+    repository: CompanyRepository = Depends(get_company_repository)
+):
+    """
+    Create a new company with all related data
+    
+    - **people**: Company personal data (name, tax_id, etc.)
+    - **company**: Company specific settings and metadata
+    - **phones**: List of phone numbers (optional)
+    - **emails**: List of email addresses (optional)
+    - **addresses**: List of addresses (optional)
+    """
+    try:
+        return await repository.create_company(company_data)
+    except Exception as e:
+        if "tax_id" in str(e).lower() and "unique" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Company with this CNPJ already exists"
+            )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error creating company"
+        )
+
+
+@router.get("/", response_model=List[CompanyList])
+async def get_companies(
+    skip: int = Query(0, ge=0, description="Number of records to skip"),
+    limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
+    search: Optional[str] = Query(None, description="Search in name, trade_name or tax_id"),
+    status: Optional[str] = Query(None, description="Filter by status"),
+    repository: CompanyRepository = Depends(get_company_repository)
+):
+    """
+    Get list of companies with filtering and pagination
+    
+    - **skip**: Number of records to skip (for pagination)
+    - **limit**: Maximum number of records to return
+    - **search**: Search term for name, trade_name or tax_id
+    - **status**: Filter by company status (active, inactive, etc.)
+    """
+    return await repository.get_companies(skip=skip, limit=limit, search=search, status=status)
+
+
+@router.get("/count")
+async def count_companies(
+    search: Optional[str] = Query(None, description="Search in name, trade_name or tax_id"),
+    status: Optional[str] = Query(None, description="Filter by status"),
+    repository: CompanyRepository = Depends(get_company_repository)
+):
+    """
+    Get total count of companies with optional filters
+    
+    - **search**: Search term for name, trade_name or tax_id
+    - **status**: Filter by company status
+    """
+    total = await repository.count_companies(search=search, status=status)
+    return {"total": total}
+
+
+@router.get("/{company_id}", response_model=CompanyDetailed)
+async def get_company(
+    company_id: int,
+    repository: CompanyRepository = Depends(get_company_repository)
+):
+    """
+    Get a specific company with all related data
+    
+    - **company_id**: Company ID to retrieve
+    """
+    company = await repository.get_company(company_id)
+    if not company:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Company not found"
+        )
+    return company
+
+
+@router.put("/{company_id}", response_model=CompanyDetailed)
+async def update_company(
+    company_id: int,
+    company_data: CompanyUpdate,
+    repository: CompanyRepository = Depends(get_company_repository)
+):
+    """
+    Update a company's information
+    
+    - **company_id**: Company ID to update
+    - **company_data**: Updated company information
+    """
+    try:
+        company = await repository.update_company(company_id, company_data)
+        if not company:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Company not found"
+            )
+        return company
+    except Exception as e:
+        if "tax_id" in str(e).lower() and "unique" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Company with this CNPJ already exists"
+            )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error updating company"
+        )
+
+
+@router.delete("/{company_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_company(
+    company_id: int,
+    repository: CompanyRepository = Depends(get_company_repository)
+):
+    """
+    Delete a company (soft delete)
+    
+    - **company_id**: Company ID to delete
+    """
+    success = await repository.delete_company(company_id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Company not found"
+        )
+
+
+@router.get("/{company_id}/contacts")
+async def get_company_contacts(
+    company_id: int,
+    repository: CompanyRepository = Depends(get_company_repository)
+):
+    """
+    Get company contact information (phones and emails only)
+    
+    - **company_id**: Company ID
+    """
+    company = await repository.get_company(company_id)
+    if not company:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Company not found"
+        )
+    
+    return {
+        "company_id": company_id,
+        "name": company.people.name,
+        "trade_name": company.people.trade_name,
+        "phones": company.phones,
+        "emails": company.emails
+    }
