@@ -46,7 +46,16 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       // Token inválido ou expirado
       localStorage.removeItem('access_token');
-      window.location.href = '/login';
+
+      // Evitar loop infinito - só redirecionar se não estiver na página de login
+      if (!window.location.pathname.includes('/login')) {
+        // Salvar URL atual para redirecionar após login
+        const currentPath = window.location.pathname + window.location.search;
+        sessionStorage.setItem('redirectAfterLogin', currentPath);
+
+        // Usar window.location.replace para evitar problemas de histórico
+        window.location.replace('/login');
+      }
     }
     
     return Promise.reject(error);

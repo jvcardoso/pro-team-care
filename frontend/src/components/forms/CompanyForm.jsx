@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { companiesService } from '../../services/api';
+import { consultarCNPJ, formatarCNPJ } from '../../services/cnpjService';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
-import { Save, X } from 'lucide-react';
+import { Save, X, Search, CheckCircle, XCircle } from 'lucide-react';
 import { PhoneInputGroup, EmailInputGroup, AddressInputGroup } from '../contacts';
 import { InputCNPJ } from '../inputs';
+import toast from 'react-hot-toast';
 
 const CompanyForm = ({ companyId, onSave, onCancel }) => {
   const [loading, setLoading] = useState(false);
@@ -226,46 +228,304 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
     }));
   };
 
-  const handleCompanyFound = (companyData) => {
-    // Confirmar com usuário antes de sobrescrever dados existentes
-    const hasExistingData = formData.people.name || formData.people.trade_name;
-    
-    if (hasExistingData) {
-      const confirmOverwrite = window.confirm(
-        'Dados da empresa encontrados na Receita Federal. Deseja preencher os campos automaticamente? Isso irá sobrescrever os dados já preenchidos.'
-      );
-      
-      if (!confirmOverwrite) {
-        return;
-      }
+  const handleCNPJConsulta = async () => {
+    const cnpj = formData.people.tax_id?.trim();
+
+    if (!cnpj || cnpj.length < 14) {
+      setError('Digite um CNPJ válido com 14 dígitos');
+      return;
     }
 
-    // Preencher formulário com dados da consulta
-    setFormData(prev => ({
-      ...prev,
-      people: {
-        ...prev.people,
-        ...companyData.people
-      },
-      // Mesclar telefones (manter existentes + adicionar novos)
-      phones: companyData.phones.length > 0 
-        ? [...companyData.phones, ...prev.phones.filter(p => p.number)]
-        : prev.phones,
-      // Mesclar emails (manter existentes + adicionar novos)
-      emails: companyData.emails.length > 0
-        ? [...companyData.emails, ...prev.emails.filter(e => e.email_address)]
-        : prev.emails,
-      // Mesclar endereços (manter existentes + adicionar novos)
-      addresses: companyData.addresses.length > 0
-        ? [...companyData.addresses, ...prev.addresses.filter(a => a.street || a.city)]
-        : prev.addresses
-    }));
+    try {
+      setLoading(true);
+      setError(null);
 
-    // Limpar erro se houver
-    setError(null);
+      const dadosEmpresa = await consultarCNPJ(cnpj);
 
-    // Mostrar feedback positivo
-    console.log('Dados da empresa preenchidos automaticamente:', companyData);
+      // Verificar se os dados retornados são válidos
+      const hasValidData = dadosEmpresa?.people?.name ||
+                          dadosEmpresa?.phones?.length > 0 ||
+                          dadosEmpresa?.emails?.length > 0 ||
+                          dadosEmpresa?.addresses?.length > 0;
+
+      // Se não há dados válidos, não faz nada
+      if (!hasValidData) {
+        toast.info('ℹ️ Nenhum dado encontrado para este CNPJ', {
+          duration: 3000,
+          style: {
+            background: '#3b82f6',
+            color: '#fff',
+            border: '1px solid #2563eb',
+          },
+        });
+        return;
+      }
+
+      // Verificar se há dados existentes que serão sobrescritos
+      const hasExistingData = formData.people.name || formData.people.trade_name ||
+                             formData.phones.some(p => p.number) ||
+                             formData.emails.some(e => e.email_address) ||
+                             formData.addresses.some(a => a.street);
+
+      const fillData = () => {
+        // LIMPAR formulário antes de preencher
+        const cleanFormData = {
+          people: {
+            person_type: 'PJ',
+            name: '',
+            trade_name: '',
+            tax_id: formData.people.tax_id, // Manter apenas o CNPJ
+            incorporation_date: '',
+            legal_nature: '',
+            status: 'active',
+            tax_regime: 'simples_nacional',
+            description: ''
+          },
+          phones: [{
+            country_code: '55',
+            number: '',
+            type: 'commercial',
+            is_principal: true,
+            is_whatsapp: false
+          }],
+          emails: [{
+            email_address: '',
+            type: 'work',
+            is_principal: true
+          }],
+          addresses: [{
+            street: '',
+            number: '',
+            details: '',
+            neighborhood: '',
+            city: '',
+            state: '',
+            zip_code: '',
+            country: 'BR',
+            type: 'commercial',
+            is_principal: true
+          }]
+        };
+
+        // Preencher com dados da ReceitaWS
+        setFormData({
+          people: {
+            ...cleanFormData.people,
+            name: dadosEmpresa.people?.name || '',
+            trade_name: dadosEmpresa.people?.trade_name || '',
+            incorporation_date: dadosEmpresa.people?.incorporation_date || '',
+            legal_nature: dadosEmpresa.people?.legal_nature || '',
+            status: dadosEmpresa.people?.status || 'active',
+            tax_regime: dadosEmpresa.people?.tax_regime || 'simples_nacional',
+            description: dadosEmpresa.people?.description || ''
+          },
+          phones: dadosEmpresa.phones?.length > 0 ? dadosEmpresa.phones : cleanFormData.phones,
+          emails: dadosEmpresa.emails?.length > 0 ? dadosEmpresa.emails : cleanFormData.emails,
+          addresses: dadosEmpresa.addresses?.length > 0 ? dadosEmpresa.addresses : cleanFormData.addresses
+        });
+
+        // Feedback visual de sucesso
+        toast.success('✅ Dados da empresa preenchidos automaticamente!', {
+          duration: 4000,
+          icon: '📋',
+          style: {
+            background: '#10b981',
+            color: '#fff',
+            border: '1px solid #059669',
+          },
+        });
+      };
+
+      if (hasExistingData) {
+        // Toast personalizado com confirmação
+        toast((t) => (
+          <div className="space-y-3">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <CheckCircle className="h-6 w-6 text-blue-500" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                  Dados Encontrados na Receita Federal
+                </h4>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                  Deseja preencher os campos automaticamente? Isso irá sobrescrever os dados já preenchidos.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex space-x-2">
+              <button
+                onClick={() => {
+                  fillData();
+                  toast.dismiss(t.id);
+                }}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-3 rounded-md transition-colors"
+              >
+                <CheckCircle className="h-4 w-4 inline mr-1" />
+                Preencher
+              </button>
+              <button
+                onClick={() => toast.dismiss(t.id)}
+                className="flex-1 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 text-sm font-medium py-2 px-3 rounded-md transition-colors"
+              >
+                <XCircle className="h-4 w-4 inline mr-1" />
+                Cancelar
+              </button>
+            </div>
+          </div>
+        ), {
+          duration: 10000, // 10 segundos para decisão
+          position: 'top-center',
+          style: {
+            background: '#ffffff',
+            color: '#374151',
+            border: '1px solid #d1d5db',
+            borderRadius: '0.5rem',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+            maxWidth: '400px',
+          },
+        });
+      } else {
+        // Se não há dados existentes, preenche diretamente
+        fillData();
+      }
+
+    } catch (err) {
+      console.error('Erro ao consultar CNPJ:', err);
+      setError(err.message || 'Erro ao consultar CNPJ');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCompanyFound = (companyData) => {
+    // Verificar se há dados existentes que serão sobrescritos
+    const hasExistingData = formData.people.name || formData.people.trade_name ||
+                           formData.phones.some(p => p.number) ||
+                           formData.emails.some(e => e.email_address) ||
+                           formData.addresses.some(a => a.street);
+
+    const fillData = () => {
+      // LIMPAR formulário antes de preencher
+      const cleanFormData = {
+        people: {
+          person_type: 'PJ',
+          name: '',
+          trade_name: '',
+          tax_id: formData.people.tax_id, // Manter apenas o CNPJ
+          incorporation_date: '',
+          legal_nature: '',
+          status: 'active',
+          tax_regime: 'simples_nacional',
+          description: ''
+        },
+        phones: [{
+          country_code: '55',
+          number: '',
+          type: 'commercial',
+          is_principal: true,
+          is_whatsapp: false
+        }],
+        emails: [{
+          email_address: '',
+          type: 'work',
+          is_principal: true
+        }],
+        addresses: [{
+          street: '',
+          number: '',
+          details: '',
+          neighborhood: '',
+          city: '',
+          state: '',
+          zip_code: '',
+          country: 'BR',
+          type: 'commercial',
+          is_principal: true
+        }]
+      };
+
+      // Preencher com dados da consulta
+      setFormData({
+        people: {
+          ...cleanFormData.people,
+          ...companyData.people
+        },
+        phones: companyData.phones?.length > 0 ? companyData.phones : cleanFormData.phones,
+        emails: companyData.emails?.length > 0 ? companyData.emails : cleanFormData.emails,
+        addresses: companyData.addresses?.length > 0 ? companyData.addresses : cleanFormData.addresses
+      });
+
+      // Limpar erro se houver
+      setError(null);
+
+      // Feedback visual de sucesso
+      toast.success('✅ Dados da empresa preenchidos automaticamente!', {
+        duration: 4000,
+        icon: '📋',
+        style: {
+          background: '#10b981',
+          color: '#fff',
+          border: '1px solid #059669',
+        },
+      });
+    };
+
+    if (hasExistingData) {
+      // Toast personalizado com confirmação
+      toast((t) => (
+        <div className="space-y-3">
+          <div className="flex items-start space-x-3">
+            <div className="flex-shrink-0">
+              <CheckCircle className="h-6 w-6 text-blue-500" />
+            </div>
+            <div className="flex-1">
+              <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                Dados Encontrados na Receita Federal
+              </h4>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                Deseja preencher os campos automaticamente? Isso irá sobrescrever os dados já preenchidos.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex space-x-2">
+            <button
+              onClick={() => {
+                fillData();
+                toast.dismiss(t.id);
+              }}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-3 rounded-md transition-colors"
+            >
+              <CheckCircle className="h-4 w-4 inline mr-1" />
+              Preencher
+            </button>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="flex-1 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 text-sm font-medium py-2 px-3 rounded-md transition-colors"
+            >
+              <XCircle className="h-4 w-4 inline mr-1" />
+              Cancelar
+            </button>
+          </div>
+        </div>
+      ), {
+        duration: 10000, // 10 segundos para decisão
+        position: 'top-center',
+        style: {
+          background: '#ffffff',
+          color: '#374151',
+          border: '1px solid #d1d5db',
+          borderRadius: '0.5rem',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+          maxWidth: '400px',
+        },
+      });
+    } else {
+      // Se não há dados existentes, preenche diretamente
+      fillData();
+    }
   };
 
   if (loading && isEditing) {

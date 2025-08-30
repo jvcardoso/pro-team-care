@@ -2384,3 +2384,214 @@ Excelente! Agora vou fazer um diagnóstico completo de todo o sistema:
   corretamente antes de migrar tudo?
 
   Quer testar a página de demonstração primeiro ou partir direto para a migração? 🤔
+
+
+  ## 🚨 Campos Faltantes por Tabela:
+
+### master.people (Dados Pessoais/Empresa)
+
+Faltando no Form:
+
+• secondary_tax_id - CNPJ secundário/IE
+• municipal_registration - Inscrição Municipal
+• occupation - Profissão/Ocupação
+• is_active - Status ativo/inativo
+• website - Site da empresa
+• description - Descrição da empresa
+• metadata - Metadados JSON (campos customizados)
+
+Campos LGPD não implementados:
+
+• lgpd_consent_version
+• lgpd_consent_given_at
+• lgpd_data_retention_expires_at
+
+### master.addresses (Endereços)
+
+Faltando no Form (muitos campos avançados):
+
+• Geocoding: latitude, longitude, geocoding_accuracy, geocoding_source, google_place_id, formatted_address
+• Códigos IBGE: ibge_city_code, ibge_state_code, region, microregion, mesoregion
+• Códigos Fiscais: area_code, gia_code, siafi_code
+• Validação: quality_score, is_validated, last_validated_at, validation_source, api_data
+• Cobertura: within_coverage, distance_to_establishment, estimated_travel_time
+• Acesso: access_difficulty, access_notes
+• Confirmação: is_confirmed, confirmed_at, confirmed_by_user_id
+• Controle: is_active, created_by_user_id, updated_by_user_id
+
+### master.emails (E-mails)
+
+Faltando no Form:
+
+• is_active - Status do email
+• verified_at - Data de verificação
+
+### master.phones (Telefones)
+
+Faltando no Form (muitos campos WhatsApp/Business):
+
+• extension - Ramal
+• whatsapp_formatted - Número formatado WhatsApp
+• whatsapp_verified - Verificado WhatsApp
+• whatsapp_verified_at - Data verificação WhatsApp
+• whatsapp_business - Conta Business
+• whatsapp_name - Nome no WhatsApp
+• accepts_whatsapp_marketing - Aceita marketing WhatsApp
+• accepts_whatsapp_notifications - Aceita notificações WhatsApp
+• whatsapp_preferred_time_start/end - Horário preferido WhatsApp
+• phone_name - Nome do contato
+• carrier - Operadora
+• line_type - Tipo de linha (pré/pós-pago)
+• is_active - Status ativo
+• can_receive_calls - Pode receber chamadas
+• can_receive_sms - Pode receber SMS
+• contact_priority - Prioridade de contato
+• verified_at - Data verificação
+• verification_method - Método verificação
+• last_contact_attempt/success - Últimas tentativas
+• contact_attempts_count - Contador tentativas
+• api_data - Dados da API
+• created_by_user_id, updated_by_user_id - Controle usuário
+
+
+/////////////////////////////
+
+# Análise de Segurança: Login e Autenticação
+
+## 📊 Estado Atual da Implementação
+
+### ✅ Pontos Fortes Identificados:
+
+1. JWT + OAuth2: Implementação sólida com tokens JWT
+2. Hash Seguro: bcrypt para senhas
+3. Rate Limiting: Proteção contra ataques de força bruta (5/min login, 3/min registro)
+4. Headers de Segurança: CSP, HSTS, X-Frame-Options, etc.
+5. CORS + Trusted Hosts: Configuração adequada
+6. Logging Estruturado: JSON logs com contexto
+7. Cache + Monitoramento: Redis + métricas de performance
+8. Testes: Cobertura boa dos fluxos principais
+
+### ⚠️ Gaps de Segurança Críticos:
+
+## 🔐 1. Gestão de Tokens
+
+Problemas:
+
+• Sem refresh tokens
+• Sem revogação de tokens
+• Expiração curta (30min) sem renovação automática
+
+Riscos: Sessões interrompidas, tokens válidos após logout
+
+## 🛡️ 2. Segurança de Senhas
+
+Problemas:
+
+• Sem requisitos de complexidade
+• Sem verificação de histórico de senhas
+• Sem bloqueio de conta após tentativas falhidas
+
+Riscos: Senhas fracas, ataques de dicionário
+
+## 📱 3. Autenticação Multifator (MFA)
+
+Ausente:
+
+• 2FA/TOTP
+• Códigos de backup
+• Autenticação por SMS/Email
+
+Riscos: Comprometimento fácil com apenas email+senha
+
+## 📊 4. Auditoria e Monitoramento
+
+Problemas:
+
+• Sem rastreamento de tentativas falhidas
+• Sem alertas de segurança
+• Sem detecção de anomalias
+
+Riscos: Ataques não detectados, compliance comprometida
+
+## 🔒 5. Proteções Avançadas
+
+Ausente:
+
+• Bloqueio de IP após tentativas
+• Detecção de sessão suspeita
+• Limitação de sessões concorrentes
+
+## 📋 Plano de Melhorias Prioritárias
+
+### Fase 1: Segurança Básica (1-2 semanas)
+
+# 1. Refresh Tokens
+class TokenPair:
+    access_token: str
+    refresh_token: str
+    expires_at: datetime
+
+# 2. Senha forte
+def validate_password_strength(password: str):
+    # Mínimo 8 chars, maiúscula, minúscula, número, especial
+
+# 3. Bloqueio de conta
+class LoginAttemptTracker:
+    max_attempts = 5
+    lockout_duration = 15 minutes
+
+### Fase 2: MFA (2-3 semanas)
+
+# TOTP Implementation
+from pyotp import TOTP
+
+class MFAHandler:
+    def generate_secret(self) -> str
+    def verify_code(self, secret: str, code: str) -> bool
+    def generate_backup_codes(self) -> List[str]
+
+### Fase 3: Monitoramento (1 semana)
+
+# Security Events
+class SecurityLogger:
+    def log_failed_login(self, email: str, ip: str, user_agent: str)
+    def log_suspicious_activity(self, event: SecurityEvent)
+    def alert_security_team(self, severity: str, message: str)
+
+### Fase 4: Compliance (LGPD/GDPR)
+
+# Consent Management
+class ConsentManager:
+    def record_consent(self, user_id: int, consent_type: str)
+    def check_consent(self, user_id: int, consent_type: str) -> bool
+    def revoke_consent(self, user_id: int, consent_type: str)
+
+## 🎯 Métricas de Segurança
+
+Monitorar:
+
+• Tentativas de login falhidas por IP
+• Sessões ativas por usuário
+• Tokens expirados vs renovados
+• Tempo médio de sessão
+• Taxa de sucesso de MFA
+
+## 💡 Recomendações Imediatas
+
+1. Implementar Refresh Tokens (Alta prioridade)
+2. Adicionar validação de força de senha (Alta prioridade)
+3. Sistema de auditoria de tentativas (Média prioridade)
+4. MFA para usuários admin (Média prioridade)
+5. Alertas de segurança (Baixa prioridade)
+
+Resultado Esperado: Sistema de autenticação enterprise-grade com compliance adequada. 🔒✨
+
+
+//////////
+
+Analise :
+  - Deep Debugging - Debug aprofundado
+  - Systematic Investigation - Investigação sistemática
+  - Differential Analysis - Análise diferencial (comparando funcionando vs quebrado)
+  - Forensic Analysis - Análise forense de código
+  - 5 Whys Method - Método dos 5 porquês (perguntar "por quê?" até chegar na causa raiz)

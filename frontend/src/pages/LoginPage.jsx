@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import { authService } from '../services/api'
 
 const LoginPage = () => {
   const navigate = useNavigate()
@@ -10,18 +11,44 @@ const LoginPage = () => {
   })
   const [isLoading, setIsLoading] = useState(false)
 
+  useEffect(() => {
+    // Verificar se já está logado
+    const token = localStorage.getItem('access_token')
+    if (token) {
+      // Verificar se há uma URL para redirecionar
+      const redirectUrl = sessionStorage.getItem('redirectAfterLogin')
+      if (redirectUrl) {
+        sessionStorage.removeItem('redirectAfterLogin')
+        navigate(redirectUrl, { replace: true })
+      } else {
+        navigate('/admin', { replace: true })
+      }
+    }
+  }, [navigate])
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
+      const response = await authService.login(formData.email, formData.password)
+
+      // Salvar token
+      localStorage.setItem('access_token', response.access_token)
+
       toast.success('Login realizado com sucesso!')
-      navigate('/')
+
+      // Verificar se há uma URL para redirecionar
+      const redirectUrl = sessionStorage.getItem('redirectAfterLogin')
+      if (redirectUrl) {
+        sessionStorage.removeItem('redirectAfterLogin')
+        navigate(redirectUrl, { replace: true })
+      } else {
+        navigate('/admin', { replace: true })
+      }
     } catch (error) {
-      toast.error('Erro no login. Tente novamente.')
+      console.error('Erro no login:', error)
+      toast.error(error.response?.data?.detail || 'Erro no login. Verifique suas credenciais.')
     } finally {
       setIsLoading(false)
     }
