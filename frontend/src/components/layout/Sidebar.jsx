@@ -90,8 +90,9 @@ const Sidebar = ({ collapsed }) => {
           icon: <Activity className="h-4 w-4" />,
           badge: { text: '24', color: 'bg-blue-500' }
         },
-        { label: 'Consultas', path: '/admin/appointments', icon: <Calendar className="h-4 w-4" /> },
-        { label: 'Profissionais', path: '/admin/professionals', icon: <Users className="h-4 w-4" /> },
+        { label: 'Consultas', path: '/admin/consultas', icon: <Calendar className="h-4 w-4" /> },
+        { label: 'Profissionais', path: '/admin/profissionais', icon: <Users className="h-4 w-4" /> },
+        { label: 'Empresas', path: '/admin/empresas', icon: <Building className="h-4 w-4" /> },
         { label: 'Relatórios', path: '/admin/reports', icon: <FileText className="h-4 w-4" /> }
       ]
     },

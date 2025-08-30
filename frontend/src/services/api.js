@@ -81,4 +81,48 @@ export const healthService = {
   }
 };
 
+export const companiesService = {
+  // Listar empresas com paginação e filtros
+  getCompanies: async (params = {}) => {
+    const response = await api.get('/api/v1/companies/', { params });
+    return response.data;
+  },
+
+  // Contar total de empresas
+  getCompaniesCount: async (params = {}) => {
+    const response = await api.get('/api/v1/companies/count', { params });
+    return response.data;
+  },
+
+  // Obter empresa por ID
+  getCompany: async (id) => {
+    const response = await api.get(`/api/v1/companies/${id}`);
+    return response.data;
+  },
+
+  // Criar nova empresa
+  createCompany: async (companyData) => {
+    const response = await api.post('/api/v1/companies/', companyData);
+    return response.data;
+  },
+
+  // Atualizar empresa
+  updateCompany: async (id, companyData) => {
+    const response = await api.put(`/api/v1/companies/${id}`, companyData);
+    return response.data;
+  },
+
+  // Deletar empresa (soft delete)
+  deleteCompany: async (id) => {
+    const response = await api.delete(`/api/v1/companies/${id}`);
+    return response.data;
+  },
+
+  // Obter apenas contatos da empresa
+  getCompanyContacts: async (id) => {
+    const response = await api.get(`/api/v1/companies/${id}/contacts`);
+    return response.data;
+  }
+};
+
 export default api;

@@ -151,7 +151,7 @@ class Email(EmailBase):
 # Base models for Address
 class AddressBase(BaseModel):
     street: str = Field(..., max_length=255)
-    number: str = Field(..., max_length=20)
+    number: Optional[str] = Field(None, max_length=20)
     details: Optional[str] = Field(None, max_length=100)
     neighborhood: str = Field(..., max_length=100)
     city: str = Field(..., max_length=100)

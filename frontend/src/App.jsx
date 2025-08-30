@@ -8,6 +8,7 @@ import LayoutDemo from './pages/LayoutDemo'
 import PacientesPage from './pages/PacientesPage'
 import ProfissionaisPage from './pages/ProfissionaisPage'
 import ConsultasPage from './pages/ConsultasPage'
+import EmpresasPage from './pages/EmpresasPage'
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
             <Route path="pacientes" element={<PacientesPage />} />
             <Route path="profissionais" element={<ProfissionaisPage />} />
             <Route path="consultas" element={<ConsultasPage />} />
+            <Route path="empresas" element={<EmpresasPage />} />
             <Route path="demo" element={<LayoutDemo />} />
           </Route>
           
