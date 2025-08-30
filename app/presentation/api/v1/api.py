@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from . import auth, health, metrics, companies
+from . import auth, health, metrics, companies, cnpj
 
 api_router = APIRouter()
 
@@ -9,3 +9,4 @@ api_router.include_router(auth.router, prefix="/auth", tags=["authentication"])
 api_router.include_router(health.router, tags=["health"])
 api_router.include_router(metrics.router, tags=["monitoring"])
 api_router.include_router(companies.router, prefix="/companies", tags=["companies"])
+api_router.include_router(cnpj.router, prefix="/cnpj", tags=["cnpj"])

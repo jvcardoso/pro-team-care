@@ -31,11 +31,24 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    // Log detalhado para debug
+    console.error('API Error Details:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message,
+      config: {
+        method: error.config?.method,
+        url: error.config?.url,
+        data: error.config?.data
+      }
+    });
+    
     if (error.response?.status === 401) {
       // Token inválido ou expirado
       localStorage.removeItem('access_token');
       window.location.href = '/login';
     }
+    
     return Promise.reject(error);
   }
 );
@@ -125,4 +138,5 @@ export const companiesService = {
   }
 };
 
+export { api };
 export default api;

@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { companiesService } from '../../services/api';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
-import { ArrowLeft, Edit, Trash2, Phone, Mail, MapPin, Building, Calendar, User, Globe } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Phone, Mail, MapPin, Building, Calendar, User, Globe, MessageCircle, Send, Navigation, ExternalLink } from 'lucide-react';
 
 const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('informacoes');
 
   useEffect(() => {
     if (companyId) {
@@ -113,6 +114,29 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
     }
   };
 
+  const openWhatsApp = (phone) => {
+    const number = phone.number.replace(/\D/g, '');
+    const url = `https://wa.me/${phone.country_code}${number}`;
+    window.open(url, '_blank');
+  };
+
+  const openEmail = (email) => {
+    const url = `mailto:${email.email_address}`;
+    window.open(url, '_blank');
+  };
+
+  const openGoogleMaps = (address) => {
+    const query = encodeURIComponent(`${address.street}, ${address.number}, ${address.city}, ${address.state}, ${address.zip_code}, ${address.country}`);
+    const url = `https://www.google.com/maps/search/?api=1&query=${query}`;
+    window.open(url, '_blank');
+  };
+
+  const openWaze = (address) => {
+    const query = encodeURIComponent(`${address.street}, ${address.number}, ${address.city}, ${address.state}`);
+    const url = `https://waze.com/ul?q=${query}`;
+    window.open(url, '_blank');
+  };
+
   if (loading) {
     return (
       <div className="text-center py-12">
@@ -172,7 +196,85 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Tabs */}
+      <div className="border-b border-border">
+        <div className="flex space-x-8">
+          <button
+            onClick={() => setActiveTab('informacoes')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'informacoes'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+            }`}
+          >
+            Informações
+          </button>
+          <button
+            onClick={() => setActiveTab('estabelecimentos')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'estabelecimentos'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+            }`}
+          >
+            Estabelecimentos
+          </button>
+          <button
+            onClick={() => setActiveTab('clientes')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'clientes'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+            }`}
+          >
+            Clientes
+          </button>
+          <button
+            onClick={() => setActiveTab('profissionais')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'profissionais'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+            }`}
+          >
+            Profissionais
+          </button>
+          <button
+            onClick={() => setActiveTab('pacientes')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'pacientes'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+            }`}
+          >
+            Pacientes
+          </button>
+          <button
+            onClick={() => setActiveTab('usuarios')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'usuarios'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+            }`}
+          >
+            Usuários
+          </button>
+          <button
+            onClick={() => setActiveTab('lgpd')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'lgpd'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+            }`}
+          >
+            LGPD
+          </button>
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'informacoes' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Informações Básicas */}
         <div className="lg:col-span-2 space-y-6">
           <Card title="Informações da Empresa">
@@ -265,6 +367,19 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
                         </div>
                       </div>
                     </div>
+                    <div className="flex gap-2">
+                      {phone.is_whatsapp && (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => openWhatsApp(phone)}
+                          icon={<MessageCircle className="h-4 w-4" />}
+                          title="Abrir no WhatsApp"
+                        >
+                          WhatsApp
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -292,6 +407,17 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
                           )}
                         </div>
                       </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => openEmail(email)}
+                        icon={<Send className="h-4 w-4" />}
+                        title="Enviar email"
+                      >
+                        Enviar Email
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -333,6 +459,26 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
                           {address.country && address.country !== 'Brasil' && ` - ${address.country}`}
                         </p>
                       </div>
+                      <div className="flex flex-col gap-2">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => openGoogleMaps(address)}
+                          icon={<Navigation className="h-4 w-4" />}
+                          title="Abrir no Google Maps"
+                        >
+                          Maps
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => openWaze(address)}
+                          icon={<ExternalLink className="h-4 w-4" />}
+                          title="Abrir no Waze"
+                        >
+                          Waze
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -347,16 +493,20 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
           <Card title="Resumo">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Telefones</span>
-                <span className="font-medium text-foreground">{company.phones?.length || 0}</span>
+                <span className="text-muted-foreground">Estabelecimentos</span>
+                <span className="font-medium text-muted-foreground">Em breve</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">E-mails</span>
-                <span className="font-medium text-foreground">{company.emails?.length || 0}</span>
+                <span className="text-muted-foreground">Clientes</span>
+                <span className="font-medium text-muted-foreground">Em breve</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Endereços</span>
-                <span className="font-medium text-foreground">{company.addresses?.length || 0}</span>
+                <span className="text-muted-foreground">Profissionais</span>
+                <span className="font-medium text-muted-foreground">Em breve</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Pacientes</span>
+                <span className="font-medium text-muted-foreground">Em breve</span>
               </div>
             </div>
           </Card>
@@ -402,6 +552,55 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
           )}
         </div>
       </div>
+      )}
+
+      {activeTab === 'estabelecimentos' && (
+        <div className="text-center py-12">
+          <Building className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">Estabelecimentos</h3>
+          <p className="text-muted-foreground">Em breve: Gerencie os estabelecimentos desta empresa</p>
+        </div>
+      )}
+
+      {activeTab === 'clientes' && (
+        <div className="text-center py-12">
+          <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">Clientes</h3>
+          <p className="text-muted-foreground">Em breve: Gerencie os clientes desta empresa</p>
+        </div>
+      )}
+
+      {activeTab === 'profissionais' && (
+        <div className="text-center py-12">
+          <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">Profissionais</h3>
+          <p className="text-muted-foreground">Em breve: Gerencie os profissionais desta empresa</p>
+        </div>
+      )}
+
+      {activeTab === 'pacientes' && (
+        <div className="text-center py-12">
+          <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">Pacientes</h3>
+          <p className="text-muted-foreground">Em breve: Gerencie os pacientes desta empresa</p>
+        </div>
+      )}
+
+      {activeTab === 'usuarios' && (
+        <div className="text-center py-12">
+          <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">Usuários</h3>
+          <p className="text-muted-foreground">Em breve: Gerencie os usuários desta empresa</p>
+        </div>
+      )}
+
+      {activeTab === 'lgpd' && (
+        <div className="text-center py-12">
+          <Globe className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">LGPD</h3>
+          <p className="text-muted-foreground">Em breve: Gerencie as configurações de privacidade e LGPD</p>
+        </div>
+      )}
     </div>
   );
 };

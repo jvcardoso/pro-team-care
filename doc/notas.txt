@@ -1993,3 +1993,394 @@ Excelente! Agora vou fazer um diagnóstico completo de todo o sistema:
   - User Experience: ✅ 80% Funcional (interface pronta, dados parciais)
 
   O sistema está pronto para uso imediato com o módulo de Empresas totalmente funcional! 🚀
+
+
+  ///////////////////////
+
+
+  ✅ Campo CEP reorganizado no formulário de endereço:
+
+  🔧 Mudanças implementadas:
+
+  1. CEP como primeiro campo: Movido para o topo da seção de endereço
+  2. Botão "Consultar": Adicionado ao lado do CEP com ícone de busca
+  3. Validação: Botão só ativa quando CEP tem 8 dígitos
+  4. Layout responsivo: CEP + Botão + Tipo na primeira linha
+  5. Organização: Demais campos (logradouro, número, etc.) na segunda linha
+
+  🎨 Interface:
+  - Campo CEP marcado com asterisco (obrigatório)
+  - Botão desabilitado quando CEP inválido
+  - Ícone de Search no botão
+  - Comentário TODO para futura implementação da lógica
+
+  📝 Próximo passo: Implementar a integração com API ViaCEP ou similar para preenchimento automático dos dados do endereço.
+
+> me diga uma coisa os forms de email telefone endereco vao ser comuns a varios cadastros esse codigo pode ser reaproveitado ? ex. 
+  editar e nova empresa agora que ja exitem ?, nao gere codigo ainda so quero entender
+
+● Excelente pergunta! Sim, definitivamente há muito potencial de reaproveitamento:
+
+  📋 Componentes Reutilizáveis Identificados:
+
+  1. ContactFormsGroup (Alta reutilização)
+
+  - Seções de telefones, emails e endereços
+  - Lógica de adicionar/remover itens
+  - Validação de mínimo obrigatório
+  - Usado em: Empresas, Pacientes, Profissionais, Fornecedores
+
+  2. PhoneInput (Muito reutilizável)
+
+  - Campos: número, tipo, WhatsApp
+  - Máscara de telefone
+  - Validações específicas
+
+  3. EmailInput (Muito reutilizável)
+
+  - Campo email + tipo
+  - Validação de email
+  - Checkbox principal
+
+  4. AddressInput (Muito reutilizável)
+
+  - CEP + botão consultar
+  - Todos os campos de endereço
+  - Integração futura com ViaCEP
+
+  🔄 Cenários de Reuso:
+
+  ✅ Empresas: Já implementado
+  ✅ Pacientes: Mesmo conjunto de contatos
+  ✅ Profissionais: Idem✅ Estabelecimentos: Pode usar endereços
+  ✅ Fornecedores: Contatos completos
+
+  💡 Estrutura Sugerida:
+
+  /components/contacts/
+    ├── PhoneInputGroup.jsx
+    ├── EmailInputGroup.jsx
+    ├── AddressInputGroup.jsx
+    └── ContactFormsSection.jsx (wrapper)
+
+  🎯 Vantagens:
+
+  - DRY principle - Don't Repeat Yourself
+  - Consistência na UX
+  - Manutenibilidade centralizada
+  - Validações padronizadas
+  - Funcionalidades (CEP, WhatsApp) em um local
+
+  Recomendo refatorar após finalizar o CRUD de empresas! 🚀
+
+
+  ///////////////////////////////
+
+  ● Excelente visão arquitetural! Sim, isso é extremamente viável e recomendado:
+
+  🎯 Campos com Formatação/Validação Universal:
+
+  📱 Campos de Entrada Padronizados:
+
+  - CEP: 12345-678 + validação + integração ViaCEP
+  - Telefone: (11) 99999-9999 + validação DDD
+  - Email: validação RFC + domínios
+  - CNPJ: 12.345.678/0001-90 + validação dígitos
+  - CPF: 123.456.789-01 + validação dígitos
+  - RG: formatação por estado
+  - Moeda: R$ 1.234,56 + parsing numérico
+  - Data: DD/MM/AAAA + validação
+
+  🏗️ Arquitetura de Componentes:
+
+  Input Components Especializados:
+
+  /components/inputs/
+  ├── InputCEP.jsx
+  ├── InputPhone.jsx
+  ├── InputEmail.jsx
+  ├── InputCNPJ.jsx
+  ├── InputCPF.jsx
+  ├── InputCurrency.jsx
+  └── InputDate.jsx
+
+  Hooks de Validação:
+
+  /hooks/validation/
+  ├── useCEP.js
+  ├── usePhone.js
+  ├── useCNPJ.js
+  ├── useCPF.js
+  └── useEmail.js
+
+  ✅ Vantagens Sistêmicas:
+
+  🎨 UX Consistente:
+  - Mesma formatação em todo sistema
+  - Comportamento padronizado
+  - Feedbacks visuais uniformes
+
+  🔧 Manutenibilidade:
+  - Regras centralizadas
+  - Mudanças propagam automaticamente
+  - Testes unitários por componente
+
+  ⚡ Performance:
+  - Validação otimizada
+  - Máscaras eficientes
+  - Reaproveitamento de código
+
+  🛡️ Confiabilidade:
+  - Validações robustas
+  - Tratamento de edge cases
+  - Padrões brasileiros corretos
+
+  🚀 Implementação Sugerida:
+
+  Fase 1: Criar componentes base (CEP, Telefone, Email)
+  Fase 2: Migrar CompanyForm para usar os novos componentesFase 3: Aplicar em outros formulários
+  Fase 4: Expandir para CPF, CNPJ, etc.
+
+  É uma excelente decisão arquitetural que vai economizar muito tempo futuro! 💪
+
+
+
+
+  //////////
+
+  🎯 Melhor Estratégia de Implementação - Abordagem Incremental e Pragmática:
+
+  📋 Roadmap Recomendado:
+
+  🚀 Etapa 1: Fundação (Prioridade ALTA)
+
+  1️⃣ Criar biblioteca base de validação
+     - utils/validators.js (CPF, CNPJ, CEP, Email, Phone)
+     - utils/formatters.js (máscaras)
+
+  2️⃣ Desenvolver 3 componentes críticos
+     - InputPhone (mais complexo)
+     - InputEmail (médio)
+     - InputCEP (com ViaCEP)
+
+  ⚡ Etapa 2: Migração Controlada (Prioridade MÉDIA)
+
+  3️⃣ Refatorar CompanyForm
+     - Substituir inputs atuais pelos novos
+     - Testar funcionalidade completa
+     - Validar que não quebrou nada
+
+  4️⃣ Criar ContactFormsGroup
+     - Extrair lógica de phones/emails/addresses
+     - Componente wrapper reutilizável
+
+  🔄 Etapa 3: Expansão (Prioridade BAIXA)
+
+  5️⃣ Desenvolver inputs adicionais
+     - InputCNPJ, InputCPF
+     - InputCurrency, InputDate
+
+  6️⃣ Aplicar em novos CRUDs
+     - Pacientes, Profissionais
+     - Usar componentes prontos
+
+  🛠️ Estratégia de Desenvolvimento:
+
+  🎭 Abordagem "Wrapper First"
+
+  - Manter inputs atuais funcionando
+  - Criar novos componentes que envolvem os existentes
+  - Migração gradual, sem quebrar sistema
+
+  📦 Estrutura de Arquivos Sugerida:
+
+  frontend/src/
+  ├── components/
+  │   ├── inputs/           # Inputs especializados
+  │   │   ├── InputPhone.jsx
+  │   │   ├── InputEmail.jsx
+  │   │   └── InputCEP.jsx
+  │   ├── contacts/         # Grupos de contatos
+  │   │   ├── PhoneGroup.jsx
+  │   │   ├── EmailGroup.jsx
+  │   │   └── AddressGroup.jsx
+  │   └── forms/            # Forms completos
+  │       └── CompanyForm.jsx (migrado)
+  ├── utils/
+  │   ├── validators.js     # Funções puras
+  │   ├── formatters.js     # Máscaras
+  │   └── constants.js      # DDDs, estados, etc.
+  └── hooks/
+      ├── usePhone.js       # Lógica de telefone
+      ├── useCEP.js         # Lógica de CEP + ViaCEP
+      └── useForm.js        # Lógica geral de forms
+
+  ⭐ Vantagens dessa Abordagem:
+
+  ✅ Segurança:
+
+  - Sistema não para de funcionar
+  - Testes em produção com fallback
+  - Rollback fácil se necessário
+
+  ✅ Produtividade:
+
+  - Componentes novos já nascem testados
+  - Reutilização imediata nos próximos CRUDs
+  - Time ganha experiência gradualmente
+
+  ✅ Qualidade:
+
+  - Validações centralizadas e robustas
+  - UX consistente desde o início
+  - Fácil manutenção futura
+
+  🎯 Decisão Estratégica:
+
+  Recomendo começar AGORA com InputPhone + InputCEP, pois:
+  - São os mais complexos
+  - Têm maior impacto na UX
+  - Podem ser testados no CompanyForm atual
+  - Criam foundation sólida para o resto
+
+  Prefere começar pela fundação ou quer continuar finalizando empresas primeiro? 🤔
+
+> vou seguir sua remondacao, ai vou testando conforme evolui
+
+● Perfeito! Vamos começar pela fundação sólida.
+
+  🚀 Plano de Execução - Etapa 1:
+
+  Vou criar primeiro os utilitários base (validators + formatters) e depois os componentes críticos (InputPhone, InputCEP,
+  InputEmail).
+
+  Começando pelas funções de validação e formatação que serão a base de tudo:
+
+● Write(frontend/src/utils/validators.js)
+  ⎿  Wrote 167 lines to frontend/src/utils/validators.js              
+     /**
+      * Validators - Funções puras para validação de dados brasileiros
+      */
+     /**
+      * Remove caracteres não numéricos de uma string
+      */
+     export const removeNonNumeric = (value) => {
+       return value ? value.replace(/\D/g, '') : '';
+     };
+     … +157 lines (ctrl+r to expand)
+
+● Write(frontend/src/utils/formatters.js)
+  ⎿  Wrote 178 lines to frontend/src/utils/formatters.js        
+     /**
+      * Formatters - Funções para formatação de entrada de dados
+      */
+     import { removeNonNumeric } from './validators';
+     /**
+      * Formatar CPF: 123.456.789-01
+      */
+     export const formatCPF = (value) => {
+     … +168 lines (ctrl+r to expand)
+
+● Agora vou criar o componente InputPhone - o mais complexo dos três:
+
+● Write(frontend/src/components/inputs/InputPhone.jsx)
+  ⎿  Wrote 207 lines to frontend/src/components/inputs/InputPhone.jsx       
+     import React, { useState, useEffect } from 'react';
+     import { formatPhone, removeNonNumeric } from '../../utils/formatters';
+     import { validatePhone, validateDDD } from '../../utils/validators';
+     const InputPhone = ({
+       label = "Telefone",
+       value = '',
+       onChange,
+       placeholder = "(11) 99999-9999",
+       required = false,
+     … +197 lines (ctrl+r to expand)
+
+● Agora vou criar o componente InputCEP com integração ViaCEP:
+
+● Write(frontend/src/components/inputs/InputCEP.jsx)
+  ⎿  Wrote 292 lines to frontend/src/components/inputs/InputCEP.jsx       
+     import React, { useState, useEffect } from 'react';
+     import { Search, Loader2, MapPin } from 'lucide-react';
+     import { formatCEP, removeNonNumeric } from '../../utils/formatters';
+     import { validateCEP } from '../../utils/validators';
+     const InputCEP = ({
+       label = "CEP",
+       value = '',
+       onChange,
+       onAddressFound,
+     … +282 lines (ctrl+r to expand)
+
+● Agora vou criar o componente InputEmail mais simples:
+
+● Write(frontend/src/components/inputs/InputEmail.jsx)
+  ⎿  Wrote 232 lines to frontend/src/components/inputs/InputEmail.jsx
+     import React, { useState, useEffect } from 'react';
+     import { Mail, Check, X } from 'lucide-react';
+     import { validateEmail } from '../../utils/validators';
+     const InputEmail = ({
+       label = "E-mail",
+       value = '',
+       onChange,
+       placeholder = "usuario@exemplo.com",
+       required = false,
+     … +222 lines (ctrl+r to expand)
+
+● Agora vou criar um arquivo de index para facilitar as importações:
+
+● Write(frontend/src/components/inputs/index.js)
+  ⎿  Wrote 24 lines to frontend/src/components/inputs/index.js
+     // Specialized Input Components
+     export { default as InputPhone } from './InputPhone';
+     export { default as InputCEP } from './InputCEP';
+     export { default as InputEmail } from './InputEmail';
+     // Re-export utilities for convenience
+     export {
+       formatPhone,
+       formatCEP,
+       formatCPF,
+     … +14 lines (ctrl+r to expand)
+
+● Agora vou fazer um teste rápido criando uma página de demonstração:
+
+● Write(frontend/src/pages/InputsDemo.jsx)
+  ⎿  Wrote 111 lines to frontend/src/pages/InputsDemo.jsx                    
+     import React, { useState } from 'react';
+     import { InputPhone, InputCEP, InputEmail } from '../components/inputs';
+     const InputsDemo = () => {
+       const [formData, setFormData] = useState({
+         phone: '',
+         cep: '',
+         email: ''
+       });
+     … +101 lines (ctrl+r to expand)
+
+● ✅ Fundação dos Componentes Especializada CONCLUÍDA!
+
+  🎯 O que foi criado:
+
+  📦 Utilitários Base:
+
+  - validators.js - Validação CPF, CNPJ, CEP, Email, Telefone + DDDs brasileiros
+  - formatters.js - Máscaras automáticas + parsers para todos os tipos
+
+  🧩 Componentes Especializados:
+
+  - InputPhone - Máscara automática, validação DDD, tipo celular/fixo, indicadores visuais
+  - InputCEP - ViaCEP integrado, consulta automática, preview do endereço
+  - InputEmail - Validação RFC, sugestões de domínio, ícones contextuais
+
+  🚀 Funcionalidades Avançadas:
+
+  - Validação em tempo real com indicadores visuais
+  - Auto-formatação durante digitação
+  - Integração ViaCEP com preenchimento automático
+  - Sugestões inteligentes de domínios de email
+  - Feedback contextual para usuário
+
+  📋 Próximo Passo:
+
+  Migrar um campo do CompanyForm para testar na prática. Posso começar substituindo apenas o campo de CEP para validar se funciona
+  corretamente antes de migrar tudo?
+
+  Quer testar a página de demonstração primeiro ou partir direto para a migração? 🤔

@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { companiesService } from '../../services/api';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
-import { Save, X, Plus, Trash2 } from 'lucide-react';
+import { Save, X } from 'lucide-react';
+import { PhoneInputGroup, EmailInputGroup, AddressInputGroup } from '../contacts';
+import { InputCNPJ } from '../inputs';
 
 const CompanyForm = ({ companyId, onSave, onCancel }) => {
   const [loading, setLoading] = useState(false);
@@ -14,9 +16,13 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
       name: '',
       trade_name: '',
       tax_id: '',
+      secondary_tax_id: '',
       incorporation_date: '',
       tax_regime: 'simples_nacional',
       legal_nature: 'ltda',
+      municipal_registration: '',
+      website: '',
+      description: '',
       status: 'active'
     },
     company: {
@@ -39,7 +45,7 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
     addresses: [{
       street: '',
       number: '',
-      complement: '',
+      details: '',
       neighborhood: '',
       city: '',
       state: '',
@@ -52,13 +58,7 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
 
   const isEditing = Boolean(companyId);
 
-  useEffect(() => {
-    if (companyId) {
-      loadCompany();
-    }
-  }, [companyId]);
-
-  const loadCompany = async () => {
+  const loadCompany = useCallback(async () => {
     try {
       setLoading(true);
       const company = await companiesService.getCompany(companyId);
@@ -69,9 +69,30 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
           metadata: company.metadata || {},
           display_order: company.display_order || 0
         },
-        phones: company.phones.length > 0 ? company.phones : formData.phones,
-        emails: company.emails.length > 0 ? company.emails : formData.emails,
-        addresses: company.addresses.length > 0 ? company.addresses : formData.addresses
+        phones: company.phones.length > 0 ? company.phones : [{
+          country_code: '55',
+          number: '',
+          type: 'commercial',
+          is_principal: true,
+          is_whatsapp: false
+        }],
+        emails: company.emails.length > 0 ? company.emails : [{
+          email_address: '',
+          type: 'work',
+          is_principal: true
+        }],
+        addresses: company.addresses.length > 0 ? company.addresses : [{
+          street: '',
+          number: '',
+          details: '',
+          neighborhood: '',
+          city: '',
+          state: '',
+          zip_code: '',
+          country: 'BR',
+          type: 'commercial',
+          is_principal: true
+        }]
       });
     } catch (err) {
       setError('Erro ao carregar empresa');
@@ -79,7 +100,13 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [companyId]);
+
+  useEffect(() => {
+    if (companyId) {
+      loadCompany();
+    }
+  }, [companyId, loadCompany]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -115,8 +142,24 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
 
       onSave?.();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Erro ao salvar empresa');
-      console.error(err);
+      console.error('Erro completo:', err);
+      console.error('Response data:', err.response?.data);
+      
+      let errorMessage = 'Erro desconhecido ao salvar empresa';
+      
+      if (err.response?.data?.detail) {
+        errorMessage = err.response.data.detail;
+      } else if (err.response?.status === 400) {
+        errorMessage = 'Dados inválidos. Verifique os campos obrigatórios.';
+      } else if (err.response?.status === 404) {
+        errorMessage = 'Empresa não encontrada.';
+      } else if (err.response?.status >= 500) {
+        errorMessage = 'Erro interno do servidor. Tente novamente.';
+      } else if (err.message) {
+        errorMessage = `Erro de conexão: ${err.message}`;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -129,94 +172,100 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
     }));
   };
 
-  const addPhone = () => {
+  const handlePhonesChange = (phones) => {
+    setFormData(prev => ({ ...prev, phones }));
+  };
+
+  const handlePhoneAdd = (newPhone) => {
     setFormData(prev => ({
       ...prev,
-      phones: [...prev.phones, {
-        country_code: '55',
-        number: '',
-        type: 'commercial',
-        is_principal: false,
-        is_whatsapp: false
-      }]
+      phones: [...prev.phones, newPhone]
     }));
   };
 
-  const updatePhone = (index, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      phones: prev.phones.map((phone, i) => 
-        i === index ? { ...phone, [field]: value } : phone
-      )
-    }));
-  };
-
-  const removePhone = (index) => {
+  const handlePhoneRemove = (index) => {
     setFormData(prev => ({
       ...prev,
       phones: prev.phones.filter((_, i) => i !== index)
     }));
   };
 
-  const addEmail = () => {
+  const handleEmailsChange = (emails) => {
+    setFormData(prev => ({ ...prev, emails }));
+  };
+
+  const handleEmailAdd = (newEmail) => {
     setFormData(prev => ({
       ...prev,
-      emails: [...prev.emails, {
-        email_address: '',
-        type: 'work',
-        is_principal: false
-      }]
+      emails: [...prev.emails, newEmail]
     }));
   };
 
-  const updateEmail = (index, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      emails: prev.emails.map((email, i) => 
-        i === index ? { ...email, [field]: value } : email
-      )
-    }));
-  };
-
-  const removeEmail = (index) => {
+  const handleEmailRemove = (index) => {
     setFormData(prev => ({
       ...prev,
       emails: prev.emails.filter((_, i) => i !== index)
     }));
   };
 
-  const addAddress = () => {
+  const handleAddressesChange = (addresses) => {
+    setFormData(prev => ({ ...prev, addresses }));
+  };
+
+  const handleAddressAdd = (newAddress) => {
     setFormData(prev => ({
       ...prev,
-      addresses: [...prev.addresses, {
-        street: '',
-        number: '',
-        details: '',
-        neighborhood: '',
-        city: '',
-        state: '',
-        zip_code: '',
-        country: 'Brasil',
-        type: 'commercial',
-        is_principal: false
-      }]
+      addresses: [...prev.addresses, newAddress]
     }));
   };
 
-  const updateAddress = (index, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      addresses: prev.addresses.map((address, i) => 
-        i === index ? { ...address, [field]: value } : address
-      )
-    }));
-  };
-
-  const removeAddress = (index) => {
+  const handleAddressRemove = (index) => {
     setFormData(prev => ({
       ...prev,
       addresses: prev.addresses.filter((_, i) => i !== index)
     }));
+  };
+
+  const handleCompanyFound = (companyData) => {
+    // Confirmar com usuário antes de sobrescrever dados existentes
+    const hasExistingData = formData.people.name || formData.people.trade_name;
+    
+    if (hasExistingData) {
+      const confirmOverwrite = window.confirm(
+        'Dados da empresa encontrados na Receita Federal. Deseja preencher os campos automaticamente? Isso irá sobrescrever os dados já preenchidos.'
+      );
+      
+      if (!confirmOverwrite) {
+        return;
+      }
+    }
+
+    // Preencher formulário com dados da consulta
+    setFormData(prev => ({
+      ...prev,
+      people: {
+        ...prev.people,
+        ...companyData.people
+      },
+      // Mesclar telefones (manter existentes + adicionar novos)
+      phones: companyData.phones.length > 0 
+        ? [...companyData.phones, ...prev.phones.filter(p => p.number)]
+        : prev.phones,
+      // Mesclar emails (manter existentes + adicionar novos)
+      emails: companyData.emails.length > 0
+        ? [...companyData.emails, ...prev.emails.filter(e => e.email_address)]
+        : prev.emails,
+      // Mesclar endereços (manter existentes + adicionar novos)
+      addresses: companyData.addresses.length > 0
+        ? [...companyData.addresses, ...prev.addresses.filter(a => a.street || a.city)]
+        : prev.addresses
+    }));
+
+    // Limpar erro se houver
+    setError(null);
+
+    // Mostrar feedback positivo
+    console.log('Dados da empresa preenchidos automaticamente:', companyData);
   };
 
   if (loading && isEditing) {
@@ -259,243 +308,303 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Dados da Empresa */}
         <Card title="Dados da Empresa">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Input
-              label="Razão Social *"
-              value={formData.people.name}
-              onChange={(e) => updatePeople('name', e.target.value)}
-              placeholder="Nome completo da empresa"
-              required
-            />
-            <Input
-              label="Nome Fantasia"
-              value={formData.people.trade_name || ''}
-              onChange={(e) => updatePeople('trade_name', e.target.value)}
-              placeholder="Nome comercial"
-            />
-            <Input
+          <div className="space-y-6">
+            {/* CNPJ - Primeiro campo com consulta */}
+            <InputCNPJ
               label="CNPJ *"
               value={formData.people.tax_id}
-              onChange={(e) => updatePeople('tax_id', e.target.value.replace(/\D/g, ''))}
-              placeholder="00.000.000/0001-00"
-              maxLength={14}
+              onChange={(data) => updatePeople('tax_id', data.target.value)}
+              onCompanyFound={handleCompanyFound}
+              placeholder="00.000.000/0000-00"
               required
+              disabled={loading}
+              showValidation={true}
+              showConsultButton={true}
+              autoConsult={false}
             />
+
+            {/* Campos principais */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Input
+                label="Razão Social *"
+                value={formData.people.name}
+                onChange={(e) => updatePeople('name', e.target.value)}
+                placeholder="Nome completo da empresa"
+                required
+              />
+              <Input
+                label="Nome Fantasia"
+                value={formData.people.trade_name || ''}
+                onChange={(e) => updatePeople('trade_name', e.target.value)}
+                placeholder="Nome comercial"
+              />
+            </div>
+
+            {/* Campos secundários */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Input
+                label="Inscrição Estadual"
+                value={formData.people.secondary_tax_id || ''}
+                onChange={(e) => updatePeople('secondary_tax_id', e.target.value)}
+                placeholder="123.456.789"
+              />
+              <Input
+                label="Inscrição Municipal"
+                value={formData.people.municipal_registration || ''}
+                onChange={(e) => updatePeople('municipal_registration', e.target.value)}
+                placeholder="12345678"
+              />
+              <Input
+                label="Website"
+                value={formData.people.website || ''}
+                onChange={(e) => updatePeople('website', e.target.value)}
+                placeholder="https://www.empresa.com.br"
+                type="url"
+              />
+            </div>
+
+            {/* Natureza e regime */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Input
+                label="Natureza Jurídica"
+                value={formData.people.legal_nature || ''}
+                onChange={(e) => updatePeople('legal_nature', e.target.value)}
+                placeholder="Sociedade Limitada"
+              />
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Regime Tributário
+                </label>
+                <select
+                  value={formData.people.tax_regime || 'simples_nacional'}
+                  onChange={(e) => updatePeople('tax_regime', e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
+                >
+                  <option value="simples_nacional">Simples Nacional</option>
+                  <option value="lucro_presumido">Lucro Presumido</option>
+                  <option value="lucro_real">Lucro Real</option>
+                  <option value="mei">MEI</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Status
+                </label>
+                <select
+                  value={formData.people.status}
+                  onChange={(e) => updatePeople('status', e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
+                >
+                  <option value="active">Ativo</option>
+                  <option value="inactive">Inativo</option>
+                  <option value="suspended">Suspenso</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Data de abertura */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Input
+                label="Data de Abertura"
+                value={formData.people.incorporation_date || ''}
+                onChange={(e) => updatePeople('incorporation_date', e.target.value)}
+                type="date"
+              />
+            </div>
+
+            {/* Descrição */}
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Status
+                Descrição da Empresa
               </label>
-              <select
-                value={formData.people.status}
-                onChange={(e) => updatePeople('status', e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
-              >
-                <option value="active">Ativo</option>
-                <option value="inactive">Inativo</option>
-                <option value="suspended">Suspenso</option>
-              </select>
+              <textarea
+                value={formData.people.description || ''}
+                onChange={(e) => updatePeople('description', e.target.value)}
+                placeholder="Breve descrição das atividades da empresa..."
+                rows={3}
+                className="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none resize-none"
+              />
             </div>
           </div>
         </Card>
 
-        {/* Telefones */}
-        <Card title="Telefones">
-          <div className="space-y-4">
-            {formData.phones.map((phone, index) => (
-              <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                <Input
-                  label="Número"
-                  value={phone.number}
-                  onChange={(e) => updatePhone(index, 'number', e.target.value)}
-                  placeholder="11987654321"
-                />
+        {/* Informações da Receita Federal */}
+        {formData.people.metadata && Object.keys(formData.people.metadata).length > 0 && (
+          <Card title="Informações da Receita Federal" className="bg-blue-50 dark:bg-blue-900/20">
+            <div className="space-y-4">
+              {/* CNAE Principal */}
+              {formData.people.metadata.cnae_fiscal && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      CNAE Principal
+                    </label>
+                    <p className="text-sm text-muted-foreground bg-white dark:bg-gray-800 p-2 rounded border">
+                      {formData.people.metadata.cnae_fiscal} - {formData.people.metadata.cnae_fiscal_descricao}
+                    </p>
+                  </div>
+                  {formData.people.metadata.porte && (
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">
+                        Porte da Empresa
+                      </label>
+                      <p className="text-sm text-muted-foreground bg-white dark:bg-gray-800 p-2 rounded border">
+                        {formData.people.metadata.porte}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* CNAEs Secundários */}
+              {formData.people.metadata.cnaes_secundarios && formData.people.metadata.cnaes_secundarios.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Tipo</label>
-                  <select
-                    value={phone.type}
-                    onChange={(e) => updatePhone(index, 'type', e.target.value)}
-                    className="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
-                  >
-                    <option value="commercial">Comercial</option>
-                    <option value="mobile">Celular</option>
-                    <option value="fax">Fax</option>
-                  </select>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={phone.is_whatsapp}
-                      onChange={(e) => updatePhone(index, 'is_whatsapp', e.target.checked)}
-                      className="mr-2"
-                    />
-                    WhatsApp
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    CNAEs Secundários
                   </label>
+                  <div className="space-y-1 max-h-32 overflow-y-auto">
+                    {formData.people.metadata.cnaes_secundarios.map((cnae, index) => (
+                      <p key={index} className="text-xs text-muted-foreground bg-white dark:bg-gray-800 p-2 rounded border">
+                        {cnae.code} - {cnae.text}
+                      </p>
+                    ))}
+                  </div>
                 </div>
-                <Button
-                  type="button"
-                  variant="danger"
-                  outline
-                  size="sm"
-                  onClick={() => removePhone(index)}
-                  disabled={formData.phones.length === 1}
-                  icon={<Trash2 className="h-4 w-4" />}
-                >
-                  Remover
-                </Button>
+              )}
+
+              {/* Informações da situação */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {formData.people.metadata.situacao && (
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      Situação na RF
+                    </label>
+                    <p className="text-sm text-muted-foreground bg-white dark:bg-gray-800 p-2 rounded border">
+                      {formData.people.metadata.situacao}
+                    </p>
+                  </div>
+                )}
+                {formData.people.metadata.data_situacao && (
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      Data da Situação
+                    </label>
+                    <p className="text-sm text-muted-foreground bg-white dark:bg-gray-800 p-2 rounded border">
+                      {formData.people.metadata.data_situacao}
+                    </p>
+                  </div>
+                )}
+                {formData.people.metadata.tipo && (
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      Tipo de Estabelecimento
+                    </label>
+                    <p className="text-sm text-muted-foreground bg-white dark:bg-gray-800 p-2 rounded border">
+                      {formData.people.metadata.tipo}
+                    </p>
+                  </div>
+                )}
               </div>
-            ))}
-            <Button
-              type="button"
-              variant="secondary"
-              outline
-              onClick={addPhone}
-              icon={<Plus className="h-4 w-4" />}
-            >
-              Adicionar Telefone
-            </Button>
-          </div>
+
+              {/* Capital social e última atualização */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {formData.people.metadata.capital_social && (
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      Capital Social
+                    </label>
+                    <p className="text-sm text-muted-foreground bg-white dark:bg-gray-800 p-2 rounded border">
+                      R$ {formData.people.metadata.capital_social}
+                    </p>
+                  </div>
+                )}
+                {formData.people.metadata.ultima_atualizacao_rf && (
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      Última Atualização RF
+                    </label>
+                    <p className="text-sm text-muted-foreground bg-white dark:bg-gray-800 p-2 rounded border">
+                      {new Date(formData.people.metadata.ultima_atualizacao_rf).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Situação especial e motivo */}
+              {(formData.people.metadata.situacao_especial || formData.people.metadata.motivo_situacao) && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {formData.people.metadata.situacao_especial && (
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">
+                        Situação Especial
+                      </label>
+                      <p className="text-sm text-muted-foreground bg-white dark:bg-gray-800 p-2 rounded border">
+                        {formData.people.metadata.situacao_especial}
+                      </p>
+                    </div>
+                  )}
+                  {formData.people.metadata.motivo_situacao && (
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">
+                        Motivo da Situação
+                      </label>
+                      <p className="text-sm text-muted-foreground bg-white dark:bg-gray-800 p-2 rounded border">
+                        {formData.people.metadata.motivo_situacao}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </Card>
+        )}
+
+        {/* Telefones */}
+        <Card>
+          <PhoneInputGroup
+            phones={formData.phones}
+            onChange={handlePhonesChange}
+            onAdd={handlePhoneAdd}
+            onRemove={handlePhoneRemove}
+            required={true}
+            disabled={loading}
+            showValidation={true}
+            minPhones={1}
+            maxPhones={5}
+            title="Telefones"
+          />
         </Card>
 
         {/* E-mails */}
-        <Card title="E-mails">
-          <div className="space-y-4">
-            {formData.emails.map((email, index) => (
-              <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                <Input
-                  label="E-mail"
-                  type="email"
-                  value={email.email_address}
-                  onChange={(e) => updateEmail(index, 'email_address', e.target.value)}
-                  placeholder="contato@empresa.com"
-                />
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Tipo</label>
-                  <select
-                    value={email.type}
-                    onChange={(e) => updateEmail(index, 'type', e.target.value)}
-                    className="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
-                  >
-                    <option value="work">Trabalho</option>
-                    <option value="personal">Pessoal</option>
-                    <option value="other">Outro</option>
-                  </select>
-                </div>
-                <Button
-                  type="button"
-                  variant="danger"
-                  outline
-                  size="sm"
-                  onClick={() => removeEmail(index)}
-                  disabled={formData.emails.length === 1}
-                  icon={<Trash2 className="h-4 w-4" />}
-                >
-                  Remover
-                </Button>
-              </div>
-            ))}
-            <Button
-              type="button"
-              variant="secondary"
-              outline
-              onClick={addEmail}
-              icon={<Plus className="h-4 w-4" />}
-            >
-              Adicionar E-mail
-            </Button>
-          </div>
+        <Card>
+          <EmailInputGroup
+            emails={formData.emails}
+            onChange={handleEmailsChange}
+            onAdd={handleEmailAdd}
+            onRemove={handleEmailRemove}
+            required={true}
+            disabled={loading}
+            showValidation={true}
+            minEmails={1}
+            maxEmails={5}
+            title="E-mails"
+          />
         </Card>
 
         {/* Endereços */}
-        <Card title="Endereços">
-          <div className="space-y-6">
-            {formData.addresses.map((address, index) => (
-              <div key={index} className="space-y-4 p-4 border border-border rounded-lg">
-                <div className="flex justify-between items-center">
-                  <h4 className="font-medium text-foreground">Endereço {index + 1}</h4>
-                  <Button
-                    type="button"
-                    variant="danger"
-                    outline
-                    size="sm"
-                    onClick={() => removeAddress(index)}
-                    disabled={formData.addresses.length === 1}
-                    icon={<Trash2 className="h-4 w-4" />}
-                  >
-                    Remover
-                  </Button>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Input
-                    label="Logradouro"
-                    value={address.street}
-                    onChange={(e) => updateAddress(index, 'street', e.target.value)}
-                    placeholder="Rua, Avenida, etc."
-                  />
-                  <Input
-                    label="Número"
-                    value={address.number}
-                    onChange={(e) => updateAddress(index, 'number', e.target.value)}
-                    placeholder="123"
-                  />
-                  <Input
-                    label="Complemento"
-                    value={address.details || ''}
-                    onChange={(e) => updateAddress(index, 'details', e.target.value)}
-                    placeholder="Sala, Andar, etc."
-                  />
-                  <Input
-                    label="Bairro"
-                    value={address.neighborhood}
-                    onChange={(e) => updateAddress(index, 'neighborhood', e.target.value)}
-                    placeholder="Centro, Bela Vista, etc."
-                  />
-                  <Input
-                    label="Cidade"
-                    value={address.city}
-                    onChange={(e) => updateAddress(index, 'city', e.target.value)}
-                    placeholder="São Paulo"
-                  />
-                  <Input
-                    label="Estado"
-                    value={address.state}
-                    onChange={(e) => updateAddress(index, 'state', e.target.value)}
-                    placeholder="SP"
-                    maxLength={2}
-                  />
-                  <Input
-                    label="CEP"
-                    value={address.zip_code}
-                    onChange={(e) => updateAddress(index, 'zip_code', e.target.value.replace(/\D/g, ''))}
-                    placeholder="01310100"
-                    maxLength={8}
-                  />
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Tipo</label>
-                    <select
-                      value={address.type}
-                      onChange={(e) => updateAddress(index, 'type', e.target.value)}
-                      className="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
-                    >
-                      <option value="commercial">Comercial</option>
-                      <option value="residential">Residencial</option>
-                      <option value="billing">Cobrança</option>
-                      <option value="delivery">Entrega</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            ))}
-            <Button
-              type="button"
-              variant="secondary"
-              outline
-              onClick={addAddress}
-              icon={<Plus className="h-4 w-4" />}
-            >
-              Adicionar Endereço
-            </Button>
-          </div>
+        <Card>
+          <AddressInputGroup
+            addresses={formData.addresses}
+            onChange={handleAddressesChange}
+            onAdd={handleAddressAdd}
+            onRemove={handleAddressRemove}
+            required={true}
+            disabled={loading}
+            showValidation={true}
+            minAddresses={1}
+            maxAddresses={3}
+            title="Endereços"
+          />
         </Card>
       </form>
     </div>

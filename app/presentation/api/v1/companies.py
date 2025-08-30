@@ -115,18 +115,37 @@ async def update_company(
         if not company:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Company not found"
+                detail="Empresa não encontrada"
             )
         return company
+    except ValueError as e:
+        # Erros de validação de regras de negócio
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
     except Exception as e:
+        print(f"Erro ao atualizar empresa {company_id}: {str(e)}")  # Log para debug
+        
         if "tax_id" in str(e).lower() and "unique" in str(e).lower():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Company with this CNPJ already exists"
+                detail="Empresa com este CNPJ já existe"
             )
+        if "foreign key constraint" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Erro de relacionamento de dados. Verifique os campos obrigatórios."
+            )
+        if "not null constraint" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Campo obrigatório não preenchido"
+            )
+        
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error updating company"
+            detail=f"Erro interno ao atualizar empresa: {str(e)}"
         )
 
 

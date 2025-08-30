@@ -268,6 +268,9 @@ class CompanyCreate(BaseModel):
 class CompanyUpdate(BaseModel):
     people: Optional[PeopleUpdate] = None
     company: Optional[CompanyBase] = None
+    phones: Optional[List[PhoneCreate]] = None
+    emails: Optional[List[EmailCreate]] = None
+    addresses: Optional[List[AddressCreate]] = None
 
 
 class Company(CompanyBase):

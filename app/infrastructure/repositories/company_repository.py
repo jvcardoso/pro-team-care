@@ -1,12 +1,13 @@
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_, or_
+from sqlalchemy import select, func, and_, or_, delete
 from sqlalchemy.orm import selectinload, joinedload
 from app.infrastructure.orm.models import People, Company, Phone, Email, Address
 from app.domain.models.company import (
     CompanyCreate, CompanyUpdate, CompanyDetailed, CompanyList,
     PeopleCreate, PhoneCreate, EmailCreate, AddressCreate
 )
+from app.utils.validators import validate_contacts_quality
 
 
 class CompanyRepository:
@@ -16,6 +17,14 @@ class CompanyRepository:
     async def create_company(self, company_data: CompanyCreate) -> CompanyDetailed:
         """Create a new company with related entities in a transaction"""
         try:
+            # Validate contact data quality
+            phones_data = [phone.model_dump() for phone in (company_data.phones or [])]
+            emails_data = [email.model_dump() for email in (company_data.emails or [])]
+            addresses_data = [address.model_dump() for address in (company_data.addresses or [])]
+            
+            is_valid, error_message = validate_contacts_quality(phones_data, emails_data, addresses_data)
+            if not is_valid:
+                raise ValueError(error_message)
             # Create people record first
             people_db = People(
                 person_type=company_data.people.person_type,
@@ -316,8 +325,27 @@ class CompanyRepository:
         return companies
 
     async def update_company(self, company_id: int, company_data: CompanyUpdate) -> Optional[CompanyDetailed]:
-        """Update a company and related people data"""
+        """Update a company and related people data with business rules validation"""
         try:
+            # Business rule validation: Company must have at least one contact of each type
+            if company_data.phones is not None and len(company_data.phones) == 0:
+                raise ValueError("Empresa deve ter pelo menos um telefone")
+            if company_data.emails is not None and len(company_data.emails) == 0:
+                raise ValueError("Empresa deve ter pelo menos um email")
+            if company_data.addresses is not None and len(company_data.addresses) == 0:
+                raise ValueError("Empresa deve ter pelo menos um endereço")
+            
+            # Validate contact data quality if provided
+            if company_data.phones:
+                phones_data = [phone.model_dump() for phone in company_data.phones]
+                emails_data = [email.model_dump() for email in (company_data.emails or [])]
+                addresses_data = [address.model_dump() for address in (company_data.addresses or [])]
+                
+                # Validate only if we have all contact types in the update
+                if company_data.phones and company_data.emails and company_data.addresses:
+                    is_valid, error_message = validate_contacts_quality(phones_data, emails_data, addresses_data)
+                    if not is_valid:
+                        raise ValueError(error_message)
             # Get existing company
             query = select(Company).where(and_(Company.id == company_id, Company.deleted_at.is_(None)))
             result = await self.db.execute(query)
@@ -346,6 +374,76 @@ class CompanyRepository:
                         if hasattr(people_db, field):
                             setattr(people_db, field, value)
             
+            # Update phones if provided
+            if company_data.phones is not None:
+                # Remove existing phones (hard delete for updates)
+                await self.db.execute(delete(Phone).where(Phone.phoneable_id == company_db.person_id))
+                
+                # Add new phones
+                for phone_data in company_data.phones:
+                    phone_db = Phone(
+                        phoneable_id=company_db.person_id,
+                        country_code=phone_data.country_code,
+                        number=phone_data.number,
+                        extension=phone_data.extension,
+                        type=phone_data.type,
+                        is_principal=phone_data.is_principal,
+                        is_active=phone_data.is_active,
+                        phone_name=phone_data.phone_name,
+                        is_whatsapp=phone_data.is_whatsapp,
+                        whatsapp_verified=phone_data.whatsapp_verified,
+                        whatsapp_business=phone_data.whatsapp_business,
+                        whatsapp_name=phone_data.whatsapp_name,
+                        accepts_whatsapp_marketing=phone_data.accepts_whatsapp_marketing,
+                        accepts_whatsapp_notifications=phone_data.accepts_whatsapp_notifications,
+                        whatsapp_preferred_time_start=phone_data.whatsapp_preferred_time_start,
+                        whatsapp_preferred_time_end=phone_data.whatsapp_preferred_time_end,
+                        carrier=phone_data.carrier,
+                        line_type=phone_data.line_type,
+                        contact_priority=phone_data.contact_priority,
+                        can_receive_calls=phone_data.can_receive_calls,
+                        can_receive_sms=phone_data.can_receive_sms
+                    )
+                    self.db.add(phone_db)
+            
+            # Update emails if provided
+            if company_data.emails is not None:
+                # Remove existing emails (hard delete for updates)
+                await self.db.execute(delete(Email).where(Email.emailable_id == company_db.person_id))
+                
+                # Add new emails
+                for email_data in company_data.emails:
+                    email_db = Email(
+                        emailable_id=company_db.person_id,
+                        email_address=email_data.email_address,
+                        type=email_data.type,
+                        is_principal=email_data.is_principal,
+                        is_active=email_data.is_active
+                    )
+                    self.db.add(email_db)
+            
+            # Update addresses if provided
+            if company_data.addresses is not None:
+                # Remove existing addresses (hard delete for updates)
+                await self.db.execute(delete(Address).where(Address.addressable_id == company_db.person_id))
+                
+                # Add new addresses
+                for address_data in company_data.addresses:
+                    address_db = Address(
+                        addressable_id=company_db.person_id,
+                        street=address_data.street,
+                        number=address_data.number,
+                        details=address_data.details,
+                        neighborhood=address_data.neighborhood,
+                        city=address_data.city,
+                        state=address_data.state,
+                        zip_code=address_data.zip_code,
+                        country=address_data.country,
+                        type=address_data.type,
+                        is_principal=address_data.is_principal
+                    )
+                    self.db.add(address_db)
+            
             await self.db.commit()
             
             # Return updated company
@@ -356,7 +454,10 @@ class CompanyRepository:
             raise e
 
     async def delete_company(self, company_id: int) -> bool:
-        """Soft delete a company"""
+        """
+        Inactivate company instead of deleting (business rule: companies cannot be deleted)
+        Changes status to 'inactive' but preserves all data and relationships
+        """
         try:
             # Get existing company
             query = select(Company).where(and_(Company.id == company_id, Company.deleted_at.is_(None)))
@@ -366,16 +467,15 @@ class CompanyRepository:
             if not company_db:
                 return False
             
-            # Soft delete company
-            company_db.deleted_at = func.now()
-            
-            # Soft delete related people record
+            # Get related people record
             people_query = select(People).where(People.id == company_db.person_id)
             people_result = await self.db.execute(people_query)
             people_db = people_result.scalars().first()
             
             if people_db:
-                people_db.deleted_at = func.now()
+                # Change status to inactive instead of soft delete
+                people_db.status = 'inactive'
+                # Do NOT set deleted_at - preserve data for relationships
             
             await self.db.commit()
             return True

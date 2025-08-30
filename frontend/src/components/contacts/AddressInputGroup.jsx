@@ -1,0 +1,312 @@
+import React from 'react';
+import { Plus, Trash2, Star, StarOff, MapPin } from 'lucide-react';
+import { InputCEP } from '../inputs';
+import Input from '../ui/Input';
+import Button from '../ui/Button';
+
+const AddressInputGroup = ({
+  addresses = [],
+  onChange,
+  onAdd,
+  onRemove,
+  required = true,
+  disabled = false,
+  showValidation = true,
+  minAddresses = 1,
+  maxAddresses = 3,
+  title = "Endereços",
+  ...props
+}) => {
+  const handleAddressChange = (index, field, value) => {
+    const updatedAddresses = addresses.map((address, i) => 
+      i === index ? { ...address, [field]: value } : address
+    );
+    onChange?.(updatedAddresses);
+  };
+
+  const handleAddAddress = () => {
+    if (addresses.length >= maxAddresses) return;
+    
+    const newAddress = {
+      street: '',
+      number: '',
+      details: '',
+      neighborhood: '',
+      city: '',
+      state: '',
+      zip_code: '',
+      country: 'Brasil',
+      type: 'commercial',
+      is_principal: addresses.length === 0 // Primeiro é principal
+    };
+    
+    onAdd?.(newAddress);
+  };
+
+  const handleRemoveAddress = (index) => {
+    if (addresses.length <= minAddresses) return;
+    onRemove?.(index);
+  };
+
+  const setPrincipal = (index) => {
+    const updatedAddresses = addresses.map((address, i) => ({
+      ...address,
+      is_principal: i === index
+    }));
+    onChange?.(updatedAddresses);
+  };
+
+  const handleAddressFound = (index, addressData) => {
+    const updatedAddresses = addresses.map((address, i) => 
+      i === index ? {
+        ...address,
+        street: addressData.street || '',
+        number: '', // Limpar número para usuário preencher
+        details: '', // Limpar complemento 
+        neighborhood: addressData.neighborhood || '',
+        city: addressData.city || '',
+        state: addressData.state || '',
+        zip_code: addressData.cep || address.zip_code
+      } : address
+    );
+    onChange?.(updatedAddresses);
+  };
+
+  const addressTypes = [
+    { value: 'commercial', label: 'Comercial' },
+    { value: 'residential', label: 'Residencial' },
+    { value: 'billing', label: 'Cobrança' },
+    { value: 'delivery', label: 'Entrega' },
+    { value: 'other', label: 'Outro' }
+  ];
+
+  const getValidAddresses = () => {
+    return addresses.filter(addr => addr.street && addr.city && addr.zip_code);
+  };
+
+  const getAddressDisplay = (address) => {
+    const parts = [];
+    if (address.street) parts.push(address.street);
+    if (address.number) parts.push(address.number);
+    if (address.neighborhood) parts.push(address.neighborhood);
+    if (address.city) parts.push(address.city);
+    if (address.state) parts.push(address.state);
+    if (address.zip_code) parts.push(address.zip_code);
+    
+    return parts.join(', ');
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium text-foreground">
+          {title}
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </h3>
+        <div className="flex items-center gap-3">
+          <div className="text-sm text-muted-foreground">
+            {addresses.length} de {maxAddresses} endereços
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            outline
+            size="sm"
+            onClick={handleAddAddress}
+            disabled={disabled || addresses.length >= maxAddresses}
+            icon={<Plus className="h-4 w-4" />}
+            title={addresses.length >= maxAddresses ? `Máximo de ${maxAddresses} endereços atingido` : "Adicionar endereço"}
+          >
+            Adicionar
+          </Button>
+        </div>
+      </div>
+
+      {/* Lista de endereços */}
+      <div className="space-y-6">
+        {addresses.map((address, index) => (
+          <div key={index} className="space-y-4 p-4 border border-border rounded-lg bg-card">
+            {/* Header do endereço */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <h4 className="font-medium text-foreground">Endereço {index + 1}</h4>
+                {address.is_principal && (
+                  <Star className="h-4 w-4 text-yellow-500 fill-current" title="Endereço principal" />
+                )}
+              </div>
+
+              {/* Botão principal */}
+              <button
+                type="button"
+                onClick={() => setPrincipal(index)}
+                disabled={disabled}
+                className={`flex items-center text-sm p-1 rounded transition-colors ${
+                  address.is_principal
+                    ? 'text-yellow-600 hover:text-yellow-700'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                title={address.is_principal ? 'Endereço principal' : 'Definir como principal'}
+              >
+                {address.is_principal ? (
+                  <Star className="h-4 w-4 fill-current" />
+                ) : (
+                  <StarOff className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+
+            {/* Campos do endereço */}
+            <div className="space-y-4">
+              {/* CEP e Tipo - primeira linha */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <InputCEP
+                  label="CEP *"
+                  value={address.zip_code}
+                  onChange={(data) => handleAddressChange(index, 'zip_code', data.target.value)}
+                  onAddressFound={(addressData) => handleAddressFound(index, addressData)}
+                  placeholder="12345-678"
+                  required={required}
+                  disabled={disabled}
+                  showValidation={showValidation}
+                  showConsultButton={true}
+                  autoConsult={false}
+                />
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Tipo
+                  </label>
+                  <select
+                    value={address.type}
+                    onChange={(e) => handleAddressChange(index, 'type', e.target.value)}
+                    disabled={disabled}
+                    className="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
+                  >
+                    {addressTypes.map(type => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <Input
+                  label="País"
+                  value={address.country}
+                  onChange={(e) => handleAddressChange(index, 'country', e.target.value)}
+                  placeholder="Brasil"
+                  disabled={disabled}
+                />
+              </div>
+              
+              {/* Logradouro e Número - segunda linha */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Input
+                  label="Logradouro"
+                  value={address.street}
+                  onChange={(e) => handleAddressChange(index, 'street', e.target.value)}
+                  placeholder="Rua, Avenida, etc."
+                  disabled={disabled}
+                />
+                
+                <Input
+                  label="Número"
+                  value={address.number}
+                  onChange={(e) => handleAddressChange(index, 'number', e.target.value)}
+                  placeholder="123"
+                  disabled={disabled}
+                />
+                
+                <Input
+                  label="Complemento"
+                  value={address.details || ''}
+                  onChange={(e) => handleAddressChange(index, 'details', e.target.value)}
+                  placeholder="Sala, Andar, etc."
+                  disabled={disabled}
+                />
+              </div>
+
+              {/* Bairro, Cidade e Estado - terceira linha */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Input
+                  label="Bairro"
+                  value={address.neighborhood}
+                  onChange={(e) => handleAddressChange(index, 'neighborhood', e.target.value)}
+                  placeholder="Centro, Bela Vista, etc."
+                  disabled={disabled}
+                />
+                
+                <Input
+                  label="Cidade"
+                  value={address.city}
+                  onChange={(e) => handleAddressChange(index, 'city', e.target.value)}
+                  placeholder="São Paulo"
+                  disabled={disabled}
+                />
+                
+                <Input
+                  label="Estado"
+                  value={address.state}
+                  onChange={(e) => handleAddressChange(index, 'state', e.target.value)}
+                  placeholder="SP"
+                  maxLength={2}
+                  disabled={disabled}
+                />
+              </div>
+            </div>
+
+            {/* Preview do endereço */}
+            {getAddressDisplay(address) && (
+              <div className="text-xs text-muted-foreground bg-muted/30 p-2 rounded border">
+                <strong>Endereço completo:</strong> {getAddressDisplay(address)}
+              </div>
+            )}
+
+            {/* Linha do botão remover */}
+            <div className="flex justify-start pt-2 border-t border-border mt-4">
+              <Button
+                type="button"
+                variant="danger"
+                outline
+                size="sm"
+                onClick={() => handleRemoveAddress(index)}
+                disabled={addresses.length <= minAddresses || disabled}
+                icon={<Trash2 className="h-4 w-4" />}
+                title={addresses.length <= minAddresses ? `Deve ter pelo menos ${minAddresses} endereço(s)` : "Remover endereço"}
+              >
+                Remover
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+
+
+      {/* Validações e dicas */}
+      {required && getValidAddresses().length === 0 && (
+        <p className="text-sm text-red-600">
+          Pelo menos um endereço é obrigatório
+        </p>
+      )}
+
+      {addresses.length > 0 && !addresses.some(a => a.is_principal && a.street && a.city) && (
+        <p className="text-sm text-orange-600">
+          Selecione um endereço como principal
+        </p>
+      )}
+
+      {!required && addresses.length === 0 && (
+        <p className="text-xs text-muted-foreground">
+          Nenhum endereço cadastrado
+        </p>
+      )}
+
+
+    </div>
+  );
+};
+
+export default AddressInputGroup;

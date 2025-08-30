@@ -9,6 +9,7 @@ import PacientesPage from './pages/PacientesPage'
 import ProfissionaisPage from './pages/ProfissionaisPage'
 import ConsultasPage from './pages/ConsultasPage'
 import EmpresasPage from './pages/EmpresasPage'
+import InputsDemo from './pages/InputsDemo'
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
             <Route path="profissionais" element={<ProfissionaisPage />} />
             <Route path="consultas" element={<ConsultasPage />} />
             <Route path="empresas" element={<EmpresasPage />} />
+            <Route path="inputs-demo" element={<InputsDemo />} />
             <Route path="demo" element={<LayoutDemo />} />
           </Route>
           
