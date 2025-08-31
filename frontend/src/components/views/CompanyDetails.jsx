@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { companiesService } from '../../services/api';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
+import CompanyBasicInfo from '../entities/CompanyBasicInfo';
+import ReceitaFederalInfo from '../metadata/ReceitaFederalInfo';
 import { ArrowLeft, Edit, Trash2, Phone, Mail, MapPin, Building, Calendar, User, Globe, MessageCircle, Send, Navigation, ExternalLink } from 'lucide-react';
 
 const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
@@ -41,10 +43,6 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
     }
   };
 
-  const formatTaxId = (taxId) => {
-    if (!taxId) return '-';
-    return taxId.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
-  };
 
   const formatPhone = (phone) => {
     if (!phone.number) return '-';
@@ -277,68 +275,7 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Informações Básicas */}
         <div className="lg:col-span-2 space-y-6">
-          <Card title="Informações da Empresa">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-muted-foreground mb-1">
-                  Razão Social
-                </label>
-                <p className="text-foreground font-medium">{company.people.name}</p>
-              </div>
-              
-              {company.people.trade_name && (
-                <div>
-                  <label className="block text-sm font-medium text-muted-foreground mb-1">
-                    Nome Fantasia
-                  </label>
-                  <p className="text-foreground">{company.people.trade_name}</p>
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium text-muted-foreground mb-1">
-                  CNPJ
-                </label>
-                <p className="text-foreground font-mono">{formatTaxId(company.people.tax_id)}</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-muted-foreground mb-1">
-                  Tipo de Pessoa
-                </label>
-                <p className="text-foreground">{company.people.person_type}</p>
-              </div>
-
-              {company.people.incorporation_date && (
-                <div>
-                  <label className="block text-sm font-medium text-muted-foreground mb-1">
-                    Data de Incorporação
-                  </label>
-                  <p className="text-foreground">
-                    {new Date(company.people.incorporation_date).toLocaleDateString('pt-BR')}
-                  </p>
-                </div>
-              )}
-
-              {company.people.tax_regime && (
-                <div>
-                  <label className="block text-sm font-medium text-muted-foreground mb-1">
-                    Regime Tributário
-                  </label>
-                  <p className="text-foreground capitalize">{company.people.tax_regime.replace('_', ' ')}</p>
-                </div>
-              )}
-
-              {company.people.legal_nature && (
-                <div>
-                  <label className="block text-sm font-medium text-muted-foreground mb-1">
-                    Natureza Jurídica
-                  </label>
-                  <p className="text-foreground uppercase">{company.people.legal_nature}</p>
-                </div>
-              )}
-            </div>
-          </Card>
+          <CompanyBasicInfo company={company} />
 
           {/* Telefones */}
           {company.phones && company.phones.length > 0 && (
@@ -485,6 +422,8 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
               </div>
             </Card>
           )}
+
+          <ReceitaFederalInfo metadata={company.metadata} />
         </div>
 
         {/* Sidebar */}
