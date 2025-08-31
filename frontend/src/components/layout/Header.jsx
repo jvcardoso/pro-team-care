@@ -5,7 +5,7 @@ import {
   Search, ChevronDown, X
 } from 'lucide-react';
 
-const Header = ({ sidebarCollapsed, onToggleSidebar, breadcrumb }) => {
+const Header = ({ sidebarCollapsed, onToggleSidebar, breadcrumb, isMobile, sidebarOpen }) => {
   const { theme, toggleTheme, isDark } = useTheme();
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -60,9 +60,9 @@ const Header = ({ sidebarCollapsed, onToggleSidebar, breadcrumb }) => {
               <button
                 onClick={onToggleSidebar}
                 className="p-2 rounded-lg text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-colors"
-                title={sidebarCollapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
+                title={isMobile ? (sidebarOpen ? 'Fechar menu' : 'Abrir menu') : (sidebarCollapsed ? 'Expandir sidebar' : 'Recolher sidebar')}
               >
-                <Menu className="h-5 w-5" />
+                {isMobile && sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
 
               {/* Logo - Desktop only */}

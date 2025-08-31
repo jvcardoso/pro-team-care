@@ -4,6 +4,7 @@ import Card from '../ui/Card';
 import Button from '../ui/Button';
 import CompanyBasicInfo from '../entities/CompanyBasicInfo';
 import ReceitaFederalInfo from '../metadata/ReceitaFederalInfo';
+import { getStatusBadge, getStatusLabel, getPhoneTypeLabel, getEmailTypeLabel, getAddressTypeLabel, formatPhone, formatZipCode } from '../../utils/statusUtils';
 import { ArrowLeft, Edit, Trash2, Phone, Mail, MapPin, Building, Calendar, User, Globe, MessageCircle, Send, Navigation, ExternalLink } from 'lucide-react';
 
 const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
@@ -22,6 +23,21 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
     try {
       setLoading(true);
       const data = await companiesService.getCompany(companyId);
+      
+      // Debug: Verificar estrutura dos dados
+      console.log('=== [CompanyDetails] Dados da empresa carregados ===');
+      console.log('Estrutura completa:', data);
+      console.log('company.company existe?', !!data.company);
+      console.log('company.company.metadata existe?', !!data.company?.metadata);
+      console.log('company.people.metadata existe?', !!data.people?.metadata);
+      console.log('company.metadata existe?', !!data.metadata);
+      console.log('Chaves do company.metadata:', data.company?.metadata ? Object.keys(data.company.metadata) : 'Nenhuma');
+      console.log('Chaves do people.metadata:', data.people?.metadata ? Object.keys(data.people.metadata) : 'Nenhuma'); 
+      console.log('Chaves do metadata direto:', data.metadata ? Object.keys(data.metadata) : 'Nenhuma');
+      console.log('company.metadata completo:', data.company?.metadata);
+      console.log('people.metadata completo:', data.people?.metadata);
+      console.log('metadata direto completo:', data.metadata);
+      
       setCompany(data);
     } catch (err) {
       setError('Erro ao carregar empresa');
@@ -44,73 +60,6 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
   };
 
 
-  const formatPhone = (phone) => {
-    if (!phone.number) return '-';
-    const number = phone.number.replace(/\D/g, '');
-    if (number.length === 11) {
-      return `+${phone.country_code} (${number.slice(0,2)}) ${number.slice(2,7)}-${number.slice(7)}`;
-    }
-    if (number.length === 10) {
-      return `+${phone.country_code} (${number.slice(0,2)}) ${number.slice(2,6)}-${number.slice(6)}`;
-    }
-    return `+${phone.country_code} ${number}`;
-  };
-
-  const formatZipCode = (zipCode) => {
-    if (!zipCode) return '-';
-    return zipCode.replace(/^(\d{5})(\d{3})$/, '$1-$2');
-  };
-
-  const getStatusBadge = (status) => {
-    const baseClasses = 'px-3 py-1 text-sm font-medium rounded-full';
-    switch (status) {
-      case 'active':
-        return `${baseClasses} bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200`;
-      case 'inactive':
-        return `${baseClasses} bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200`;
-      case 'suspended':
-        return `${baseClasses} bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200`;
-      default:
-        return `${baseClasses} bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200`;
-    }
-  };
-
-  const getStatusLabel = (status) => {
-    switch (status) {
-      case 'active': return 'Ativo';
-      case 'inactive': return 'Inativo';
-      case 'suspended': return 'Suspenso';
-      default: return status;
-    }
-  };
-
-  const getPhoneTypeLabel = (type) => {
-    switch (type) {
-      case 'commercial': return 'Comercial';
-      case 'mobile': return 'Celular';
-      case 'fax': return 'Fax';
-      default: return type;
-    }
-  };
-
-  const getEmailTypeLabel = (type) => {
-    switch (type) {
-      case 'work': return 'Trabalho';
-      case 'personal': return 'Pessoal';
-      case 'other': return 'Outro';
-      default: return type;
-    }
-  };
-
-  const getAddressTypeLabel = (type) => {
-    switch (type) {
-      case 'commercial': return 'Comercial';
-      case 'residential': return 'Residencial';
-      case 'billing': return 'Cobrança';
-      case 'delivery': return 'Entrega';
-      default: return type;
-    }
-  };
 
   const openWhatsApp = (phone) => {
     const number = phone.number.replace(/\D/g, '');
@@ -167,106 +116,117 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="space-y-4">
+        {/* Back Button */}
+        <div>
           <Button variant="secondary" outline onClick={onBack} icon={<ArrowLeft className="h-4 w-4" />}>
             Voltar
           </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">{company.people.name}</h1>
-            <div className="flex items-center gap-4 mt-1">
+        </div>
+        
+        {/* Company Info and Actions */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold text-foreground break-words">{company.people.name}</h1>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-1">
               {company.people.trade_name && company.people.trade_name !== company.people.name && (
-                <p className="text-muted-foreground">{company.people.trade_name}</p>
+                <p className="text-muted-foreground break-words">{company.people.trade_name}</p>
               )}
               <span className={getStatusBadge(company.people.status)}>
                 {getStatusLabel(company.people.status)}
               </span>
             </div>
           </div>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="primary" onClick={() => onEdit?.(companyId)} icon={<Edit className="h-4 w-4" />}>
-            Editar
-          </Button>
-          <Button variant="danger" outline onClick={handleDelete} icon={<Trash2 className="h-4 w-4" />}>
-            Excluir
-          </Button>
+          <div className="flex gap-3 shrink-0">
+            <Button variant="primary" onClick={() => onEdit?.(companyId)} icon={<Edit className="h-4 w-4" />} className="flex-1 sm:flex-none">
+              <span className="hidden sm:inline">Editar</span>
+              <span className="sm:hidden">Editar</span>
+            </Button>
+            <Button variant="danger" outline onClick={handleDelete} icon={<Trash2 className="h-4 w-4" />} className="flex-1 sm:flex-none">
+              <span className="hidden sm:inline">Excluir</span>
+              <span className="sm:hidden">Excluir</span>
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Tabs */}
       <div className="border-b border-border">
-        <div className="flex space-x-8">
-          <button
-            onClick={() => setActiveTab('informacoes')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'informacoes'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-            }`}
-          >
-            Informações
-          </button>
-          <button
-            onClick={() => setActiveTab('estabelecimentos')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'estabelecimentos'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-            }`}
-          >
-            Estabelecimentos
-          </button>
-          <button
-            onClick={() => setActiveTab('clientes')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'clientes'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-            }`}
-          >
-            Clientes
-          </button>
-          <button
-            onClick={() => setActiveTab('profissionais')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'profissionais'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-            }`}
-          >
-            Profissionais
-          </button>
-          <button
-            onClick={() => setActiveTab('pacientes')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'pacientes'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-            }`}
-          >
-            Pacientes
-          </button>
-          <button
-            onClick={() => setActiveTab('usuarios')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'usuarios'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-            }`}
-          >
-            Usuários
-          </button>
-          <button
-            onClick={() => setActiveTab('lgpd')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'lgpd'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-            }`}
-          >
-            LGPD
-          </button>
+        <div className="overflow-x-auto">
+          <div className="flex space-x-4 sm:space-x-8 min-w-max">
+            <button
+              onClick={() => setActiveTab('informacoes')}
+              className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${
+                activeTab === 'informacoes'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+              }`}
+            >
+              Informações
+            </button>
+            <button
+              onClick={() => setActiveTab('estabelecimentos')}
+              className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${
+                activeTab === 'estabelecimentos'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+              }`}
+            >
+              <span className="hidden sm:inline">Estabelecimentos</span>
+              <span className="sm:hidden">Estab.</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('clientes')}
+              className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${
+                activeTab === 'clientes'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+              }`}
+            >
+              Clientes
+            </button>
+            <button
+              onClick={() => setActiveTab('profissionais')}
+              className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${
+                activeTab === 'profissionais'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+              }`}
+            >
+              <span className="hidden sm:inline">Profissionais</span>
+              <span className="sm:hidden">Profis.</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('pacientes')}
+              className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${
+                activeTab === 'pacientes'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+              }`}
+            >
+              Pacientes
+            </button>
+            <button
+              onClick={() => setActiveTab('usuarios')}
+              className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${
+                activeTab === 'usuarios'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+              }`}
+            >
+              Usuários
+            </button>
+            <button
+              onClick={() => setActiveTab('lgpd')}
+              className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${
+                activeTab === 'lgpd'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+              }`}
+            >
+              LGPD
+            </button>
+          </div>
         </div>
       </div>
 
@@ -423,7 +383,12 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
             </Card>
           )}
 
-          <ReceitaFederalInfo metadata={company.metadata} />
+          <ReceitaFederalInfo metadata={
+            company.company?.metadata || 
+            company.people?.metadata || 
+            company.metadata || 
+            {}
+          } />
         </div>
 
         {/* Sidebar */}

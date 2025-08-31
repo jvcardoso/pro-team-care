@@ -5,9 +5,17 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import CompanyForm from '../components/forms/CompanyForm';
 import CompanyDetails from '../components/views/CompanyDetails';
-import { Building, Search, Plus, Filter, Phone, Mail, MapPin, Edit, Eye, Trash2 } from 'lucide-react';
+import CompanyMobileCard from '../components/mobile/CompanyMobileCard';
+import { getStatusBadge, getStatusLabel, formatTaxId } from '../utils/statusUtils';
+import { Building, Search, Plus, Filter, Phone, Mail, MapPin, Edit, Eye, Trash2, Calendar } from 'lucide-react';
 
 const EmpresasPage = () => {
+  // Add error boundary logging
+  if (typeof window !== 'undefined') {
+    window.addEventListener('error', (e) => {
+      console.error('Page Error:', e.error);
+    });
+  }
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,6 +37,8 @@ const EmpresasPage = () => {
   const loadCompanies = async () => {
     try {
       setLoading(true);
+      setError(null); // Clear previous errors
+      
       const params = {
         skip: (currentPage - 1) * itemsPerPage,
         limit: itemsPerPage,
@@ -36,11 +46,15 @@ const EmpresasPage = () => {
         ...(filterStatus !== 'todos' && { status: filterStatus })
       };
 
+      console.log('Loading companies with params:', params);
       const data = await companiesService.getCompanies(params);
-      setCompanies(data);
+      console.log('Companies loaded:', data?.length || 0);
+      
+      setCompanies(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError('Erro ao carregar empresas');
-      console.error(err);
+      console.error('Error loading companies:', err);
+      setError(`Erro ao carregar empresas: ${err.message || 'Erro desconhecido'}`);
+      setCompanies([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
@@ -111,33 +125,6 @@ const EmpresasPage = () => {
     loadTotalCount();
   };
 
-  const getStatusBadge = (status) => {
-    const baseClasses = 'px-2 py-1 text-xs font-medium rounded-full';
-    switch (status) {
-      case 'active':
-        return `${baseClasses} bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200`;
-      case 'inactive':
-        return `${baseClasses} bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200`;
-      case 'suspended':
-        return `${baseClasses} bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200`;
-      default:
-        return `${baseClasses} bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200`;
-    }
-  };
-
-  const getStatusLabel = (status) => {
-    switch (status) {
-      case 'active': return 'Ativo';
-      case 'inactive': return 'Inativo';
-      case 'suspended': return 'Suspenso';
-      default: return status;
-    }
-  };
-
-  const formatTaxId = (taxId) => {
-    if (!taxId) return '-';
-    return taxId.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
-  };
 
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
@@ -189,32 +176,34 @@ const EmpresasPage = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Empresas</h1>
           <p className="text-muted-foreground">Gerencie as empresas cadastradas no sistema</p>
         </div>
-        <Button onClick={handleCreate} icon={<Plus className="h-4 w-4" />}>
-          Nova Empresa
+        <Button onClick={handleCreate} icon={<Plus className="h-4 w-4" />} className="shrink-0">
+          <span className="hidden sm:inline">Nova Empresa</span>
+          <span className="sm:hidden">Nova</span>
         </Button>
       </div>
 
       {/* Filters */}
       <Card>
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-          <div className="flex flex-1 gap-4">
+        <div className="space-y-4">
+          {/* Search and Status Filter */}
+          <div className="flex flex-col sm:flex-row gap-3">
             <Input
               placeholder="Buscar empresas..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               leftIcon={<Search className="h-4 w-4" />}
-              className="max-w-sm"
+              className="flex-1 min-w-0"
             />
             
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-2 border border-border rounded-md bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
+              className="px-3 py-2 border border-border rounded-md bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none min-w-0 sm:w-48"
             >
               <option value="todos">Todos os status</option>
               <option value="active">Ativo</option>
@@ -223,9 +212,11 @@ const EmpresasPage = () => {
             </select>
           </div>
 
-          <div className="flex gap-2">
+          {/* Additional Filters Button */}
+          <div className="flex justify-end">
             <Button variant="secondary" outline icon={<Filter className="h-4 w-4" />}>
-              Filtros
+              <span className="hidden sm:inline">Filtros Avançados</span>
+              <span className="sm:hidden">Filtros</span>
             </Button>
           </div>
         </div>
@@ -290,97 +281,122 @@ const EmpresasPage = () => {
 
       {/* Companies Table */}
       <Card title="Lista de Empresas">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left py-3 px-4 font-medium text-muted-foreground">Empresa</th>
-                <th className="text-left py-3 px-4 font-medium text-muted-foreground">CNPJ</th>
-                <th className="text-left py-3 px-4 font-medium text-muted-foreground">Contatos</th>
-                <th className="text-left py-3 px-4 font-medium text-muted-foreground">Status</th>
-                <th className="text-left py-3 px-4 font-medium text-muted-foreground">Criado em</th>
-                <th className="text-left py-3 px-4 font-medium text-muted-foreground">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {companies.map((company) => (
-                <tr key={company.id} className="border-b border-border hover:bg-muted/50">
-                  <td className="py-3 px-4">
-                    <div>
-                      <p className="font-medium text-foreground">{company.name}</p>
-                      {company.trade_name && company.trade_name !== company.name && (
-                        <p className="text-sm text-muted-foreground">{company.trade_name}</p>
-                      )}
-                    </div>
-                  </td>
-                  <td className="py-3 px-4 text-foreground font-mono text-sm">
-                    {formatTaxId(company.tax_id)}
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <Phone className="h-3 w-3 mr-1" />
-                        {company.phones_count} telefone{company.phones_count !== 1 ? 's' : ''}
-                      </div>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <Mail className="h-3 w-3 mr-1" />
-                        {company.emails_count} email{company.emails_count !== 1 ? 's' : ''}
-                      </div>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <MapPin className="h-3 w-3 mr-1" />
-                        {company.addresses_count} endereço{company.addresses_count !== 1 ? 's' : ''}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className={getStatusBadge(company.status)}>
-                      {getStatusLabel(company.status)}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-foreground">
-                    {new Date(company.created_at).toLocaleDateString('pt-BR')}
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
-                        variant="secondary" 
-                        outline 
-                        icon={<Eye className="h-3 w-3" />}
-                        onClick={() => handleView(company.id)}
-                      >
-                        Ver
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="primary" 
-                        outline 
-                        icon={<Edit className="h-3 w-3" />}
-                        onClick={() => handleEdit(company.id)}
-                      >
-                        Editar
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="danger" 
-                        outline 
-                        icon={<Trash2 className="h-3 w-3" />}
-                        onClick={() => handleDelete(company.id)}
-                      >
-                        Excluir
-                      </Button>
-                    </div>
-                  </td>
+        {/* Desktop Table */}
+        <div className="hidden lg:block">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Empresa</th>
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">CNPJ</th>
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Contatos</th>
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Status</th>
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Criado em</th>
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Ações</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {companies.map((company) => (
+                  <tr key={company.id} className="border-b border-border hover:bg-muted/50">
+                    <td className="py-3 px-4">
+                      <div>
+                        <p className="font-medium text-foreground">{company.name}</p>
+                        {company.trade_name && company.trade_name !== company.name && (
+                          <p className="text-sm text-muted-foreground">{company.trade_name}</p>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-foreground font-mono text-sm">
+                      {formatTaxId(company.tax_id)}
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <Phone className="h-3 w-3 mr-1" />
+                          {company.phones_count} telefone{company.phones_count !== 1 ? 's' : ''}
+                        </div>
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <Mail className="h-3 w-3 mr-1" />
+                          {company.emails_count} email{company.emails_count !== 1 ? 's' : ''}
+                        </div>
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <MapPin className="h-3 w-3 mr-1" />
+                          {company.addresses_count} endereço{company.addresses_count !== 1 ? 's' : ''}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className={getStatusBadge(company.status)}>
+                        {getStatusLabel(company.status)}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-foreground">
+                      {new Date(company.created_at).toLocaleDateString('pt-BR')}
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex gap-1">
+                        <Button 
+                          size="sm" 
+                          variant="secondary" 
+                          outline 
+                          icon={<Eye className="h-3 w-3" />}
+                          onClick={() => handleView(company.id)}
+                        >
+                          Ver
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="primary" 
+                          outline 
+                          icon={<Edit className="h-3 w-3" />}
+                          onClick={() => handleEdit(company.id)}
+                        >
+                          Editar
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="danger" 
+                          outline 
+                          icon={<Trash2 className="h-3 w-3" />}
+                          onClick={() => handleDelete(company.id)}
+                        >
+                          Excluir
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Mobile Cards */}
+        <div className="lg:hidden space-y-4">
+          {companies.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500 dark:text-gray-400">Nenhuma empresa encontrada</p>
+            </div>
+          ) : (
+            companies.map((company, index) => (
+              <CompanyMobileCard
+                key={company?.id || index}
+                company={company}
+                onView={handleView}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                getStatusBadge={getStatusBadge}
+                getStatusLabel={getStatusLabel}
+                formatTaxId={formatTaxId}
+              />
+            ))
+          )}
         </div>
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
-            <p className="text-sm text-muted-foreground">
+          <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <p className="text-sm text-gray-600 dark:text-gray-300">
               Mostrando {Math.min((currentPage - 1) * itemsPerPage + 1, totalCount)} a{' '}
               {Math.min(currentPage * itemsPerPage, totalCount)} de {totalCount} empresas
             </p>

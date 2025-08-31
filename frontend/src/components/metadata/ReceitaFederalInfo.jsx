@@ -11,14 +11,46 @@ const ReceitaFederalInfo = ({
   showLocalizacao = true,
   showNaturezaJuridica = true
 }) => {
+  // Debug: Verificar metadados recebidos
+  console.log('=== [ReceitaFederalInfo] Metadados recebidos ===');
+  console.log('Metadata:', metadata);
+  console.log('Tem dados?', metadata && Object.keys(metadata).length > 0);
+  console.log('Chaves disponíveis:', metadata ? Object.keys(metadata) : 'Nenhuma');
+  
   if (!metadata || Object.keys(metadata).length === 0) {
+    console.log('❌ ReceitaFederalInfo: Nenhum metadata para exibir');
     return null;
   }
 
   return (
     <Card title={title} className={className}>
       <div className="space-y-4">
-        {/* CNAE Principal - Não disponível nos dados atuais, mas estrutura preparada */}
+        {/* CNAE Principal */}
+        {(metadata.cnae_fiscal || metadata.cnae_principal) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">
+                CNAE Principal
+              </label>
+              <p className="text-sm text-muted-foreground bg-white dark:bg-gray-800 p-2 rounded border">
+                {metadata.cnae_fiscal || metadata.cnae_principal} 
+                {(metadata.cnae_fiscal_descricao || metadata.cnae_principal_descricao) && 
+                  ` - ${metadata.cnae_fiscal_descricao || metadata.cnae_principal_descricao}`
+                }
+              </p>
+            </div>
+            {metadata.porte && (
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Porte da Empresa
+                </label>
+                <p className="text-sm text-muted-foreground bg-white dark:bg-gray-800 p-2 rounded border">
+                  {metadata.porte}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
         
         {/* CNAEs Secundários */}
         {showCNAEs && metadata.cnaes_secundarios && metadata.cnaes_secundarios.length > 0 && (

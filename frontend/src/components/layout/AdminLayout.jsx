@@ -6,6 +6,8 @@ import Footer from './Footer';
 
 const AdminLayout = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const location = useLocation();
@@ -29,11 +31,17 @@ const AdminLayout = () => {
     checkAuth();
   }, [navigate, location]);
 
-  // Responsive behavior - collapse sidebar on mobile by default
+  // Responsive behavior - mobile overlay behavior
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 1024) { // lg breakpoint
+      const mobile = window.innerWidth < 1024; // lg breakpoint
+      setIsMobile(mobile);
+      
+      if (mobile) {
         setSidebarCollapsed(true);
+        setSidebarOpen(false); // Close sidebar when switching to mobile
+      } else {
+        setSidebarOpen(false); // Ensure overlay is closed on desktop
       }
     };
 
@@ -44,8 +52,39 @@ const AdminLayout = () => {
   }, []);
 
   const toggleSidebar = () => {
-    setSidebarCollapsed(!sidebarCollapsed);
+    if (isMobile) {
+      setSidebarOpen(!sidebarOpen);
+    } else {
+      setSidebarCollapsed(!sidebarCollapsed);
+    }
   };
+
+  // Close mobile sidebar when clicking outside
+  const closeMobileSidebar = () => {
+    if (isMobile && sidebarOpen) {
+      setSidebarOpen(false);
+    }
+  };
+
+  // Prevent body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (isMobile && sidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobile, sidebarOpen]);
+
+  // Close mobile sidebar on route change
+  useEffect(() => {
+    if (isMobile && sidebarOpen) {
+      setSidebarOpen(false);
+    }
+  }, [location.pathname]);
 
   // Generate breadcrumb
   const generateBreadcrumb = () => {
@@ -90,26 +129,55 @@ const AdminLayout = () => {
 
   return (
     <div className="h-screen flex overflow-hidden bg-gray-100 dark:bg-gray-900">
-      {/* Sidebar */}
-      <div
-        className={`${
-          sidebarCollapsed ? 'w-16' : 'w-64'
-        } transition-all duration-300 ease-in-out flex-shrink-0`}
-      >
-        <Sidebar collapsed={sidebarCollapsed} />
-      </div>
+      {/* Desktop Sidebar */}
+      {!isMobile && (
+        <div
+          className={`${
+            sidebarCollapsed ? 'w-16' : 'w-64'
+          } transition-all duration-300 ease-in-out flex-shrink-0`}
+        >
+          <Sidebar collapsed={sidebarCollapsed} />
+        </div>
+      )}
+
+      {/* Mobile Sidebar Overlay */}
+      {isMobile && (
+        <>
+          {/* Backdrop */}
+          {sidebarOpen && (
+            <div
+              className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden animate-fade-in"
+              onClick={closeMobileSidebar}
+            />
+          )}
+          
+          {/* Mobile Sidebar */}
+          <div
+            className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out lg:hidden ${
+              sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+            }`}
+          >
+            <Sidebar collapsed={false} />
+          </div>
+        </>
+      )}
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <Header
-          sidebarCollapsed={sidebarCollapsed}
+          sidebarCollapsed={isMobile ? false : sidebarCollapsed}
           onToggleSidebar={toggleSidebar}
           breadcrumb={generateBreadcrumb()}
+          isMobile={isMobile}
+          sidebarOpen={sidebarOpen}
         />
 
         {/* Main Content Area */}
-        <main className="flex-1 relative overflow-y-auto focus:outline-none">
+        <main 
+          className="flex-1 relative overflow-y-auto focus:outline-none"
+          onClick={closeMobileSidebar}
+        >
           <div className="py-6">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
               <Outlet />

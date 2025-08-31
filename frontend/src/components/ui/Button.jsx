@@ -21,11 +21,11 @@ const Button = ({
     'disabled:opacity-50 disabled:pointer-events-none'
   ];
 
-  // Size classes
+  // Size classes - Mobile-optimized with better touch targets
   const sizeClasses = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-sm',
-    lg: 'px-6 py-3 text-base'
+    sm: 'px-3 py-2 text-sm min-h-[36px]', // Increased touch target
+    md: 'px-4 py-2.5 text-sm min-h-[40px]', // Better mobile tap area
+    lg: 'px-6 py-3 text-base min-h-[44px]'  // iOS recommended minimum
   };
 
   // Variant classes

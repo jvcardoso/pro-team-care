@@ -784,8 +784,8 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-foreground">
             {isEditing ? 'Editar Empresa' : 'Nova Empresa'}
           </h1>
@@ -793,12 +793,14 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
             {isEditing ? 'Atualize as informações da empresa' : 'Cadastre uma nova empresa no sistema'}
           </p>
         </div>
-        <div className="flex gap-3">
-          <Button variant="secondary" outline onClick={onCancel} icon={<X className="h-4 w-4" />}>
-            Cancelar
+        <div className="flex gap-3 shrink-0">
+          <Button variant="secondary" outline onClick={onCancel} icon={<X className="h-4 w-4" />} className="flex-1 sm:flex-none">
+            <span className="hidden sm:inline">Cancelar</span>
+            <span className="sm:hidden">Cancelar</span>
           </Button>
-          <Button onClick={handleSubmit} disabled={loading} icon={<Save className="h-4 w-4" />}>
-            {loading ? 'Salvando...' : 'Salvar'}
+          <Button onClick={handleSubmit} disabled={loading} icon={<Save className="h-4 w-4" />} className="flex-1 sm:flex-none">
+            <span className="hidden sm:inline">{loading ? 'Salvando...' : 'Salvar'}</span>
+            <span className="sm:hidden">{loading ? 'Salvando...' : 'Salvar'}</span>
           </Button>
         </div>
       </div>
@@ -821,14 +823,14 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
                onCompanyFound={handleCompanyFound}
                placeholder="00.000.000/0000-00"
                required
-               disabled={loading}
+               disabled={loading || isEditing}
                showValidation={true}
-               showConsultButton={true}
+               showConsultButton={!isEditing}
                autoConsult={false} // Desabilitado para evitar loop de login
              />
 
             {/* Campos principais */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Input
                 label="Razão Social *"
                 value={formData.people.name}
@@ -845,7 +847,7 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
             </div>
 
             {/* Campos secundários */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               <Input
                 label="Inscrição Estadual"
                 value={formData.people.secondary_tax_id || ''}
@@ -868,7 +870,7 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
             </div>
 
             {/* Natureza e regime */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               <Input
                 label="Natureza Jurídica"
                 value={formData.people.legal_nature || ''}
@@ -907,7 +909,7 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
             </div>
 
             {/* Data de abertura */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Input
                 label="Data de Abertura"
                 value={formData.people.incorporation_date || ''}
@@ -933,27 +935,27 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
         </Card>
 
         {/* Informações da Receita Federal */}
-        {formData.people.metadata && Object.keys(formData.people.metadata).length > 0 && (
+        {formData.company.metadata && Object.keys(formData.company.metadata).length > 0 && (
           <Card title="Informações da Receita Federal" className="bg-blue-50 dark:bg-blue-900/20">
             <div className="space-y-4">
               {/* CNAE Principal */}
-              {formData.people.metadata.cnae_fiscal && (
+              {formData.company.metadata.cnae_fiscal && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">
                       CNAE Principal
                     </label>
                     <p className="text-sm text-muted-foreground bg-white dark:bg-gray-800 p-2 rounded border">
-                      {formData.people.metadata.cnae_fiscal} - {formData.people.metadata.cnae_fiscal_descricao}
+                      {formData.company.metadata.cnae_fiscal} - {formData.company.metadata.cnae_fiscal_descricao}
                     </p>
                   </div>
-                  {formData.people.metadata.porte && (
+                  {formData.company.metadata.porte && (
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-1">
                         Porte da Empresa
                       </label>
                       <p className="text-sm text-muted-foreground bg-white dark:bg-gray-800 p-2 rounded border">
-                        {formData.people.metadata.porte}
+                        {formData.company.metadata.porte}
                       </p>
                     </div>
                   )}
@@ -961,13 +963,13 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
               )}
 
               {/* CNAEs Secundários */}
-              {formData.people.metadata.cnaes_secundarios && formData.people.metadata.cnaes_secundarios.length > 0 && (
+              {formData.company.metadata.cnaes_secundarios && formData.company.metadata.cnaes_secundarios.length > 0 && (
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">
                     CNAEs Secundários
                   </label>
                   <div className="space-y-1 max-h-32 overflow-y-auto">
-                    {formData.people.metadata.cnaes_secundarios.map((cnae, index) => (
+                    {formData.company.metadata.cnaes_secundarios.map((cnae, index) => (
                       <p key={index} className="text-xs text-muted-foreground bg-white dark:bg-gray-800 p-2 rounded border">
                         {cnae.code} - {cnae.text}
                       </p>
@@ -978,33 +980,33 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
 
               {/* Informações da situação */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {formData.people.metadata.situacao && (
+                {formData.company.metadata.situacao && (
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">
                       Situação na RF
                     </label>
                     <p className="text-sm text-muted-foreground bg-white dark:bg-gray-800 p-2 rounded border">
-                      {formData.people.metadata.situacao}
+                      {formData.company.metadata.situacao}
                     </p>
                   </div>
                 )}
-                {formData.people.metadata.data_situacao && (
+                {formData.company.metadata.data_situacao && (
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">
                       Data da Situação
                     </label>
                     <p className="text-sm text-muted-foreground bg-white dark:bg-gray-800 p-2 rounded border">
-                      {formData.people.metadata.data_situacao}
+                      {formData.company.metadata.data_situacao}
                     </p>
                   </div>
                 )}
-                {formData.people.metadata.tipo && (
+                {formData.company.metadata.tipo && (
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">
                       Tipo de Estabelecimento
                     </label>
                     <p className="text-sm text-muted-foreground bg-white dark:bg-gray-800 p-2 rounded border">
-                      {formData.people.metadata.tipo}
+                      {formData.company.metadata.tipo}
                     </p>
                   </div>
                 )}
@@ -1012,48 +1014,48 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
 
               {/* Capital social e última atualização */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {formData.people.metadata.capital_social && (
+                {formData.company.metadata.capital_social && (
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">
                       Capital Social
                     </label>
                     <p className="text-sm text-muted-foreground bg-white dark:bg-gray-800 p-2 rounded border">
-                      R$ {formData.people.metadata.capital_social}
+                      R$ {formData.company.metadata.capital_social}
                     </p>
                   </div>
                 )}
-                {formData.people.metadata.ultima_atualizacao_rf && (
+                {formData.company.metadata.ultima_atualizacao_rf && (
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">
                       Última Atualização RF
                     </label>
                     <p className="text-sm text-muted-foreground bg-white dark:bg-gray-800 p-2 rounded border">
-                      {new Date(formData.people.metadata.ultima_atualizacao_rf).toLocaleDateString('pt-BR')}
+                      {new Date(formData.company.metadata.ultima_atualizacao_rf).toLocaleDateString('pt-BR')}
                     </p>
                   </div>
                 )}
               </div>
 
               {/* Situação especial e motivo */}
-              {(formData.people.metadata.situacao_especial || formData.people.metadata.motivo_situacao) && (
+              {(formData.company.metadata.situacao_especial || formData.company.metadata.motivo_situacao) && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {formData.people.metadata.situacao_especial && (
+                  {formData.company.metadata.situacao_especial && (
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-1">
                         Situação Especial
                       </label>
                       <p className="text-sm text-muted-foreground bg-white dark:bg-gray-800 p-2 rounded border">
-                        {formData.people.metadata.situacao_especial}
+                        {formData.company.metadata.situacao_especial}
                       </p>
                     </div>
                   )}
-                  {formData.people.metadata.motivo_situacao && (
+                  {formData.company.metadata.motivo_situacao && (
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-1">
                         Motivo da Situação
                       </label>
                       <p className="text-sm text-muted-foreground bg-white dark:bg-gray-800 p-2 rounded border">
-                        {formData.people.metadata.motivo_situacao}
+                        {formData.company.metadata.motivo_situacao}
                       </p>
                     </div>
                   )}
