@@ -1,77 +1,137 @@
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+/**
+ * Serviço de Geocoding usando APIs públicas
+ * Estratégia híbrida: Nominatim (gratuito) como principal
+ */
 
-export const geocodingService = {
+class GeocodingService {
+  constructor() {
+    this.cache = new Map(); // Cache em memória para sessão
+  }
+
   /**
-   * Geocode an address using Google Maps Geocoding API
-   * @param {string} address - Full address to geocode
-   * @returns {Promise<Object>} Geocoding result with lat, lng, place_id, etc.
+   * Geocoding usando backend como proxy para Nominatim
    */
-  geocodeAddress: async (address) => {
-    if (!GOOGLE_MAPS_API_KEY) {
-      throw new Error('Google Maps API key not configured');
+  async nominatimGeocode(address) {
+    // Não precisamos mais de rate limiting no frontend, o backend cuida disso
+    
+    const response = await fetch('/api/v1/geocoding/geocode', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        address: address
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || `Geocoding API error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    
+    return {
+      latitude: result.latitude,
+      longitude: result.longitude,
+      formatted_address: result.formatted_address,
+      geocoding_accuracy: result.geocoding_accuracy,
+      geocoding_source: result.geocoding_source,
+      google_place_id: null, // Para uso futuro
+      api_data: result.api_data
+    };
+  }
+
+
+  /**
+   * Geocoding principal com cache
+   */
+  async geocode(address) {
+    if (!address || address.trim().length === 0) {
+      throw new Error('Endereço não pode estar vazio');
+    }
+
+    // Verificar cache
+    const cacheKey = address.toLowerCase().trim();
+    if (this.cache.has(cacheKey)) {
+      console.log('🔄 Usando geocoding do cache:', address);
+      return this.cache.get(cacheKey);
     }
 
     try {
-      const encodedAddress = encodeURIComponent(address);
-      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${GOOGLE_MAPS_API_KEY}`;
-
-      const response = await fetch(url);
-      const data = await response.json();
-
-      if (data.status !== 'OK') {
-        throw new Error(`Geocoding failed: ${data.status}`);
-      }
-
-      const result = data.results[0];
-      const location = result.geometry.location;
-
-      return {
-        lat: location.lat,
-        lng: location.lng,
-        place_id: result.place_id,
-        formatted_address: result.formatted_address,
-        accuracy: result.geometry.location_type,
-        raw_data: result
-      };
+      // Usar backend como proxy para Nominatim
+      const result = await this.nominatimGeocode(address);
+      
+      // Salvar no cache
+      this.cache.set(cacheKey, result);
+      
+      return result;
+      
     } catch (error) {
-      console.error('Geocoding error:', error);
-      throw error;
-    }
-  },
-
-  /**
-   * Reverse geocode coordinates to address
-   * @param {number} lat - Latitude
-   * @param {number} lng - Longitude
-   * @returns {Promise<Object>} Reverse geocoding result
-   */
-  reverseGeocode: async (lat, lng) => {
-    if (!GOOGLE_MAPS_API_KEY) {
-      throw new Error('Google Maps API key not configured');
-    }
-
-    try {
-      const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_MAPS_API_KEY}`;
-
-      const response = await fetch(url);
-      const data = await response.json();
-
-      if (data.status !== 'OK') {
-        throw new Error(`Reverse geocoding failed: ${data.status}`);
-      }
-
-      const result = data.results[0];
-
-      return {
-        formatted_address: result.formatted_address,
-        place_id: result.place_id,
-        raw_data: result
-      };
-    } catch (error) {
-      console.error('Reverse geocoding error:', error);
-      throw error;
+      console.warn('Geocoding falhou:', error.message);
+      return null;
     }
   }
-};
+
+  /**
+   * Geocoding específico para endereços brasileiros (ViaCEP + coordenadas)
+   */
+  async geocodeBrazilianAddress(viaCepData) {
+    if (!viaCepData) return null;
+
+    // Construir endereço completo
+    const addressParts = [
+      viaCepData.logradouro,
+      viaCepData.bairro,
+      viaCepData.localidade,
+      viaCepData.uf,
+      'Brasil'
+    ].filter(Boolean);
+
+    const fullAddress = addressParts.join(', ');
+
+    try {
+      const geoData = await this.geocode(fullAddress);
+      
+      if (geoData) {
+        return {
+          ...viaCepData,
+          ...geoData,
+          // Manter campo number em branco se não houver
+          number: viaCepData.number || '',
+          // Manter dados de validação do ViaCEP
+          is_validated: true,
+          validation_source: 'viacep',
+          last_validated_at: new Date().toISOString()
+        };
+      }
+
+      return viaCepData;
+
+    } catch (error) {
+      console.warn('Erro ao enriquecer endereço com coordenadas:', error);
+      return viaCepData;
+    }
+  }
+
+  /**
+   * Reverse geocoding (coordenadas para endereço)
+   * TODO: Implementar endpoint no backend se necessário
+   */
+  async reverseGeocode(latitude, longitude) {
+    console.warn('Reverse geocoding não implementado ainda via backend');
+    return null;
+  }
+
+  /**
+   * Limpar cache (útil para desenvolvimento)
+   */
+  clearCache() {
+    this.cache.clear();
+  }
+}
+
+// Instância singleton
+const geocodingService = new GeocodingService();
 
 export default geocodingService;

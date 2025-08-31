@@ -2,6 +2,7 @@ from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_, delete
 from sqlalchemy.orm import selectinload, joinedload
+from structlog import get_logger
 from app.infrastructure.orm.models import People, Company, Phone, Email, Address
 from app.domain.models.company import (
     CompanyCreate, CompanyUpdate, CompanyDetailed, CompanyList,
@@ -13,15 +14,20 @@ from app.utils.validators import validate_contacts_quality
 class CompanyRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
+        self.logger = get_logger()
 
     async def create_company(self, company_data: CompanyCreate) -> CompanyDetailed:
         """Create a new company with related entities in a transaction"""
         try:
+            self.logger.info("Iniciando criação de empresa", company_data=company_data.model_dump())
+
             # Validate contact data quality
             phones_data = [phone.model_dump() for phone in (company_data.phones or [])]
             emails_data = [email.model_dump() for email in (company_data.emails or [])]
             addresses_data = [address.model_dump() for address in (company_data.addresses or [])]
-            
+
+            self.logger.info("Dados de endereços recebidos", addresses=addresses_data)
+
             is_valid, error_message = validate_contacts_quality(phones_data, emails_data, addresses_data)
             if not is_valid:
                 raise ValueError(error_message)
@@ -93,10 +99,12 @@ class CompanyRepository:
             
             # Create related addresses
             for address_data in company_data.addresses or []:
+                self.logger.info("Criando endereço", address_data=address_data.model_dump())
+
                 address_db = Address(
                     addressable_id=people_db.id,
                     street=address_data.street,
-                    number=address_data.number,
+                    number=address_data.number,  # Manter como enviado pelo frontend
                     details=address_data.details,
                     neighborhood=address_data.neighborhood,
                     city=address_data.city,
@@ -104,8 +112,38 @@ class CompanyRepository:
                     zip_code=address_data.zip_code,
                     country=address_data.country,
                     type=address_data.type,
-                    is_principal=address_data.is_principal
+                    is_principal=address_data.is_principal,
+                    # Geocoding fields
+                    latitude=address_data.latitude,
+                    longitude=address_data.longitude,
+                    google_place_id=address_data.google_place_id,
+                    formatted_address=address_data.formatted_address,
+                    geocoding_accuracy=getattr(address_data, 'geocoding_accuracy', None),
+                    geocoding_source=getattr(address_data, 'geocoding_source', None),
+                    # Validation fields
+                    is_validated=getattr(address_data, 'is_validated', False),
+                    validation_source=getattr(address_data, 'validation_source', None),
+                    last_validated_at=getattr(address_data, 'last_validated_at', None),
+                    # IBGE codes
+                    ibge_city_code=getattr(address_data, 'ibge_city_code', None),
+                    gia_code=getattr(address_data, 'gia_code', None),
+                    siafi_code=getattr(address_data, 'siafi_code', None),
+                    area_code=getattr(address_data, 'area_code', None),
+                    # API data
+                    api_data=getattr(address_data, 'api_data', None)
                 )
+
+                self.logger.info("Endereço criado no banco", address_db_data={
+                    'latitude': address_db.latitude,
+                    'longitude': address_db.longitude,
+                    'geocoding_accuracy': address_db.geocoding_accuracy,
+                    'geocoding_source': address_db.geocoding_source,
+                    'ibge_city_code': address_db.ibge_city_code,
+                    'gia_code': address_db.gia_code,
+                    'siafi_code': address_db.siafi_code,
+                    'area_code': address_db.area_code
+                })
+
                 self.db.add(address_db)
             
             await self.db.commit()
@@ -234,8 +272,13 @@ class CompanyRepository:
                     'longitude': addr.longitude,
                     'google_place_id': addr.google_place_id,
                     'formatted_address': addr.formatted_address,
+                    'geocoding_accuracy': addr.geocoding_accuracy,
+                    'geocoding_source': addr.geocoding_source,
                     'ibge_city_code': addr.ibge_city_code,
                     'ibge_state_code': addr.ibge_state_code,
+                    'gia_code': addr.gia_code,
+                    'siafi_code': addr.siafi_code,
+                    'area_code': addr.area_code,
                     'region': addr.region,
                     'microregion': addr.microregion,
                     'mesoregion': addr.mesoregion,
@@ -248,6 +291,7 @@ class CompanyRepository:
                     'is_validated': addr.is_validated,
                     'last_validated_at': addr.last_validated_at,
                     'validation_source': addr.validation_source,
+                    'api_data': addr.api_data,
                     'created_at': addr.created_at,
                     'updated_at': addr.updated_at
                 } for addr in company_db.people.addresses
@@ -424,15 +468,52 @@ class CompanyRepository:
             
             # Update addresses if provided
             if company_data.addresses is not None:
-                # Remove existing addresses (hard delete for updates)
+                # Buscar endereços existentes para preservar dados de geocoding
+                existing_addresses = await self.db.execute(
+                    select(Address).where(Address.addressable_id == company_db.person_id)
+                )
+                existing_addresses_dict = {addr.id: addr for addr in existing_addresses.scalars().all()}
+                
+                # Remove todos os endereços existentes (será recriado com merge de dados)
                 await self.db.execute(delete(Address).where(Address.addressable_id == company_db.person_id))
                 
-                # Add new addresses
-                for address_data in company_data.addresses:
+                # Add new addresses com merge inteligente de geocoding
+                for i, address_data in enumerate(company_data.addresses):
+                    self.logger.info("Atualizando endereço", address_data=address_data.model_dump())
+                    
+                    # Buscar endereço existente correspondente (por ordem ou principal)
+                    existing_addr = None
+                    if existing_addresses_dict:
+                        # Tentar matchear por endereço principal ou primeira ocorrência
+                        existing_addr = list(existing_addresses_dict.values())[0] if i == 0 else None
+                    
+                    # Merge inteligente: usar coordenadas do payload OU preservar existentes
+                    merged_latitude = getattr(address_data, 'latitude', None)
+                    merged_longitude = getattr(address_data, 'longitude', None)
+                    merged_accuracy = getattr(address_data, 'geocoding_accuracy', None)
+                    merged_source = getattr(address_data, 'geocoding_source', None)
+                    
+                    # Se não tem coordenadas no payload MAS tinha no endereço existente, preservar
+                    if not merged_latitude and existing_addr and existing_addr.latitude:
+                        merged_latitude = existing_addr.latitude
+                        merged_longitude = existing_addr.longitude
+                        merged_accuracy = existing_addr.geocoding_accuracy
+                        merged_source = existing_addr.geocoding_source
+                        self.logger.info("🔄 Preservando geocoding existente", 
+                            lat=merged_latitude, lng=merged_longitude, source=merged_source)
+                    
+                    # Debug: verificar campos finais
+                    self.logger.info("DEBUG: Campos de geocoding finais", 
+                        latitude=merged_latitude or 'AUSENTE',
+                        longitude=merged_longitude or 'AUSENTE',
+                        geocoding_accuracy=merged_accuracy or 'AUSENTE',
+                        geocoding_source=merged_source or 'AUSENTE'
+                    )
+
                     address_db = Address(
                         addressable_id=company_db.person_id,
                         street=address_data.street,
-                        number=address_data.number,
+                        number=getattr(address_data, 'number', None),
                         details=address_data.details,
                         neighborhood=address_data.neighborhood,
                         city=address_data.city,
@@ -440,8 +521,38 @@ class CompanyRepository:
                         zip_code=address_data.zip_code,
                         country=address_data.country,
                         type=address_data.type,
-                        is_principal=address_data.is_principal
+                        is_principal=address_data.is_principal,
+                        # Geocoding fields com merge inteligente
+                        latitude=merged_latitude,
+                        longitude=merged_longitude,
+                        google_place_id=getattr(address_data, 'google_place_id', None),
+                        formatted_address=getattr(address_data, 'formatted_address', None),
+                        geocoding_accuracy=merged_accuracy,
+                        geocoding_source=merged_source,
+                        # Validation fields
+                        is_validated=getattr(address_data, 'is_validated', False),
+                        validation_source=getattr(address_data, 'validation_source', None),
+                        last_validated_at=getattr(address_data, 'last_validated_at', None),
+                        # IBGE codes - preservar existentes se não fornecidos
+                        ibge_city_code=getattr(address_data, 'ibge_city_code', None) or (existing_addr.ibge_city_code if existing_addr else None),
+                        gia_code=getattr(address_data, 'gia_code', None) or (existing_addr.gia_code if existing_addr else None),
+                        siafi_code=getattr(address_data, 'siafi_code', None) or (existing_addr.siafi_code if existing_addr else None),
+                        area_code=getattr(address_data, 'area_code', None) or (existing_addr.area_code if existing_addr else None),
+                        # API data
+                        api_data=getattr(address_data, 'api_data', None)
                     )
+
+                    self.logger.info("✅ Endereço salvo com geocoding preservado", address_db_data={
+                        'latitude': address_db.latitude,
+                        'longitude': address_db.longitude,
+                        'geocoding_accuracy': address_db.geocoding_accuracy,
+                        'geocoding_source': address_db.geocoding_source,
+                        'ibge_city_code': address_db.ibge_city_code,
+                        'gia_code': address_db.gia_code,
+                        'siafi_code': address_db.siafi_code,
+                        'area_code': address_db.area_code
+                    })
+
                     self.db.add(address_db)
             
             await self.db.commit()

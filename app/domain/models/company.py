@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, ConfigDict
-from typing import Optional, List
+from typing import Optional, List, Dict
 from datetime import datetime, date, time
 from enum import Enum
 
@@ -177,6 +177,25 @@ class AddressUpdate(BaseModel):
     country: Optional[str] = Field(None, max_length=2)
     type: Optional[AddressType] = None
     is_principal: Optional[bool] = None
+    
+    # Campos de geocoding
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    google_place_id: Optional[str] = None
+    formatted_address: Optional[str] = None
+    geocoding_accuracy: Optional[str] = None
+    geocoding_source: Optional[str] = None
+    
+    # Códigos oficiais brasileiros
+    ibge_city_code: Optional[int] = None
+    gia_code: Optional[int] = None
+    siafi_code: Optional[int] = None
+    area_code: Optional[int] = None
+    
+    # Campos de validação
+    is_validated: Optional[bool] = None
+    validation_source: Optional[str] = None
+    last_validated_at: Optional[str] = None
 
 
 class Address(AddressBase):
@@ -185,8 +204,13 @@ class Address(AddressBase):
     longitude: Optional[float] = None
     google_place_id: Optional[str] = None
     formatted_address: Optional[str] = None
+    geocoding_accuracy: Optional[str] = None
+    geocoding_source: Optional[str] = None
     ibge_city_code: Optional[int] = None
     ibge_state_code: Optional[int] = None
+    gia_code: Optional[str] = None
+    siafi_code: Optional[str] = None
+    area_code: Optional[str] = None
     region: Optional[str] = None
     microregion: Optional[str] = None
     mesoregion: Optional[str] = None
@@ -199,6 +223,7 @@ class Address(AddressBase):
     is_validated: bool = False
     last_validated_at: Optional[datetime] = None
     validation_source: Optional[str] = None
+    api_data: Optional[Dict] = None
     created_at: datetime
     updated_at: datetime
 

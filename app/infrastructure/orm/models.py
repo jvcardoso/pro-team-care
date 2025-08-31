@@ -204,7 +204,7 @@ class Address(Base):
     
     # Address details
     street = Column(String(255), nullable=False)
-    number = Column(String(20), nullable=False)
+    number = Column(String(20), nullable=True)  # Permitir valores nulos
     details = Column(String(100))
     neighborhood = Column(String(100), nullable=False)
     city = Column(String(100), nullable=False)
@@ -219,8 +219,13 @@ class Address(Base):
     longitude = Column(Numeric(11, 8))
     google_place_id = Column(String(255))
     formatted_address = Column(Text)
+    geocoding_accuracy = Column(String(50))
+    geocoding_source = Column(String(50))
     ibge_city_code = Column(Integer)
     ibge_state_code = Column(Integer)
+    gia_code = Column(String(10))
+    siafi_code = Column(String(10))
+    area_code = Column(String(5))
     region = Column(String(100))
     microregion = Column(String(100))
     mesoregion = Column(String(100))

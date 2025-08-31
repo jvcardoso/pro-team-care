@@ -3,6 +3,7 @@ import { Search, Loader2, MapPin, Star } from 'lucide-react';
 import { formatCEP } from '../../utils/formatters';
 import { removeNonNumeric } from '../../utils/validators';
 import { validateCEP } from '../../utils/validators';
+import geocodingService from '../../services/geocodingService';
 
 const InputCEP = ({
   label = "CEP",
@@ -80,55 +81,57 @@ const InputCEP = ({
     setIsLoading(true);
 
     try {
+      // 1. Consultar ViaCEP primeiro
       const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-      const data = await response.json();
+      const viaCepData = await response.json();
 
-      if (data.erro) {
+      if (viaCepData.erro) {
         setValidationMessage('CEP não encontrado');
         setIsValid(false);
         setAddressData(null);
+        return;
+      }
+
+      // 2. Enriquecer com dados geográficos usando Nominatim
+      console.log('🔍 Enriquecendo endereço com coordenadas...');
+      const enrichedData = await geocodingService.geocodeBrazilianAddress({
+        // Dados básicos do endereço
+        street: viaCepData.logradouro || '',
+        number: '', // Deixar em branco - usuário deve informar manualmente
+        neighborhood: viaCepData.bairro || '',
+        city: viaCepData.localidade || '',
+        state: viaCepData.uf || '',
+        zip_code: cep,
+        complement: viaCepData.complemento || '',
+
+        // Códigos oficiais brasileiros
+        ibge_city_code: viaCepData.ibge || null,
+        gia_code: viaCepData.gia || null,
+        siafi_code: viaCepData.siafi || null,
+        area_code: viaCepData.ddd || null,
+
+        // Campos da ViaCEP
+        logradouro: viaCepData.logradouro,
+        bairro: viaCepData.bairro,
+        localidade: viaCepData.localidade,
+        uf: viaCepData.uf
+      });
+
+      setAddressData(enrichedData);
+      setValidationMessage('');
+      setIsValid(true);
+
+      // Log para debug
+      if (enrichedData?.latitude && enrichedData?.longitude) {
+        console.log(`✅ Endereço enriquecido com coordenadas: ${enrichedData.latitude}, ${enrichedData.longitude}`);
+        console.log(`📍 Fonte: ${enrichedData.geocoding_source} | Precisão: ${enrichedData.geocoding_accuracy}`);
       } else {
-        setAddressData(data);
-        setValidationMessage('');
-        setIsValid(true);
+        console.log('⚠️ Coordenadas não encontradas, usando apenas dados ViaCEP');
+      }
 
-        // Preparar dados completos da ViaCEP
-        const addressData = {
-          // Dados básicos do endereço
-          street: data.logradouro || '',
-          neighborhood: data.bairro || '',
-          city: data.localidade || '',
-          state: data.uf || '',
-          zip_code: cep,
-          complement: data.complemento || '',
-
-          // Códigos oficiais brasileiros
-          ibge_city_code: data.ibge || null,
-          gia_code: data.gia || null,
-          siafi_code: data.siafi || null,
-          area_code: data.ddd || null,
-
-          // Campos de validação e controle
-          is_validated: true,
-          validation_source: 'viacep',
-          last_validated_at: new Date().toISOString(),
-
-          // Campos para geolocalização futura
-          latitude: null,
-          longitude: null,
-          google_place_id: null,
-          formatted_address: null,
-          geocoding_accuracy: null,
-          geocoding_source: null,
-          api_data: null
-        };
-
-        console.log('✅ Dados ViaCEP completos:', addressData);
-
-        // Callback para o componente pai com dados completos
-        if (onAddressFound) {
-          onAddressFound(addressData);
-        }
+      // Callback para o componente pai com dados completos
+      if (onAddressFound) {
+        onAddressFound(enrichedData);
       }
     } catch (error) {
       console.error('❌ Erro ao consultar CEP:', error);
