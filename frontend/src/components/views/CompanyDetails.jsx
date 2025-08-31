@@ -245,12 +245,12 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
             <Card title="Telefones">
               <div className="space-y-4">
                 {company.phones.map((phone, index) => (
-                  <div key={phone.id || index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <div className="flex items-center gap-3">
+                  <div key={phone.id || index} className="p-3 bg-muted/30 rounded-lg">
+                    <div className="flex items-start gap-3">
                       <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
                         <Phone className="h-4 w-4 text-blue-600 dark:text-blue-300" />
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <p className="font-medium text-foreground">{formatPhone(phone)}</p>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <span>{getPhoneTypeLabel(phone.type)}</span>
@@ -265,20 +265,35 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
                             </span>
                           )}
                         </div>
+                        
+                        {/* Mobile: Card de ação visível e claro */}
+                        {phone.is_whatsapp && (
+                          <div className="block sm:hidden mt-3">
+                            <button
+                              onClick={() => openWhatsApp(phone)}
+                              className="flex items-center justify-center gap-2 w-full p-3 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-700 dark:text-green-300 rounded-lg transition-colors"
+                            >
+                              <MessageCircle className="h-5 w-5" />
+                              <span className="text-sm font-medium">Abrir no WhatsApp</span>
+                            </button>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                    <div className="flex gap-2">
-                      {phone.is_whatsapp && (
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => openWhatsApp(phone)}
-                          icon={<MessageCircle className="h-4 w-4" />}
-                          title="Abrir no WhatsApp"
-                        >
-                          WhatsApp
-                        </Button>
-                      )}
+                      
+                      {/* Desktop: Botões tradicionais à direita */}
+                      <div className="hidden sm:flex gap-2">
+                        {phone.is_whatsapp && (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => openWhatsApp(phone)}
+                            icon={<MessageCircle className="h-4 w-4" />}
+                            title="Abrir no WhatsApp"
+                          >
+                            WhatsApp
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -291,13 +306,13 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
             <Card title="E-mails">
               <div className="space-y-4">
                 {company.emails.map((email, index) => (
-                  <div key={email.id || index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <div className="flex items-center gap-3">
+                  <div key={email.id || index} className="p-3 bg-muted/30 rounded-lg">
+                    <div className="flex items-start gap-3">
                       <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
                         <Mail className="h-4 w-4 text-green-600 dark:text-green-300" />
                       </div>
-                      <div>
-                        <p className="font-medium text-foreground">{email.email_address}</p>
+                      <div className="flex-1">
+                        <p className="font-medium text-foreground break-all">{email.email_address}</p>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <span>{getEmailTypeLabel(email.type)}</span>
                           {email.is_principal && (
@@ -306,18 +321,31 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
                             </span>
                           )}
                         </div>
+                        
+                        {/* Mobile: Card de ação visível e claro */}
+                        <div className="block sm:hidden mt-3">
+                          <button
+                            onClick={() => openEmail(email)}
+                            className="flex items-center justify-center gap-2 w-full p-3 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg transition-colors"
+                          >
+                            <Send className="h-5 w-5" />
+                            <span className="text-sm font-medium">Enviar Email</span>
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => openEmail(email)}
-                        icon={<Send className="h-4 w-4" />}
-                        title="Enviar email"
-                      >
-                        Enviar Email
-                      </Button>
+                      
+                      {/* Desktop: Botões tradicionais à direita */}
+                      <div className="hidden sm:flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => openEmail(email)}
+                          icon={<Send className="h-4 w-4" />}
+                          title="Enviar email"
+                        >
+                          Enviar Email
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -358,8 +386,30 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
                           CEP: {formatZipCode(address.zip_code)}
                           {address.country && address.country !== 'Brasil' && ` - ${address.country}`}
                         </p>
+                        
+                        {/* Mobile: Cards de ação lado a lado */}
+                        <div className="block sm:hidden mt-3">
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              onClick={() => openGoogleMaps(address)}
+                              className="flex items-center justify-center gap-2 p-3 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 rounded-lg transition-colors"
+                            >
+                              <Navigation className="h-5 w-5" />
+                              <span className="text-sm font-medium">Maps</span>
+                            </button>
+                            <button
+                              onClick={() => openWaze(address)}
+                              className="flex items-center justify-center gap-2 p-3 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded-lg transition-colors"
+                            >
+                              <ExternalLink className="h-5 w-5" />
+                              <span className="text-sm font-medium">Waze</span>
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex flex-col gap-2">
+                      
+                      {/* Desktop: Botões tradicionais à direita */}
+                      <div className="hidden sm:flex flex-col gap-2">
                         <Button
                           size="sm"
                           variant="secondary"
