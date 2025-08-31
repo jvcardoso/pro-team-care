@@ -7,6 +7,7 @@ import Input from '../ui/Input';
 import { Save, X, Search, CheckCircle, XCircle } from 'lucide-react';
 import { PhoneInputGroup, EmailInputGroup, AddressInputGroup } from '../contacts';
 import { InputCNPJ } from '../inputs';
+import { notify } from '../../utils/notifications.jsx';
 import toast from 'react-hot-toast';
 
 const CompanyForm = ({ companyId, onSave, onCancel }) => {
@@ -460,14 +461,7 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
 
       // Se não há dados válidos, não faz nada
       if (!hasValidData) {
-        toast.info('ℹ️ Nenhum dado encontrado para este CNPJ', {
-          duration: 3000,
-          style: {
-            background: '#3b82f6',
-            color: '#fff',
-            border: '1px solid #2563eb',
-          },
-        });
+        notify.info('Nenhum dado encontrado para este CNPJ');
         return;
       }
 
@@ -552,15 +546,7 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
         console.log('FormData após atribuição:', formData);
 
         // Feedback visual de sucesso
-        toast.success('✅ Dados da empresa preenchidos automaticamente!', {
-          duration: 4000,
-          icon: '📋',
-          style: {
-            background: '#10b981',
-            color: '#fff',
-            border: '1px solid #059669',
-          },
-        });
+        notify.success('Dados da empresa preenchidos automaticamente!');
       };
 
       if (hasExistingData) {
@@ -705,15 +691,7 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
       setError(null);
 
       // Feedback visual de sucesso
-      toast.success('✅ Dados da empresa preenchidos automaticamente!', {
-        duration: 4000,
-        icon: '📋',
-        style: {
-          background: '#10b981',
-          color: '#fff',
-          border: '1px solid #059669',
-        },
-      });
+      notify.success('Dados da empresa preenchidos automaticamente!');
     };
 
     if (hasExistingData) {

@@ -5,6 +5,7 @@ import Button from '../ui/Button';
 import CompanyBasicInfo from '../entities/CompanyBasicInfo';
 import ReceitaFederalInfo from '../metadata/ReceitaFederalInfo';
 import { getStatusBadge, getStatusLabel, getPhoneTypeLabel, getEmailTypeLabel, getAddressTypeLabel, formatPhone, formatZipCode } from '../../utils/statusUtils';
+import { notify } from '../../utils/notifications.jsx';
 import { ArrowLeft, Edit, Trash2, Phone, Mail, MapPin, Building, Calendar, User, Globe, MessageCircle, Send, Navigation, ExternalLink } from 'lucide-react';
 
 const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
@@ -24,19 +25,14 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
       setLoading(true);
       const data = await companiesService.getCompany(companyId);
       
-      // Debug: Verificar estrutura dos dados
-      console.log('=== [CompanyDetails] Dados da empresa carregados ===');
-      console.log('Estrutura completa:', data);
-      console.log('company.company existe?', !!data.company);
-      console.log('company.company.metadata existe?', !!data.company?.metadata);
-      console.log('company.people.metadata existe?', !!data.people?.metadata);
-      console.log('company.metadata existe?', !!data.metadata);
-      console.log('Chaves do company.metadata:', data.company?.metadata ? Object.keys(data.company.metadata) : 'Nenhuma');
-      console.log('Chaves do people.metadata:', data.people?.metadata ? Object.keys(data.people.metadata) : 'Nenhuma'); 
-      console.log('Chaves do metadata direto:', data.metadata ? Object.keys(data.metadata) : 'Nenhuma');
-      console.log('company.metadata completo:', data.company?.metadata);
-      console.log('people.metadata completo:', data.people?.metadata);
-      console.log('metadata direto completo:', data.metadata);
+      // Debug: Verificar estrutura dos dados (manter apenas para identificar problemas)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('CompanyDetails - Metadados:', {
+          company_metadata: !!data.company?.metadata,
+          people_metadata: !!data.people?.metadata,  
+          direct_metadata: !!data.metadata
+        });
+      }
       
       setCompany(data);
     } catch (err) {
@@ -48,15 +44,22 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
   };
 
   const handleDelete = async () => {
-    if (window.confirm('Tem certeza que deseja excluir esta empresa?')) {
+    const executeDelete = async () => {
       try {
         await companiesService.deleteCompany(companyId);
+        notify.success('Empresa excluída com sucesso!');
         onDelete?.();
       } catch (err) {
-        alert('Erro ao excluir empresa');
+        notify.error('Erro ao excluir empresa');
         console.error(err);
       }
-    }
+    };
+
+    notify.confirmDelete(
+      'Excluir Empresa',
+      `Tem certeza que deseja excluir a empresa "${company?.people?.name || 'esta empresa'}"?`,
+      executeDelete
+    );
   };
 
 

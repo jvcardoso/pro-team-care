@@ -7,6 +7,7 @@ import CompanyForm from '../components/forms/CompanyForm';
 import CompanyDetails from '../components/views/CompanyDetails';
 import CompanyMobileCard from '../components/mobile/CompanyMobileCard';
 import { getStatusBadge, getStatusLabel, formatTaxId } from '../utils/statusUtils';
+import { notify } from '../utils/notifications.jsx';
 import { Building, Search, Plus, Filter, Phone, Mail, MapPin, Edit, Eye, Trash2, Calendar } from 'lucide-react';
 
 const EmpresasPage = () => {
@@ -74,16 +75,26 @@ const EmpresasPage = () => {
   };
 
   const handleDelete = async (companyId) => {
-    if (window.confirm('Tem certeza que deseja excluir esta empresa?')) {
+    const company = companies.find(c => c.id === companyId);
+    const companyName = company?.name || 'esta empresa';
+
+    const executeDelete = async () => {
       try {
         await companiesService.deleteCompany(companyId);
+        notify.success('Empresa excluída com sucesso!');
         loadCompanies();
         loadTotalCount();
       } catch (err) {
-        setError('Erro ao excluir empresa');
+        notify.error('Erro ao excluir empresa');
         console.error(err);
       }
-    }
+    };
+
+    notify.confirmDelete(
+      'Excluir Empresa',
+      `Tem certeza que deseja excluir a empresa "${companyName}"?`,
+      executeDelete
+    );
   };
 
   const handleCreate = () => {

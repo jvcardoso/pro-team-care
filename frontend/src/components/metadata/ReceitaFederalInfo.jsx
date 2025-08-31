@@ -11,14 +11,12 @@ const ReceitaFederalInfo = ({
   showLocalizacao = true,
   showNaturezaJuridica = true
 }) => {
-  // Debug: Verificar metadados recebidos
-  console.log('=== [ReceitaFederalInfo] Metadados recebidos ===');
-  console.log('Metadata:', metadata);
-  console.log('Tem dados?', metadata && Object.keys(metadata).length > 0);
-  console.log('Chaves disponíveis:', metadata ? Object.keys(metadata) : 'Nenhuma');
+  // Debug: Verificar metadados recebidos (apenas em desenvolvimento)
+  if (process.env.NODE_ENV === 'development' && (!metadata || Object.keys(metadata).length === 0)) {
+    console.log('ReceitaFederalInfo: Nenhum metadata disponível');
+  }
   
   if (!metadata || Object.keys(metadata).length === 0) {
-    console.log('❌ ReceitaFederalInfo: Nenhum metadata para exibir');
     return null;
   }
 

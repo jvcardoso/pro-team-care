@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { notify } from '../utils/notifications.jsx'
 import toast from 'react-hot-toast'
 import { authService } from '../services/api'
 
@@ -37,7 +38,7 @@ const LoginPage = () => {
         const fakeToken = 'test_token_' + Date.now()
         localStorage.setItem('access_token', fakeToken)
 
-        toast.success('Login realizado com sucesso! (Modo teste)')
+        notify.success('Login realizado com sucesso! (Modo teste)')
 
         // Verificar se há uma URL para redirecionar
         const redirectUrl = sessionStorage.getItem('redirectAfterLogin')
@@ -52,7 +53,7 @@ const LoginPage = () => {
       }
     } catch (error) {
       console.error('Erro no login:', error)
-      toast.error(error.message || 'Erro no login. Verifique suas credenciais.')
+      notify.error(error.message || 'Erro no login. Verifique suas credenciais.')
     } finally {
       setIsLoading(false)
     }
@@ -143,7 +144,7 @@ const LoginPage = () => {
                   setTimeout(() => {
                     const fakeToken = 'test_token_' + Date.now()
                     localStorage.setItem('access_token', fakeToken)
-                    toast.success('Login de teste realizado!')
+                    notify.success('Login de teste realizado!')
                     navigate('/admin/inputs-demo', { replace: true })
                   }, 500)
                 }}
