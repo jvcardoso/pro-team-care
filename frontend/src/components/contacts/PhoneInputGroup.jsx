@@ -97,18 +97,37 @@ const PhoneInputGroup = ({
           <div className="text-sm text-muted-foreground">
             {phones.length} de {maxPhones} telefones
           </div>
-          <Button
-            type="button"
-            variant="secondary"
-            outline
-            size="sm"
-            onClick={handleAddPhone}
-            disabled={disabled || phones.length >= maxPhones}
-            icon={<Plus className="h-4 w-4" />}
-            title={phones.length >= maxPhones ? `Máximo de ${maxPhones} telefones atingido` : "Adicionar telefone"}
-          >
-            Adicionar
-          </Button>
+          {/* Mobile: Apenas ícone + */}
+          <div className="block sm:hidden">
+            <Button
+              type="button"
+              variant="secondary"
+              outline
+              size="sm"
+              onClick={handleAddPhone}
+              disabled={disabled || phones.length >= maxPhones}
+              title={phones.length >= maxPhones ? `Máximo de ${maxPhones} telefones atingido` : "Adicionar telefone"}
+              className="w-8 h-8 p-0 flex items-center justify-center"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          {/* Desktop: Ícone + Texto */}
+          <div className="hidden sm:block">
+            <Button
+              type="button"
+              variant="secondary"
+              outline
+              size="sm"
+              onClick={handleAddPhone}
+              disabled={disabled || phones.length >= maxPhones}
+              icon={<Plus className="h-4 w-4" />}
+              title={phones.length >= maxPhones ? `Máximo de ${maxPhones} telefones atingido` : "Adicionar telefone"}
+            >
+              Adicionar
+            </Button>
+          </div>
         </div>
       </div>
 

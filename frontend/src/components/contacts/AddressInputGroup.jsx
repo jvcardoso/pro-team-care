@@ -129,18 +129,37 @@ const AddressInputGroup = ({
           <div className="text-sm text-muted-foreground">
             {addresses.length} de {maxAddresses} endereços
           </div>
-          <Button
-            type="button"
-            variant="secondary"
-            outline
-            size="sm"
-            onClick={handleAddAddress}
-            disabled={disabled || addresses.length >= maxAddresses}
-            icon={<Plus className="h-4 w-4" />}
-            title={addresses.length >= maxAddresses ? `Máximo de ${maxAddresses} endereços atingido` : "Adicionar endereço"}
-          >
-            Adicionar
-          </Button>
+          {/* Mobile: Apenas ícone + */}
+          <div className="block sm:hidden">
+            <Button
+              type="button"
+              variant="secondary"
+              outline
+              size="sm"
+              onClick={handleAddAddress}
+              disabled={disabled || addresses.length >= maxAddresses}
+              title={addresses.length >= maxAddresses ? `Máximo de ${maxAddresses} endereços atingido` : "Adicionar endereço"}
+              className="w-8 h-8 p-0 flex items-center justify-center"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          {/* Desktop: Ícone + Texto */}
+          <div className="hidden sm:block">
+            <Button
+              type="button"
+              variant="secondary"
+              outline
+              size="sm"
+              onClick={handleAddAddress}
+              disabled={disabled || addresses.length >= maxAddresses}
+              icon={<Plus className="h-4 w-4" />}
+              title={addresses.length >= maxAddresses ? `Máximo de ${maxAddresses} endereços atingido` : "Adicionar endereço"}
+            >
+              Adicionar
+            </Button>
+          </div>
         </div>
       </div>
 

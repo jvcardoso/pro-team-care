@@ -74,18 +74,37 @@ const EmailInputGroup = ({
           <div className="text-sm text-muted-foreground">
             {emails.length} de {maxEmails} e-mails
           </div>
-          <Button
-            type="button"
-            variant="secondary"
-            outline
-            size="sm"
-            onClick={handleAddEmail}
-            disabled={disabled || emails.length >= maxEmails}
-            icon={<Plus className="h-4 w-4" />}
-            title={emails.length >= maxEmails ? `Máximo de ${maxEmails} e-mails atingido` : "Adicionar e-mail"}
-          >
-            Adicionar
-          </Button>
+          {/* Mobile: Apenas ícone + */}
+          <div className="block sm:hidden">
+            <Button
+              type="button"
+              variant="secondary"
+              outline
+              size="sm"
+              onClick={handleAddEmail}
+              disabled={disabled || emails.length >= maxEmails}
+              title={emails.length >= maxEmails ? `Máximo de ${maxEmails} e-mails atingido` : "Adicionar e-mail"}
+              className="w-8 h-8 p-0 flex items-center justify-center"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          {/* Desktop: Ícone + Texto */}
+          <div className="hidden sm:block">
+            <Button
+              type="button"
+              variant="secondary"
+              outline
+              size="sm"
+              onClick={handleAddEmail}
+              disabled={disabled || emails.length >= maxEmails}
+              icon={<Plus className="h-4 w-4" />}
+              title={emails.length >= maxEmails ? `Máximo de ${maxEmails} e-mails atingido` : "Adicionar e-mail"}
+            >
+              Adicionar
+            </Button>
+          </div>
         </div>
       </div>
 
