@@ -5,7 +5,7 @@ import {
   Calendar, FileText, BarChart3, PieChart, TrendingUp,
   Palette, LayoutGrid, Table, FormInput, BookOpen, Kanban,
   Mail, Image, Receipt, User, Building, FileX,
-  LogIn, Lock, Settings, ChevronDown, ChevronRight
+  LogIn, Lock, Settings, ChevronDown, ChevronRight, Bell
 } from 'lucide-react';
 
 const Sidebar = ({ collapsed }) => {
@@ -182,6 +182,25 @@ const Sidebar = ({ collapsed }) => {
                 <span>Inputs Demo</span>
                 <span className="ml-auto inline-block py-0.5 px-2 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full">
                   CEP
+                </span>
+              </>
+            )}
+          </Link>
+
+          <Link
+            to="/admin/notifications"
+            className={`group flex items-center px-2 py-2 text-sm font-medium rounded-lg transition-colors ${
+              isActiveItem('/admin/notifications')
+                ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
+          >
+            <Bell className="h-5 w-5 mr-3 flex-shrink-0" />
+            {!collapsed && (
+              <>
+                <span>Notifications</span>
+                <span className="ml-auto inline-block py-0.5 px-2 text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-full">
+                  NEW
                 </span>
               </>
             )}

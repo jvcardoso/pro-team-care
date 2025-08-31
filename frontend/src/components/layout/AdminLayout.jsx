@@ -98,6 +98,7 @@ const AdminLayout = () => {
         'admin': 'Admin',
         'dashboard': 'Dashboard',
         'demo': 'Layout Demo',
+        'notifications': 'Demo de Notificações',
       };
       
       if (customLabels[pathname]) {

@@ -10,6 +10,7 @@ import ProfissionaisPage from './pages/ProfissionaisPage'
 import ConsultasPage from './pages/ConsultasPage'
 import EmpresasPage from './pages/EmpresasPage'
 import InputsDemo from './pages/InputsDemo'
+import NotificationDemo from './pages/NotificationDemo'
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
             <Route path="empresas" element={<EmpresasPage />} />
             <Route path="inputs-demo" element={<InputsDemo />} />
             <Route path="demo" element={<LayoutDemo />} />
+            <Route path="notifications" element={<NotificationDemo />} />
           </Route>
           
           {/* 404 Page */}
