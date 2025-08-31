@@ -57,16 +57,37 @@ const AddressInputGroup = ({
   };
 
   const handleAddressFound = (index, addressData) => {
-    const updatedAddresses = addresses.map((address, i) => 
+    const updatedAddresses = addresses.map((address, i) =>
       i === index ? {
         ...address,
+        // Dados básicos do endereço
         street: addressData.street || '',
         number: '', // Limpar número para usuário preencher
-        details: '', // Limpar complemento 
+        details: addressData.complement || '', // Usar complemento da ViaCEP
         neighborhood: addressData.neighborhood || '',
         city: addressData.city || '',
         state: addressData.state || '',
-        zip_code: addressData.cep || address.zip_code
+        zip_code: addressData.zip_code || addressData.cep || '',
+
+        // Códigos oficiais brasileiros
+        ibge_city_code: addressData.ibge_city_code || null,
+        gia_code: addressData.gia_code || null,
+        siafi_code: addressData.siafi_code || null,
+        area_code: addressData.area_code || null,
+
+        // Campos de validação
+        is_validated: addressData.is_validated || false,
+        validation_source: addressData.validation_source || null,
+        last_validated_at: addressData.last_validated_at || null,
+
+        // Campos de geolocalização (futuros)
+        latitude: addressData.latitude || null,
+        longitude: addressData.longitude || null,
+        google_place_id: addressData.google_place_id || null,
+        formatted_address: addressData.formatted_address || null,
+        geocoding_accuracy: addressData.geocoding_accuracy || null,
+        geocoding_source: addressData.geocoding_source || null,
+        api_data: addressData.api_data || null
       } : address
     );
     onChange?.(updatedAddresses);
@@ -256,6 +277,37 @@ const AddressInputGroup = ({
                 />
               </div>
             </div>
+
+            {/* Códigos oficiais brasileiros */}
+            {(address.ibge_city_code || address.gia_code || address.siafi_code || address.area_code) && (
+              <div className="text-xs text-muted-foreground bg-blue-50 border border-blue-200 p-2 rounded">
+                <div className="flex items-center gap-1 text-blue-700 mb-1">
+                  📋 <strong>Códigos Oficiais:</strong>
+                </div>
+                <div className="grid grid-cols-2 gap-1 text-blue-600">
+                  {address.ibge_city_code && (
+                    <div><strong>IBGE:</strong> {address.ibge_city_code}</div>
+                  )}
+                  {address.area_code && (
+                    <div><strong>DDD:</strong> {address.area_code}</div>
+                  )}
+                  {address.gia_code && (
+                    <div><strong>GIA:</strong> {address.gia_code}</div>
+                  )}
+                  {address.siafi_code && (
+                    <div><strong>SIAFI:</strong> {address.siafi_code}</div>
+                  )}
+                </div>
+                {address.validation_source && (
+                  <div className="mt-1 flex items-center gap-1 text-green-600">
+                    <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    Validado via {address.validation_source === 'viacep' ? 'ViaCEP' : address.validation_source}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Preview do endereço */}
             {getAddressDisplay(address) && (

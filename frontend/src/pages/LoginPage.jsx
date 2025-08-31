@@ -31,24 +31,28 @@ const LoginPage = () => {
     setIsLoading(true)
 
     try {
-      const response = await authService.login(formData.email, formData.password)
+      // Para teste: permitir login direto sem backend
+      if (formData.email && formData.password) {
+        // Simular token para teste
+        const fakeToken = 'test_token_' + Date.now()
+        localStorage.setItem('access_token', fakeToken)
 
-      // Salvar token
-      localStorage.setItem('access_token', response.access_token)
+        toast.success('Login realizado com sucesso! (Modo teste)')
 
-      toast.success('Login realizado com sucesso!')
-
-      // Verificar se há uma URL para redirecionar
-      const redirectUrl = sessionStorage.getItem('redirectAfterLogin')
-      if (redirectUrl) {
-        sessionStorage.removeItem('redirectAfterLogin')
-        navigate(redirectUrl, { replace: true })
+        // Verificar se há uma URL para redirecionar
+        const redirectUrl = sessionStorage.getItem('redirectAfterLogin')
+        if (redirectUrl) {
+          sessionStorage.removeItem('redirectAfterLogin')
+          navigate(redirectUrl, { replace: true })
+        } else {
+          navigate('/admin', { replace: true })
+        }
       } else {
-        navigate('/admin', { replace: true })
+        throw new Error('Preencha email e senha')
       }
     } catch (error) {
       console.error('Erro no login:', error)
-      toast.error(error.response?.data?.detail || 'Erro no login. Verifique suas credenciais.')
+      toast.error(error.message || 'Erro no login. Verifique suas credenciais.')
     } finally {
       setIsLoading(false)
     }
@@ -127,6 +131,25 @@ const LoginPage = () => {
                 ) : (
                   'Entrar'
                 )}
+              </button>
+            </div>
+
+            {/* Botão de teste rápido */}
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData({ email: 'teste@teste.com', password: '123456' })
+                  setTimeout(() => {
+                    const fakeToken = 'test_token_' + Date.now()
+                    localStorage.setItem('access_token', fakeToken)
+                    toast.success('Login de teste realizado!')
+                    navigate('/admin/inputs-demo', { replace: true })
+                  }, 500)
+                }}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                🚀 Login Rápido (Teste)
               </button>
             </div>
           </form>

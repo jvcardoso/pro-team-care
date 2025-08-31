@@ -1,9 +1,10 @@
 /**
  * Serviço para consulta de dados de empresa via CNPJ
- * Utiliza proxy local que consulta ReceitaWS
+ * Utiliza APENAS endpoint público - sem autenticação
+ * Evita problemas de loop de login
  */
 
-import { api } from './api';
+import axios from 'axios';
 
 /**
  * Consulta dados de empresa pelo CNPJ
@@ -18,47 +19,46 @@ export const consultarCNPJ = async (cnpj) => {
     throw new Error('CNPJ deve ter 14 dígitos');
   }
 
+  // Configurar base URL
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://192.168.11.62:8000';
+
+  // Criar instância axios simples para endpoint público
+  const cnpjApi = axios.create({
+    baseURL: API_BASE_URL,
+    timeout: 15000, // Timeout maior para consulta externa
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
   try {
-    console.log('Consultando CNPJ:', cnpjLimpo);
+    console.log('Consultando CNPJ (apenas endpoint público):', cnpjLimpo);
 
-    // Tentar primeiro o endpoint autenticado
-    try {
-      const response = await api.get(`/api/v1/cnpj/consultar/${cnpjLimpo}`);
-      const data = response.data;
+    // Usar apenas endpoint público - sem autenticação
+    const response = await cnpjApi.get(`/api/v1/cnpj/publico/consultar/${cnpjLimpo}`);
+    const data = response.data;
 
-      if (!data.success) {
-        throw new Error(data.message || 'CNPJ não encontrado ou inválido');
-      }
-
-      return data.data;
-    } catch (authError) {
-      // Se erro de autenticação (401), tentar endpoint público
-      if (authError.response?.status === 401) {
-        console.log('Tentando endpoint público devido a erro de autenticação');
-        const publicResponse = await api.get(`/api/v1/cnpj/publico/consultar/${cnpjLimpo}`);
-        const publicData = publicResponse.data;
-
-        if (!publicData.success) {
-          throw new Error(publicData.message || 'CNPJ não encontrado ou inválido');
-        }
-
-        return publicData.data;
-      }
-
-      // Se não for erro de autenticação, re-throw
-      throw authError;
+    if (!data.success) {
+      throw new Error(data.message || 'CNPJ não encontrado ou inválido');
     }
+
+    return data.data;
   } catch (error) {
     console.error('Erro ao consultar CNPJ:', error);
 
-    // Tratamento para erros da API
+    // Tratamento específico para erros da API
     if (error.response?.data?.detail) {
       throw new Error(error.response.data.detail);
     }
 
     // Tratamento para erros de rede
-    if (error.message.includes('Network Error')) {
-      throw new Error('Erro de conexão. Verifique sua internet.');
+    if (error.message.includes('Network Error') || error.code === 'ECONNABORTED') {
+      throw new Error('Erro de conexão. Verifique sua internet e tente novamente.');
+    }
+
+    // Tratamento para timeout
+    if (error.code === 'ECONNABORTED') {
+      throw new Error('Consulta demorou muito para responder. Tente novamente.');
     }
 
     throw new Error(error.message || 'Erro inesperado ao consultar CNPJ');

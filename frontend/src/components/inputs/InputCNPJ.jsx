@@ -40,15 +40,20 @@ const InputCNPJ = ({
     }
   }, [value, showValidation]);
 
-  // Auto-consulta quando CNPJ estiver válido
+  // Auto-consulta quando CNPJ estiver válido (desabilitado por padrão para evitar loops)
   useEffect(() => {
-    if (autoConsult && isValid && formattedValue.length === 18) {
+    if (autoConsult && isValid && formattedValue.length === 18 && !isLoading) {
       const cleanCNPJ = removeNonNumeric(formattedValue);
       if (cleanCNPJ.length === 14) {
-        consultCompany(cleanCNPJ);
+        // Pequeno delay para evitar múltiplas chamadas
+        const timeoutId = setTimeout(() => {
+          consultCompany(cleanCNPJ);
+        }, 500);
+
+        return () => clearTimeout(timeoutId);
       }
     }
-  }, [autoConsult, isValid, formattedValue]);
+  }, [autoConsult, isValid, formattedValue, isLoading]);
 
   const consultCompany = async (cnpj) => {
     if (!cnpj || cnpj.length !== 14) return;

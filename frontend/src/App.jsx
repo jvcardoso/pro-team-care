@@ -18,7 +18,8 @@ function App() {
         <Routes>
           {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />
-          
+          <Route path="/inputs-demo" element={<InputsDemo />} />
+
           {/* Redirect root to admin */}
           <Route path="/" element={<Navigate to="/admin" replace />} />
           

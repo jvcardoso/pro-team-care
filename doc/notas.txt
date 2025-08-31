@@ -2595,3 +2595,486 @@ Analise :
   - Differential Analysis - Análise diferencial (comparando funcionando vs quebrado)
   - Forensic Analysis - Análise forense de código
   - 5 Whys Method - Método dos 5 porquês (perguntar "por quê?" até chegar na causa raiz)
+
+
+  ///////////////
+
+  ## 📊 Análise Revisada: Integração CEP + Geolocalização
+
+### 🔍 Dados Atuais da Consulta CEP (ViaCEP)
+
+O InputCEP já consulta a ViaCEP API e retorna dados estruturados:
+
+// Dados retornados pela ViaCEP:
+{
+  "cep": "01001-000",
+  "logradouro": "Praça da Sé",
+  "complemento": "lado ímpar",
+  "bairro": "Sé",
+  "localidade": "São Paulo",
+  "uf": "SP",
+  "ibge": "3550308",
+  "gia": "1004",
+  "ddd": "11",
+  "siafi": "7107"
+}
+
+### 🔗 Mapeamento Atual vs Campos de Geolocalização
+
+#### ✅ Dados Já Mapeados:
+
+// handleAddressFound (linha 59-73)
+onAddressFound: {
+  street: data.logradouro,      // ✅ Mapeia para street
+  neighborhood: data.bairro,    // ✅ Mapeia para neighborhood
+  city: data.localidade,        // ✅ Mapeia para city
+  state: data.uf,               // ✅ Mapeia para state
+  cep: data.cep                 // ✅ Mapeia para zip_code
+}
+
+#### ⚠️ Dados Perdidos da ViaCEP:
+
+// Campos disponíveis mas NÃO salvos:
+"ibge": "3550308",        // ❌ Não mapeado → ibge_city_code
+"gia": "1004",           // ❌ Não mapeado → gia_code
+"ddd": "11",             // ❌ Não mapeado → area_code
+"siafi": "7107"          // ❌ Não mapeado → siafi_code
+
+### 🚀 Integração Completa: CEP → Google Maps
+
+#### Fluxo Otimizado:
+
+1. Usuário digita CEP
+   ↓
+2. Consulta ViaCEP (dados básicos)
+   ↓
+3. Preenche campos básicos + códigos IBGE/GIA/SIAFI
+   ↓
+4. Monta endereço completo para Google Maps
+   ↓
+5. Consulta Google Geocoding API
+   ↓
+6. Recebe coordenadas + place_id + endereço formatado
+   ↓
+7. Salva dados completos no banco
+
+#### Implementação Sugerida:
+
+const handleAddressFound = async (index, viaCepData) => {
+  // 1. Preencher dados básicos da ViaCEP
+  const updatedAddresses = addresses.map((address, i) =>
+    i === index ? {
+      ...address,
+      street: viaCepData.logradouro || '',
+      neighborhood: viaCepData.bairro || '',
+      city: viaCepData.localidade || '',
+      state: viaCepData.uf || '',
+      zip_code: viaCepData.cep || '',
+
+      // Novos campos dos códigos
+      ibge_city_code: viaCepData.ibge || null,
+      gia_code: viaCepData.gia || null,
+      siafi_code: viaCepData.siafi || null,
+      area_code: viaCepData.ddd || null,
+
+      // Marcar como validado pela ViaCEP
+      is_validated: true,
+      validation_source: 'viacep',
+      last_validated_at: new Date().toISOString()
+    } : address
+  );
+
+  // 2. Montar endereço completo para Google Maps
+  const fullAddress = `${viaCepData.logradouro}, ${viaCepData.bairro}, ${viaCepData.localidade}, ${viaCepData.uf}, Brasil`;
+
+  try {
+    // 3. Consultar Google Maps (se API estiver configurada)
+    const googleResult = await geocodingService.geocodeAddress(fullAddress);
+
+    // 4. Atualizar com dados do Google
+    updatedAddresses[index] = {
+      ...updatedAddresses[index],
+      latitude: googleResult.lat,
+      longitude: googleResult.lng,
+      google_place_id: googleResult.place_id,
+      formatted_address: googleResult.formatted_address,
+      geocoding_accuracy: googleResult.accuracy,
+      geocoding_source: 'google_maps',
+      api_data: googleResult.raw_data
+    };
+  } catch (error) {
+    console.warn('Google Maps não disponível, mantendo dados da ViaCEP');
+  }
+
+  onChange?.(updatedAddresses);
+};
+
+### 📋 Campos de Geolocalização - Status Atualizado
+
+#### ✅ Dados da ViaCEP (Já Disponíveis):
+
+• ibge_city_code ← ibge
+• gia_code ← gia
+• siafi_code ← siafi
+• area_code ← ddd
+
+#### ✅ Dados do Google Maps (Após Integração):
+
+• latitude / longitude ← Google Geocoding
+• google_place_id ← Google Places API
+• formatted_address ← Google Geocoding
+• geocoding_accuracy ← Google response
+• geocoding_source ← "google_maps"
+
+#### ✅ Campos Calculados/Validados:
+
+• quality_score ← Algoritmo baseado em completude
+• is_validated ← true após ViaCEP
+• validation_source ← "viacep" ou "google_maps"
+• last_validated_at ← timestamp da validação
+
+### 🎯 Benefícios da Integração Completa
+
+#### 1. Dados Enriquecidos:
+
+• ViaCEP: Dados básicos + códigos oficiais brasileiros
+• Google Maps: Coordenadas precisas + place_id
+• Sistema: Score de qualidade + histórico de validações
+
+#### 2. Validação Robusta:
+
+• ViaCEP: Validação básica de CEP brasileiro
+• Google Maps: Validação de existência real do endereço
+• Sistema: Score de qualidade baseado em múltiplas fontes
+
+#### 3. Funcionalidades Habilitadas:
+
+• Roteirização: Coordenadas para cálculo de rotas
+• Cobertura: Verificação de área de atendimento
+• Relatórios: Análises geográficas por região
+• Autocomplete: Sugestões inteligentes de endereço
+
+### 🔧 Implementação Prioritária
+
+#### Fase 1: Enriquecer ViaCEP (Imediata)
+
+// Adicionar mapeamento dos códigos na handleAddressFound
+ibge_city_code: viaCepData.ibge,
+gia_code: viaCepData.gia,
+siafi_code: viaCepData.siafi,
+area_code: viaCepData.ddd,
+
+#### Fase 2: Integrar Google Maps (Próxima)
+
+// Após ViaCEP, consultar Google para coordenadas
+const googleData = await geocodingService.geocodeAddress(fullAddress);
+
+#### Fase 3: Sistema de Qualidade (Futuro)
+
+// Calcular score baseado em completude e fontes
+const qualityScore = calculateAddressQuality(addressData);
+
+### 📊 Comparativo: Antes vs Depois
+
+ Aspecto                                     │ Antes                                       │ Depois
+─────────────────────────────────────────────┼─────────────────────────────────────────────┼────────────────────────────────────────────
+ Dados Básicos                               │ ✅ CEP, Rua,                                │ ✅ CEP, Rua,
+                                             │  Cidade                                     │  Cidade
+                                             │                                             │
+ Códigos IBGE                                │ ❌                                          │ ✅ Salvos
+                                             │  Perdidos                                   │  automaticamente
+                                             │                                             │
+ Coordenadas                                 │ ❌ Não                                      │ ✅ Google Maps
+                                             │  disponíveis                                │  integration
+                                             │                                             │
+ Validação                                   │ ⚠️ Apenas                                   │ ✅ Múltiplas
+                                             │  formato                                    │  fontes
+                                             │                                             │
+ Qualidade                                   │ ❌ Não                                      │ ✅ Score
+                                             │  medida                                     │  calculado
+                                             │                                             │
+ Histórico                                   │ ❌ Não                                      │ ✅ Data/hora
+                                             │  rastreado                                  │  validação
+                                             │                                             │
+
+
+### 💡 Conclusão
+
+A ViaCEP API já fornece dados valiosos que estão sendo parcialmente perdidos. Com a integração completa:
+
+1. Dados da ViaCEP → Campos IBGE, GIA, SIAFI, DDD
+2. Google Maps → Coordenadas, place_id, endereço formatado
+3. Sistema → Score de qualidade, histórico de validações
+
+Resultado: Sistema de endereços 100% preparado para geolocalização avançada! 🗺️✨
+
+
+/////## 🔍 ANÁLISE: Validação de Dados no Campo JSON companies.metadata
+
+### 🎯 Contexto do Problema:
+
+• Campo metadata armazena dados complexos da Receita Federal
+• Risco de dados inconsistentes ou malformados
+• Necessidade de garantir integridade dos dados
+
+---
+
+## 📊 OPÇÕES DE VALIDAÇÃO NO BANCO DE DADOS
+
+### 1. ✅ JSON Schema Validation (PostgreSQL)
+
+-- Validação via JSON Schema
+ALTER TABLE companies
+ADD CONSTRAINT metadata_schema_check
+CHECK (jsonb_matches_schema('{
+  "type": "object",
+  "properties": {
+    "cnae_fiscal": {"type": "string", "pattern": "^\\d{2}\\.\\d{2}-\\d-\\d{2}$"},
+    "porte": {"enum": ["MEI", "MICRO", "PEQUENA", "MEDIA", "GRANDE", "DEMAIS"]},
+    "situacao": {"enum": ["ATIVA", "INATIVA", "SUSPENSA"]},
+    "capital_social": {"type": "string", "pattern": "^\\d+\\.\\d{2}$"}
+  },
+  "required": ["cnae_fiscal", "situacao"]
+}', metadata));
+
+Vantagens:
+
+• ✅ Validação estrutural rigorosa
+• ✅ Padrões regex para formatos específicos
+• ✅ Campos obrigatórios garantidos
+• ✅ Rejeição automática de dados inválidos
+
+Desvantagens:
+
+• ❌ Complexidade de manutenção
+• ❌ Schema rígido (dificulta evoluções)
+• ❌ Performance impact em inserts/updates
+
+---
+
+### 2. ⚖️ Check Constraints + Funções
+
+-- Função de validação personalizada
+CREATE OR REPLACE FUNCTION validate_company_metadata(metadata jsonb)
+RETURNS boolean AS $$
+BEGIN
+  -- Validar CNAE fiscal
+  IF NOT (metadata->>'cnae_fiscal' ~ '^\d{2}\.\d{2}-\d-\d{2}$') THEN
+    RETURN false;
+  END IF;
+
+  -- Validar porte
+  IF NOT (metadata->>'porte' IN ('MEI', 'MICRO', 'PEQUENA', 'MEDIA', 'GRANDE', 'DEMAIS')) THEN
+    RETURN false;
+  END IF;
+
+  -- Validar capital social
+  IF NOT (metadata->>'capital_social' ~ '^\d+\.\d{2}$') THEN
+    RETURN false;
+  END IF;
+
+  RETURN true;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Constraint usando a função
+ALTER TABLE companies
+ADD CONSTRAINT metadata_validation_check
+CHECK (validate_company_metadata(metadata));
+
+Vantagens:
+
+• ✅ Validações customizáveis
+• ✅ Lógica complexa possível
+• ✅ Fácil manutenção
+• ✅ Mensagens de erro específicas
+
+Desvantagens:
+
+• ❌ Performance overhead
+• ❌ Complexidade de desenvolvimento
+• ❌ Dificuldade de debug
+
+---
+
+### 3. 🔄 Triggers de Validação
+
+-- Trigger para validação antes do insert/update
+CREATE OR REPLACE FUNCTION validate_metadata_trigger()
+RETURNS trigger AS $$
+BEGIN
+  -- Validar estrutura básica
+  IF NEW.metadata IS NOT NULL THEN
+    -- Verificar campos obrigatórios
+    IF NOT (NEW.metadata ? 'cnae_fiscal' AND NEW.metadata ? 'situacao') THEN
+      RAISE EXCEPTION 'Campos obrigatórios ausentes no metadata';
+    END IF;
+
+    -- Validar formatos
+    IF NOT (NEW.metadata->>'cnae_fiscal' ~ '^\d{2}\.\d{2}-\d-\d{2}$') THEN
+      RAISE EXCEPTION 'Formato de CNAE fiscal inválido';
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Aplicar trigger
+CREATE TRIGGER validate_company_metadata_trigger
+  BEFORE INSERT OR UPDATE ON companies
+  FOR EACH ROW EXECUTE FUNCTION validate_metadata_trigger();
+
+Vantagens:
+
+• ✅ Validação em tempo real
+• ✅ Controle total da lógica
+• ✅ Possibilidade de correção automática
+• ✅ Logs detalhados de erros
+
+Desvantagens:
+
+• ❌ Impacto significativo na performance
+• ❌ Complexidade de manutenção
+• ❌ Possibilidade de loops infinitos
+
+---
+
+### 4. 🎯 Validação Híbrida (Aplicação + Banco)
+
+No Frontend:
+
+// Validação antes de enviar
+const validateMetadata = (metadata) => {
+  if (!metadata.cnae_fiscal?.match(/^\d{2}\.\d{2}-\d-\d{2}$/)) {
+    throw new Error('CNAE fiscal inválido');
+  }
+  if (!['MEI', 'MICRO', 'PEQUENA', 'MEDIA', 'GRANDE', 'DEMAIS'].includes(metadata.porte)) {
+    throw new Error('Porte inválido');
+  }
+  return true;
+};
+
+No Banco (Constraints Simples):
+
+-- Apenas validações críticas
+ALTER TABLE companies
+ADD CONSTRAINT metadata_basic_check
+CHECK (
+  (metadata IS NULL) OR
+  (metadata ? 'cnae_fiscal' AND metadata ? 'situacao')
+);
+
+Vantagens:
+
+• ✅ Melhor performance
+• ✅ Validações em camadas
+• ✅ Feedback imediato ao usuário
+• ✅ Segurança em backup
+
+Desvantagens:
+
+• ❌ Duplicação de lógica
+• ❌ Possibilidade de inconsistências
+
+---
+
+## 📈 ANÁLISE COMPARATIVA
+
+ Critério                  │ JSON                      │ Check +                  │ Triggers                 │ Híbrido
+───────────────────────────┼───────────────────────────┼──────────────────────────┼──────────────────────────┼──────────────────────────
+ Performance               │ 🔴                        │ 🟡                       │ 🔴                       │ 🟢
+                           │  Baixa                    │  Média                   │  Baixa                   │  Alta
+                           │                           │                          │                          │
+ Manutenibilidade          │ 🟡                        │ 🟡                       │ 🔴                       │ 🟢
+                           │  Média                    │  Média                   │  Baixa                   │  Alta
+                           │                           │                          │                          │
+ Flexibilidade             │ 🔴                        │ 🟢                       │ 🟢                       │ 🟢
+                           │  Baixa                    │  Alta                    │  Alta                    │  Alta
+                           │                           │                          │                          │
+ Complexidade              │ 🟡                        │ 🟡                       │ 🔴                       │ 🟢
+                           │  Média                    │  Média                   │  Alta                    │  Baixa
+                           │                           │                          │                          │
+ Custo Desenvolvimento     │ 🟡                        │ 🟡                       │ 🔴                       │ 🟢
+                           │  Médio                    │  Médio                   │  Alto                    │  Baixo
+                           │                           │                          │                          │
+
+
+---
+
+## 🎯 RECOMENDAÇÃO: ABORDAGEM HÍBRIDA
+
+### ✅ Estratégia Recomendada:
+
+1. Validação no Frontend (Primária):
+
+• Feedback imediato ao usuário
+• Validações de formato e obrigatoriedade
+• Prevenção de dados claramente inválidos
+
+2. Validação no Banco (Segurança):
+
+• Constraints básicas para campos críticos
+• Validação de estrutura mínima
+• Segurança contra dados corrompidos
+
+3. Monitoramento Contínuo:
+
+• Logs de validações
+• Alertas para dados suspeitos
+• Auditoria de mudanças
+
+### 📋 Implementação Sugerida:
+
+-- Validações críticas no banco
+ALTER TABLE companies
+ADD CONSTRAINT metadata_critical_check
+CHECK (
+  (metadata IS NULL) OR (
+    jsonb_typeof(metadata) = 'object' AND
+    metadata ? 'cnae_fiscal' AND
+    metadata ? 'situacao' AND
+    (metadata->>'cnae_fiscal') IS NOT NULL AND
+    (metadata->>'situacao') IS NOT NULL
+  )
+);
+
+-- Índice para performance
+CREATE INDEX idx_companies_metadata_cnae ON companies USING gin ((metadata->'cnae_fiscal'));
+CREATE INDEX idx_companies_metadata_situacao ON companies USING gin ((metadata->'situacao'));
+
+---
+
+## 🚨 RISCOS E CONSIDERAÇÕES
+
+### ⚠️ Riscos da Validação Rigorosa:
+
+• Evolução dificultada: Novos campos podem quebrar validações
+• Performance impactada: Validações complexas = queries lentas
+• Manutenção complexa: Mudanças requerem alterações em múltiplos locais
+
+### ✅ Benefícios Esperados:
+
+• Integridade garantida: Dados consistentes
+• Segurança aumentada: Prevenção de dados corrompidos
+• Confiabilidade: Sistema mais robusto
+• Auditoria facilitada: Rastreamento de mudanças
+
+---
+
+## 🎯 CONCLUSÃO
+
+A abordagem híbrida é a mais recomendada:
+
+1. Frontend: Validações rápidas e feedback imediato
+2. Banco: Constraints básicas para segurança
+3. Monitoramento: Logs e alertas para detecção de anomalias
+
+Isso garante:
+
+• ✅ Performance otimizada
+• ✅ Manutenibilidade simplificada
+• ✅ Segurança adequada
+• ✅ Flexibilidade para evoluções
+
+A validação híbrida oferece o melhor equilíbrio entre segurança, performance e manutenibilidade!

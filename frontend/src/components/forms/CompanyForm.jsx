@@ -66,10 +66,10 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
       const company = await companiesService.getCompany(companyId);
       setFormData({
         people: company.people,
-        company: {
-          settings: company.settings || {},
-          metadata: company.metadata || {},
-          display_order: company.display_order || 0
+        company: company.company || {
+          settings: {},
+          metadata: {},
+          display_order: 0
         },
         phones: company.phones.length > 0 ? company.phones : [{
           country_code: '55',
@@ -117,24 +117,220 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
       setError(null);
 
       // Validação básica
-      if (!formData.people.name.trim()) {
+      if (!formData.people.name?.trim()) {
         setError('Nome da empresa é obrigatório');
         return;
       }
-      if (!formData.people.tax_id.trim()) {
+      if (!formData.people.tax_id?.trim()) {
         setError('CNPJ é obrigatório');
         return;
       }
 
-      // Limpar campos vazios
-      const cleanedData = {
-        ...formData,
-        phones: formData.phones.filter(phone => phone.number.trim()),
-        emails: formData.emails.filter(email => email.email_address.trim()),
-        addresses: formData.addresses.filter(address => 
-          address.street.trim() && address.city.trim()
-        )
+      // Verificar se há pelo menos um endereço válido
+      const hasValidAddress = formData.addresses.some(address =>
+        address.street?.trim() && address.city?.trim()
+      );
+      if (!hasValidAddress) {
+        setError('Pelo menos um endereço com rua e cidade é obrigatório');
+        return;
+      }
+
+      // Verificar se há pelo menos um telefone válido (sincronizado com a limpeza)
+      console.log('=== [VALIDATION] Verificando telefones ===');
+      console.log('Telefones no formData:', formData.phones);
+
+      const validPhones = formData.phones.filter(phone =>
+        phone.number?.trim() && phone.number.trim().length >= 8
+      );
+      console.log('Telefones válidos (8+ dígitos):', validPhones);
+
+      const hasValidPhone = validPhones.length > 0;
+      console.log('Tem telefone válido?', hasValidPhone);
+
+      if (!hasValidPhone) {
+        setError('Erro na validação dos telefones, verifique os números informados');
+        return;
+      }
+
+      // Verificar se há pelo menos um email válido
+      const hasValidEmail = formData.emails.some(email => email.email_address?.trim());
+      if (!hasValidEmail) {
+        setError('Pelo menos um email é obrigatório');
+        return;
+      }
+
+      // Validações adicionais para campos específicos
+      if (!formData.people.person_type) {
+        setError('Tipo de pessoa é obrigatório');
+        return;
+      }
+
+      // Limpar valores undefined/null que podem causar problemas no backend
+      const sanitizeData = (obj) => {
+        if (obj === null || obj === undefined) return obj;
+        if (typeof obj === 'object') {
+          const cleaned = {};
+          for (const [key, value] of Object.entries(obj)) {
+            // Processar metadata mantendo campos importantes
+            if (key === 'metadata' && typeof value === 'object') {
+              console.log('=== [SANITIZE] Processando metadata ===');
+              console.log('Metadata original keys:', Object.keys(value));
+              console.log('Metadata original:', value);
+
+              const cleanMetadata = {};
+              // Manter campos essenciais
+              if (value.cnae_fiscal) cleanMetadata.cnae_fiscal = value.cnae_fiscal;
+              if (value.cnae_fiscal_descricao) cleanMetadata.cnae_fiscal_descricao = value.cnae_fiscal_descricao;
+              if (value.porte) cleanMetadata.porte = value.porte;
+              if (value.situacao) cleanMetadata.situacao = value.situacao;
+              if (value.capital_social) cleanMetadata.capital_social = value.capital_social;
+              if (value.natureza_juridica) cleanMetadata.natureza_juridica = value.natureza_juridica;
+              if (value.ultima_atualizacao_rf) cleanMetadata.ultima_atualizacao_rf = value.ultima_atualizacao_rf;
+
+              // Incluir campos adicionais importantes
+              if (value.cnaes_secundarios) cleanMetadata.cnaes_secundarios = value.cnaes_secundarios;
+              if (value.data_situacao) cleanMetadata.data_situacao = value.data_situacao;
+              if (value.tipo) cleanMetadata.tipo = value.tipo;
+              if (value.municipio) cleanMetadata.municipio = value.municipio;
+              if (value.uf) cleanMetadata.uf = value.uf;
+
+              console.log('Metadata limpo keys:', Object.keys(cleanMetadata));
+              console.log('Metadata limpo:', cleanMetadata);
+
+              // Não incluir campos muito complexos como receita_ws_data completo
+              if (Object.keys(cleanMetadata).length > 0) {
+                cleaned[key] = cleanMetadata;
+                console.log('✅ Metadata incluído nos dados finais');
+              } else {
+                console.log('❌ Metadata vazio - não incluído');
+              }
+            } else if (value !== null && value !== undefined && value !== '') {
+              cleaned[key] = sanitizeData(value);
+            }
+          }
+          return cleaned;
+        }
+        return obj;
       };
+
+      // Limpar campos vazios e preparar dados
+      let cleanedData = {
+        people: sanitizeData(formData.people),
+        company: sanitizeData(formData.company) || {
+          settings: {},
+          metadata: {},
+          display_order: 0
+        },
+        phones: formData.phones
+          .filter(phone => {
+            const isValid = phone.number?.trim() && phone.number.trim().length >= 8;
+            console.log(`[CLEANUP] Telefone ${phone.number}: válido=${isValid}, length=${phone.number?.trim()?.length || 0}`);
+            return isValid;
+          })
+          .map(phone => sanitizeData({
+            country_code: phone.country_code || '55',
+            number: phone.number.trim().replace(/\D/g, ''), // Remover não dígitos
+            type: phone.type || 'commercial',
+            is_principal: phone.is_principal || false,
+            is_whatsapp: phone.is_whatsapp || false
+          }))
+          .slice(0, 3), // Limitar a 3 telefones
+        emails: formData.emails
+          .filter(email => email.email_address?.trim())
+          .map(email => sanitizeData({
+            email_address: email.email_address.trim(),
+            type: email.type || 'work',
+            is_principal: email.is_principal || false
+          })),
+        addresses: formData.addresses
+          .filter(address => address.street?.trim() && address.city?.trim())
+          .map(address => {
+            // Remover campos que podem não ser aceitos pelo backend
+            const { ibge_city_code, gia_code, siafi_code, area_code, is_validated, validation_source, last_validated_at, latitude, longitude, google_place_id, formatted_address, geocoding_accuracy, geocoding_source, api_data, ...cleanAddress } = address;
+            return sanitizeData({
+              ...cleanAddress,
+              country: cleanAddress.country || 'Brasil',
+              type: cleanAddress.type || 'commercial',
+              is_principal: cleanAddress.is_principal || false
+            });
+          })
+          .slice(0, 1) // Apenas o primeiro endereço
+      };
+
+
+
+      // Garantir que o campo company esteja sempre presente
+      if (!cleanedData.company || Object.keys(cleanedData.company).length === 0) {
+        cleanedData.company = {
+          settings: {},
+          metadata: {},
+          display_order: 0
+        };
+      }
+
+      // Verificar se os arrays têm pelo menos um item válido
+      if (cleanedData.phones.length === 0) {
+        setError('Pelo menos um telefone deve ser válido');
+        return;
+      }
+
+      if (cleanedData.emails.length === 0) {
+        setError('Pelo menos um email deve ser válido');
+        return;
+      }
+
+      if (cleanedData.addresses.length === 0) {
+        setError('Pelo menos um endereço deve ser válido');
+        return;
+      }
+
+      // Validações finais dos campos obrigatórios
+      if (!cleanedData.people.person_type) {
+        cleanedData.people.person_type = 'PJ';
+      }
+
+      if (!cleanedData.people.status) {
+        cleanedData.people.status = 'active';
+      }
+
+
+
+      // Log detalhado dos dados sendo enviados para debug
+      console.log('=== [DEBUG] DADOS SENDO ENVIADOS PARA SALVAR EMPRESA ===');
+      console.log('Timestamp:', new Date().toISOString());
+      console.log('URL:', isEditing ? `/api/v1/companies/${companyId}` : '/api/v1/companies/');
+      console.log('Method:', isEditing ? 'PUT' : 'POST');
+      console.log('Estrutura completa:', JSON.stringify(cleanedData, null, 2));
+      console.log('People keys:', Object.keys(cleanedData.people));
+      console.log('Company keys:', Object.keys(cleanedData.company));
+      console.log('Phones count:', cleanedData.phones.length);
+      console.log('Emails count:', cleanedData.emails.length);
+      console.log('Addresses count:', cleanedData.addresses.length);
+
+      // Verificar campos de metadata (AGORA NO COMPANY!)
+      console.log('=== [METADATA] Campos do metadata (companies.metadata) ===');
+      if (cleanedData.company.metadata && Object.keys(cleanedData.company.metadata).length > 0) {
+        console.log('✅ Metadata encontrado no COMPANY!');
+        console.log('Metadata keys:', Object.keys(cleanedData.company.metadata));
+        console.log('CNAEs Secundários:', cleanedData.company.metadata.cnaes_secundarios);
+        console.log('Situação na RF:', cleanedData.company.metadata.situacao);
+        console.log('Data da Situação:', cleanedData.company.metadata.data_situacao);
+        console.log('Tipo de Estabelecimento:', cleanedData.company.metadata.tipo);
+        console.log('Capital Social:', cleanedData.company.metadata.capital_social);
+        console.log('Última Atualização RF:', cleanedData.company.metadata.ultima_atualizacao_rf);
+      } else {
+        console.log('❌ Nenhum metadata encontrado no company!');
+      }
+
+      // Verificar campos obrigatórios
+      console.log('=== [VALIDATION] Campos obrigatórios ===');
+      console.log('People.name:', !!cleanedData.people.name);
+      console.log('People.tax_id:', !!cleanedData.people.tax_id);
+      console.log('People.person_type:', !!cleanedData.people.person_type);
+      console.log('Company exists:', !!cleanedData.company);
+      console.log('Phones valid:', cleanedData.phones.length > 0);
+      console.log('Emails valid:', cleanedData.emails.length > 0);
+      console.log('Addresses valid:', cleanedData.addresses.length > 0);
 
       if (isEditing) {
         await companiesService.updateCompany(companyId, cleanedData);
@@ -146,21 +342,35 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
     } catch (err) {
       console.error('Erro completo:', err);
       console.error('Response data:', err.response?.data);
-      
+
       let errorMessage = 'Erro desconhecido ao salvar empresa';
-      
-      if (err.response?.data?.detail) {
-        errorMessage = err.response.data.detail;
+
+      if (err.response?.status === 422) {
+        // Erro de validação do Pydantic (FastAPI)
+        if (Array.isArray(err.response.data?.detail)) {
+          const validationErrors = err.response.data.detail.map(error => {
+            const field = error.loc?.join('.') || 'campo';
+            return `${field}: ${error.msg}`;
+          });
+          errorMessage = `Erros de validação:\n${validationErrors.join('\n')}`;
+        } else if (err.response.data?.detail) {
+          errorMessage = err.response.data.detail;
+        } else {
+          errorMessage = 'Dados inválidos. Verifique os campos obrigatórios.';
+        }
       } else if (err.response?.status === 400) {
         errorMessage = 'Dados inválidos. Verifique os campos obrigatórios.';
       } else if (err.response?.status === 404) {
         errorMessage = 'Empresa não encontrada.';
       } else if (err.response?.status >= 500) {
-        errorMessage = 'Erro interno do servidor. Tente novamente.';
+        // Erro interno do servidor - tentar extrair mais detalhes
+        const serverError = err.response?.data?.detail || err.response?.data?.message || 'Erro interno do servidor';
+        errorMessage = `Erro interno do servidor: ${serverError}. Verifique os logs do backend.`;
+        console.error('Erro 500 - Detalhes do servidor:', err.response?.data);
       } else if (err.message) {
         errorMessage = `Erro de conexão: ${err.message}`;
       }
-      
+
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -281,6 +491,11 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
             tax_regime: 'simples_nacional',
             description: ''
           },
+          company: {
+            settings: {},
+            metadata: {},
+            display_order: 0
+          },
           phones: [{
             country_code: '55',
             number: '',
@@ -308,6 +523,10 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
         };
 
         // Preencher com dados da ReceitaWS
+        console.log('=== [CNPJ] Atribuindo dados ao formData ===');
+        console.log('Dados da empresa recebidos:', dadosEmpresa);
+        console.log('Metadata da empresa:', dadosEmpresa.people?.metadata);
+
         setFormData({
           people: {
             ...cleanFormData.people,
@@ -318,11 +537,19 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
             status: dadosEmpresa.people?.status || 'active',
             tax_regime: dadosEmpresa.people?.tax_regime || 'simples_nacional',
             description: dadosEmpresa.people?.description || ''
+            // ❌ REMOVER metadata daqui - vai para company
+          },
+          company: {
+            ...cleanFormData.company,
+            // ✅ METADATA VAI PARA COMPANY!
+            metadata: dadosEmpresa.people?.metadata || {}
           },
           phones: dadosEmpresa.phones?.length > 0 ? dadosEmpresa.phones : cleanFormData.phones,
           emails: dadosEmpresa.emails?.length > 0 ? dadosEmpresa.emails : cleanFormData.emails,
           addresses: dadosEmpresa.addresses?.length > 0 ? dadosEmpresa.addresses : cleanFormData.addresses
         });
+
+        console.log('FormData após atribuição:', formData);
 
         // Feedback visual de sucesso
         toast.success('✅ Dados da empresa preenchidos automaticamente!', {
@@ -420,6 +647,11 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
           tax_regime: 'simples_nacional',
           description: ''
         },
+        company: {
+          settings: {},
+          metadata: {},
+          display_order: 0
+        },
         phones: [{
           country_code: '55',
           number: '',
@@ -447,15 +679,27 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
       };
 
       // Preencher com dados da consulta
+      console.log('=== [COMPANY FOUND] Atribuindo dados ao formData ===');
+      console.log('Dados da empresa recebidos:', companyData);
+      console.log('Metadata da empresa:', companyData.people?.metadata);
+
       setFormData({
         people: {
           ...cleanFormData.people,
           ...companyData.people
+          // ❌ REMOVER metadata daqui - vai para company
+        },
+        company: {
+          ...cleanFormData.company,
+          // ✅ METADATA VAI PARA COMPANY!
+          metadata: companyData.people?.metadata || cleanFormData.company.metadata || {}
         },
         phones: companyData.phones?.length > 0 ? companyData.phones : cleanFormData.phones,
         emails: companyData.emails?.length > 0 ? companyData.emails : cleanFormData.emails,
         addresses: companyData.addresses?.length > 0 ? companyData.addresses : cleanFormData.addresses
       });
+
+      console.log('FormData após atribuição (handleCompanyFound):', formData);
 
       // Limpar erro se houver
       setError(null);
@@ -570,18 +814,18 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
         <Card title="Dados da Empresa">
           <div className="space-y-6">
             {/* CNPJ - Primeiro campo com consulta */}
-            <InputCNPJ
-              label="CNPJ *"
-              value={formData.people.tax_id}
-              onChange={(data) => updatePeople('tax_id', data.target.value)}
-              onCompanyFound={handleCompanyFound}
-              placeholder="00.000.000/0000-00"
-              required
-              disabled={loading}
-              showValidation={true}
-              showConsultButton={true}
-              autoConsult={false}
-            />
+             <InputCNPJ
+               label="CNPJ *"
+               value={formData.people.tax_id}
+               onChange={(data) => updatePeople('tax_id', data.target.value)}
+               onCompanyFound={handleCompanyFound}
+               placeholder="00.000.000/0000-00"
+               required
+               disabled={loading}
+               showValidation={true}
+               showConsultButton={true}
+               autoConsult={false} // Desabilitado para evitar loop de login
+             />
 
             {/* Campos principais */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

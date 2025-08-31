@@ -148,7 +148,7 @@ const Sidebar = ({ collapsed }) => {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4">
         <div className="px-3 space-y-1">
-          {/* Demo Link */}
+          {/* Demo Links */}
           <Link
             to="/admin/demo"
             className={`group flex items-center px-2 py-2 text-sm font-medium rounded-lg transition-colors ${
@@ -163,6 +163,25 @@ const Sidebar = ({ collapsed }) => {
                 <span>Layout Demo</span>
                 <span className="ml-auto inline-block py-0.5 px-2 text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-full">
                   Demo
+                </span>
+              </>
+            )}
+          </Link>
+
+          <Link
+            to="/admin/inputs-demo"
+            className={`group flex items-center px-2 py-2 text-sm font-medium rounded-lg transition-colors ${
+              isActiveItem('/admin/inputs-demo')
+                ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
+          >
+            <FormInput className="h-5 w-5 mr-3 flex-shrink-0" />
+            {!collapsed && (
+              <>
+                <span>Inputs Demo</span>
+                <span className="ml-auto inline-block py-0.5 px-2 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full">
+                  CEP
                 </span>
               </>
             )}

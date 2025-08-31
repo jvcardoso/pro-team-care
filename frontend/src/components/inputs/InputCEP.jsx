@@ -76,13 +76,13 @@ const InputCEP = ({
 
   const consultCEP = async (cep) => {
     if (!cep || cep.length !== 8) return;
-    
+
     setIsLoading(true);
-    
+
     try {
       const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
       const data = await response.json();
-      
+
       if (data.erro) {
         setValidationMessage('CEP não encontrado');
         setIsValid(false);
@@ -91,21 +91,47 @@ const InputCEP = ({
         setAddressData(data);
         setValidationMessage('');
         setIsValid(true);
-        
-        // Callback para o componente pai com dados do endereço
+
+        // Preparar dados completos da ViaCEP
+        const addressData = {
+          // Dados básicos do endereço
+          street: data.logradouro || '',
+          neighborhood: data.bairro || '',
+          city: data.localidade || '',
+          state: data.uf || '',
+          zip_code: cep,
+          complement: data.complemento || '',
+
+          // Códigos oficiais brasileiros
+          ibge_city_code: data.ibge || null,
+          gia_code: data.gia || null,
+          siafi_code: data.siafi || null,
+          area_code: data.ddd || null,
+
+          // Campos de validação e controle
+          is_validated: true,
+          validation_source: 'viacep',
+          last_validated_at: new Date().toISOString(),
+
+          // Campos para geolocalização futura
+          latitude: null,
+          longitude: null,
+          google_place_id: null,
+          formatted_address: null,
+          geocoding_accuracy: null,
+          geocoding_source: null,
+          api_data: null
+        };
+
+        console.log('✅ Dados ViaCEP completos:', addressData);
+
+        // Callback para o componente pai com dados completos
         if (onAddressFound) {
-          onAddressFound({
-            street: data.logradouro || '',
-            neighborhood: data.bairro || '',
-            city: data.localidade || '',
-            state: data.uf || '',
-            cep: cep,
-            complement: data.complemento || ''
-          });
+          onAddressFound(addressData);
         }
       }
     } catch (error) {
-      console.error('Erro ao consultar CEP:', error);
+      console.error('❌ Erro ao consultar CEP:', error);
       setValidationMessage('Erro ao consultar CEP. Tente novamente.');
       setIsValid(false);
       setAddressData(null);
@@ -266,21 +292,64 @@ const InputCEP = ({
         <p className="text-sm text-red-600">{displayError}</p>
       )}
       
-      {/* Dados do endereço encontrado */}
-      {addressData && !displayError && (
-        <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded border">
-          <div className="flex items-start gap-2">
-            <MapPin className="h-3 w-3 mt-0.5 text-green-600" />
-            <div>
-              <p className="font-medium">{addressData.logradouro}</p>
-              <p>{addressData.bairro}, {addressData.localidade} - {addressData.uf}</p>
-              {addressData.complemento && (
-                <p className="text-xs opacity-75">{addressData.complemento}</p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+       {/* Dados do endereço encontrado */}
+       {addressData && !displayError && (
+         <div className="text-xs text-muted-foreground bg-green-50 border border-green-200 p-3 rounded-lg space-y-3">
+           <div className="flex items-start gap-2">
+             <MapPin className="h-4 w-4 mt-0.5 text-green-600 flex-shrink-0" />
+             <div className="flex-1 min-w-0">
+               {/* Endereço principal */}
+               <div className="space-y-1">
+                 <p className="font-semibold text-green-800">{addressData.logradouro || 'Endereço não informado'}</p>
+                 <p className="text-green-700">
+                   {addressData.bairro && `${addressData.bairro}, `}
+                   {addressData.localidade} - {addressData.uf}
+                 </p>
+                 {addressData.complemento && (
+                   <p className="text-green-600 italic">{addressData.complemento}</p>
+                 )}
+               </div>
+
+               {/* Códigos oficiais brasileiros */}
+               <div className="mt-3 p-2 bg-white rounded border border-green-200">
+                 <p className="font-medium text-green-800 mb-2">📋 Códigos Oficiais:</p>
+                 <div className="grid grid-cols-2 gap-2 text-xs">
+                   <div className="flex justify-between">
+                     <span className="text-green-700">IBGE:</span>
+                     <span className="font-mono text-green-800">{addressData.ibge || 'N/A'}</span>
+                   </div>
+                   <div className="flex justify-between">
+                     <span className="text-green-700">DDD:</span>
+                     <span className="font-mono text-green-800">{addressData.ddd || 'N/A'}</span>
+                   </div>
+                   <div className="flex justify-between">
+                     <span className="text-green-700">GIA:</span>
+                     <span className="font-mono text-green-800">{addressData.gia || 'N/A'}</span>
+                   </div>
+                   <div className="flex justify-between">
+                     <span className="text-green-700">SIAFI:</span>
+                     <span className="font-mono text-green-800">{addressData.siafi || 'N/A'}</span>
+                   </div>
+                 </div>
+               </div>
+
+               {/* Status de validação */}
+               <div className="mt-2 flex items-center gap-2 text-xs">
+                 <div className="flex items-center gap-1">
+                   <svg className="h-3 w-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                   </svg>
+                   <span className="text-green-700">Validado via ViaCEP</span>
+                 </div>
+                 <span className="text-green-500">•</span>
+                 <span className="text-green-600">
+                   {new Date().toLocaleString('pt-BR')}
+                 </span>
+               </div>
+             </div>
+           </div>
+         </div>
+       )}
       
       {!displayError && !addressData && formattedValue && showValidation && isValid && (
         <p className="text-xs text-muted-foreground">
