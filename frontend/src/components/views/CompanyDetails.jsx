@@ -266,9 +266,9 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
                           )}
                         </div>
                         
-                        {/* Mobile: Card de ação visível e claro */}
+                        {/* Padrão visual unificado para todos os dispositivos */}
                         {phone.is_whatsapp && (
-                          <div className="block sm:hidden mt-3">
+                          <div className="mt-3">
                             <button
                               onClick={() => openWhatsApp(phone)}
                               className="flex items-center justify-center gap-2 w-full p-3 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-700 dark:text-green-300 rounded-lg transition-colors"
@@ -277,21 +277,6 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
                               <span className="text-sm font-medium">Abrir no WhatsApp</span>
                             </button>
                           </div>
-                        )}
-                      </div>
-                      
-                      {/* Desktop: Botões tradicionais à direita */}
-                      <div className="hidden sm:flex gap-2">
-                        {phone.is_whatsapp && (
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => openWhatsApp(phone)}
-                            icon={<MessageCircle className="h-4 w-4" />}
-                            title="Abrir no WhatsApp"
-                          >
-                            WhatsApp
-                          </Button>
                         )}
                       </div>
                     </div>
@@ -322,8 +307,8 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
                           )}
                         </div>
                         
-                        {/* Mobile: Card de ação visível e claro */}
-                        <div className="block sm:hidden mt-3">
+                        {/* Padrão visual unificado para todos os dispositivos */}
+                        <div className="mt-3">
                           <button
                             onClick={() => openEmail(email)}
                             className="flex items-center justify-center gap-2 w-full p-3 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg transition-colors"
@@ -332,19 +317,6 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
                             <span className="text-sm font-medium">Enviar Email</span>
                           </button>
                         </div>
-                      </div>
-                      
-                      {/* Desktop: Botões tradicionais à direita */}
-                      <div className="hidden sm:flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => openEmail(email)}
-                          icon={<Send className="h-4 w-4" />}
-                          title="Enviar email"
-                        >
-                          Enviar Email
-                        </Button>
                       </div>
                     </div>
                   </div>
@@ -387,8 +359,8 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
                           {address.country && address.country !== 'Brasil' && ` - ${address.country}`}
                         </p>
                         
-                        {/* Mobile: Cards de ação lado a lado */}
-                        <div className="block sm:hidden mt-3">
+                        {/* Padrão visual unificado para todos os dispositivos */}
+                        <div className="mt-3">
                           <div className="grid grid-cols-2 gap-2">
                             <button
                               onClick={() => openGoogleMaps(address)}
@@ -406,28 +378,6 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
                             </button>
                           </div>
                         </div>
-                      </div>
-                      
-                      {/* Desktop: Botões tradicionais à direita */}
-                      <div className="hidden sm:flex flex-col gap-2">
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => openGoogleMaps(address)}
-                          icon={<Navigation className="h-4 w-4" />}
-                          title="Abrir no Google Maps"
-                        >
-                          Maps
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => openWaze(address)}
-                          icon={<ExternalLink className="h-4 w-4" />}
-                          title="Abrir no Waze"
-                        >
-                          Waze
-                        </Button>
                       </div>
                     </div>
                   </div>
