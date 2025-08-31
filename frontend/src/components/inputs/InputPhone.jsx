@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Star } from 'lucide-react';
 import { formatPhone } from '../../utils/formatters';
 import { removeNonNumeric } from '../../utils/validators';
 import { validatePhone, validateDDD } from '../../utils/validators';
@@ -149,9 +150,9 @@ const InputPhone = ({
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between">
-        <label className="block text-sm font-medium text-foreground">
+        <label className="flex items-center text-sm font-medium text-foreground">
           {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
+          {required && <Star className="h-3 w-3 text-red-500 ml-1 fill-current" />}
         </label>
         {phoneType && (
           <span className="text-xs text-muted-foreground">

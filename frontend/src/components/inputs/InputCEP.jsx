@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Loader2, MapPin } from 'lucide-react';
+import { Search, Loader2, MapPin, Star } from 'lucide-react';
 import { formatCEP } from '../../utils/formatters';
 import { removeNonNumeric } from '../../utils/validators';
 import { validateCEP } from '../../utils/validators';
@@ -224,9 +224,9 @@ const InputCEP = ({
 
   return (
     <div className="space-y-1">
-      <label className="block text-sm font-medium text-foreground">
+      <label className="flex items-center text-sm font-medium text-foreground">
         {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
+        {required && <Star className="h-3 w-3 text-red-500 ml-1 fill-current" />}
       </label>
       
       <div className="flex gap-2">

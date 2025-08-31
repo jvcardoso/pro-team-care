@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Check, X, Search, Loader2 } from 'lucide-react';
+import { Building2, Check, X, Search, Loader2, Star } from 'lucide-react';
 import { formatCNPJ } from '../../utils/formatters';
 import { removeNonNumeric, validateCNPJ } from '../../utils/validators';
 import { consultarCNPJ } from '../../services/cnpjService';
@@ -192,9 +192,9 @@ const InputCNPJ = ({
 
   return (
     <div className="space-y-1">
-      <label className="block text-sm font-medium text-foreground">
+      <label className="flex items-center text-sm font-medium text-foreground">
         {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
+        {required && <Star className="h-3 w-3 text-red-500 ml-1 fill-current" />}
       </label>
       
       <div className="flex gap-2">

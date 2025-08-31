@@ -1,4 +1,5 @@
 import React, { forwardRef } from 'react';
+import { Star } from 'lucide-react';
 
 const Input = forwardRef(({ 
   label,
@@ -53,9 +54,9 @@ const Input = forwardRef(({
   return (
     <div className={containerClasses}>
       {label && (
-        <label className="block text-sm font-medium text-foreground mb-2">
+        <label className="flex items-center text-sm font-medium text-foreground mb-2">
           {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
+          {required && <Star className="h-3 w-3 text-red-500 ml-1 fill-current" />}
         </label>
       )}
       

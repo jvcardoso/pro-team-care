@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, Check } from 'lucide-react';
+import { DollarSign, Check, Star } from 'lucide-react';
 import { formatCurrency, parseCurrency } from '../../utils/formatters';
 
 const InputCurrency = ({
@@ -195,9 +195,9 @@ const InputCurrency = ({
 
   return (
     <div className="space-y-1">
-      <label className="block text-sm font-medium text-foreground">
+      <label className="flex items-center text-sm font-medium text-foreground">
         {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
+        {required && <Star className="h-3 w-3 text-red-500 ml-1 fill-current" />}
       </label>
       
       <div className="relative">

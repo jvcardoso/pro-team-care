@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Check, X } from 'lucide-react';
+import { Calendar, Check, X, Star } from 'lucide-react';
 import { formatDate, parseDate } from '../../utils/formatters';
 import { removeNonNumeric } from '../../utils/validators';
 
@@ -228,9 +228,9 @@ const InputDate = ({
 
   return (
     <div className="space-y-1">
-      <label className="block text-sm font-medium text-foreground">
+      <label className="flex items-center text-sm font-medium text-foreground">
         {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
+        {required && <Star className="h-3 w-3 text-red-500 ml-1 fill-current" />}
       </label>
       
       <div className="relative">

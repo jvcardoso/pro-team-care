@@ -795,7 +795,7 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
           <div className="space-y-6">
             {/* CNPJ - Primeiro campo com consulta */}
              <InputCNPJ
-               label="CNPJ *"
+               label="CNPJ"
                value={formData.people.tax_id}
                onChange={(data) => updatePeople('tax_id', data.target.value)}
                onCompanyFound={handleCompanyFound}
@@ -810,7 +810,7 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
             {/* Campos principais */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Input
-                label="Razão Social *"
+                label="Razão Social"
                 value={formData.people.name}
                 onChange={(e) => updatePeople('name', e.target.value)}
                 placeholder="Nome completo da empresa"

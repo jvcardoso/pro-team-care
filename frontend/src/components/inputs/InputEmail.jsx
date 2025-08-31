@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Check, X } from 'lucide-react';
+import { Mail, Check, X, Star } from 'lucide-react';
 import { validateEmail } from '../../utils/validators';
 
 const InputEmail = ({
@@ -144,9 +144,9 @@ const InputEmail = ({
 
   return (
     <div className="space-y-1">
-      <label className="block text-sm font-medium text-foreground">
+      <label className="flex items-center text-sm font-medium text-foreground">
         {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
+        {required && <Star className="h-3 w-3 text-red-500 ml-1 fill-current" />}
       </label>
       
       <div className="relative">

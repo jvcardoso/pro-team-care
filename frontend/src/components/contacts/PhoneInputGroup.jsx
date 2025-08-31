@@ -80,9 +80,9 @@ const PhoneInputGroup = ({
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium text-foreground">
+        <h3 className="flex items-center text-lg font-medium text-foreground">
           {title}
-          {required && <span className="text-red-500 ml-1">*</span>}
+          {required && <Star className="h-3 w-3 text-red-500 ml-1 fill-current" />}
         </h3>
         <div className="flex items-center gap-3">
           <button
@@ -107,9 +107,9 @@ const PhoneInputGroup = ({
               onClick={handleAddPhone}
               disabled={disabled || phones.length >= maxPhones}
               title={phones.length >= maxPhones ? `Máximo de ${maxPhones} telefones atingido` : "Adicionar telefone"}
-              className="w-8 h-8 p-0 flex items-center justify-center"
+              className="w-10 h-10 p-0 flex items-center justify-center"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-5 w-5" />
             </Button>
           </div>
           
