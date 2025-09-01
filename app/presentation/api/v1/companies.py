@@ -214,6 +214,34 @@ async def delete_company(
         )
 
 
+@router.get("/cnpj/{cnpj}")
+async def get_company_by_cnpj(
+    cnpj: str,
+    repository: CompanyRepository = Depends(get_company_repository)
+):
+    """
+    Get a company by CNPJ with all related data
+
+    - **cnpj**: CNPJ to search for (with or without formatting)
+    """
+    # Validação básica do CNPJ
+    clean_cnpj = cnpj.replace(".", "").replace("/", "").replace("-", "")
+    if not clean_cnpj.isdigit() or len(clean_cnpj) != 14:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid CNPJ format. Must be 14 digits."
+        )
+
+    company = await repository.get_company_by_cnpj(clean_cnpj)
+    if not company:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Company not found"
+        )
+
+    return company
+
+
 @router.get("/{company_id}/contacts")
 async def get_company_contacts(
     company_id: int,
@@ -221,7 +249,7 @@ async def get_company_contacts(
 ):
     """
     Get company contact information (phones and emails only)
-    
+
     - **company_id**: Company ID
     """
     company = await repository.get_company(company_id)
@@ -230,7 +258,7 @@ async def get_company_contacts(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Company not found"
         )
-    
+
     return {
         "company_id": company_id,
         "name": company.people.name,

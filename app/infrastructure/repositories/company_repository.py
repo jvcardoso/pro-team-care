@@ -1,4 +1,5 @@
 from typing import List, Optional
+from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_, delete
 from sqlalchemy.orm import selectinload, joinedload
@@ -9,12 +10,51 @@ from app.domain.models.company import (
     PeopleCreate, PhoneCreate, EmailCreate, AddressCreate
 )
 from app.utils.validators import validate_contacts_quality
+from app.infrastructure.services.address_enrichment_service import address_enrichment_service
 
 
 class CompanyRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.logger = get_logger()
+    
+    def _to_naive_datetime(self, dt):
+        """Convert timezone-aware datetime to naive datetime"""
+        if dt is None:
+            return None
+        if isinstance(dt, datetime) and dt.tzinfo is not None:
+            return dt.replace(tzinfo=None)
+        return dt
+
+    async def _enrich_addresses_automatically(self, addresses: List[AddressCreate]) -> List[dict]:
+        """
+        Hook para enriquecimento automático de endereços antes de salvar
+        
+        Args:
+            addresses: Lista de endereços a serem enriquecidos
+            
+        Returns:
+            Lista de endereços enriquecidos como dicionários
+        """
+        if not addresses:
+            return []
+            
+        self.logger.info(f"Starting automatic address enrichment for {len(addresses)} addresses")
+        
+        # Converter AddressCreate para dicionários para o serviço
+        addresses_dict = []
+        for addr in addresses:
+            addr_dict = addr.model_dump()
+            addresses_dict.append(addr_dict)
+        
+        # Enriquecer endereços
+        enriched_addresses = await address_enrichment_service.enrich_multiple_addresses(addresses_dict)
+        
+        self.logger.info(f"Address enrichment completed", 
+                        original_count=len(addresses), 
+                        enriched_count=len(enriched_addresses))
+        
+        return enriched_addresses
 
     async def create_company(self, company_data: CompanyCreate) -> CompanyDetailed:
         """Create a new company with related entities in a transaction"""
@@ -97,41 +137,48 @@ class CompanyRepository:
                 )
                 self.db.add(email_db)
             
-            # Create related addresses
-            for address_data in company_data.addresses or []:
-                self.logger.info("Criando endereço", address_data=address_data.model_dump())
+            # Create related addresses with automatic enrichment
+            if company_data.addresses:
+                # 🚀 HOOK: Enriquecimento automático de endereços
+                enriched_addresses = await self._enrich_addresses_automatically(company_data.addresses)
+                
+                for address_dict in enriched_addresses:
+                    self.logger.info("Criando endereço enriquecido", address_data=address_dict)
 
-                address_db = Address(
-                    addressable_id=people_db.id,
-                    street=address_data.street,
-                    number=address_data.number,  # Manter como enviado pelo frontend
-                    details=address_data.details,
-                    neighborhood=address_data.neighborhood,
-                    city=address_data.city,
-                    state=address_data.state,
-                    zip_code=address_data.zip_code,
-                    country=address_data.country,
-                    type=address_data.type,
-                    is_principal=address_data.is_principal,
-                    # Geocoding fields
-                    latitude=address_data.latitude,
-                    longitude=address_data.longitude,
-                    google_place_id=address_data.google_place_id,
-                    formatted_address=address_data.formatted_address,
-                    geocoding_accuracy=getattr(address_data, 'geocoding_accuracy', None),
-                    geocoding_source=getattr(address_data, 'geocoding_source', None),
-                    # Validation fields
-                    is_validated=getattr(address_data, 'is_validated', False),
-                    validation_source=getattr(address_data, 'validation_source', None),
-                    last_validated_at=getattr(address_data, 'last_validated_at', None),
-                    # IBGE codes
-                    ibge_city_code=getattr(address_data, 'ibge_city_code', None),
-                    gia_code=getattr(address_data, 'gia_code', None),
-                    siafi_code=getattr(address_data, 'siafi_code', None),
-                    area_code=getattr(address_data, 'area_code', None),
-                    # API data
-                    api_data=getattr(address_data, 'api_data', None)
-                )
+                    address_db = Address(
+                        addressable_id=people_db.id,
+                        street=address_dict.get('street'),
+                        number=address_dict.get('number'),
+                        details=address_dict.get('details'),
+                        neighborhood=address_dict.get('neighborhood'),
+                        city=address_dict.get('city'),
+                        state=address_dict.get('state'),
+                        zip_code=address_dict.get('zip_code'),
+                        country=address_dict.get('country', 'BR'),
+                        type=address_dict.get('type', 'commercial'),
+                        is_principal=address_dict.get('is_principal', False),
+                        # Geocoding fields (enriquecidos automaticamente)
+                        latitude=address_dict.get('latitude'),
+                        longitude=address_dict.get('longitude'),
+                        google_place_id=address_dict.get('google_place_id'),
+                        formatted_address=address_dict.get('formatted_address'),
+                        geocoding_accuracy=address_dict.get('geocoding_accuracy'),
+                        geocoding_source=address_dict.get('geocoding_source'),
+                        coordinates_source=address_dict.get('coordinates_source'),
+                        # Validation fields (enriquecidos automaticamente)
+                        is_validated=address_dict.get('is_validated', False),
+                        validation_source=address_dict.get('validation_source'),
+                        # IBGE codes (enriquecidos automaticamente)
+                        ibge_city_code=address_dict.get('ibge_city_code'),
+                        ibge_state_code=address_dict.get('ibge_state_code'),
+                        gia_code=address_dict.get('gia_code'),
+                        siafi_code=address_dict.get('siafi_code'),
+                        area_code=address_dict.get('area_code'),
+                        # Enrichment metadata
+                        enrichment_source=address_dict.get('enrichment_source'),
+                        # API data
+                        api_data=address_dict.get('api_data')
+                    )
 
                 self.logger.info("Endereço criado no banco", address_db_data={
                     'latitude': address_db.latitude,
@@ -532,12 +579,13 @@ class CompanyRepository:
                         # Validation fields
                         is_validated=getattr(address_data, 'is_validated', False),
                         validation_source=getattr(address_data, 'validation_source', None),
-                        last_validated_at=getattr(address_data, 'last_validated_at', None),
-                        # IBGE codes - preservar existentes se não fornecidos
-                        ibge_city_code=getattr(address_data, 'ibge_city_code', None) or (existing_addr.ibge_city_code if existing_addr else None),
-                        gia_code=getattr(address_data, 'gia_code', None) or (existing_addr.gia_code if existing_addr else None),
-                        siafi_code=getattr(address_data, 'siafi_code', None) or (existing_addr.siafi_code if existing_addr else None),
-                        area_code=getattr(address_data, 'area_code', None) or (existing_addr.area_code if existing_addr else None),
+                        last_validated_at=self._to_naive_datetime(getattr(address_data, 'last_validated_at', None)),
+                        # IBGE codes - usar acesso direto e preservar existentes se não fornecidos
+                        ibge_city_code=(address_data.ibge_city_code if hasattr(address_data, 'ibge_city_code') else None) or (existing_addr.ibge_city_code if existing_addr else None),
+                        ibge_state_code=(address_data.ibge_state_code if hasattr(address_data, 'ibge_state_code') else None) or (existing_addr.ibge_state_code if existing_addr else None),
+                        gia_code=(address_data.gia_code if hasattr(address_data, 'gia_code') else None) or (existing_addr.gia_code if existing_addr else None),
+                        siafi_code=(address_data.siafi_code if hasattr(address_data, 'siafi_code') else None) or (existing_addr.siafi_code if existing_addr else None),
+                        area_code=(address_data.area_code if hasattr(address_data, 'area_code') else None) or (existing_addr.area_code if existing_addr else None),
                         # API data
                         api_data=getattr(address_data, 'api_data', None)
                     )
@@ -595,6 +643,159 @@ class CompanyRepository:
             await self.db.rollback()
             raise e
 
+    async def get_company_by_cnpj(self, cnpj: str) -> Optional[CompanyDetailed]:
+        """Get a company by CNPJ with all related data"""
+        # Remove formatação do CNPJ
+        clean_cnpj = cnpj.replace(".", "").replace("/", "").replace("-", "")
+
+        query = (
+            select(Company)
+            .options(
+                joinedload(Company.people).selectinload(People.phones),
+                joinedload(Company.people).selectinload(People.emails),
+                joinedload(Company.people).selectinload(People.addresses)
+            )
+            .join(People, Company.person_id == People.id)
+            .where(and_(
+                Company.deleted_at.is_(None),
+                People.deleted_at.is_(None),
+                People.tax_id == clean_cnpj
+            ))
+        )
+
+        result = await self.db.execute(query)
+        company_db = result.scalars().first()
+
+        if not company_db:
+            return None
+
+        # Convert to dict and fix metadata field mapping (same as get_company)
+        company_dict = {
+            'id': company_db.id,
+            'person_id': company_db.person_id,
+            'settings': company_db.settings,
+            'metadata': company_db.metadata_,  # Map metadata_ to metadata
+            'display_order': company_db.display_order,
+            'created_at': company_db.created_at,
+            'updated_at': company_db.updated_at,
+            'deleted_at': company_db.deleted_at,
+            'people': {
+                'id': company_db.people.id,
+                'person_type': company_db.people.person_type,
+                'name': company_db.people.name,
+                'trade_name': company_db.people.trade_name,
+                'tax_id': company_db.people.tax_id,
+                'secondary_tax_id': company_db.people.secondary_tax_id,
+                'birth_date': company_db.people.birth_date,
+                'incorporation_date': company_db.people.incorporation_date,
+                'gender': company_db.people.gender,
+                'marital_status': company_db.people.marital_status,
+                'occupation': company_db.people.occupation,
+                'tax_regime': company_db.people.tax_regime,
+                'legal_nature': company_db.people.legal_nature,
+                'municipal_registration': company_db.people.municipal_registration,
+                'website': company_db.people.website,
+                'description': company_db.people.description,
+                'status': company_db.people.status,
+                'is_active': company_db.people.is_active,
+                'lgpd_consent_version': company_db.people.lgpd_consent_version,
+                'lgpd_consent_given_at': company_db.people.lgpd_consent_given_at,
+                'lgpd_data_retention_expires_at': company_db.people.lgpd_data_retention_expires_at,
+                'created_at': company_db.people.created_at,
+                'updated_at': company_db.people.updated_at,
+                'deleted_at': company_db.people.deleted_at
+            },
+            'phones': [
+                {
+                    'id': phone.id,
+                    'country_code': phone.country_code,
+                    'number': phone.number,
+                    'extension': phone.extension,
+                    'type': phone.type,
+                    'is_principal': phone.is_principal,
+                    'is_active': phone.is_active,
+                    'phone_name': phone.phone_name,
+                    'is_whatsapp': phone.is_whatsapp,
+                    'whatsapp_formatted': phone.whatsapp_formatted,
+                    'whatsapp_verified': phone.whatsapp_verified,
+                    'whatsapp_verified_at': phone.whatsapp_verified_at,
+                    'whatsapp_business': phone.whatsapp_business,
+                    'whatsapp_name': phone.whatsapp_name,
+                    'accepts_whatsapp_marketing': phone.accepts_whatsapp_marketing,
+                    'accepts_whatsapp_notifications': phone.accepts_whatsapp_notifications,
+                    'whatsapp_preferred_time_start': phone.whatsapp_preferred_time_start,
+                    'whatsapp_preferred_time_end': phone.whatsapp_preferred_time_end,
+                    'carrier': phone.carrier,
+                    'line_type': phone.line_type,
+                    'contact_priority': phone.contact_priority,
+                    'can_receive_calls': phone.can_receive_calls,
+                    'can_receive_sms': phone.can_receive_sms,
+                    'last_contact_attempt': phone.last_contact_attempt,
+                    'last_contact_success': phone.last_contact_success,
+                    'contact_attempts_count': phone.contact_attempts_count,
+                    'verified_at': phone.verified_at,
+                    'verification_method': phone.verification_method,
+                    'created_at': phone.created_at,
+                    'updated_at': phone.updated_at
+                } for phone in company_db.people.phones
+            ],
+            'emails': [
+                {
+                    'id': email.id,
+                    'email_address': email.email_address,
+                    'type': email.type,
+                    'is_principal': email.is_principal,
+                    'is_active': email.is_active,
+                    'verified_at': email.verified_at,
+                    'created_at': email.created_at,
+                    'updated_at': email.updated_at
+                } for email in company_db.people.emails
+            ],
+            'addresses': [
+                {
+                    'id': addr.id,
+                    'street': addr.street,
+                    'number': addr.number,
+                    'details': addr.details,
+                    'neighborhood': addr.neighborhood,
+                    'city': addr.city,
+                    'state': addr.state,
+                    'zip_code': addr.zip_code,
+                    'country': addr.country,
+                    'type': addr.type,
+                    'is_principal': addr.is_principal,
+                    'latitude': addr.latitude,
+                    'longitude': addr.longitude,
+                    'google_place_id': addr.google_place_id,
+                    'formatted_address': addr.formatted_address,
+                    'geocoding_accuracy': addr.geocoding_accuracy,
+                    'geocoding_source': addr.geocoding_source,
+                    'ibge_city_code': addr.ibge_city_code,
+                    'ibge_state_code': addr.ibge_state_code,
+                    'gia_code': addr.gia_code,
+                    'siafi_code': addr.siafi_code,
+                    'area_code': addr.area_code,
+                    'region': addr.region,
+                    'microregion': addr.microregion,
+                    'mesoregion': addr.mesoregion,
+                    'within_coverage': addr.within_coverage,
+                    'distance_to_establishment': addr.distance_to_establishment,
+                    'estimated_travel_time': addr.estimated_travel_time,
+                    'access_difficulty': addr.access_difficulty,
+                    'access_notes': addr.access_notes,
+                    'quality_score': addr.quality_score,
+                    'is_validated': addr.is_validated,
+                    'last_validated_at': addr.last_validated_at,
+                    'validation_source': addr.validation_source,
+                    'api_data': addr.api_data,
+                    'created_at': addr.created_at,
+                    'updated_at': addr.updated_at
+                } for addr in company_db.people.addresses
+            ]
+        }
+
+        return CompanyDetailed.model_validate(company_dict)
+
     async def count_companies(self, search: Optional[str] = None, status: Optional[str] = None) -> int:
         """Count total companies with optional filters"""
         query = (
@@ -602,7 +803,7 @@ class CompanyRepository:
             .join(People, Company.person_id == People.id)
             .where(and_(Company.deleted_at.is_(None), People.deleted_at.is_(None)))
         )
-        
+
         # Add search filter
         if search:
             search_filter = or_(
@@ -611,10 +812,10 @@ class CompanyRepository:
                 People.tax_id.ilike(f"%{search}%")
             )
             query = query.where(search_filter)
-        
+
         # Add status filter
         if status:
             query = query.where(People.status == status)
-        
+
         result = await self.db.execute(query)
         return result.scalar() or 0

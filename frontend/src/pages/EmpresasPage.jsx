@@ -98,8 +98,16 @@ const EmpresasPage = () => {
   };
 
   const handleCreate = () => {
+    // Garantir limpeza completa do estado antes de criar
     setSelectedCompanyId(null);
     setCurrentView('create');
+    // Pequeno delay para garantir que o estado seja atualizado
+    setTimeout(() => {
+      if (selectedCompanyId !== null) {
+        console.warn('selectedCompanyId não foi limpo adequadamente, forçando limpeza');
+        setSelectedCompanyId(null);
+      }
+    }, 0);
   };
 
   const handleEdit = (companyId) => {
@@ -122,6 +130,14 @@ const EmpresasPage = () => {
   const handleCancel = () => {
     setCurrentView('list');
     setSelectedCompanyId(null);
+    // Limpar qualquer estado residual
+    setTimeout(() => {
+      if (currentView !== 'list' || selectedCompanyId !== null) {
+        console.warn('Estado não foi limpo adequadamente no cancelamento');
+        setCurrentView('list');
+        setSelectedCompanyId(null);
+      }
+    }, 0);
   };
 
   const handleBack = () => {
@@ -141,9 +157,12 @@ const EmpresasPage = () => {
 
   // Render different views based on current state
   if (currentView === 'create' || currentView === 'edit') {
+    // Garantir que companyId seja null no modo de criação
+    const companyIdToPass = currentView === 'create' ? null : selectedCompanyId;
+
     return (
-      <CompanyForm 
-        companyId={selectedCompanyId}
+      <CompanyForm
+        companyId={companyIdToPass}
         onSave={handleSave}
         onCancel={handleCancel}
       />

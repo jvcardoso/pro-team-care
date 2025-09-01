@@ -2590,9 +2590,13 @@ Resultado Esperado: Sistema de autenticação enterprise-grade com compliance ad
 //////////
 
 Analise :
+  🎯 Outros termos relacionados:
+
   - Deep Debugging - Debug aprofundado
   - Systematic Investigation - Investigação sistemática
   - Differential Analysis - Análise diferencial (comparando funcionando vs quebrado)
+  - Forensic Analysis - Análise forense de código
+  - 5 Whys Method - Método dos 5 porquês (perguntar "por quê?" até chegar na causa raiz)
 
 
   ///////////////

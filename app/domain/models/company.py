@@ -161,6 +161,30 @@ class AddressBase(BaseModel):
     type: AddressType = AddressType.COMMERCIAL
     is_principal: bool = False
 
+    # Geocoding fields
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    google_place_id: Optional[str] = None
+    geocoding_accuracy: Optional[str] = None
+    geocoding_source: Optional[str] = None
+    formatted_address: Optional[str] = None
+    coordinates_added_at: Optional[datetime] = None
+    coordinates_source: Optional[str] = None
+
+    # Enrichment metadata
+    enriched_at: Optional[datetime] = None
+    enrichment_source: Optional[str] = None
+    validation_source: Optional[str] = None
+    last_validated_at: Optional[datetime] = None
+    is_validated: bool = False
+    
+    # Códigos oficiais brasileiros (ViaCEP)
+    ibge_city_code: Optional[int] = None
+    ibge_state_code: Optional[int] = None
+    gia_code: Optional[str] = None
+    siafi_code: Optional[str] = None
+    area_code: Optional[str] = None
+
 
 class AddressCreate(AddressBase):
     pass
@@ -177,7 +201,7 @@ class AddressUpdate(BaseModel):
     country: Optional[str] = Field(None, max_length=2)
     type: Optional[AddressType] = None
     is_principal: Optional[bool] = None
-    
+
     # Campos de geocoding
     latitude: Optional[float] = None
     longitude: Optional[float] = None
@@ -185,27 +209,17 @@ class AddressUpdate(BaseModel):
     formatted_address: Optional[str] = None
     geocoding_accuracy: Optional[str] = None
     geocoding_source: Optional[str] = None
-    
-    # Códigos oficiais brasileiros
-    ibge_city_code: Optional[int] = None
-    gia_code: Optional[int] = None
-    siafi_code: Optional[int] = None
-    area_code: Optional[int] = None
-    
-    # Campos de validação
-    is_validated: Optional[bool] = None
-    validation_source: Optional[str] = None
-    last_validated_at: Optional[str] = None
+    coordinates_added_at: Optional[datetime] = None
+    coordinates_source: Optional[str] = None
+
+    # Enrichment metadata
+    enriched_at: Optional[datetime] = None
+    enrichment_source: Optional[str] = None
 
 
 class Address(AddressBase):
     id: int
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    google_place_id: Optional[str] = None
-    formatted_address: Optional[str] = None
-    geocoding_accuracy: Optional[str] = None
-    geocoding_source: Optional[str] = None
+    # Campos adicionais específicos do modelo Address
     ibge_city_code: Optional[int] = None
     ibge_state_code: Optional[int] = None
     gia_code: Optional[str] = None
@@ -220,9 +234,6 @@ class Address(AddressBase):
     access_difficulty: Optional[AccessDifficulty] = None
     access_notes: Optional[str] = None
     quality_score: Optional[int] = Field(None, ge=0, le=100)
-    is_validated: bool = False
-    last_validated_at: Optional[datetime] = None
-    validation_source: Optional[str] = None
     api_data: Optional[Dict] = None
     created_at: datetime
     updated_at: datetime

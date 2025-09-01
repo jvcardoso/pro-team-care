@@ -12,9 +12,10 @@ class GeocodingService {
    * Geocoding usando backend como proxy para Nominatim
    */
   async nominatimGeocode(address) {
-    // Não precisamos mais de rate limiting no frontend, o backend cuida disso
-    
-    const response = await fetch('/api/v1/geocoding/geocode', {
+    // Sempre usar backend diretamente (não proxy do Vite)
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://192.168.11.83:8000';
+
+    const response = await fetch(`${baseUrl}/api/v1/geocoding/geocode`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

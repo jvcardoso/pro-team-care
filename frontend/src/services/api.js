@@ -122,6 +122,12 @@ export const companiesService = {
     return response.data;
   },
 
+  // Obter empresa por CNPJ
+  getCompanyByCNPJ: async (cnpj) => {
+    const response = await api.get(`/api/v1/companies/cnpj/${cnpj}`);
+    return response.data;
+  },
+
   // Criar nova empresa
   createCompany: async (companyData) => {
     const response = await api.post('/api/v1/companies/', companyData);

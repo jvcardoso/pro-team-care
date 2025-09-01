@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { companiesService } from '../../services/api';
 import { consultarCNPJ, formatarCNPJ } from '../../services/cnpjService';
-import addressEnrichmentService from '../../services/addressEnrichmentService';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
@@ -128,38 +127,6 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
       if (!formData.people.tax_id?.trim()) {
         setError('CNPJ é obrigatório');
         return;
-      }
-
-      // Double check: Verificar se CNPJ já existe antes de tentar salvar
-      if (!isEditing) {
-        try {
-          const cleanCNPJ = formData.people.tax_id.replace(/[./-]/g, '');
-          const existingCompany = await companiesService.getCompanyByCNPJ(cleanCNPJ);
-
-          if (existingCompany) {
-            toast.error('Este CNPJ já está cadastrado no sistema. Você pode editar a empresa existente.', {
-              duration: 6000,
-              icon: '⚠️',
-              action: {
-                label: 'Editar Empresa',
-                onClick: () => {
-                  window.location.href = `/empresas/${existingCompany.id}`;
-                }
-              }
-            });
-            return;
-          }
-        } catch (error) {
-          // Se erro 404, CNPJ não existe - pode prosseguir
-          if (error.response?.status !== 404) {
-            console.error('Erro ao verificar CNPJ antes do salvamento:', error);
-            // Em caso de erro na verificação, mostrar aviso mas permitir prosseguir
-            toast.warning('Não foi possível verificar se o CNPJ já existe. Prosseguindo com o salvamento...', {
-              duration: 3000,
-              icon: '⚠️'
-            });
-          }
-        }
       }
 
       // Verificar se há pelo menos um endereço válido
@@ -426,40 +393,6 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
       console.log('Emails valid:', cleanedData.emails.length > 0);
       console.log('Addresses valid:', cleanedData.addresses.length > 0);
 
-      // 🔍 FORENSIC DEBUG - Dados sendo enviados para backend
-      if (cleanedData.addresses && cleanedData.addresses.length > 0) {
-        cleanedData.addresses.forEach((addr, index) => {
-          console.log(`🔍 ENDERECO ${index + 1} ENVIADO PARA BACKEND:`, {
-            basic_fields: {
-              street: addr.street,
-              number: addr.number,
-              neighborhood: addr.neighborhood,
-              city: addr.city,
-              state: addr.state,
-              zip_code: addr.zip_code
-            },
-            geocoding: {
-              latitude: addr.latitude,
-              longitude: addr.longitude,
-              geocoding_accuracy: addr.geocoding_accuracy,
-              geocoding_source: addr.geocoding_source
-            },
-            viacep_codes: {
-              ibge_city_code: addr.ibge_city_code,
-              gia_code: addr.gia_code,
-              siafi_code: addr.siafi_code,
-              area_code: addr.area_code,
-              ibge_state_code: addr.ibge_state_code
-            },
-            validation: {
-              is_validated: addr.is_validated,
-              validation_source: addr.validation_source,
-              enrichment_source: addr.enrichment_source
-            }
-          });
-        });
-      }
-
       if (isEditing) {
         await companiesService.updateCompany(companyId, cleanedData);
       } else {
@@ -484,16 +417,7 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
         } else if (err.response.data?.detail) {
           errorMessage = err.response.data.detail;
         } else {
-                  // Verificar se é erro de CNPJ duplicado
-        const errorDetail = err.response.data?.detail;
-        if (errorDetail && (
-          errorDetail.includes('CNPJ already exists') ||
-          errorDetail.includes('Company with this CNPJ already exists')
-        )) {
-          errorMessage = 'Já existe uma empresa cadastrada com este CNPJ. Você pode editar a empresa existente ou usar um CNPJ diferente.';
-        } else {
           errorMessage = 'Dados inválidos. Verifique os campos obrigatórios.';
-        }
         }
       } else if (err.response?.status === 400) {
         errorMessage = 'Dados inválidos. Verifique os campos obrigatórios.';
@@ -775,40 +699,6 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
       console.log('Emails valid:', cleanedData.emails.length > 0);
       console.log('Addresses valid:', cleanedData.addresses.length > 0);
 
-      // 🔍 FORENSIC DEBUG - Dados sendo enviados para backend
-      if (cleanedData.addresses && cleanedData.addresses.length > 0) {
-        cleanedData.addresses.forEach((addr, index) => {
-          console.log(`🔍 ENDERECO ${index + 1} ENVIADO PARA BACKEND:`, {
-            basic_fields: {
-              street: addr.street,
-              number: addr.number,
-              neighborhood: addr.neighborhood,
-              city: addr.city,
-              state: addr.state,
-              zip_code: addr.zip_code
-            },
-            geocoding: {
-              latitude: addr.latitude,
-              longitude: addr.longitude,
-              geocoding_accuracy: addr.geocoding_accuracy,
-              geocoding_source: addr.geocoding_source
-            },
-            viacep_codes: {
-              ibge_city_code: addr.ibge_city_code,
-              gia_code: addr.gia_code,
-              siafi_code: addr.siafi_code,
-              area_code: addr.area_code,
-              ibge_state_code: addr.ibge_state_code
-            },
-            validation: {
-              is_validated: addr.is_validated,
-              validation_source: addr.validation_source,
-              enrichment_source: addr.enrichment_source
-            }
-          });
-        });
-      }
-
       if (isEditing) {
         await companiesService.updateCompany(companyId, cleanedData);
       } else {
@@ -876,7 +766,7 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
 
       // Se não há dados válidos, não faz nada
       if (!hasValidData) {
-         toast('Nenhum dado encontrado para este CNPJ', { icon: 'ℹ️' });
+        notify.info('Nenhum dado encontrado para este CNPJ');
         return;
       }
 
@@ -886,8 +776,138 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
                              formData.emails.some(e => e.email_address) ||
                              formData.addresses.some(a => a.street);
 
+      const fillData = () => {
+        // LIMPAR formulário antes de preencher
+        const cleanFormData = {
+          people: {
+            person_type: 'PJ',
+            name: '',
+            trade_name: '',
+            tax_id: formData.people.tax_id, // Manter apenas o CNPJ
+            incorporation_date: '',
+            legal_nature: '',
+            status: 'active',
+            tax_regime: 'simples_nacional',
+            description: ''
+          },
+          company: {
+            settings: {},
+            metadata: {},
+            display_order: 0
+          },
+          phones: [{
+            country_code: '55',
+            number: '',
+            type: 'commercial',
+            is_principal: true,
+            is_whatsapp: false
+          }],
+          emails: [{
+            email_address: '',
+            type: 'work',
+            is_principal: true
+          }],
+          addresses: [{
+            street: '',
+            number: '',
+            details: '',
+            neighborhood: '',
+            city: '',
+            state: '',
+            zip_code: '',
+            country: 'BR',
+            type: 'commercial',
+            is_principal: true
+          }]
+        };
 
+        // Preencher com dados da ReceitaWS
+        console.log('=== [CNPJ] Atribuindo dados ao formData ===');
+        console.log('Dados da empresa recebidos:', dadosEmpresa);
+        console.log('Metadata da empresa:', dadosEmpresa.people?.metadata);
 
+        setFormData({
+          people: {
+            ...cleanFormData.people,
+            name: dadosEmpresa.people?.name || '',
+            trade_name: dadosEmpresa.people?.trade_name || '',
+            incorporation_date: dadosEmpresa.people?.incorporation_date || '',
+            legal_nature: dadosEmpresa.people?.legal_nature || '',
+            status: dadosEmpresa.people?.status || 'active',
+            tax_regime: dadosEmpresa.people?.tax_regime || 'simples_nacional',
+            description: dadosEmpresa.people?.description || ''
+            // ❌ REMOVER metadata daqui - vai para company
+          },
+          company: {
+            ...cleanFormData.company,
+            // ✅ METADATA VAI PARA COMPANY!
+            metadata: dadosEmpresa.people?.metadata || {}
+          },
+          phones: dadosEmpresa.phones?.length > 0 ? dadosEmpresa.phones : cleanFormData.phones,
+          emails: dadosEmpresa.emails?.length > 0 ? dadosEmpresa.emails : cleanFormData.emails,
+          addresses: dadosEmpresa.addresses?.length > 0 ? dadosEmpresa.addresses : cleanFormData.addresses
+        });
+
+        console.log('FormData após atribuição:', formData);
+
+        // Feedback visual de sucesso
+        notify.success('Dados da empresa preenchidos automaticamente!');
+      };
+
+      if (hasExistingData) {
+        // Toast personalizado com confirmação
+        toast((t) => (
+          <div className="space-y-3">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <CheckCircle className="h-6 w-6 text-blue-500" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                  Dados Encontrados na Receita Federal
+                </h4>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                  Deseja preencher os campos automaticamente? Isso irá sobrescrever os dados já preenchidos.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex space-x-2">
+              <button
+                onClick={() => {
+                  fillData();
+                  toast.dismiss(t.id);
+                }}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-3 rounded-md transition-colors"
+              >
+                <CheckCircle className="h-4 w-4 inline mr-1" />
+                Preencher
+              </button>
+              <button
+                onClick={() => toast.dismiss(t.id)}
+                className="flex-1 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 text-sm font-medium py-2 px-3 rounded-md transition-colors"
+              >
+                <XCircle className="h-4 w-4 inline mr-1" />
+                Cancelar
+              </button>
+            </div>
+          </div>
+        ), {
+          duration: 10000, // 10 segundos para decisão
+          position: 'top-center',
+          style: {
+            background: '#ffffff',
+            color: '#374151',
+            border: '1px solid #d1d5db',
+            borderRadius: '0.5rem',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+            maxWidth: '400px',
+          },
+        });
+      } else {
+        // Se não há dados existentes, preenche diretamente
+        fillData();
+      }
 
     } catch (err) {
       console.error('Erro ao consultar CNPJ:', err);
@@ -897,188 +917,152 @@ const CompanyForm = ({ companyId, onSave, onCancel }) => {
     }
   };
 
-  const handleCompanyFound = async (companyData) => {
-    try {
-      // Verificar se CNPJ já existe no sistema
-      const cleanCNPJ = companyData.people?.tax_id?.replace(/[./-]/g, '') || '';
-      const existingCompany = await companiesService.getCompanyByCNPJ(cleanCNPJ);
+  const handleCompanyFound = (companyData) => {
+    // Verificar se há dados existentes que serão sobrescritos
+    const hasExistingData = formData.people.name || formData.people.trade_name ||
+                           formData.phones.some(p => p.number) ||
+                           formData.emails.some(e => e.email_address) ||
+                           formData.addresses.some(a => a.street);
 
-      if (existingCompany) {
-        // CNPJ já existe - mostrar mensagem de erro
-        toast.error('Este CNPJ já está cadastrado no sistema. Você pode editar a empresa existente.', {
-          duration: 6000,
-          icon: '⚠️',
-          action: {
-            label: 'Editar Empresa',
-            onClick: () => {
-              // Redirecionar para edição da empresa existente
-              window.location.href = `/empresas/${existingCompany.id}`;
-            }
-          }
-        });
-        return;
-      }
+    const fillData = () => {
+      // LIMPAR formulário antes de preencher
+      const cleanFormData = {
+        people: {
+          person_type: 'PJ',
+          name: '',
+          trade_name: '',
+          tax_id: formData.people.tax_id, // Manter apenas o CNPJ
+          incorporation_date: '',
+          legal_nature: '',
+          status: 'active',
+          tax_regime: 'simples_nacional',
+          description: ''
+        },
+        company: {
+          settings: {},
+          metadata: {},
+          display_order: 0
+        },
+        phones: [{
+          country_code: '55',
+          number: '',
+          type: 'commercial',
+          is_principal: true,
+          is_whatsapp: false
+        }],
+        emails: [{
+          email_address: '',
+          type: 'work',
+          is_principal: true
+        }],
+        addresses: [{
+          street: '',
+          number: '',
+          details: '',
+          neighborhood: '',
+          city: '',
+          state: '',
+          zip_code: '',
+          country: 'BR',
+          type: 'commercial',
+          is_principal: true
+        }]
+      };
 
-      // CNPJ não existe - preencher automaticamente os dados
-      fillData(companyData);
+      // Preencher com dados da consulta
+      console.log('=== [COMPANY FOUND] Atribuindo dados ao formData ===');
+      console.log('Dados da empresa recebidos:', companyData);
+      console.log('Metadata da empresa:', companyData.people?.metadata);
 
-    } catch (error) {
-      if (error.response?.status === 404) {
-        // CNPJ não encontrado no sistema - pode prosseguir com preenchimento
-        fillData(companyData);
-      } else {
-        // Outro erro - mostrar mensagem genérica e prosseguir
-        console.error('Erro ao verificar CNPJ:', error);
-        toast.error('Erro ao verificar CNPJ. Prosseguindo com preenchimento automático.', {
-          duration: 4000,
-          icon: '⚠️'
-        });
-        fillData(companyData);
-      }
-    }
-  };
+      setFormData({
+        people: {
+          ...cleanFormData.people,
+          ...companyData.people
+          // ❌ REMOVER metadata daqui - vai para company
+        },
+        company: {
+          ...cleanFormData.company,
+          // ✅ METADATA VAI PARA COMPANY!
+          metadata: companyData.people?.metadata || cleanFormData.company.metadata || {}
+        },
+        phones: companyData.phones?.length > 0 ? companyData.phones : cleanFormData.phones,
+        emails: companyData.emails?.length > 0 ? companyData.emails : cleanFormData.emails,
+        addresses: companyData.addresses?.length > 0 ? companyData.addresses : cleanFormData.addresses
+      });
 
-  const fillData = async (companyData) => {
-    console.log('🚀 Iniciando preenchimento de dados da empresa...');
+      console.log('FormData após atribuição (handleCompanyFound):', formData);
 
-    // Manter CNPJ atual
-    const currentCNPJ = formData.people.tax_id;
+      // Limpar erro se houver
+      setError(null);
 
-    // Preparar dados básicos
-    const basicFormData = {
-      people: {
-        person_type: 'PJ',
-        name: companyData.people?.name || '',
-        trade_name: companyData.people?.trade_name || '',
-        tax_id: currentCNPJ, // Manter CNPJ atual
-        secondary_tax_id: companyData.people?.secondary_tax_id || '',
-        incorporation_date: companyData.people?.incorporation_date || '',
-        tax_regime: companyData.people?.tax_regime || 'simples_nacional',
-        legal_nature: companyData.people?.legal_nature || '',
-        municipal_registration: companyData.people?.municipal_registration || '',
-        website: companyData.people?.website || '',
-        description: companyData.people?.description || '',
-        status: companyData.people?.status || 'active'
-      },
-      company: {
-        settings: companyData.company?.settings || {},
-        metadata: companyData.company?.metadata || {},
-        display_order: companyData.company?.display_order || 0
-      },
-      phones: companyData.phones && companyData.phones.length > 0 ? companyData.phones.map(phone => ({
-        country_code: phone.country_code || '55',
-        number: phone.number || '',
-        type: phone.type || 'commercial',
-        is_principal: phone.is_principal || false,
-        is_whatsapp: phone.is_whatsapp || false
-      })) : [{
-        country_code: '55',
-        number: '',
-        type: 'commercial',
-        is_principal: true,
-        is_whatsapp: false
-      }],
-      emails: companyData.emails && companyData.emails.length > 0 ? companyData.emails.map(email => ({
-        email_address: email.email_address || '',
-        type: email.type || 'work',
-        is_principal: email.is_principal || false
-      })) : [{
-        email_address: '',
-        type: 'work',
-        is_principal: true
-      }],
-      addresses: companyData.addresses && companyData.addresses.length > 0 ? companyData.addresses.map(address => ({
-        street: address.street || '',
-        number: (address.number && address.number !== 'S/N' && address.number !== 's/n') ? address.number : '',
-        details: address.details || '',
-        neighborhood: address.neighborhood || '',
-        city: address.city || '',
-        state: address.state || '',
-        zip_code: address.zip_code || '',
-        country: address.country || 'BR',
-        type: address.type || 'commercial',
-        is_principal: address.is_principal || false,
-        latitude: address.latitude,
-        longitude: address.longitude,
-        geocoding_source: address.geocoding_source,
-        geocoding_accuracy: address.geocoding_accuracy
-      })) : [{
-        street: '',
-        number: '',
-        details: '',
-        neighborhood: '',
-        city: '',
-        state: '',
-        zip_code: '',
-        country: 'BR',
-        type: 'commercial',
-        is_principal: true
-      }]
+      // Feedback visual de sucesso
+      notify.success('Dados da empresa preenchidos automaticamente!');
     };
 
-    // Atualizar formulário com dados básicos primeiro
-    setFormData(basicFormData);
+    if (hasExistingData) {
+      // Toast personalizado com confirmação
+      toast((t) => (
+        <div className="space-y-3">
+          <div className="flex items-start space-x-3">
+            <div className="flex-shrink-0">
+              <CheckCircle className="h-6 w-6 text-blue-500" />
+            </div>
+            <div className="flex-1">
+              <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                Dados Encontrados na Receita Federal
+              </h4>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                Deseja preencher os campos automaticamente? Isso irá sobrescrever os dados já preenchidos.
+              </p>
+            </div>
+          </div>
 
-    // Mostrar toast inicial
-    toast.success('Dados básicos carregados da Receita Federal!', {
-      duration: 3000,
-      icon: '📋'
-    });
-
-    // Enriquecer endereços automaticamente
-    if (basicFormData.addresses && basicFormData.addresses.length > 0) {
-      console.log('🔄 Iniciando enriquecimento automático de endereços...');
-
-      try {
-        // Enriquecer endereços com ViaCEP + geocoding
-        const enrichedAddresses = await addressEnrichmentService.enriquecerMultiplosEnderecos(basicFormData.addresses);
-
-        console.log('✅ Endereços enriquecidos:', enrichedAddresses);
-
-        // Atualizar formulário com endereços enriquecidos
-        setFormData(prevData => ({
-          ...prevData,
-          addresses: enrichedAddresses
-        }));
-
-        // Verificar se algum endereço foi enriquecido
-        const hasEnrichedData = enrichedAddresses.some(addr =>
-          addr.latitude && addr.longitude && addr.ibge_city_code
-        );
-
-        const hasViaCepData = enrichedAddresses.some(addr =>
-          addr.ibge_city_code || addr.gia_code || addr.siafi_code
-        );
-
-        if (hasEnrichedData) {
-          toast.success('Endereços enriquecidos com coordenadas GPS e dados oficiais!', {
-            duration: 4000,
-            icon: '🗺️'
-          });
-        } else if (hasViaCepData) {
-          toast.success('Endereços enriquecidos com dados oficiais do ViaCEP!', {
-            duration: 4000,
-            icon: '🏠'
-          });
-        } else {
-          console.warn('Endereços não foram enriquecidos completamente');
-          toast('Dados básicos carregados, mas houve problemas no enriquecimento.', {
-            duration: 3000,
-            icon: '⚠️'
-          });
-        }
-
-      } catch (error) {
-        console.error('Erro ao enriquecer endereços:', error);
-        toast('Dados básicos carregados, mas houve erro no enriquecimento de endereços.', {
-          duration: 4000,
-          icon: '⚠️'
-        });
-      }
+          <div className="flex space-x-2">
+            <button
+              onClick={() => {
+                fillData();
+                toast.dismiss(t.id);
+              }}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-3 rounded-md transition-colors"
+            >
+              <CheckCircle className="h-4 w-4 inline mr-1" />
+              Preencher
+            </button>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="flex-1 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 text-sm font-medium py-2 px-3 rounded-md transition-colors"
+            >
+              <XCircle className="h-4 w-4 inline mr-1" />
+              Cancelar
+            </button>
+          </div>
+        </div>
+      ), {
+        duration: 10000, // 10 segundos para decisão
+        position: 'top-center',
+        style: {
+          background: '#ffffff',
+          color: '#374151',
+          border: '1px solid #d1d5db',
+          borderRadius: '0.5rem',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+          maxWidth: '400px',
+        },
+      });
     } else {
-      console.log('ℹ️ Nenhum endereço para enriquecer');
+      // Se não há dados existentes, preenche diretamente
+      fillData();
     }
   };
+
+  if (loading && isEditing) {
+    return (
+      <div className="text-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        <p className="mt-4 text-muted-foreground">Carregando empresa...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

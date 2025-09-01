@@ -9,6 +9,8 @@ const InputCNPJ = ({
   value = '',
   onChange,
   onCompanyFound,
+  onEnrichmentStart,
+  onEnrichmentEnd,
   placeholder = "00.000.000/0000-00",
   required = false,
   disabled = false,
@@ -26,7 +28,16 @@ const InputCNPJ = ({
   const [isFocused, setIsFocused] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isEnriching, setIsEnriching] = useState(false);
   const [companyData, setCompanyData] = useState(null);
+
+  // Função para finalizar enriquecimento
+  const finishEnrichment = () => {
+    setIsEnriching(false);
+    if (onEnrichmentEnd) {
+      onEnrichmentEnd();
+    }
+  };
 
   // Sincronizar valor externo com estado interno
   useEffect(() => {
@@ -67,15 +78,88 @@ const InputCNPJ = ({
       setValidationMessage('');
       setIsValid(true);
 
+      // Notificar início do enriquecimento se houver callback
+      if (onEnrichmentStart) {
+        setIsEnriching(true);
+        onEnrichmentStart();
+      }
+
       // Callback para o componente pai com dados da empresa
       if (onCompanyFound) {
         onCompanyFound(result);
       }
+
+      // Notificar fim do enriquecimento (será chamado pelo componente pai)
+      // O componente pai deve chamar onEnrichmentEnd quando terminar
     } catch (error) {
       console.error('Erro ao consultar CNPJ:', error);
-      setValidationMessage(error.message || 'Erro ao consultar CNPJ');
-      setIsValid(false);
-      setCompanyData(null);
+
+      // Mesmo com erro na consulta, se o CNPJ for válido, criar dados básicos
+      if (cnpj.length === 14 && /^\d+$/.test(cnpj)) {
+        console.log('CNPJ válido mas não encontrado na Receita Federal - criando dados básicos');
+
+        const basicCompanyData = {
+          people: {
+            person_type: 'PJ',
+            name: '',
+            trade_name: '',
+            tax_id: cnpj,
+            incorporation_date: '',
+            tax_regime: 'simples_nacional',
+            legal_nature: '',
+            status: 'active',
+            description: ''
+          },
+          company: {
+            settings: {},
+            metadata: {},
+            display_order: 0
+          },
+          phones: [{
+            country_code: '55',
+            number: '',
+            type: 'commercial',
+            is_principal: true,
+            is_whatsapp: false
+          }],
+          emails: [{
+            email_address: '',
+            type: 'work',
+            is_principal: true
+          }],
+          addresses: [{
+            street: '',
+            number: '',
+            details: '',
+            neighborhood: '',
+            city: '',
+            state: '',
+            zip_code: '',
+            country: 'BR',
+            type: 'commercial',
+            is_principal: true
+          }]
+        };
+
+        setCompanyData(basicCompanyData);
+        setValidationMessage('CNPJ válido, mas dados não encontrados na Receita Federal');
+        setIsValid(true);
+
+        // Chamar callback mesmo com dados básicos
+        if (onCompanyFound) {
+          onCompanyFound(basicCompanyData);
+        }
+
+        // Notificar início do enriquecimento
+        if (onEnrichmentStart) {
+          setIsEnriching(true);
+          onEnrichmentStart();
+        }
+      } else {
+        setValidationMessage(error.message || 'Erro ao consultar CNPJ');
+        setIsValid(false);
+        setCompanyData(null);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -143,6 +227,8 @@ const InputCNPJ = ({
       consultCompany(cleanCNPJ);
     }
   };
+
+  // O finishEnrichment agora é exposto via useImperativeHandle
 
   const handleFocus = (e) => {
     setIsFocused(true);
@@ -225,6 +311,11 @@ const InputCNPJ = ({
             <div className="absolute inset-y-0 right-0 flex items-center pr-3">
               {isLoading ? (
                 <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />
+              ) : isEnriching ? (
+                <div className="flex items-center space-x-1">
+                  <Loader2 className="h-4 w-4 text-purple-500 animate-spin" />
+                  <span className="text-xs text-purple-600 hidden sm:inline">Completando...</span>
+                </div>
               ) : isValid && isComplete && companyData ? (
                 <Building2 className="h-4 w-4 text-green-500" />
               ) : isValid && isComplete ? (

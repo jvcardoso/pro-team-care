@@ -298,58 +298,10 @@ const AddressInputGroup = ({
             </div>
 
             {/* Códigos oficiais brasileiros */}
-            {(address.ibge_city_code || address.gia_code || address.siafi_code || address.area_code) && (
-              <div className="text-xs text-muted-foreground bg-blue-50 border border-blue-200 p-2 rounded">
-                <div className="flex items-center gap-1 text-blue-700 mb-1">
-                  📋 <strong>Códigos Oficiais:</strong>
-                </div>
-                <div className="grid grid-cols-2 gap-1 text-blue-600">
-                  {address.ibge_city_code && (
-                    <div><strong>IBGE:</strong> {address.ibge_city_code}</div>
-                  )}
-                  {address.area_code && (
-                    <div><strong>DDD:</strong> {address.area_code}</div>
-                  )}
-                  {address.gia_code && (
-                    <div><strong>GIA:</strong> {address.gia_code}</div>
-                  )}
-                  {address.siafi_code && (
-                    <div><strong>SIAFI:</strong> {address.siafi_code}</div>
-                  )}
-                </div>
-                {address.validation_source && (
-                  <div className="mt-1 flex items-center gap-1 text-green-600">
-                    <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    Validado via {address.validation_source === 'viacep' ? 'ViaCEP' : address.validation_source}
-                  </div>
-                )}
-              </div>
-            )}
+
 
             {/* Dados geográficos */}
-            {(address.latitude && address.longitude) && (
-              <div className="text-xs text-muted-foreground bg-green-50 border border-green-200 p-2 rounded">
-                <div className="flex items-center gap-1 text-green-700 mb-1">
-                  🌍 <strong>Localização Geográfica:</strong>
-                </div>
-                <div className="grid grid-cols-1 gap-1 text-green-600">
-                  <div><strong>Coordenadas:</strong> {address.latitude.toFixed(6)}, {address.longitude.toFixed(6)}</div>
-                  {address.geocoding_accuracy && (
-                    <div><strong>Precisão:</strong> {address.geocoding_accuracy}</div>
-                  )}
-                  {address.geocoding_source && (
-                    <div><strong>Fonte:</strong> {address.geocoding_source === 'nominatim' ? 'OpenStreetMap' : address.geocoding_source}</div>
-                  )}
-                </div>
-                {address.formatted_address && (
-                  <div className="mt-1 text-xs text-green-600">
-                    <strong>Endereço formatado:</strong> {address.formatted_address}
-                  </div>
-                )}
-              </div>
-            )}
+
 
             {/* Preview do endereço */}
             {getAddressDisplay(address) && (

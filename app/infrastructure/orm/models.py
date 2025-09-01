@@ -221,6 +221,12 @@ class Address(Base):
     formatted_address = Column(Text)
     geocoding_accuracy = Column(String(50))
     geocoding_source = Column(String(50))
+    coordinates_added_at = Column(DateTime)
+    coordinates_source = Column(String(50))
+
+    # Enrichment metadata
+    enriched_at = Column(DateTime)
+    enrichment_source = Column(String(50))
     ibge_city_code = Column(Integer)
     ibge_state_code = Column(Integer)
     gia_code = Column(String(10))
