@@ -3697,3 +3697,64 @@ Seu Prompt Inicial: "Você é um Desenvolvedor Full-Stack Sênior, especialista 
    - se sucesso na consulta, crie uma forma de armazenar o nuemro do endereco retornado pela api do cnpj, pois ele vai ser usado depois, depois  ele faz uma pesquisa no cep (seria o mesmo que pressioan o 
       botao consultar ao lado do cep), os isso vai fazer ele vai buscar os dados do via cep mais os dados 
       de geo localização, com o sucesso destes dados, o nuemro do endereco vai esta vazio no fomr, ai vc preenche ele com o numero do endereco retorando pela api de cnpj, 
+
+
+
+////////////
+
+VPS
+The server user name is root.
+
+ssh root@74.208.164.170      
+
+The password for accessing your server is F70F2fDr
+
+
+/////////////////////
+
+
+ PRIORIZAÇÃO POR IMPACTO vs ESFORÇO
+
+  🚨 Alto Impacto + Baixo Esforço (FAZER HOJE)
+
+  1. Mover credenciais para .env (30 min - impacto CRÍTICO)
+  2. Gerar JWT secret seguro (5 min - impacto CRÍTICO)
+  3. Renomear domain/models → domain/entities (10 min - impacto arquitetural)
+
+  🔴 Alto Impacto + Médio Esforço (ESTA SEMANA)
+
+  1. Separar dependências Pydantic do Domain (4h - impacto arquitetural)
+  2. Implementar Application Layer básica (8h - organização)
+  3. Configuração TypeScript (2h - type safety)
+
+  🟡 Médio Impacto + Alto Esforço (PRÓXIMAS SEMANAS)
+
+  1. Refatorar lógica de negócio dos repositories (16h - Clean Architecture)
+  2. Testes de arquitetura (12h - qualidade)
+  3. Health checks avançados (8h - monitoring)
+
+  ---
+  🎯 RECOMENDAÇÕES ESPECÍFICAS
+
+  Ação Imediata (Hoje):
+
+  # 1. Criar .env
+  echo "DATABASE_URL=postgresql+asyncpg://postgres:SENHA_SEGURA@192.168.11.62:5432/pro_team_care_11"
+  > .env
+  echo "JWT_SECRET_KEY=$(openssl rand -hex 32)" >> .env
+
+  # 2. Atualizar database.py  
+  sed -i 's/DATABASE_URL = "postgresql.*/DATABASE_URL = os.getenv("DATABASE_URL")/'
+  app/infrastructure/database.py
+
+  # 3. Adicionar import
+  echo "import os" >> app/infrastructure/database.py
+
+  Esta Semana:
+
+  # Reorganizar estrutura
+  mkdir -p app/domain/entities app/application/use_cases
+  mv app/domain/models/* app/domain/entities/
+
+  O maior ROI está nas correções de segurança (30 min de trabalho, elimina riscos críticos) e na
+  reorganização básica da arquitetura (2-4h, melhora significativamente a manutenibilidade).
