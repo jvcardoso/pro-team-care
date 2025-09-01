@@ -3640,3 +3640,56 @@ Seu Prompt Inicial: "Você é um Arquiteto de Soluções e Analista de Sistemas 
 Chat 2 - Agente Desenvolvedor Full-Stack:
 
 Seu Prompt Inicial: "Você é um Desenvolvedor Full-Stack Sênior, especialista em Python/FastAPI e React/TailwindCSS. Sua função é receber especificações técnicas detalhadas de um arquiteto e implementar o código de forma limpa e eficiente, seguindo exatamente o plano fornecido. Você é responsável por escrever o código do backend, frontend e os testes automatizados com pytest."
+
+
+
+///////////////////
+
+ 🔧 Comandos Git para Commit da Pasta Doc
+
+  # 1. Navegar para o diretório do projeto
+  cd /home/juliano/Projetos/pro_team_care_16
+
+  # 2. Adicionar apenas a pasta doc ao staging
+  git add doc/
+
+  # 3. Fazer commit das análises técnicas
+  git commit -m "feat: Adicionar auditoria completa do sistema
+
+  - 7 análises técnicas detalhadas (Fases 1-7)
+  - Metodologia dos 5 porquês aplicada
+  - Especificações técnicas com exemplos de código  
+  - Casos de teste e cronogramas de implementação
+  - Critérios de aceitação mensuráveis
+
+  🤖 Generated with [Claude Code](https://claude.ai/code)
+
+  Co-Authored-By: Claude <noreply@anthropic.com>"
+
+  # 4. Push para o repositório remoto
+  git push origin main
+
+
+ 🔄 Reset Completo para Estado do GitHub
+
+  # 1. Navegar para o diretório do projeto
+  cd /home/juliano/Projetos/pro_team_care_16
+
+  # 2. Fazer fetch das últimas mudanças do GitHub
+  git fetch origin
+
+  # 3. RESETAR TUDO para o estado do GitHub (CUIDADO: perde mudanças locais)
+  git reset --hard origin/main
+
+  # 4. Limpar arquivos não rastreados (remove arquivos/pastas não commitados)
+  git clean -fd
+
+
+  ///////
+
+  1 - informo cnpj; (esta ok)
+  2  - pressiono consultar: (esta OK)
+   - ele consulta o cnpj e tendo retono da msg de sucesso ou nao (esta ok)
+   - se sucesso na consulta, crie uma forma de armazenar o nuemro do endereco retornado pela api do cnpj, pois ele vai ser usado depois, depois  ele faz uma pesquisa no cep (seria o mesmo que pressioan o 
+      botao consultar ao lado do cep), os isso vai fazer ele vai buscar os dados do via cep mais os dados 
+      de geo localização, com o sucesso destes dados, o nuemro do endereco vai esta vazio no fomr, ai vc preenche ele com o numero do endereco retorando pela api de cnpj, 
