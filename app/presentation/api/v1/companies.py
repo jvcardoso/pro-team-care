@@ -19,20 +19,57 @@ async def get_company_repository(db: AsyncSession = Depends(get_db)) -> CompanyR
     return CompanyRepository(db)
 
 
-@router.post("/", response_model=CompanyDetailed, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/", 
+    response_model=CompanyDetailed, 
+    status_code=status.HTTP_201_CREATED,
+    summary="Criar Empresa",
+    description="""
+    Cria uma nova empresa com todos os dados relacionados (contatos, endereços, etc.).
+    
+    **Validações automáticas:**
+    - CNPJ deve ser válido e único no sistema
+    - Email deve ter formato válido
+    - Telefone deve seguir padrão brasileiro (DDD + número)
+    - CEP será enriquecido automaticamente com dados da ViaCEP
+    
+    **Campos obrigatórios:**
+    - people.name: Nome da empresa
+    - people.tax_id: CNPJ da empresa
+    - people.person_type: Deve ser "PJ"
+    - people.status: Status da empresa (active, inactive, suspended)
+    """,
+    tags=["Companies"],
+    responses={
+        201: {
+            "description": "Empresa criada com sucesso",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "id": 1,
+                        "person_id": 1,
+                        "people": {
+                            "name": "Empresa Exemplo LTDA",
+                            "trade_name": "Exemplo Corp",
+                            "tax_id": "11222333000144",
+                            "status": "active"
+                        },
+                        "phones": [{"number": "11987654321", "type": "commercial"}],
+                        "emails": [{"email_address": "contato@exemplo.com", "type": "work"}],
+                        "addresses": [{"street": "Avenida Paulista", "city": "São Paulo"}]
+                    }
+                }
+            }
+        },
+        400: {"description": "Dados inválidos ou CNPJ já existe"},
+        401: {"description": "Não autorizado - token JWT inválido"},
+        422: {"description": "Erro de validação dos dados enviados"}
+    }
+)
 async def create_company(
     company_data: CompanyCreate,
     repository: CompanyRepository = Depends(get_company_repository)
 ):
-    """
-    Create a new company with all related data
-    
-    - **people**: Company personal data (name, tax_id, etc.)
-    - **company**: Company specific settings and metadata
-    - **phones**: List of phone numbers (optional)
-    - **emails**: List of email addresses (optional)
-    - **addresses**: List of addresses (optional)
-    """
     try:
         logger.info("Criando empresa", company_data=company_data.model_dump())
 
@@ -81,39 +118,99 @@ async def create_company(
                 detail="Company with this CNPJ already exists"
             )
 
-        # Log detalhado para debug
-        error_detail = f"Error creating company: {str(e)}"
-        logger.error("Erro interno detalhado", error_detail=error_detail)
+        # ✅ Log seguro sem exposição de detalhes internos
+        logger.error(
+            "Erro interno ao criar empresa", 
+            error=str(e), 
+            exc_info=True
+        )
 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=error_detail
+            detail="Erro interno do servidor. Contate o suporte."
         )
 
 
-@router.get("/", response_model=List[CompanyList])
+@router.get(
+    "/", 
+    response_model=List[CompanyList],
+    summary="Listar Empresas",
+    description="""
+    Retorna lista paginada de empresas com filtros opcionais.
+    
+    **Funcionalidades:**
+    - Paginação com skip/limit
+    - Busca por nome, nome fantasia ou CNPJ
+    - Filtro por status
+    - Contadores de contatos (telefones, emails, endereços)
+    
+    **Performance:**
+    - Máximo 1000 registros por requisição
+    - Otimizado para listagens grandes com índices de banco
+    """,
+    tags=["Companies"],
+    responses={
+        200: {
+            "description": "Lista de empresas retornada com sucesso",
+            "content": {
+                "application/json": {
+                    "example": [
+                        {
+                            "id": 1,
+                            "name": "Empresa Exemplo LTDA",
+                            "trade_name": "Exemplo Corp",
+                            "tax_id": "11.222.333/0001-44",
+                            "status": "active",
+                            "phones_count": 2,
+                            "emails_count": 1,
+                            "addresses_count": 1,
+                            "created_at": "2024-01-15T10:30:00Z"
+                        }
+                    ]
+                }
+            }
+        },
+        401: {"description": "Não autorizado - token JWT inválido"},
+        422: {"description": "Parâmetros de query inválidos"}
+    }
+)
 async def get_companies(
-    skip: int = Query(0, ge=0, description="Number of records to skip"),
-    limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
-    search: Optional[str] = Query(None, description="Search in name, trade_name or tax_id"),
-    status: Optional[str] = Query(None, description="Filter by status"),
+    skip: int = Query(0, ge=0, description="Número de registros para pular (paginação)"),
+    limit: int = Query(100, ge=1, le=1000, description="Máximo de registros para retornar (1-1000)"),
+    search: Optional[str] = Query(None, description="Buscar por nome, nome fantasia ou CNPJ"),
+    status: Optional[str] = Query(None, description="Filtrar por status (active, inactive, suspended)"),
     repository: CompanyRepository = Depends(get_company_repository)
 ):
-    """
-    Get list of companies with filtering and pagination
-    
-    - **skip**: Number of records to skip (for pagination)
-    - **limit**: Maximum number of records to return
-    - **search**: Search term for name, trade_name or tax_id
-    - **status**: Filter by company status (active, inactive, etc.)
-    """
     return await repository.get_companies(skip=skip, limit=limit, search=search, status=status)
 
 
-@router.get("/count")
+@router.get(
+    "/count",
+    summary="Contar Empresas",
+    description="""
+    Retorna o total de empresas que atendem aos critérios de filtro.
+    
+    **Útil para:**
+    - Implementar paginação no frontend
+    - Estatísticas e relatórios
+    - Validar filtros antes de fazer listagem completa
+    """,
+    tags=["Companies"],
+    responses={
+        200: {
+            "description": "Contagem retornada com sucesso",
+            "content": {
+                "application/json": {
+                    "example": {"total": 150}
+                }
+            }
+        },
+        401: {"description": "Não autorizado"}
+    }
+)
 async def count_companies(
-    search: Optional[str] = Query(None, description="Search in name, trade_name or tax_id"),
-    status: Optional[str] = Query(None, description="Filter by status"),
+    search: Optional[str] = Query(None, description="Buscar por nome, nome fantasia ou CNPJ"),
+    status: Optional[str] = Query(None, description="Filtrar por status"),
     repository: CompanyRepository = Depends(get_company_repository)
 ):
     """
@@ -126,16 +223,53 @@ async def count_companies(
     return {"total": total}
 
 
-@router.get("/{company_id}", response_model=CompanyDetailed)
+@router.get(
+    "/{company_id}", 
+    response_model=CompanyDetailed,
+    summary="Obter Empresa por ID",
+    description="""
+    Retorna todos os dados de uma empresa específica incluindo contatos completos.
+    
+    **Dados retornados:**
+    - Informações da empresa (nome, CNPJ, status)
+    - Todos os telefones cadastrados
+    - Todos os emails cadastrados  
+    - Todos os endereços com dados de geolocalização
+    - Metadados e configurações da empresa
+    """,
+    tags=["Companies"],
+    responses={
+        200: {
+            "description": "Empresa encontrada com sucesso",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "id": 1,
+                        "people": {
+                            "name": "Empresa Exemplo LTDA",
+                            "tax_id": "11.222.333/0001-44",
+                            "status": "active"
+                        },
+                        "phones": [{"number": "11987654321", "is_whatsapp": True}],
+                        "emails": [{"email_address": "contato@exemplo.com"}],
+                        "addresses": [{
+                            "street": "Avenida Paulista, 1000",
+                            "city": "São Paulo",
+                            "latitude": -23.5505,
+                            "longitude": -46.6333
+                        }]
+                    }
+                }
+            }
+        },
+        404: {"description": "Empresa não encontrada"},
+        401: {"description": "Não autorizado"}
+    }
+)
 async def get_company(
     company_id: int,
     repository: CompanyRepository = Depends(get_company_repository)
 ):
-    """
-    Get a specific company with all related data
-    
-    - **company_id**: Company ID to retrieve
-    """
     company = await repository.get_company(company_id)
     if not company:
         raise HTTPException(
@@ -145,18 +279,51 @@ async def get_company(
     return company
 
 
-@router.put("/{company_id}", response_model=CompanyDetailed)
+@router.put(
+    "/{company_id}", 
+    response_model=CompanyDetailed,
+    summary="Atualizar Empresa",
+    description="""
+    Atualiza os dados de uma empresa existente.
+    
+    **Funcionalidades:**
+    - Atualização parcial ou completa dos dados
+    - Validação automática de CNPJ se alterado
+    - Atualização de contatos (adicionar/remover/modificar)
+    - Enriquecimento automático de novos endereços
+    
+    **Restrições:**
+    - CNPJ não pode ser duplicado no sistema
+    - Empresa deve existir e não estar excluída
+    """,
+    tags=["Companies"],
+    responses={
+        200: {
+            "description": "Empresa atualizada com sucesso",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "id": 1,
+                        "people": {
+                            "name": "Empresa Atualizada LTDA",
+                            "tax_id": "11.222.333/0001-44",
+                            "status": "active"
+                        },
+                        "updated_at": "2024-01-15T15:30:00Z"
+                    }
+                }
+            }
+        },
+        400: {"description": "Dados inválidos ou CNPJ duplicado"},
+        404: {"description": "Empresa não encontrada"},
+        401: {"description": "Não autorizado"}
+    }
+)
 async def update_company(
     company_id: int,
     company_data: CompanyUpdate,
     repository: CompanyRepository = Depends(get_company_repository)
 ):
-    """
-    Update a company's information
-    
-    - **company_id**: Company ID to update
-    - **company_data**: Updated company information
-    """
     try:
         company = await repository.update_company(company_id, company_data)
         if not company:
@@ -166,13 +333,23 @@ async def update_company(
             )
         return company
     except ValueError as e:
-        # Erros de validação de regras de negócio
+        # ✅ Log estruturado sem exposição de detalhes
+        logger.warning(
+            "Erro de validação na atualização de empresa",
+            company_id=company_id,
+            error=str(e)
+        )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+            detail="Dados inválidos. Verifique as informações fornecidas."
         )
     except Exception as e:
-        print(f"Erro ao atualizar empresa {company_id}: {str(e)}")  # Log para debug
+        logger.error(
+            "Erro ao atualizar empresa",
+            company_id=company_id,
+            error=str(e),
+            exc_info=True
+        )
         
         if "tax_id" in str(e).lower() and "unique" in str(e).lower():
             raise HTTPException(
@@ -190,22 +367,41 @@ async def update_company(
                 detail="Campo obrigatório não preenchido"
             )
         
+        # ✅ Resposta segura sem exposição de detalhes internos
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erro interno ao atualizar empresa: {str(e)}"
+            detail="Erro interno do servidor. Contate o suporte."
         )
 
 
-@router.delete("/{company_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{company_id}", 
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Excluir Empresa",
+    description="""
+    Exclui uma empresa do sistema (exclusão lógica).
+    
+    **Comportamento:**
+    - Exclusão lógica (soft delete) - dados preservados
+    - Empresa não aparecerá mais nas listagens
+    - Relacionamentos mantidos para auditoria
+    - Ação irreversível via API (requer intervenção no banco)
+    
+    **Segurança:**
+    - Requer autenticação válida
+    - Operação auditada nos logs
+    """,
+    tags=["Companies"],
+    responses={
+        204: {"description": "Empresa excluída com sucesso (sem conteúdo na resposta)"},
+        404: {"description": "Empresa não encontrada"},
+        401: {"description": "Não autorizado"}
+    }
+)
 async def delete_company(
     company_id: int,
     repository: CompanyRepository = Depends(get_company_repository)
 ):
-    """
-    Delete a company (soft delete)
-    
-    - **company_id**: Company ID to delete
-    """
     success = await repository.delete_company(company_id)
     if not success:
         raise HTTPException(
@@ -242,16 +438,56 @@ async def get_company_by_cnpj(
     return company
 
 
-@router.get("/{company_id}/contacts")
+@router.get(
+    "/{company_id}/contacts",
+    summary="Obter Contatos da Empresa",
+    description="""
+    Retorna apenas os contatos (telefones e emails) de uma empresa.
+    
+    **Otimização:**
+    - Endpoint leve para casos que não precisam de todos os dados
+    - Útil para componentes de contato rápido
+    - Não inclui endereços (use GET /{id} para dados completos)
+    
+    **Casos de uso:**
+    - Listas de contato
+    - Integrações de telefonia
+    - Envio de emails em massa
+    """,
+    tags=["Companies"],
+    responses={
+        200: {
+            "description": "Contatos retornados com sucesso",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "phones": [
+                            {
+                                "number": "11987654321",
+                                "type": "commercial",
+                                "is_whatsapp": True,
+                                "is_principal": True
+                            }
+                        ],
+                        "emails": [
+                            {
+                                "email_address": "contato@empresa.com",
+                                "type": "work",
+                                "is_principal": True
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        404: {"description": "Empresa não encontrada"},
+        401: {"description": "Não autorizado"}
+    }
+)
 async def get_company_contacts(
     company_id: int,
     repository: CompanyRepository = Depends(get_company_repository)
 ):
-    """
-    Get company contact information (phones and emails only)
-
-    - **company_id**: Company ID
-    """
     company = await repository.get_company(company_id)
     if not company:
         raise HTTPException(

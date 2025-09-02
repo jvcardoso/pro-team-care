@@ -33,10 +33,61 @@ logger = get_logger()
 
 app = FastAPI(
     title="Pro Team Care API",
-    description="API para sistema de gestão de equipe profissional",
+    description="""
+    ## 🚀 Sistema de Gestão de Equipe Profissional
+    
+    API completa para gestão de empresas, equipes e relacionamentos profissionais.
+    
+    ### 🏗️ Arquitetura
+    - **Clean Architecture** com separação de responsabilidades
+    - **FastAPI** com validação automática via Pydantic  
+    - **PostgreSQL** para persistência com SQLAlchemy assíncrono
+    - **JWT Authentication** com segurança bcrypt
+    - **Rate Limiting** para proteção contra abuse
+    
+    ### 🔐 Segurança
+    - Autenticação JWT obrigatória em endpoints protegidos
+    - Rate limiting (5 tentativas/min para login)
+    - Security headers (CORS, XSS protection, etc.)
+    - Validação rigorosa de entrada de dados
+    
+    ### 📊 Funcionalidades Principais
+    - **Companies**: CRUD completo de empresas com validação de CNPJ
+    - **CNPJ Lookup**: Integração com ReceitaWS para enriquecimento
+    - **Authentication**: Sistema completo de login/registro
+    - **Geolocation**: Enriquecimento automático de endereços
+    
+    ### 🔗 Links Úteis  
+    - [Documentação Interativa](/docs)
+    - [Documentação ReDoc](/redoc) 
+    - [Health Check](/api/v1/health)
+    - [Métricas Prometheus](/metrics)
+    """,
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
+    openapi_tags=[
+        {
+            "name": "Authentication",
+            "description": "Autenticação e autorização de usuários"
+        },
+        {
+            "name": "Companies", 
+            "description": "Gestão completa de empresas e seus dados"
+        },
+        {
+            "name": "CNPJ Lookup",
+            "description": "Consulta e enriquecimento de dados via CNPJ"
+        },
+        {
+            "name": "Development",
+            "description": "Endpoints para desenvolvimento e debugging"
+        },
+        {
+            "name": "Health",
+            "description": "Monitoramento e status do sistema"
+        }
+    ],
 )
 
 # Security middleware
@@ -99,7 +150,8 @@ if os.path.exists(frontend_dist_path):
     async def serve_frontend(path: str = ""):
         """Serve React frontend for all non-API routes"""
         # Skip API routes
-        if path.startswith("api/") or path.startswith("docs") or path.startswith("redoc") or path.startswith("openapi.json"):
+        if (path.startswith("api/") or path.startswith("docs") or 
+            path.startswith("redoc") or path.startswith("openapi.json")):
             raise HTTPException(status_code=404, detail="Not found")
         
         index_path = os.path.join(frontend_dist_path, "index.html")

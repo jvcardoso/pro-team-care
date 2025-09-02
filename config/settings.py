@@ -89,7 +89,9 @@ class Settings(BaseSettings):
     # JWT Settings - ✅ Usando acesso direto ao ambiente devido a incompatibilidade do pydantic-settings
     secret_key: str = Field(default_factory=lambda: os.getenv("JWT_SECRET_KEY", ""))
     algorithm: str = Field(default_factory=lambda: os.getenv("JWT_ALGORITHM", "HS256"))
-    access_token_expire_minutes: int = Field(default_factory=lambda: int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "30")))
+    access_token_expire_minutes: int = Field(
+        default_factory=lambda: int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+    )
     
     @validator("secret_key")
     def validate_jwt_secret(cls, v: str) -> str:
@@ -97,7 +99,10 @@ class Settings(BaseSettings):
         if len(v) < 32:
             raise ValueError("❌ JWT secret key deve ter pelo menos 32 caracteres para segurança")
         if v == "your-secret-key-here-make-it-very-long-and-random-256-bits":
-            raise ValueError("❌ JWT secret key padrão detectado! Use: python -c 'import secrets; print(secrets.token_hex(32))'")
+            raise ValueError(
+                "❌ JWT secret key padrão detectado! "
+                "Use: python -c 'import secrets; print(secrets.token_hex(32))'"
+            )
         return v
     
     # =================================
@@ -105,10 +110,16 @@ class Settings(BaseSettings):
     # =================================
     
     allowed_origins: str = Field(
-        default_factory=lambda: os.getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
+        default_factory=lambda: os.getenv(
+            "CORS_ORIGINS", 
+            "http://localhost:3000,http://127.0.0.1:3000"
+        )
     )
     allowed_hosts: str = Field(
-        default_factory=lambda: os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,testserver")
+        default_factory=lambda: os.getenv(
+            "ALLOWED_HOSTS", 
+            "localhost,127.0.0.1,testserver"
+        )
     )
     cors_credentials: bool = Field(default=True, env="CORS_CREDENTIALS")
     
