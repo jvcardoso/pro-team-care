@@ -7,8 +7,14 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.settings import settings
-from app.domain.models.user import TokenData
 from app.infrastructure.database import get_db
+# ✅ Infrastructure será atualizada para usar entidades puras
+from dataclasses import dataclass
+
+@dataclass
+class TokenData:
+    """Token data para infrastructure"""
+    email: str
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")

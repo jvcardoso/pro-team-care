@@ -12,7 +12,7 @@ os.environ["ENV_FILE"] = ".env.test"
 os.environ["PYTEST_CURRENT_TEST"] = "true"
 
 from app.main import app
-from app.domain.entities.user import Base
+from app.infrastructure.orm.models import Base
 from app.infrastructure.database import get_db
 from config.settings import settings
 

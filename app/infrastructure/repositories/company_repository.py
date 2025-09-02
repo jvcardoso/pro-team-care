@@ -5,10 +5,10 @@ from sqlalchemy import select, func, and_, or_, delete
 from sqlalchemy.orm import selectinload, joinedload
 from structlog import get_logger
 from app.infrastructure.orm.models import People, Company, Phone, Email, Address
-from app.domain.models.company import (
-    CompanyCreate, CompanyUpdate, CompanyDetailed, CompanyList,
-    PeopleCreate, PhoneCreate, EmailCreate, AddressCreate
-)
+# ✅ Infrastructure deve usar entidades domain ao invés de schemas presentation
+from app.domain.entities.company import CompanyEntity
+from app.presentation.schemas.company import AddressCreate, CompanyCreate, CompanyDetailed, CompanyList, CompanyUpdate
+from typing import Dict, Any
 from app.utils.validators import validate_contacts_quality
 from app.infrastructure.services.address_enrichment_service import address_enrichment_service
 

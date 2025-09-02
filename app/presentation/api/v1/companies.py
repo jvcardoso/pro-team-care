@@ -5,7 +5,7 @@ from structlog import get_logger
 
 from app.infrastructure.database import get_db
 from app.infrastructure.repositories.company_repository import CompanyRepository
-from app.domain.models.company import (
+from app.presentation.schemas.company_legacy import (
     CompanyCreate, CompanyUpdate, CompanyDetailed, CompanyList
 )
 

@@ -225,8 +225,8 @@ def mapear_dados_receita(dados: Dict[str, Any]) -> Dict[str, Any]:
             "tax_regime": "simples_nacional",  # Default - não disponível na ReceitaWS
             "metadata": {
                 # CNAE Principal
-                "cnae_fiscal": dados.get("atividade_principal", {}).get("code") if isinstance(dados.get("atividade_principal"), dict) else None,
-                "cnae_fiscal_descricao": dados.get("atividade_principal", {}).get("text") if isinstance(dados.get("atividade_principal"), dict) else None,
+                "cnae_fiscal": dados.get("atividade_principal", [{}])[0].get("code") if isinstance(dados.get("atividade_principal"), list) and len(dados.get("atividade_principal", [])) > 0 else None,
+                "cnae_fiscal_descricao": dados.get("atividade_principal", [{}])[0].get("text") if isinstance(dados.get("atividade_principal"), list) and len(dados.get("atividade_principal", [])) > 0 else None,
 
                 # CNAEs Secundários
                 "cnaes_secundarios": dados.get("atividades_secundarias", []) if isinstance(dados.get("atividades_secundarias"), list) else [],

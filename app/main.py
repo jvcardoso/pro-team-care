@@ -55,9 +55,7 @@ setup_monitoring_middleware(app)
 # CORS configuration with validation
 def get_cors_origins():
     """Get and validate CORS origins"""
-    origins = [origin.strip() for origin in settings.allowed_origins.split(",")]
-    # Filter out empty strings
-    origins = [origin for origin in origins if origin]
+    origins = settings.cors_origins_list
     logger.info("CORS origins configured", origins=origins)
     return origins
 
