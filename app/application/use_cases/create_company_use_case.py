@@ -33,7 +33,7 @@ class CreateCompanyUseCase:
         self.company_repository = company_repository
         self.address_enrichment_service = address_enrichment_service
     
-    async def execute(self, command: CreateCompanyCommand) -> CompanyDetailed:
+    async def execute(self, command: CreateCompanyCommand) -> CompanyEntity:
         """
         Executar criação de empresa
         
@@ -41,7 +41,7 @@ class CreateCompanyUseCase:
             command: Dados e configurações para criação
             
         Returns:
-            CompanyDetailed: Empresa criada com todos os dados
+            CompanyEntity: Empresa criada com todos os dados
             
         Raises:
             ValueError: CNPJ já existe ou dados inválidos

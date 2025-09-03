@@ -1,10 +1,19 @@
-import React, { FormEvent } from 'react';
-import Button from '../ui/Button';
-import Card from '../ui/Card';
-import { Save, X } from 'lucide-react';
-import { PhoneInputGroup, EmailInputGroup, AddressInputGroup } from '../contacts';
-import { CompanyBasicDataSection, CompanyReceitaFederalSection, AddressNumberConfirmationModal } from './CompanyFormSections';
-import { useCompanyForm } from '../../hooks/useCompanyForm';
+import React, { FormEvent } from "react";
+import Button from "../ui/Button";
+import { FormErrorBoundary } from "../error";
+import Card from "../ui/Card";
+import { Save, X } from "lucide-react";
+import {
+  PhoneInputGroup,
+  EmailInputGroup,
+  AddressInputGroup,
+} from "../contacts";
+import {
+  CompanyBasicDataSection,
+  CompanyReceitaFederalSection,
+  AddressNumberConfirmationModal,
+} from "./CompanyFormSections";
+import { useCompanyForm } from "../../hooks/useCompanyForm";
 
 interface CompanyFormProps {
   companyId?: number;
@@ -12,7 +21,25 @@ interface CompanyFormProps {
   onCancel?: () => void;
 }
 
-const CompanyForm: React.FC<CompanyFormProps> = ({ companyId, onSave, onCancel }) => {
+const CompanyForm: React.FC<CompanyFormProps> = React.memo(
+  ({ companyId, onSave, onCancel }) => {
+    return (
+      <FormErrorBoundary formName="CompanyForm">
+        <CompanyFormContent
+          companyId={companyId}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      </FormErrorBoundary>
+    );
+  }
+);
+
+const CompanyFormContent: React.FC<CompanyFormProps> = ({
+  companyId,
+  onSave,
+  onCancel,
+}) => {
   const {
     loading,
     error,
@@ -33,15 +60,18 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ companyId, onSave, onCancel }
     handleNumberConfirmation,
     proceedWithSave,
     setShowNumberConfirmation,
-    setPendingAddresses
+    setPendingAddresses,
   } = useCompanyForm({ companyId, onSave });
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
-    
+
     // Verificar se há endereços sem número
-    const addressesWithoutNumber = formData.addresses.filter(address => 
-      address.street?.trim() && address.city?.trim() && !address.number?.trim()
+    const addressesWithoutNumber = formData.addresses.filter(
+      (address) =>
+        address.street?.trim() &&
+        address.city?.trim() &&
+        !address.number?.trim()
     );
 
     if (addressesWithoutNumber.length > 0) {
@@ -56,35 +86,81 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ companyId, onSave, onCancel }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-bold text-foreground">
-            {isEditing ? 'Editar Empresa' : 'Nova Empresa'}
-          </h1>
-          <p className="text-muted-foreground">
-            {isEditing ? 'Atualize as informações da empresa' : 'Cadastre uma nova empresa no sistema'}
-          </p>
-        </div>
-        <div className="flex gap-3 shrink-0">
-          <Button variant="secondary" outline onClick={onCancel} icon={<X className="h-4 w-4" />} className="flex-1 sm:flex-none">
-            <span className="hidden sm:inline">Cancelar</span>
-            <span className="sm:hidden">Cancelar</span>
-          </Button>
-          <Button onClick={handleSubmit} disabled={loading} icon={<Save className="h-4 w-4" />} className="flex-1 sm:flex-none">
-            <span className="hidden sm:inline">{loading ? 'Salvando...' : 'Salvar'}</span>
-            <span className="sm:hidden">{loading ? 'Salvando...' : 'Salvar'}</span>
-          </Button>
-        </div>
-      </div>
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-6"
+        aria-labelledby="form-title"
+        aria-describedby="form-description"
+        noValidate
+      >
+        {/* Header */}
+        <header
+          className="flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+          role="banner"
+        >
+          <div className="min-w-0">
+            <h1
+              id="form-title"
+              className="text-2xl font-bold text-foreground"
+              tabIndex={-1}
+            >
+              {isEditing ? "Editar Empresa" : "Nova Empresa"}
+            </h1>
+            <p className="text-muted-foreground" id="form-description">
+              {isEditing
+                ? "Atualize as informações da empresa"
+                : "Cadastre uma nova empresa no sistema"}
+            </p>
+          </div>
+          <div
+            className="flex gap-3 shrink-0"
+            role="group"
+            aria-label="Ações do formulário"
+          >
+            <Button
+              variant="secondary"
+              outline
+              onClick={onCancel}
+              icon={<X className="h-4 w-4" />}
+              className="flex-1 sm:flex-none"
+              aria-label="Cancelar edição e fechar formulário"
+            >
+              <span className="hidden sm:inline">Cancelar</span>
+              <span className="sm:hidden">Cancelar</span>
+            </Button>
+            <Button
+              type="submit"
+              disabled={loading}
+              icon={<Save className="h-4 w-4" />}
+              className="flex-1 sm:flex-none"
+              aria-label={
+                loading
+                  ? "Salvando empresa, aguarde..."
+                  : isEditing
+                  ? "Salvar alterações da empresa"
+                  : "Salvar nova empresa"
+              }
+            >
+              <span className="hidden sm:inline">
+                {loading ? "Salvando..." : "Salvar"}
+              </span>
+              <span className="sm:hidden">
+                {loading ? "Salvando..." : "Salvar"}
+              </span>
+            </Button>
+          </div>
+        </header>
 
-      {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-          <p className="text-red-600 dark:text-red-400">{error}</p>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-6">
+        {error && (
+          <div
+            className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4"
+            role="alert"
+            aria-live="polite"
+            id="form-error"
+          >
+            <p className="text-red-600 dark:text-red-400">{error}</p>
+          </div>
+        )}
         {/* Dados da Empresa */}
         <CompanyBasicDataSection
           formData={formData}
@@ -95,7 +171,9 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ companyId, onSave, onCancel }
         />
 
         {/* Informações da Receita Federal */}
-        <CompanyReceitaFederalSection metadata={formData.company.metadata || {}} />
+        <CompanyReceitaFederalSection
+          metadata={formData.company.metadata || {}}
+        />
 
         {/* Telefones */}
         <Card>
@@ -154,5 +232,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ companyId, onSave, onCancel }
     </div>
   );
 };
+
+CompanyForm.displayName = "CompanyForm";
 
 export default CompanyForm;

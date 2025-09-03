@@ -1,12 +1,12 @@
-import React from 'react';
-import Card from '../ui/Card';
-import { ExternalLink } from 'lucide-react';
+import React from "react";
+import Card from "../ui/Card";
+import { ExternalLink } from "lucide-react";
 
-const CompanyBasicInfo = ({ 
-  company, 
+const CompanyBasicInfo = ({
+  company,
   title = "Informações da Empresa",
   showDescription = true,
-  className = ""
+  className = "",
 }) => {
   if (!company || !company.people) {
     return null;
@@ -21,7 +21,7 @@ const CompanyBasicInfo = ({
           </label>
           <p className="text-foreground font-medium">{company.people.name}</p>
         </div>
-        
+
         {company.people.trade_name && (
           <div>
             <label className="block text-sm font-medium text-muted-foreground mb-1">
@@ -36,10 +36,12 @@ const CompanyBasicInfo = ({
             CNPJ
           </label>
           <p className="text-foreground font-mono">
-            {company.people.tax_id ? 
-              company.people.tax_id.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5') 
-              : '-'
-            }
+            {company.people.tax_id
+              ? company.people.tax_id.replace(
+                  /^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,
+                  "$1.$2.$3/$4-$5"
+                )
+              : "-"}
           </p>
         </div>
 
@@ -56,7 +58,9 @@ const CompanyBasicInfo = ({
               Data de Incorporação
             </label>
             <p className="text-foreground">
-              {new Date(company.people.incorporation_date).toLocaleDateString('pt-BR')}
+              {new Date(company.people.incorporation_date).toLocaleDateString(
+                "pt-BR"
+              )}
             </p>
           </div>
         )}
@@ -66,7 +70,9 @@ const CompanyBasicInfo = ({
             <label className="block text-sm font-medium text-muted-foreground mb-1">
               Regime Tributário
             </label>
-            <p className="text-foreground capitalize">{company.people.tax_regime.replace('_', ' ')}</p>
+            <p className="text-foreground capitalize">
+              {company.people.tax_regime.replace("_", " ")}
+            </p>
           </div>
         )}
 
@@ -75,7 +81,9 @@ const CompanyBasicInfo = ({
             <label className="block text-sm font-medium text-muted-foreground mb-1">
               Natureza Jurídica
             </label>
-            <p className="text-foreground uppercase">{company.people.legal_nature}</p>
+            <p className="text-foreground uppercase">
+              {company.people.legal_nature}
+            </p>
           </div>
         )}
 
@@ -93,7 +101,9 @@ const CompanyBasicInfo = ({
             <label className="block text-sm font-medium text-muted-foreground mb-1">
               Inscrição Municipal
             </label>
-            <p className="text-foreground">{company.people.municipal_registration}</p>
+            <p className="text-foreground">
+              {company.people.municipal_registration}
+            </p>
           </div>
         )}
 
@@ -102,8 +112,12 @@ const CompanyBasicInfo = ({
             <label className="block text-sm font-medium text-muted-foreground mb-1">
               Website
             </label>
-            <a 
-              href={company.people.website.startsWith('http') ? company.people.website : `https://${company.people.website}`}
+            <a
+              href={
+                company.people.website.startsWith("http")
+                  ? company.people.website
+                  : `https://${company.people.website}`
+              }
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline flex items-center gap-1"
@@ -120,7 +134,9 @@ const CompanyBasicInfo = ({
           <label className="block text-sm font-medium text-muted-foreground mb-2">
             Descrição da Empresa
           </label>
-          <p className="text-foreground bg-muted/30 p-3 rounded-lg">{company.people.description}</p>
+          <p className="text-foreground bg-muted/30 p-3 rounded-lg">
+            {company.people.description}
+          </p>
         </div>
       )}
     </Card>

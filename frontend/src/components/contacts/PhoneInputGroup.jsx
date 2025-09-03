@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { Plus, Trash2, Star, StarOff, Phone, Settings } from 'lucide-react';
-import { InputPhone, InputWhatsApp } from '../inputs';
-import Input from '../ui/Input';
-import Button from '../ui/Button';
+import React, { useState } from "react";
+import { Plus, Trash2, Star, StarOff, Phone, Settings } from "lucide-react";
+import { InputPhone, InputWhatsApp } from "../inputs";
+import Input from "../ui/Input";
+import Button from "../ui/Button";
+import { PhoneType, PhoneTypeLabels } from "../../types";
 
 const PhoneInputGroup = ({
   phones = [],
@@ -20,7 +21,7 @@ const PhoneInputGroup = ({
 }) => {
   const [advancedMode, setAdvancedMode] = useState(showAdvancedFields);
   const handlePhoneChange = (index, field, value) => {
-    const updatedPhones = phones.map((phone, i) => 
+    const updatedPhones = phones.map((phone, i) =>
       i === index ? { ...phone, [field]: value } : phone
     );
     onChange?.(updatedPhones);
@@ -28,30 +29,30 @@ const PhoneInputGroup = ({
 
   const handleAddPhone = () => {
     if (phones.length >= maxPhones) return;
-    
+
     const newPhone = {
-      country_code: '55',
-      number: '',
-      extension: '',
-      type: 'commercial',
+      country_code: "55",
+      number: "",
+      extension: "",
+      type: PhoneType.COMMERCIAL, // 🔄 Enum sincronizado
       is_principal: phones.length === 0,
       is_active: true,
-      phone_name: '',
+      phone_name: "",
       is_whatsapp: false,
       whatsapp_verified: false,
       whatsapp_business: false,
-      whatsapp_name: '',
+      whatsapp_name: "",
       accepts_whatsapp_marketing: true,
       accepts_whatsapp_notifications: true,
-      whatsapp_preferred_time_start: '09:00',
-      whatsapp_preferred_time_end: '18:00',
-      carrier: '',
-      line_type: 'postpaid',
+      whatsapp_preferred_time_start: "09:00",
+      whatsapp_preferred_time_end: "18:00",
+      carrier: "",
+      line_type: "postpaid",
       contact_priority: 5,
       can_receive_calls: true,
-      can_receive_sms: true
+      can_receive_sms: true,
     };
-    
+
     onAdd?.(newPhone);
   };
 
@@ -63,17 +64,17 @@ const PhoneInputGroup = ({
   const setPrincipal = (index) => {
     const updatedPhones = phones.map((phone, i) => ({
       ...phone,
-      is_principal: i === index
+      is_principal: i === index,
     }));
     onChange?.(updatedPhones);
   };
 
   const phoneTypes = [
-    { value: 'commercial', label: 'Comercial' },
-    { value: 'mobile', label: 'Celular' },
-    { value: 'residential', label: 'Residencial' },
-    { value: 'fax', label: 'Fax' },
-    { value: 'other', label: 'Outro' }
+    { value: "commercial", label: "Comercial" },
+    { value: "mobile", label: "Celular" },
+    { value: "residential", label: "Residencial" },
+    { value: "fax", label: "Fax" },
+    { value: "other", label: "Outro" },
   ];
 
   return (
@@ -82,7 +83,9 @@ const PhoneInputGroup = ({
       <div className="flex items-center justify-between">
         <h3 className="flex items-center text-lg font-medium text-foreground">
           {title}
-          {required && <Star className="h-3 w-3 text-red-500 ml-1 fill-current" />}
+          {required && (
+            <Star className="h-3 w-3 text-red-500 ml-1 fill-current" />
+          )}
         </h3>
         <div className="flex items-center gap-3">
           <button
@@ -92,7 +95,7 @@ const PhoneInputGroup = ({
             disabled={disabled}
           >
             <Settings className="h-3 w-3 mr-1" />
-            {advancedMode ? 'Modo Simples' : 'Modo Avançado'}
+            {advancedMode ? "Modo Simples" : "Modo Avançado"}
           </button>
           <div className="text-sm text-muted-foreground">
             {phones.length} de {maxPhones} telefones
@@ -106,13 +109,17 @@ const PhoneInputGroup = ({
               size="sm"
               onClick={handleAddPhone}
               disabled={disabled || phones.length >= maxPhones}
-              title={phones.length >= maxPhones ? `Máximo de ${maxPhones} telefones atingido` : "Adicionar telefone"}
+              title={
+                phones.length >= maxPhones
+                  ? `Máximo de ${maxPhones} telefones atingido`
+                  : "Adicionar telefone"
+              }
               className="w-10 h-10 p-0 flex items-center justify-center"
             >
               <Plus className="h-5 w-5" />
             </Button>
           </div>
-          
+
           {/* Desktop: Ícone + Texto */}
           <div className="hidden sm:block">
             <Button
@@ -123,7 +130,11 @@ const PhoneInputGroup = ({
               onClick={handleAddPhone}
               disabled={disabled || phones.length >= maxPhones}
               icon={<Plus className="h-4 w-4" />}
-              title={phones.length >= maxPhones ? `Máximo de ${maxPhones} telefones atingido` : "Adicionar telefone"}
+              title={
+                phones.length >= maxPhones
+                  ? `Máximo de ${maxPhones} telefones atingido`
+                  : "Adicionar telefone"
+              }
             >
               Adicionar
             </Button>
@@ -134,7 +145,10 @@ const PhoneInputGroup = ({
       {/* Lista de telefones */}
       <div className="space-y-4">
         {phones.map((phone, index) => (
-          <div key={index} className="space-y-4 p-4 border border-border rounded-lg bg-card">
+          <div
+            key={index}
+            className="space-y-4 p-4 border border-border rounded-lg bg-card"
+          >
             {/* Linha dos inputs */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
               {/* Número do telefone */}
@@ -142,7 +156,9 @@ const PhoneInputGroup = ({
                 <InputPhone
                   label={`Telefone ${index + 1}`}
                   value={phone.number}
-                  onChange={(data) => handlePhoneChange(index, 'number', data.target.value)}
+                  onChange={(data) =>
+                    handlePhoneChange(index, "number", data.target.value)
+                  }
                   placeholder="(11) 99999-9999"
                   required={required}
                   disabled={disabled}
@@ -157,11 +173,13 @@ const PhoneInputGroup = ({
                 </label>
                 <select
                   value={phone.type}
-                  onChange={(e) => handlePhoneChange(index, 'type', e.target.value)}
+                  onChange={(e) =>
+                    handlePhoneChange(index, "type", e.target.value)
+                  }
                   disabled={disabled}
                   className="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
                 >
-                  {phoneTypes.map(type => (
+                  {phoneTypes.map((type) => (
                     <option key={type.value} value={type.value}>
                       {type.label}
                     </option>
@@ -185,7 +203,13 @@ const PhoneInputGroup = ({
                     disabled={disabled}
                     className="mr-2"
                   />
-                  <Star className={`h-3 w-3 mr-1 ${phone.is_principal ? 'text-yellow-500 fill-current' : 'text-muted-foreground'}`} />
+                  <Star
+                    className={`h-3 w-3 mr-1 ${
+                      phone.is_principal
+                        ? "text-yellow-500 fill-current"
+                        : "text-muted-foreground"
+                    }`}
+                  />
                   Principal
                 </label>
 
@@ -195,7 +219,9 @@ const PhoneInputGroup = ({
                     <input
                       type="checkbox"
                       checked={phone.is_active !== false}
-                      onChange={(e) => handlePhoneChange(index, 'is_active', e.target.checked)}
+                      onChange={(e) =>
+                        handlePhoneChange(index, "is_active", e.target.checked)
+                      }
                       disabled={disabled}
                       className="mr-2 rounded border-border focus:ring-ring focus:ring-2"
                     />
@@ -212,24 +238,30 @@ const PhoneInputGroup = ({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Input
                     label="Ramal"
-                    value={phone.extension || ''}
-                    onChange={(e) => handlePhoneChange(index, 'extension', e.target.value)}
+                    value={phone.extension || ""}
+                    onChange={(e) =>
+                      handlePhoneChange(index, "extension", e.target.value)
+                    }
                     placeholder="1234"
                     disabled={disabled}
                     size="sm"
                   />
                   <Input
                     label="Nome do Contato"
-                    value={phone.phone_name || ''}
-                    onChange={(e) => handlePhoneChange(index, 'phone_name', e.target.value)}
+                    value={phone.phone_name || ""}
+                    onChange={(e) =>
+                      handlePhoneChange(index, "phone_name", e.target.value)
+                    }
                     placeholder="João da Silva"
                     disabled={disabled}
                     size="sm"
                   />
                   <Input
                     label="Operadora"
-                    value={phone.carrier || ''}
-                    onChange={(e) => handlePhoneChange(index, 'carrier', e.target.value)}
+                    value={phone.carrier || ""}
+                    onChange={(e) =>
+                      handlePhoneChange(index, "carrier", e.target.value)
+                    }
                     placeholder="Vivo, Tim, Claro..."
                     disabled={disabled}
                     size="sm"
@@ -243,8 +275,10 @@ const PhoneInputGroup = ({
                       Tipo de Linha
                     </label>
                     <select
-                      value={phone.line_type || 'postpaid'}
-                      onChange={(e) => handlePhoneChange(index, 'line_type', e.target.value)}
+                      value={phone.line_type || "postpaid"}
+                      onChange={(e) =>
+                        handlePhoneChange(index, "line_type", e.target.value)
+                      }
                       disabled={disabled}
                       className="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
                     >
@@ -262,7 +296,13 @@ const PhoneInputGroup = ({
                       min="1"
                       max="10"
                       value={phone.contact_priority || 5}
-                      onChange={(e) => handlePhoneChange(index, 'contact_priority', parseInt(e.target.value))}
+                      onChange={(e) =>
+                        handlePhoneChange(
+                          index,
+                          "contact_priority",
+                          parseInt(e.target.value)
+                        )
+                      }
                       disabled={disabled}
                       className="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
                     />
@@ -279,7 +319,13 @@ const PhoneInputGroup = ({
                       <input
                         type="checkbox"
                         checked={phone.can_receive_calls !== false}
-                        onChange={(e) => handlePhoneChange(index, 'can_receive_calls', e.target.checked)}
+                        onChange={(e) =>
+                          handlePhoneChange(
+                            index,
+                            "can_receive_calls",
+                            e.target.checked
+                          )
+                        }
                         disabled={disabled}
                         className="mr-2 rounded border-border focus:ring-ring focus:ring-2"
                       />
@@ -289,7 +335,13 @@ const PhoneInputGroup = ({
                       <input
                         type="checkbox"
                         checked={phone.can_receive_sms !== false}
-                        onChange={(e) => handlePhoneChange(index, 'can_receive_sms', e.target.checked)}
+                        onChange={(e) =>
+                          handlePhoneChange(
+                            index,
+                            "can_receive_sms",
+                            e.target.checked
+                          )
+                        }
                         disabled={disabled}
                         className="mr-2 rounded border-border focus:ring-ring focus:ring-2"
                       />
@@ -302,7 +354,7 @@ const PhoneInputGroup = ({
                 <InputWhatsApp
                   phone={phone}
                   onChange={(updatedPhone) => {
-                    const updatedPhones = phones.map((p, i) => 
+                    const updatedPhones = phones.map((p, i) =>
                       i === index ? updatedPhone : p
                     );
                     onChange?.(updatedPhones);
@@ -318,7 +370,7 @@ const PhoneInputGroup = ({
               <InputWhatsApp
                 phone={phone}
                 onChange={(updatedPhone) => {
-                  const updatedPhones = phones.map((p, i) => 
+                  const updatedPhones = phones.map((p, i) =>
                     i === index ? updatedPhone : p
                   );
                   onChange?.(updatedPhones);
@@ -338,7 +390,11 @@ const PhoneInputGroup = ({
                 onClick={() => handleRemovePhone(index)}
                 disabled={phones.length <= minPhones || disabled}
                 icon={<Trash2 className="h-4 w-4" />}
-                title={phones.length <= minPhones ? `Deve ter pelo menos ${minPhones} telefone(s)` : "Remover telefone"}
+                title={
+                  phones.length <= minPhones
+                    ? `Deve ter pelo menos ${minPhones} telefone(s)`
+                    : "Remover telefone"
+                }
               >
                 Remover
               </Button>
@@ -347,8 +403,6 @@ const PhoneInputGroup = ({
         ))}
       </div>
 
-
-
       {/* Validações e dicas */}
       {required && phones.length === 0 && (
         <p className="text-sm text-red-600">
@@ -356,7 +410,7 @@ const PhoneInputGroup = ({
         </p>
       )}
 
-      {phones.length > 0 && !phones.some(p => p.is_principal) && (
+      {phones.length > 0 && !phones.some((p) => p.is_principal) && (
         <p className="text-sm text-orange-600">
           Selecione um telefone como principal
         </p>

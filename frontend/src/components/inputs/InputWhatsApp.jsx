@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { MessageCircle, Check, Clock } from 'lucide-react';
-import Input from '../ui/Input';
+import React, { useState } from "react";
+import { MessageCircle, Check, Clock } from "lucide-react";
+import Input from "../ui/Input";
 
 const InputWhatsApp = ({
   phone,
@@ -16,7 +16,7 @@ const InputWhatsApp = ({
       ...phone,
       [field]: value,
       // Se habilita WhatsApp, marcar como verificado por padrão
-      ...(field === 'is_whatsapp' && value ? { whatsapp_verified: true } : {})
+      ...(field === "is_whatsapp" && value ? { whatsapp_verified: true } : {}),
     });
   };
 
@@ -27,7 +27,9 @@ const InputWhatsApp = ({
         <input
           type="checkbox"
           checked={phone.is_whatsapp || false}
-          onChange={(e) => handleWhatsAppChange('is_whatsapp', e.target.checked)}
+          onChange={(e) =>
+            handleWhatsAppChange("is_whatsapp", e.target.checked)
+          }
           disabled={disabled}
           className="mr-2 rounded border-border focus:ring-ring focus:ring-2"
         />
@@ -43,7 +45,9 @@ const InputWhatsApp = ({
             <input
               type="checkbox"
               checked={phone.whatsapp_business || false}
-              onChange={(e) => handleWhatsAppChange('whatsapp_business', e.target.checked)}
+              onChange={(e) =>
+                handleWhatsAppChange("whatsapp_business", e.target.checked)
+              }
               disabled={disabled}
               className="mr-2 rounded border-border focus:ring-ring focus:ring-2"
             />
@@ -54,8 +58,10 @@ const InputWhatsApp = ({
           {showAdvanced && (
             <Input
               label="Nome no WhatsApp"
-              value={phone.whatsapp_name || ''}
-              onChange={(e) => handleWhatsAppChange('whatsapp_name', e.target.value)}
+              value={phone.whatsapp_name || ""}
+              onChange={(e) =>
+                handleWhatsAppChange("whatsapp_name", e.target.value)
+              }
               placeholder="Nome exibido no WhatsApp"
               disabled={disabled}
               size="sm"
@@ -68,7 +74,12 @@ const InputWhatsApp = ({
               <input
                 type="checkbox"
                 checked={phone.accepts_whatsapp_marketing || false}
-                onChange={(e) => handleWhatsAppChange('accepts_whatsapp_marketing', e.target.checked)}
+                onChange={(e) =>
+                  handleWhatsAppChange(
+                    "accepts_whatsapp_marketing",
+                    e.target.checked
+                  )
+                }
                 disabled={disabled}
                 className="mr-2 rounded border-border focus:ring-ring focus:ring-2"
               />
@@ -79,7 +90,12 @@ const InputWhatsApp = ({
               <input
                 type="checkbox"
                 checked={phone.accepts_whatsapp_notifications || false}
-                onChange={(e) => handleWhatsAppChange('accepts_whatsapp_notifications', e.target.checked)}
+                onChange={(e) =>
+                  handleWhatsAppChange(
+                    "accepts_whatsapp_notifications",
+                    e.target.checked
+                  )
+                }
                 disabled={disabled}
                 className="mr-2 rounded border-border focus:ring-ring focus:ring-2"
               />
@@ -97,8 +113,13 @@ const InputWhatsApp = ({
                 </label>
                 <input
                   type="time"
-                  value={phone.whatsapp_preferred_time_start || '09:00'}
-                  onChange={(e) => handleWhatsAppChange('whatsapp_preferred_time_start', e.target.value)}
+                  value={phone.whatsapp_preferred_time_start || "09:00"}
+                  onChange={(e) =>
+                    handleWhatsAppChange(
+                      "whatsapp_preferred_time_start",
+                      e.target.value
+                    )
+                  }
                   disabled={disabled}
                   className="w-full px-2 py-1 text-xs border border-border rounded bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
                 />
@@ -110,8 +131,13 @@ const InputWhatsApp = ({
                 </label>
                 <input
                   type="time"
-                  value={phone.whatsapp_preferred_time_end || '18:00'}
-                  onChange={(e) => handleWhatsAppChange('whatsapp_preferred_time_end', e.target.value)}
+                  value={phone.whatsapp_preferred_time_end || "18:00"}
+                  onChange={(e) =>
+                    handleWhatsAppChange(
+                      "whatsapp_preferred_time_end",
+                      e.target.value
+                    )
+                  }
                   disabled={disabled}
                   className="w-full px-2 py-1 text-xs border border-border rounded bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
                 />
@@ -126,7 +152,10 @@ const InputWhatsApp = ({
               WhatsApp verificado
               {phone.whatsapp_verified_at && (
                 <span className="ml-1 text-muted-foreground">
-                  em {new Date(phone.whatsapp_verified_at).toLocaleDateString('pt-BR')}
+                  em{" "}
+                  {new Date(phone.whatsapp_verified_at).toLocaleDateString(
+                    "pt-BR"
+                  )}
                 </span>
               )}
             </div>
@@ -139,7 +168,7 @@ const InputWhatsApp = ({
             className="text-xs text-blue-600 hover:text-blue-700 focus:outline-none"
             disabled={disabled}
           >
-            {showAdvanced ? 'Ocultar' : 'Mostrar'} campos avançados
+            {showAdvanced ? "Ocultar" : "Mostrar"} campos avançados
           </button>
         </div>
       )}

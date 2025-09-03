@@ -1,35 +1,60 @@
-import React, { useState, useEffect } from 'react';
-import { companiesService } from '../services/api';
-import Card from '../components/ui/Card';
-import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
-import CompanyForm from '../components/forms/CompanyForm';
-import CompanyDetails from '../components/views/CompanyDetails';
-import CompanyMobileCard from '../components/mobile/CompanyMobileCard';
-import { getStatusBadge, getStatusLabel, formatTaxId } from '../utils/statusUtils';
-import { notify } from '../utils/notifications.jsx';
-import { Building, Search, Plus, Filter, Phone, Mail, MapPin, Edit, Eye, Trash2, Calendar } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { companiesService } from "../services/api";
+import { PageErrorBoundary } from "../components/error";
+import Card from "../components/ui/Card";
+import Button from "../components/ui/Button";
+import Input from "../components/ui/Input";
+import CompanyForm from "../components/forms/CompanyForm";
+import CompanyDetails from "../components/views/CompanyDetails";
+import CompanyMobileCard from "../components/mobile/CompanyMobileCard";
+import {
+  getStatusBadge,
+  getStatusLabel,
+  formatTaxId,
+} from "../utils/statusUtils";
+import { notify } from "../utils/notifications.jsx";
+import {
+  Building,
+  Search,
+  Plus,
+  Filter,
+  Phone,
+  Mail,
+  MapPin,
+  Edit,
+  Eye,
+  Trash2,
+  Calendar,
+} from "lucide-react";
 
 const EmpresasPage = () => {
+  return (
+    <PageErrorBoundary pageName="Empresas">
+      <EmpresasPageContent />
+    </PageErrorBoundary>
+  );
+};
+
+const EmpresasPageContent = () => {
   // Add error boundary logging
-  if (typeof window !== 'undefined') {
-    window.addEventListener('error', (e) => {
-      console.error('Page Error:', e.error);
+  if (typeof window !== "undefined") {
+    window.addEventListener("error", (e) => {
+      console.error("Page Error:", e.error);
     });
   }
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('todos');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("todos");
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
-  const [currentView, setCurrentView] = useState('list'); // 'list', 'create', 'edit', 'details'
+  const [currentView, setCurrentView] = useState("list"); // 'list', 'create', 'edit', 'details'
   const [selectedCompanyId, setSelectedCompanyId] = useState(null);
 
   useEffect(() => {
-    if (currentView === 'list') {
+    if (currentView === "list") {
       loadCompanies();
       loadTotalCount();
     }
@@ -39,22 +64,24 @@ const EmpresasPage = () => {
     try {
       setLoading(true);
       setError(null); // Clear previous errors
-      
+
       const params = {
         skip: (currentPage - 1) * itemsPerPage,
         limit: itemsPerPage,
         ...(searchTerm && { search: searchTerm }),
-        ...(filterStatus !== 'todos' && { status: filterStatus })
+        ...(filterStatus !== "todos" && { status: filterStatus }),
       };
 
-      console.log('Loading companies with params:', params);
+      console.log("Loading companies with params:", params);
       const data = await companiesService.getCompanies(params);
-      console.log('Companies loaded:', data?.length || 0);
-      
+      console.log("Companies loaded:", data?.length || 0);
+
       setCompanies(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error('Error loading companies:', err);
-      setError(`Erro ao carregar empresas: ${err.message || 'Erro desconhecido'}`);
+      console.error("Error loading companies:", err);
+      setError(
+        `Erro ao carregar empresas: ${err.message || "Erro desconhecido"}`
+      );
       setCompanies([]); // Set empty array on error
     } finally {
       setLoading(false);
@@ -65,33 +92,33 @@ const EmpresasPage = () => {
     try {
       const params = {
         ...(searchTerm && { search: searchTerm }),
-        ...(filterStatus !== 'todos' && { status: filterStatus })
+        ...(filterStatus !== "todos" && { status: filterStatus }),
       };
       const data = await companiesService.getCompaniesCount(params);
       setTotalCount(data.total);
     } catch (err) {
-      console.error('Erro ao carregar contagem:', err);
+      console.error("Erro ao carregar contagem:", err);
     }
   };
 
   const handleDelete = async (companyId) => {
-    const company = companies.find(c => c.id === companyId);
-    const companyName = company?.name || 'esta empresa';
+    const company = companies.find((c) => c.id === companyId);
+    const companyName = company?.name || "esta empresa";
 
     const executeDelete = async () => {
       try {
         await companiesService.deleteCompany(companyId);
-        notify.success('Empresa excluída com sucesso!');
+        notify.success("Empresa excluída com sucesso!");
         loadCompanies();
         loadTotalCount();
       } catch (err) {
-        notify.error('Erro ao excluir empresa');
+        notify.error("Erro ao excluir empresa");
         console.error(err);
       }
     };
 
     notify.confirmDelete(
-      'Excluir Empresa',
+      "Excluir Empresa",
       `Tem certeza que deseja excluir a empresa "${companyName}"?`,
       executeDelete
     );
@@ -100,11 +127,13 @@ const EmpresasPage = () => {
   const handleCreate = () => {
     // Garantir limpeza completa do estado antes de criar
     setSelectedCompanyId(null);
-    setCurrentView('create');
+    setCurrentView("create");
     // Pequeno delay para garantir que o estado seja atualizado
     setTimeout(() => {
       if (selectedCompanyId !== null) {
-        console.warn('selectedCompanyId não foi limpo adequadamente, forçando limpeza');
+        console.warn(
+          "selectedCompanyId não foi limpo adequadamente, forçando limpeza"
+        );
         setSelectedCompanyId(null);
       }
     }, 0);
@@ -112,53 +141,52 @@ const EmpresasPage = () => {
 
   const handleEdit = (companyId) => {
     setSelectedCompanyId(companyId);
-    setCurrentView('edit');
+    setCurrentView("edit");
   };
 
   const handleView = (companyId) => {
     setSelectedCompanyId(companyId);
-    setCurrentView('details');
+    setCurrentView("details");
   };
 
   const handleSave = () => {
-    setCurrentView('list');
+    setCurrentView("list");
     setSelectedCompanyId(null);
     loadCompanies();
     loadTotalCount();
   };
 
   const handleCancel = () => {
-    setCurrentView('list');
+    setCurrentView("list");
     setSelectedCompanyId(null);
     // Limpar qualquer estado residual
     setTimeout(() => {
-      if (currentView !== 'list' || selectedCompanyId !== null) {
-        console.warn('Estado não foi limpo adequadamente no cancelamento');
-        setCurrentView('list');
+      if (currentView !== "list" || selectedCompanyId !== null) {
+        console.warn("Estado não foi limpo adequadamente no cancelamento");
+        setCurrentView("list");
         setSelectedCompanyId(null);
       }
     }, 0);
   };
 
   const handleBack = () => {
-    setCurrentView('list');
+    setCurrentView("list");
     setSelectedCompanyId(null);
   };
 
   const handleDeleteFromDetails = () => {
-    setCurrentView('list');
+    setCurrentView("list");
     setSelectedCompanyId(null);
     loadCompanies();
     loadTotalCount();
   };
 
-
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   // Render different views based on current state
-  if (currentView === 'create' || currentView === 'edit') {
+  if (currentView === "create" || currentView === "edit") {
     // Garantir que companyId seja null no modo de criação
-    const companyIdToPass = currentView === 'create' ? null : selectedCompanyId;
+    const companyIdToPass = currentView === "create" ? null : selectedCompanyId;
 
     return (
       <CompanyForm
@@ -169,9 +197,9 @@ const EmpresasPage = () => {
     );
   }
 
-  if (currentView === 'details') {
+  if (currentView === "details") {
     return (
-      <CompanyDetails 
+      <CompanyDetails
         companyId={selectedCompanyId}
         onEdit={handleEdit}
         onBack={handleBack}
@@ -209,9 +237,15 @@ const EmpresasPage = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Empresas</h1>
-          <p className="text-muted-foreground">Gerencie as empresas cadastradas no sistema</p>
+          <p className="text-muted-foreground">
+            Gerencie as empresas cadastradas no sistema
+          </p>
         </div>
-        <Button onClick={handleCreate} icon={<Plus className="h-4 w-4" />} className="shrink-0">
+        <Button
+          onClick={handleCreate}
+          icon={<Plus className="h-4 w-4" />}
+          className="shrink-0"
+        >
           <span className="hidden sm:inline">Nova Empresa</span>
           <span className="sm:hidden">Nova</span>
         </Button>
@@ -229,7 +263,7 @@ const EmpresasPage = () => {
               leftIcon={<Search className="h-4 w-4" />}
               className="flex-1 min-w-0"
             />
-            
+
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
@@ -244,7 +278,11 @@ const EmpresasPage = () => {
 
           {/* Additional Filters Button */}
           <div className="flex justify-end">
-            <Button variant="secondary" outline icon={<Filter className="h-4 w-4" />}>
+            <Button
+              variant="secondary"
+              outline
+              icon={<Filter className="h-4 w-4" />}
+            >
               <span className="hidden sm:inline">Filtros Avançados</span>
               <span className="sm:hidden">Filtros</span>
             </Button>
@@ -274,7 +312,7 @@ const EmpresasPage = () => {
             <div className="ml-4">
               <p className="text-sm text-muted-foreground">Ativas</p>
               <p className="text-2xl font-bold text-foreground">
-                {companies.filter(c => c.status === 'active').length}
+                {companies.filter((c) => c.status === "active").length}
               </p>
             </div>
           </div>
@@ -288,7 +326,7 @@ const EmpresasPage = () => {
             <div className="ml-4">
               <p className="text-sm text-muted-foreground">Inativas</p>
               <p className="text-2xl font-bold text-foreground">
-                {companies.filter(c => c.status === 'inactive').length}
+                {companies.filter((c) => c.status === "inactive").length}
               </p>
             </div>
           </div>
@@ -302,7 +340,7 @@ const EmpresasPage = () => {
             <div className="ml-4">
               <p className="text-sm text-muted-foreground">Suspensas</p>
               <p className="text-2xl font-bold text-foreground">
-                {companies.filter(c => c.status === 'suspended').length}
+                {companies.filter((c) => c.status === "suspended").length}
               </p>
             </div>
           </div>
@@ -317,23 +355,43 @@ const EmpresasPage = () => {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Empresa</th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">CNPJ</th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Contatos</th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Status</th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Criado em</th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Ações</th>
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">
+                    Empresa
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">
+                    CNPJ
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">
+                    Contatos
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">
+                    Status
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">
+                    Criado em
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">
+                    Ações
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {companies.map((company) => (
-                  <tr key={company.id} className="border-b border-border hover:bg-muted/50">
+                  <tr
+                    key={company.id}
+                    className="border-b border-border hover:bg-muted/50"
+                  >
                     <td className="py-3 px-4">
                       <div>
-                        <p className="font-medium text-foreground">{company.name}</p>
-                        {company.trade_name && company.trade_name !== company.name && (
-                          <p className="text-sm text-muted-foreground">{company.trade_name}</p>
-                        )}
+                        <p className="font-medium text-foreground">
+                          {company.name}
+                        </p>
+                        {company.trade_name &&
+                          company.trade_name !== company.name && (
+                            <p className="text-sm text-muted-foreground">
+                              {company.trade_name}
+                            </p>
+                          )}
                       </div>
                     </td>
                     <td className="py-3 px-4 text-foreground font-mono text-sm">
@@ -343,15 +401,18 @@ const EmpresasPage = () => {
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center text-sm text-muted-foreground">
                           <Phone className="h-3 w-3 mr-1" />
-                          {company.phones_count} telefone{company.phones_count !== 1 ? 's' : ''}
+                          {company.phones_count} telefone
+                          {company.phones_count !== 1 ? "s" : ""}
                         </div>
                         <div className="flex items-center text-sm text-muted-foreground">
                           <Mail className="h-3 w-3 mr-1" />
-                          {company.emails_count} email{company.emails_count !== 1 ? 's' : ''}
+                          {company.emails_count} email
+                          {company.emails_count !== 1 ? "s" : ""}
                         </div>
                         <div className="flex items-center text-sm text-muted-foreground">
                           <MapPin className="h-3 w-3 mr-1" />
-                          {company.addresses_count} endereço{company.addresses_count !== 1 ? 's' : ''}
+                          {company.addresses_count} endereço
+                          {company.addresses_count !== 1 ? "s" : ""}
                         </div>
                       </div>
                     </td>
@@ -361,32 +422,32 @@ const EmpresasPage = () => {
                       </span>
                     </td>
                     <td className="py-3 px-4 text-foreground">
-                      {new Date(company.created_at).toLocaleDateString('pt-BR')}
+                      {new Date(company.created_at).toLocaleDateString("pt-BR")}
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex gap-1">
-                        <Button 
-                          size="sm" 
-                          variant="secondary" 
-                          outline 
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          outline
                           icon={<Eye className="h-3 w-3" />}
                           onClick={() => handleView(company.id)}
                         >
                           Ver
                         </Button>
-                        <Button 
-                          size="sm" 
-                          variant="primary" 
-                          outline 
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          outline
                           icon={<Edit className="h-3 w-3" />}
                           onClick={() => handleEdit(company.id)}
                         >
                           Editar
                         </Button>
-                        <Button 
-                          size="sm" 
-                          variant="danger" 
-                          outline 
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          outline
                           icon={<Trash2 className="h-3 w-3" />}
                           onClick={() => handleDelete(company.id)}
                         >
@@ -405,7 +466,9 @@ const EmpresasPage = () => {
         <div className="lg:hidden space-y-4">
           {companies.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-500 dark:text-gray-400">Nenhuma empresa encontrada</p>
+              <p className="text-gray-500 dark:text-gray-400">
+                Nenhuma empresa encontrada
+              </p>
             </div>
           ) : (
             companies.map((company, index) => (
@@ -427,8 +490,10 @@ const EmpresasPage = () => {
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              Mostrando {Math.min((currentPage - 1) * itemsPerPage + 1, totalCount)} a{' '}
-              {Math.min(currentPage * itemsPerPage, totalCount)} de {totalCount} empresas
+              Mostrando{" "}
+              {Math.min((currentPage - 1) * itemsPerPage + 1, totalCount)} a{" "}
+              {Math.min(currentPage * itemsPerPage, totalCount)} de {totalCount}{" "}
+              empresas
             </p>
             <div className="flex gap-2">
               <Button

@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import Mock, AsyncMock
 from datetime import datetime
-from app.domain.models.company import (
+from app.presentation.schemas.company import (
     CompanyCreate, CompanyDetailed, CompanyList, 
     PeopleCreate, PhoneCreate, EmailCreate, AddressCreate
 )

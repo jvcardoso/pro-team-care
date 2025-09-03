@@ -1,7 +1,7 @@
 from datetime import timedelta
 from typing import Optional, Dict, Any
 
-from app.domain.entities.user import UserEntity
+from app.domain.entities.user import User
 from app.domain.repositories.user_repository import UserRepositoryInterface
 from app.application.interfaces.services import AuthServiceInterface
 # ✅ Application Layer não deve depender de Presentation - apenas de Domain
@@ -15,7 +15,7 @@ class AuthUseCase:
         self.user_repository = user_repository
         self.auth_service = auth_service
     
-    async def authenticate_user(self, email: str, password: str) -> Optional[UserEntity]:
+    async def authenticate_user(self, email: str, password: str) -> Optional[User]:
         """Autenticar usuário com email e senha"""
         user = await self.user_repository.get_by_email(email)
         if not user:
@@ -26,7 +26,7 @@ class AuthUseCase:
         
         return user
     
-    async def create_access_token_for_user(self, user: UserEntity) -> Dict[str, str]:
+    async def create_access_token_for_user(self, user: User) -> Dict[str, str]:
         """Criar token de acesso para usuário - ✅ Retorna dict básico"""
         access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
         access_token = self.auth_service.create_access_token(
@@ -35,7 +35,7 @@ class AuthUseCase:
         )
         return {"access_token": access_token, "token_type": "bearer"}
     
-    async def register_user(self, user_data: Dict[str, Any]) -> UserEntity:
+    async def register_user(self, user_data: Dict[str, Any]) -> User:
         """Registrar novo usuário - ✅ Recebe e retorna dados básicos"""
         # Verificar se usuário já existe
         existing_user = await self.user_repository.get_by_email(user_data["email"])
@@ -56,6 +56,6 @@ class AuthUseCase:
         
         return user_entity
     
-    async def get_user_by_email(self, email: str) -> Optional[UserEntity]:
+    async def get_user_by_email(self, email: str) -> Optional[User]:
         """Buscar usuário por email - ✅ Retorna entidade pura"""
         return await self.user_repository.get_by_email(email)

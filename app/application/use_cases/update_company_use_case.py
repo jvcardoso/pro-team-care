@@ -27,7 +27,7 @@ class UpdateCompanyUseCase:
     async def update_by_id(
         self, 
         command: UpdateCompanyCommand
-    ) -> Optional[CompanyDetailed]:
+    ) -> Optional[CompanyEntity]:
         """
         Atualizar empresa por ID
         
@@ -35,7 +35,7 @@ class UpdateCompanyUseCase:
             command: Command contendo dados da empresa e metadados
             
         Returns:
-            CompanyDetailed ou None se não encontrada
+            CompanyEntity ou None se não encontrada
         """
         logger.info(
             "Iniciando atualização de empresa",

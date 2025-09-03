@@ -1,5 +1,5 @@
-import React from 'react';
-import { Heart, Code } from 'lucide-react';
+import React from "react";
+import { Heart, Code } from "lucide-react";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -10,8 +10,12 @@ const Footer = () => {
         {/* Left side - Copyright */}
         <div className="flex items-center space-x-1 mb-2 sm:mb-0">
           <span>Copyright © {currentYear}</span>
-          <strong className="text-blue-600 dark:text-blue-400">Pro Team Care</strong>
-          <span className="hidden md:inline">- Sistema de Gestão Home Care</span>
+          <strong className="text-blue-600 dark:text-blue-400">
+            Pro Team Care
+          </strong>
+          <span className="hidden md:inline">
+            - Sistema de Gestão Home Care
+          </span>
         </div>
 
         {/* Right side - Version & Credits */}

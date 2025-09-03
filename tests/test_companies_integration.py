@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, Mock
 from datetime import datetime
 from app.main import app
 from app.infrastructure.repositories.company_repository import CompanyRepository
-from app.domain.models.company import CompanyDetailed, CompanyList
+from app.presentation.schemas.company import CompanyDetailed, CompanyList
 
 
 class TestCompaniesAPI:

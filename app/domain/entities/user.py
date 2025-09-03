@@ -16,6 +16,7 @@ class User:
     id: int
     person_id: int
     email_address: str
+    password: str  # hashed password
     is_active: bool
     is_system_admin: bool
     created_at: datetime

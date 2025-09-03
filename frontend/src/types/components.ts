@@ -3,16 +3,16 @@
  * Interfaces para componentes React e state management
  */
 
-import { ReactNode } from 'react';
-import { 
-  Company, 
-  CompanyDetailed, 
-  CompanyCreate, 
-  Phone, 
-  Email, 
+import { ReactNode } from "react";
+import {
+  Company,
+  CompanyDetailed,
+  CompanyCreate,
+  Phone,
+  Email,
   Address,
-  PersonStatus 
-} from './api';
+  PersonStatus,
+} from "./api";
 
 // ===============================
 // FORM TYPES
@@ -65,7 +65,7 @@ export interface InputValidationProps extends BaseInputProps {
 
 export interface CompanyFormData {
   people: {
-    person_type: 'PF' | 'PJ';
+    person_type: "PF" | "PJ";
     name: string;
     trade_name?: string;
     tax_id: string;
@@ -116,7 +116,7 @@ export interface CompanyFormProps {
   onSubmit: (data: CompanyCreate) => Promise<void>;
   onCancel?: () => void;
   isLoading?: boolean;
-  mode?: 'create' | 'edit';
+  mode?: "create" | "edit";
 }
 
 // ===============================
@@ -152,13 +152,18 @@ export interface PaginationProps {
 // UI COMPONENT TYPES
 // ===============================
 
-export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'outline';
-export type ButtonSize = 'sm' | 'md' | 'lg';
+export type ButtonVariant =
+  | "primary"
+  | "secondary"
+  | "danger"
+  | "ghost"
+  | "outline";
+export type ButtonSize = "sm" | "md" | "lg";
 
 export interface ButtonProps {
   children: ReactNode;
   onClick?: () => void;
-  type?: 'button' | 'submit' | 'reset';
+  type?: "button" | "submit" | "reset";
   variant?: ButtonVariant;
   size?: ButtonSize;
   disabled?: boolean;
@@ -171,12 +176,12 @@ export interface ModalProps {
   onClose: () => void;
   title?: string;
   children: ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: "sm" | "md" | "lg" | "xl";
   showCloseButton?: boolean;
 }
 
 export interface ToastProps {
-  type: 'success' | 'error' | 'warning' | 'info';
+  type: "success" | "error" | "warning" | "info";
   message: string;
   duration?: number;
 }
@@ -223,7 +228,10 @@ export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
 export type WithId<T> = T & { id: number };
 
-export type CreateType<T> = Omit<T, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>;
+export type CreateType<T> = Omit<
+  T,
+  "id" | "created_at" | "updated_at" | "deleted_at"
+>;
 
 export type UpdateType<T> = Partial<CreateType<T>>;
 

@@ -3,7 +3,7 @@
  * Provides programmatic access to theme values and utilities
  */
 
-import { designTokens } from '../styles/design-tokens';
+import { designTokens } from "../styles/design-tokens";
 
 /**
  * Get color value from theme
@@ -15,19 +15,19 @@ export const getColor = (color, shade = null) => {
   if (shade) {
     return `var(--${color}-${shade})`;
   }
-  
+
   // Return main color variable
   const colorMap = {
-    primary: 'var(--primary-color)',
-    secondary: 'var(--secondary-color)',
-    success: 'var(--success-color)',
-    danger: 'var(--danger-color)',
-    warning: 'var(--warning-color)',
-    info: 'var(--info-color)',
-    light: 'var(--light-color)',
-    dark: 'var(--dark-color)',
+    primary: "var(--primary-color)",
+    secondary: "var(--secondary-color)",
+    success: "var(--success-color)",
+    danger: "var(--danger-color)",
+    warning: "var(--warning-color)",
+    info: "var(--info-color)",
+    light: "var(--light-color)",
+    dark: "var(--dark-color)",
   };
-  
+
   return colorMap[color] || `var(--${color}-color)`;
 };
 
@@ -102,15 +102,19 @@ export const getZIndex = (layer) => {
  * @param {string[]} breakpoints - Breakpoints to generate for
  * @returns {object} Responsive class object
  */
-export const generateResponsiveClasses = (property, value, breakpoints = ['sm', 'md', 'lg', 'xl']) => {
+export const generateResponsiveClasses = (
+  property,
+  value,
+  breakpoints = ["sm", "md", "lg", "xl"]
+) => {
   const classes = {
-    [property]: value
+    [property]: value,
   };
-  
-  breakpoints.forEach(bp => {
+
+  breakpoints.forEach((bp) => {
     classes[`${bp}:${property}`] = value;
   });
-  
+
   return classes;
 };
 
@@ -123,12 +127,12 @@ export const generateResponsiveClasses = (property, value, breakpoints = ['sm', 
  */
 export const createUtilityClasses = (prefix, values, property) => {
   const classes = {};
-  
+
   Object.entries(values).forEach(([key, value]) => {
-    const className = key === 'default' ? prefix : `${prefix}-${key}`;
+    const className = key === "default" ? prefix : `${prefix}-${key}`;
     classes[className] = { [property]: value };
   });
-  
+
   return classes;
 };
 
@@ -146,14 +150,14 @@ export const getThemeVariable = (variable) => {
  * @returns {boolean} True if dark theme is active
  */
 export const isDarkTheme = () => {
-  if (typeof window === 'undefined') return false;
-  
-  const theme = localStorage.getItem('pro-team-care-theme');
+  if (typeof window === "undefined") return false;
+
+  const theme = localStorage.getItem("pro-team-care-theme");
   if (theme) {
-    return theme === 'dark';
+    return theme === "dark";
   }
-  
-  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
 };
 
 /**
@@ -161,14 +165,16 @@ export const isDarkTheme = () => {
  * @returns {string} Current theme ('light' or 'dark')
  */
 export const getCurrentTheme = () => {
-  if (typeof window === 'undefined') return 'light';
-  
-  const theme = localStorage.getItem('pro-team-care-theme');
+  if (typeof window === "undefined") return "light";
+
+  const theme = localStorage.getItem("pro-team-care-theme");
   if (theme) {
     return theme;
   }
-  
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
 };
 
 /**
@@ -176,15 +182,17 @@ export const getCurrentTheme = () => {
  * @param {string} theme - Theme to set ('light' or 'dark')
  */
 export const setTheme = (theme) => {
-  if (typeof window === 'undefined') return;
-  
-  document.documentElement.setAttribute('data-theme', theme);
-  localStorage.setItem('pro-team-care-theme', theme);
-  
+  if (typeof window === "undefined") return;
+
+  document.documentElement.setAttribute("data-theme", theme);
+  localStorage.setItem("pro-team-care-theme", theme);
+
   // Dispatch custom event for theme change
-  window.dispatchEvent(new CustomEvent('themeChange', { 
-    detail: { theme } 
-  }));
+  window.dispatchEvent(
+    new CustomEvent("themeChange", {
+      detail: { theme },
+    })
+  );
 };
 
 /**
@@ -193,7 +201,7 @@ export const setTheme = (theme) => {
  */
 export const toggleTheme = () => {
   const currentTheme = getCurrentTheme();
-  const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+  const newTheme = currentTheme === "light" ? "dark" : "light";
   setTheme(newTheme);
   return newTheme;
 };
@@ -204,28 +212,28 @@ export const toggleTheme = () => {
  * @returns {function} Cleanup function
  */
 export const onThemeChange = (callback) => {
-  if (typeof window === 'undefined') return () => {};
-  
+  if (typeof window === "undefined") return () => {};
+
   const handleThemeChange = (event) => {
     callback(event.detail.theme);
   };
-  
-  window.addEventListener('themeChange', handleThemeChange);
-  
+
+  window.addEventListener("themeChange", handleThemeChange);
+
   // Also listen to system theme changes
-  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
   const handleSystemThemeChange = (e) => {
-    const savedTheme = localStorage.getItem('pro-team-care-theme');
+    const savedTheme = localStorage.getItem("pro-team-care-theme");
     if (!savedTheme) {
-      callback(e.matches ? 'dark' : 'light');
+      callback(e.matches ? "dark" : "light");
     }
   };
-  
-  mediaQuery.addEventListener('change', handleSystemThemeChange);
-  
+
+  mediaQuery.addEventListener("change", handleSystemThemeChange);
+
   return () => {
-    window.removeEventListener('themeChange', handleThemeChange);
-    mediaQuery.removeEventListener('change', handleSystemThemeChange);
+    window.removeEventListener("themeChange", handleThemeChange);
+    mediaQuery.removeEventListener("change", handleSystemThemeChange);
   };
 };
 
@@ -237,14 +245,14 @@ export const onThemeChange = (callback) => {
 export const createThemeObject = (theme = getCurrentTheme()) => {
   return {
     colors: {
-      primary: getColor('primary'),
-      secondary: getColor('secondary'),
-      success: getColor('success'),
-      danger: getColor('danger'),
-      warning: getColor('warning'),
-      info: getColor('info'),
-      light: getColor('light'),
-      dark: getColor('dark'),
+      primary: getColor("primary"),
+      secondary: getColor("secondary"),
+      success: getColor("success"),
+      danger: getColor("danger"),
+      warning: getColor("warning"),
+      info: getColor("info"),
+      light: getColor("light"),
+      dark: getColor("dark"),
     },
     spacing: designTokens.spacing,
     typography: designTokens.typography,
@@ -274,7 +282,7 @@ export const mediaQuery = (breakpoint) => {
 export const createHoverStyles = (styles) => {
   return {
     ...styles,
-    '&:hover': {
+    "&:hover": {
       ...styles.hover,
     },
   };
@@ -288,9 +296,9 @@ export const createHoverStyles = (styles) => {
 export const createFocusStyles = (styles) => {
   return {
     ...styles,
-    '&:focus': {
-      outline: 'none',
-      boxShadow: `0 0 0 0.2rem ${getColor('primary', '200')}`,
+    "&:focus": {
+      outline: "none",
+      boxShadow: `0 0 0 0.2rem ${getColor("primary", "200")}`,
       ...styles.focus,
     },
   };

@@ -4,7 +4,8 @@
  * Evita problemas de loop de login
  */
 
-import axios from 'axios';
+import axios from "axios";
+import { createAxiosConfig } from "../config/http";
 
 /**
  * Consulta dados de empresa pelo CNPJ
@@ -13,38 +14,31 @@ import axios from 'axios';
  */
 export const consultarCNPJ = async (cnpj) => {
   // Remover caracteres não numéricos
-  const cnpjLimpo = cnpj.replace(/\D/g, '');
+  const cnpjLimpo = cnpj.replace(/\D/g, "");
 
   if (cnpjLimpo.length !== 14) {
-    throw new Error('CNPJ deve ter 14 dígitos');
+    throw new Error("CNPJ deve ter 14 dígitos");
   }
 
-  // Configurar base URL
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://192.168.11.62:8000';
-
-  // Criar instância axios simples para endpoint público
-  const cnpjApi = axios.create({
-    baseURL: API_BASE_URL,
-    timeout: 15000, // Timeout maior para consulta externa
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
+  // 🔄 Usar configuração HTTP padronizada para CNPJ service
+  const cnpjApi = axios.create(createAxiosConfig("cnpj"));
 
   try {
-    console.log('Consultando CNPJ (apenas endpoint público):', cnpjLimpo);
+    console.log("Consultando CNPJ (apenas endpoint público):", cnpjLimpo);
 
     // Usar apenas endpoint público - sem autenticação
-    const response = await cnpjApi.get(`/api/v1/cnpj/publico/consultar/${cnpjLimpo}`);
+    const response = await cnpjApi.get(
+      `/api/v1/cnpj/publico/consultar/${cnpjLimpo}`
+    );
     const data = response.data;
 
     if (!data.success) {
-      throw new Error(data.message || 'CNPJ não encontrado ou inválido');
+      throw new Error(data.message || "CNPJ não encontrado ou inválido");
     }
 
     return data.data;
   } catch (error) {
-    console.error('Erro ao consultar CNPJ:', error);
+    console.error("Erro ao consultar CNPJ:", error);
 
     // Tratamento específico para erros da API
     if (error.response?.data?.detail) {
@@ -52,16 +46,23 @@ export const consultarCNPJ = async (cnpj) => {
     }
 
     // Tratamento para erros de rede
-    if (error.message.includes('Network Error') || error.code === 'ECONNABORTED') {
-      throw new Error('Erro de conexão. Verifique sua internet e tente novamente.');
+    if (
+      error.message.includes("Network Error") ||
+      error.code === "ECONNABORTED"
+    ) {
+      throw new Error(
+        "Erro de conexão. Verifique sua internet e tente novamente."
+      );
     }
 
     // Tratamento para timeout
-    if (error.code === 'ECONNABORTED') {
-      throw new Error('Consulta demorou muito para responder. Tente novamente.');
+    if (error.code === "ECONNABORTED") {
+      throw new Error(
+        "Consulta demorou muito para responder. Tente novamente."
+      );
     }
 
-    throw new Error(error.message || 'Erro inesperado ao consultar CNPJ');
+    throw new Error(error.message || "Erro inesperado ao consultar CNPJ");
   }
 };
 
@@ -75,7 +76,7 @@ export const consultarCNPJ = async (cnpj) => {
  * @returns {boolean} True se válido
  */
 export const validarFormatoCNPJ = (cnpj) => {
-  const cnpjLimpo = cnpj.replace(/\D/g, '');
+  const cnpjLimpo = cnpj.replace(/\D/g, "");
   return cnpjLimpo.length === 14;
 };
 
@@ -85,14 +86,14 @@ export const validarFormatoCNPJ = (cnpj) => {
  * @returns {string} CNPJ formatado
  */
 export const formatarCNPJ = (cnpj) => {
-  const cnpjLimpo = cnpj.replace(/\D/g, '');
-  
+  const cnpjLimpo = cnpj.replace(/\D/g, "");
+
   if (cnpjLimpo.length === 14) {
     return cnpjLimpo.replace(
       /^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,
-      '$1.$2.$3/$4-$5'
+      "$1.$2.$3/$4-$5"
     );
   }
-  
+
   return cnpj;
 };

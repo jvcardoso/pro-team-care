@@ -1,18 +1,41 @@
-import React, { useState, useEffect } from 'react';
-import { companiesService } from '../../services/api';
-import Card from '../ui/Card';
-import Button from '../ui/Button';
-import CompanyBasicInfo from '../entities/CompanyBasicInfo';
-import ReceitaFederalInfo from '../metadata/ReceitaFederalInfo';
-import { getStatusBadge, getStatusLabel, getPhoneTypeLabel, getEmailTypeLabel, getAddressTypeLabel, formatPhone, formatZipCode } from '../../utils/statusUtils';
-import { notify } from '../../utils/notifications.jsx';
-import { ArrowLeft, Edit, Trash2, Phone, Mail, MapPin, Building, Calendar, User, Globe, MessageCircle, Send, Navigation, ExternalLink } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { companiesService } from "../../services/api";
+import Card from "../ui/Card";
+import Button from "../ui/Button";
+import CompanyBasicInfo from "../entities/CompanyBasicInfo";
+import ReceitaFederalInfo from "../metadata/ReceitaFederalInfo";
+import {
+  getStatusBadge,
+  getStatusLabel,
+  getPhoneTypeLabel,
+  getEmailTypeLabel,
+  getAddressTypeLabel,
+  formatPhone,
+  formatZipCode,
+} from "../../utils/statusUtils";
+import { notify } from "../../utils/notifications.jsx";
+import {
+  ArrowLeft,
+  Edit,
+  Trash2,
+  Phone,
+  Mail,
+  MapPin,
+  Building,
+  Calendar,
+  User,
+  Globe,
+  MessageCircle,
+  Send,
+  Navigation,
+  ExternalLink,
+} from "lucide-react";
 
 const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('informacoes');
+  const [activeTab, setActiveTab] = useState("informacoes");
 
   useEffect(() => {
     if (companyId) {
@@ -24,19 +47,15 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
     try {
       setLoading(true);
       const data = await companiesService.getCompany(companyId);
-      
-      // Debug: Verificar estrutura dos dados (manter apenas para identificar problemas)
-      if (process.env.NODE_ENV === 'development') {
-        console.log('CompanyDetails - Metadados:', {
-          company_metadata: !!data.company?.metadata,
-          people_metadata: !!data.people?.metadata,  
-          direct_metadata: !!data.metadata
-        });
+
+      // Debug: Verificar estrutura dos dados (sem exposição de PII)
+      if (process.env.NODE_ENV === "development") {
+        console.log("CompanyDetails - Estrutura de metadados verificada");
       }
-      
+
       setCompany(data);
     } catch (err) {
-      setError('Erro ao carregar empresa');
+      setError("Erro ao carregar empresa");
       console.error(err);
     } finally {
       setLoading(false);
@@ -47,44 +66,48 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
     const executeDelete = async () => {
       try {
         await companiesService.deleteCompany(companyId);
-        notify.success('Empresa excluída com sucesso!');
+        notify.success("Empresa excluída com sucesso!");
         onDelete?.();
       } catch (err) {
-        notify.error('Erro ao excluir empresa');
+        notify.error("Erro ao excluir empresa");
         console.error(err);
       }
     };
 
     notify.confirmDelete(
-      'Excluir Empresa',
-      `Tem certeza que deseja excluir a empresa "${company?.people?.name || 'esta empresa'}"?`,
+      "Excluir Empresa",
+      `Tem certeza que deseja excluir a empresa "${
+        company?.people?.name || "esta empresa"
+      }"?`,
       executeDelete
     );
   };
 
-
-
   const openWhatsApp = (phone) => {
-    const number = phone.number.replace(/\D/g, '');
+    const number = phone.number.replace(/\D/g, "");
     const url = `https://wa.me/${phone.country_code}${number}`;
-    window.open(url, '_blank');
+    window.open(url, "_blank");
   };
 
   const openEmail = (email) => {
     const url = `mailto:${email.email_address}`;
-    window.open(url, '_blank');
+    window.open(url, "_blank");
   };
 
   const openGoogleMaps = (address) => {
-    const query = encodeURIComponent(`${address.street}, ${address.number}, ${address.city}, ${address.state}, ${address.zip_code}, ${address.country}`);
+    const query = encodeURIComponent(
+      `${address.street}, ${address.number}, ${address.city}, ${address.state}, ${address.zip_code}, ${address.country}`
+    );
     const url = `https://www.google.com/maps/search/?api=1&query=${query}`;
-    window.open(url, '_blank');
+    window.open(url, "_blank");
   };
 
   const openWaze = (address) => {
-    const query = encodeURIComponent(`${address.street}, ${address.number}, ${address.city}, ${address.state}`);
+    const query = encodeURIComponent(
+      `${address.street}, ${address.number}, ${address.city}, ${address.state}`
+    );
     const url = `https://waze.com/ul?q=${query}`;
-    window.open(url, '_blank');
+    window.open(url, "_blank");
   };
 
   if (loading) {
@@ -109,7 +132,11 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground">Empresa não encontrada</p>
-        <Button onClick={onBack} className="mt-4" icon={<ArrowLeft className="h-4 w-4" />}>
+        <Button
+          onClick={onBack}
+          className="mt-4"
+          icon={<ArrowLeft className="h-4 w-4" />}
+        >
           Voltar
         </Button>
       </div>
@@ -122,30 +149,51 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
       <div className="space-y-4">
         {/* Back Button */}
         <div>
-          <Button variant="secondary" outline onClick={onBack} icon={<ArrowLeft className="h-4 w-4" />}>
+          <Button
+            variant="secondary"
+            outline
+            onClick={onBack}
+            icon={<ArrowLeft className="h-4 w-4" />}
+          >
             Voltar
           </Button>
         </div>
-        
+
         {/* Company Info and Actions */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="min-w-0">
-            <h1 className="text-2xl font-bold text-foreground break-words">{company.people.name}</h1>
+            <h1 className="text-2xl font-bold text-foreground break-words">
+              {company.people.name}
+            </h1>
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-1">
-              {company.people.trade_name && company.people.trade_name !== company.people.name && (
-                <p className="text-muted-foreground break-words">{company.people.trade_name}</p>
-              )}
+              {company.people.trade_name &&
+                company.people.trade_name !== company.people.name && (
+                  <p className="text-muted-foreground break-words">
+                    {company.people.trade_name}
+                  </p>
+                )}
               <span className={getStatusBadge(company.people.status)}>
                 {getStatusLabel(company.people.status)}
               </span>
             </div>
           </div>
           <div className="flex gap-3 shrink-0">
-            <Button variant="primary" onClick={() => onEdit?.(companyId)} icon={<Edit className="h-4 w-4" />} className="flex-1 sm:flex-none">
+            <Button
+              variant="primary"
+              onClick={() => onEdit?.(companyId)}
+              icon={<Edit className="h-4 w-4" />}
+              className="flex-1 sm:flex-none"
+            >
               <span className="hidden sm:inline">Editar</span>
               <span className="sm:hidden">Editar</span>
             </Button>
-            <Button variant="danger" outline onClick={handleDelete} icon={<Trash2 className="h-4 w-4" />} className="flex-1 sm:flex-none">
+            <Button
+              variant="danger"
+              outline
+              onClick={handleDelete}
+              icon={<Trash2 className="h-4 w-4" />}
+              className="flex-1 sm:flex-none"
+            >
               <span className="hidden sm:inline">Excluir</span>
               <span className="sm:hidden">Excluir</span>
             </Button>
@@ -158,73 +206,73 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
         <div className="overflow-x-auto">
           <div className="flex space-x-4 sm:space-x-8 min-w-max">
             <button
-              onClick={() => setActiveTab('informacoes')}
+              onClick={() => setActiveTab("informacoes")}
               className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${
-                activeTab === 'informacoes'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                activeTab === "informacoes"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
               }`}
             >
               Informações
             </button>
             <button
-              onClick={() => setActiveTab('estabelecimentos')}
+              onClick={() => setActiveTab("estabelecimentos")}
               className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${
-                activeTab === 'estabelecimentos'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                activeTab === "estabelecimentos"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
               }`}
             >
               <span className="hidden sm:inline">Estabelecimentos</span>
               <span className="sm:hidden">Estab.</span>
             </button>
             <button
-              onClick={() => setActiveTab('clientes')}
+              onClick={() => setActiveTab("clientes")}
               className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${
-                activeTab === 'clientes'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                activeTab === "clientes"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
               }`}
             >
               Clientes
             </button>
             <button
-              onClick={() => setActiveTab('profissionais')}
+              onClick={() => setActiveTab("profissionais")}
               className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${
-                activeTab === 'profissionais'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                activeTab === "profissionais"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
               }`}
             >
               <span className="hidden sm:inline">Profissionais</span>
               <span className="sm:hidden">Profis.</span>
             </button>
             <button
-              onClick={() => setActiveTab('pacientes')}
+              onClick={() => setActiveTab("pacientes")}
               className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${
-                activeTab === 'pacientes'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                activeTab === "pacientes"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
               }`}
             >
               Pacientes
             </button>
             <button
-              onClick={() => setActiveTab('usuarios')}
+              onClick={() => setActiveTab("usuarios")}
               className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${
-                activeTab === 'usuarios'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                activeTab === "usuarios"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
               }`}
             >
               Usuários
             </button>
             <button
-              onClick={() => setActiveTab('lgpd')}
+              onClick={() => setActiveTab("lgpd")}
               className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${
-                activeTab === 'lgpd'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                activeTab === "lgpd"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
               }`}
             >
               LGPD
@@ -234,278 +282,353 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
       </div>
 
       {/* Tab Content */}
-      {activeTab === 'informacoes' && (
+      {activeTab === "informacoes" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Informações Básicas */}
-        <div className="lg:col-span-2 space-y-6">
-          <CompanyBasicInfo company={company} />
+          {/* Informações Básicas */}
+          <div className="lg:col-span-2 space-y-6">
+            <CompanyBasicInfo company={company} />
 
-          {/* Telefones */}
-          {company.phones && company.phones.length > 0 && (
-            <Card title="Telefones">
-              <div className="space-y-4">
-                {company.phones.map((phone, index) => (
-                  <div key={phone.id || index} className="p-3 bg-muted/30 rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                        <Phone className="h-4 w-4 text-blue-600 dark:text-blue-300" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-foreground">{formatPhone(phone)}</p>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <span>{getPhoneTypeLabel(phone.type)}</span>
-                          {phone.is_principal && (
-                            <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded">
-                              Principal
-                            </span>
-                          )}
+            {/* Telefones */}
+            {company.phones && company.phones.length > 0 && (
+              <Card title="Telefones">
+                <div className="space-y-4">
+                  {company.phones.map((phone, index) => (
+                    <div
+                      key={phone.id || index}
+                      className="p-3 bg-muted/30 rounded-lg"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                          <Phone className="h-4 w-4 text-blue-600 dark:text-blue-300" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-foreground">
+                            {formatPhone(phone)}
+                          </p>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <span>{getPhoneTypeLabel(phone.type)}</span>
+                            {phone.is_principal && (
+                              <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded">
+                                Principal
+                              </span>
+                            )}
+                            {phone.is_whatsapp && (
+                              <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded">
+                                WhatsApp
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Padrão visual unificado para todos os dispositivos */}
                           {phone.is_whatsapp && (
-                            <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded">
-                              WhatsApp
-                            </span>
+                            <div className="mt-3">
+                              <button
+                                onClick={() => openWhatsApp(phone)}
+                                className="flex items-center justify-center gap-2 w-full p-3 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-700 dark:text-green-300 rounded-lg transition-colors"
+                              >
+                                <MessageCircle className="h-5 w-5" />
+                                <span className="text-sm font-medium">
+                                  Abrir no WhatsApp
+                                </span>
+                              </button>
+                            </div>
                           )}
                         </div>
-                        
-                        {/* Padrão visual unificado para todos os dispositivos */}
-                        {phone.is_whatsapp && (
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+
+            {/* E-mails */}
+            {company.emails && company.emails.length > 0 && (
+              <Card title="E-mails">
+                <div className="space-y-4">
+                  {company.emails.map((email, index) => (
+                    <div
+                      key={email.id || index}
+                      className="p-3 bg-muted/30 rounded-lg"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+                          <Mail className="h-4 w-4 text-green-600 dark:text-green-300" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-foreground break-all">
+                            {email.email_address}
+                          </p>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <span>{getEmailTypeLabel(email.type)}</span>
+                            {email.is_principal && (
+                              <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded">
+                                Principal
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Padrão visual unificado para todos os dispositivos */}
                           <div className="mt-3">
                             <button
-                              onClick={() => openWhatsApp(phone)}
-                              className="flex items-center justify-center gap-2 w-full p-3 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-700 dark:text-green-300 rounded-lg transition-colors"
+                              onClick={() => openEmail(email)}
+                              className="flex items-center justify-center gap-2 w-full p-3 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg transition-colors"
                             >
-                              <MessageCircle className="h-5 w-5" />
-                              <span className="text-sm font-medium">Abrir no WhatsApp</span>
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
-
-          {/* E-mails */}
-          {company.emails && company.emails.length > 0 && (
-            <Card title="E-mails">
-              <div className="space-y-4">
-                {company.emails.map((email, index) => (
-                  <div key={email.id || index} className="p-3 bg-muted/30 rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                        <Mail className="h-4 w-4 text-green-600 dark:text-green-300" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-foreground break-all">{email.email_address}</p>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <span>{getEmailTypeLabel(email.type)}</span>
-                          {email.is_principal && (
-                            <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded">
-                              Principal
-                            </span>
-                          )}
-                        </div>
-                        
-                        {/* Padrão visual unificado para todos os dispositivos */}
-                        <div className="mt-3">
-                          <button
-                            onClick={() => openEmail(email)}
-                            className="flex items-center justify-center gap-2 w-full p-3 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg transition-colors"
-                          >
-                            <Send className="h-5 w-5" />
-                            <span className="text-sm font-medium">Enviar Email</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
-
-          {/* Endereços */}
-          {company.addresses && company.addresses.length > 0 && (
-            <Card title="Endereços">
-              <div className="space-y-4">
-                {company.addresses.map((address, index) => (
-                  <div key={address.id || index} className="p-4 bg-muted/30 rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
-                        <MapPin className="h-4 w-4 text-orange-600 dark:text-orange-300" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="font-medium text-foreground">
-                            {getAddressTypeLabel(address.type)}
-                          </span>
-                          {address.is_principal && (
-                            <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded">
-                              Principal
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-foreground">
-                          {address.street}
-                          {address.number && `, ${address.number}`}
-                          {address.details && ` - ${address.details}`}
-                        </p>
-                        <p className="text-foreground">
-                          {address.neighborhood}, {address.city} - {address.state}
-                        </p>
-                        <p className="text-muted-foreground">
-                          CEP: {formatZipCode(address.zip_code)}
-                          {address.country && address.country !== 'Brasil' && ` - ${address.country}`}
-                        </p>
-                        
-                        {/* Padrão visual unificado para todos os dispositivos */}
-                        <div className="mt-3">
-                          <div className="grid grid-cols-2 gap-2">
-                            <button
-                              onClick={() => openGoogleMaps(address)}
-                              className="flex items-center justify-center gap-2 p-3 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 rounded-lg transition-colors"
-                            >
-                              <Navigation className="h-5 w-5" />
-                              <span className="text-sm font-medium">Maps</span>
-                            </button>
-                            <button
-                              onClick={() => openWaze(address)}
-                              className="flex items-center justify-center gap-2 p-3 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded-lg transition-colors"
-                            >
-                              <ExternalLink className="h-5 w-5" />
-                              <span className="text-sm font-medium">Waze</span>
+                              <Send className="h-5 w-5" />
+                              <span className="text-sm font-medium">
+                                Enviar Email
+                              </span>
                             </button>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
-
-          <ReceitaFederalInfo metadata={
-            company.company?.metadata || 
-            company.people?.metadata || 
-            company.metadata || 
-            {}
-          } />
-        </div>
-
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Resumo */}
-          <Card title="Resumo">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Estabelecimentos</span>
-                <span className="font-medium text-muted-foreground">Em breve</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Clientes</span>
-                <span className="font-medium text-muted-foreground">Em breve</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Profissionais</span>
-                <span className="font-medium text-muted-foreground">Em breve</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Pacientes</span>
-                <span className="font-medium text-muted-foreground">Em breve</span>
-              </div>
-            </div>
-          </Card>
-
-          {/* Metadados */}
-          <Card title="Informações do Sistema">
-            <div className="space-y-4 text-sm">
-              <div>
-                <label className="block text-muted-foreground mb-1">ID da Empresa</label>
-                <p className="text-foreground font-mono">#{company.id}</p>
-              </div>
-              <div>
-                <label className="block text-muted-foreground mb-1">Criado em</label>
-                <p className="text-foreground">{new Date(company.created_at).toLocaleString('pt-BR')}</p>
-              </div>
-              <div>
-                <label className="block text-muted-foreground mb-1">Atualizado em</label>
-                <p className="text-foreground">{new Date(company.updated_at).toLocaleString('pt-BR')}</p>
-              </div>
-              {company.display_order !== null && (
-                <div>
-                  <label className="block text-muted-foreground mb-1">Ordem de Exibição</label>
-                  <p className="text-foreground">{company.display_order}</p>
+                  ))}
                 </div>
-              )}
-            </div>
-          </Card>
+              </Card>
+            )}
 
-          {/* Configurações */}
-          {company.settings && Object.keys(company.settings).length > 0 && (
-            <Card title="Configurações">
-              <div className="space-y-2 text-sm">
-                {Object.entries(company.settings).map(([key, value]) => (
-                  <div key={key} className="flex items-center justify-between">
-                    <span className="text-muted-foreground capitalize">{key.replace('_', ' ')}</span>
-                    <span className="text-foreground">
-                      {typeof value === 'boolean' ? (value ? 'Sim' : 'Não') : String(value)}
-                    </span>
-                  </div>
-                ))}
+            {/* Endereços */}
+            {company.addresses && company.addresses.length > 0 && (
+              <Card title="Endereços">
+                <div className="space-y-4">
+                  {company.addresses.map((address, index) => (
+                    <div
+                      key={address.id || index}
+                      className="p-4 bg-muted/30 rounded-lg"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
+                          <MapPin className="h-4 w-4 text-orange-600 dark:text-orange-300" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="font-medium text-foreground">
+                              {getAddressTypeLabel(address.type)}
+                            </span>
+                            {address.is_principal && (
+                              <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded">
+                                Principal
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-foreground">
+                            {address.street}
+                            {address.number && `, ${address.number}`}
+                            {address.details && ` - ${address.details}`}
+                          </p>
+                          <p className="text-foreground">
+                            {address.neighborhood}, {address.city} -{" "}
+                            {address.state}
+                          </p>
+                          <p className="text-muted-foreground">
+                            CEP: {formatZipCode(address.zip_code)}
+                            {address.country &&
+                              address.country !== "Brasil" &&
+                              ` - ${address.country}`}
+                          </p>
+
+                          {/* Padrão visual unificado para todos os dispositivos */}
+                          <div className="mt-3">
+                            <div className="grid grid-cols-2 gap-2">
+                              <button
+                                onClick={() => openGoogleMaps(address)}
+                                className="flex items-center justify-center gap-2 p-3 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 rounded-lg transition-colors"
+                              >
+                                <Navigation className="h-5 w-5" />
+                                <span className="text-sm font-medium">
+                                  Maps
+                                </span>
+                              </button>
+                              <button
+                                onClick={() => openWaze(address)}
+                                className="flex items-center justify-center gap-2 p-3 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded-lg transition-colors"
+                              >
+                                <ExternalLink className="h-5 w-5" />
+                                <span className="text-sm font-medium">
+                                  Waze
+                                </span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+
+            <ReceitaFederalInfo
+              metadata={
+                company.company?.metadata ||
+                company.people?.metadata ||
+                company.metadata ||
+                {}
+              }
+            />
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Resumo */}
+            <Card title="Resumo">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">
+                    Estabelecimentos
+                  </span>
+                  <span className="font-medium text-muted-foreground">
+                    Em breve
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Clientes</span>
+                  <span className="font-medium text-muted-foreground">
+                    Em breve
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Profissionais</span>
+                  <span className="font-medium text-muted-foreground">
+                    Em breve
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Pacientes</span>
+                  <span className="font-medium text-muted-foreground">
+                    Em breve
+                  </span>
+                </div>
               </div>
             </Card>
-          )}
+
+            {/* Metadados */}
+            <Card title="Informações do Sistema">
+              <div className="space-y-4 text-sm">
+                <div>
+                  <label className="block text-muted-foreground mb-1">
+                    ID da Empresa
+                  </label>
+                  <p className="text-foreground font-mono">#{company.id}</p>
+                </div>
+                <div>
+                  <label className="block text-muted-foreground mb-1">
+                    Criado em
+                  </label>
+                  <p className="text-foreground">
+                    {new Date(company.created_at).toLocaleString("pt-BR")}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-muted-foreground mb-1">
+                    Atualizado em
+                  </label>
+                  <p className="text-foreground">
+                    {new Date(company.updated_at).toLocaleString("pt-BR")}
+                  </p>
+                </div>
+                {company.display_order !== null && (
+                  <div>
+                    <label className="block text-muted-foreground mb-1">
+                      Ordem de Exibição
+                    </label>
+                    <p className="text-foreground">{company.display_order}</p>
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            {/* Configurações */}
+            {company.settings && Object.keys(company.settings).length > 0 && (
+              <Card title="Configurações">
+                <div className="space-y-2 text-sm">
+                  {Object.entries(company.settings).map(([key, value]) => (
+                    <div
+                      key={key}
+                      className="flex items-center justify-between"
+                    >
+                      <span className="text-muted-foreground capitalize">
+                        {key.replace("_", " ")}
+                      </span>
+                      <span className="text-foreground">
+                        {typeof value === "boolean"
+                          ? value
+                            ? "Sim"
+                            : "Não"
+                          : String(value)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+          </div>
         </div>
-      </div>
       )}
 
-      {activeTab === 'estabelecimentos' && (
+      {activeTab === "estabelecimentos" && (
         <div className="text-center py-12">
           <Building className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">Estabelecimentos</h3>
-          <p className="text-muted-foreground">Em breve: Gerencie os estabelecimentos desta empresa</p>
+          <h3 className="text-lg font-medium text-foreground mb-2">
+            Estabelecimentos
+          </h3>
+          <p className="text-muted-foreground">
+            Em breve: Gerencie os estabelecimentos desta empresa
+          </p>
         </div>
       )}
 
-      {activeTab === 'clientes' && (
+      {activeTab === "clientes" && (
         <div className="text-center py-12">
           <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">Clientes</h3>
-          <p className="text-muted-foreground">Em breve: Gerencie os clientes desta empresa</p>
+          <p className="text-muted-foreground">
+            Em breve: Gerencie os clientes desta empresa
+          </p>
         </div>
       )}
 
-      {activeTab === 'profissionais' && (
+      {activeTab === "profissionais" && (
         <div className="text-center py-12">
           <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">Profissionais</h3>
-          <p className="text-muted-foreground">Em breve: Gerencie os profissionais desta empresa</p>
+          <h3 className="text-lg font-medium text-foreground mb-2">
+            Profissionais
+          </h3>
+          <p className="text-muted-foreground">
+            Em breve: Gerencie os profissionais desta empresa
+          </p>
         </div>
       )}
 
-      {activeTab === 'pacientes' && (
+      {activeTab === "pacientes" && (
         <div className="text-center py-12">
           <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">Pacientes</h3>
-          <p className="text-muted-foreground">Em breve: Gerencie os pacientes desta empresa</p>
+          <h3 className="text-lg font-medium text-foreground mb-2">
+            Pacientes
+          </h3>
+          <p className="text-muted-foreground">
+            Em breve: Gerencie os pacientes desta empresa
+          </p>
         </div>
       )}
 
-      {activeTab === 'usuarios' && (
+      {activeTab === "usuarios" && (
         <div className="text-center py-12">
           <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">Usuários</h3>
-          <p className="text-muted-foreground">Em breve: Gerencie os usuários desta empresa</p>
+          <p className="text-muted-foreground">
+            Em breve: Gerencie os usuários desta empresa
+          </p>
         </div>
       )}
 
-      {activeTab === 'lgpd' && (
+      {activeTab === "lgpd" && (
         <div className="text-center py-12">
           <Globe className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">LGPD</h3>
-          <p className="text-muted-foreground">Em breve: Gerencie as configurações de privacidade e LGPD</p>
+          <p className="text-muted-foreground">
+            Em breve: Gerencie as configurações de privacidade e LGPD
+          </p>
         </div>
       )}
     </div>

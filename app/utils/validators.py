@@ -100,7 +100,11 @@ def validate_address_completeness(address_data: dict) -> tuple[bool, Optional[st
     return True, None
 
 
-def validate_contacts_quality(phones: List[dict], emails: List[dict], addresses: List[dict]) -> tuple[bool, Optional[str]]:
+def validate_contacts_quality(
+    phones: List[dict], 
+    emails: List[dict], 
+    addresses: List[dict]
+) -> tuple[bool, Optional[str]]:
     """Validate that all contact data has good quality"""
     
     # Validate phones

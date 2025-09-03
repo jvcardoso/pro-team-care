@@ -97,11 +97,11 @@ O projeto segue arquitetura hexagonal (Clean Architecture) com separação clara
 
 ## URLs de Acesso
 
-### Rede Local (192.168.11.62)
-- **Backend API**: http://192.168.11.62:8000
-- **Frontend App**: http://192.168.11.62:3000
-- **API Docs**: http://192.168.11.62:8000/docs
-- **Health Check**: http://192.168.11.62:8000/api/v1/health
+### Rede Local (192.168.11.83)
+- **Backend API**: http://192.168.11.83:8000
+- **Frontend App**: http://192.168.11.83:3000
+- **API Docs**: http://192.168.11.83:8000/docs
+- **Health Check**: http://192.168.11.83:8000/api/v1/health
 
 ### Localhost
 - **Backend API**: http://localhost:8000

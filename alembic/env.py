@@ -11,7 +11,7 @@ from alembic import context
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 # Import our models and settings
-from app.domain.entities.user import Base
+from app.infrastructure.orm.models import Base
 from config.settings import settings
 
 # this is the Alembic Config object, which provides

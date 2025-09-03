@@ -1,28 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Loader2, MapPin, Star } from 'lucide-react';
-import { formatCEP } from '../../utils/formatters';
-import { removeNonNumeric } from '../../utils/validators';
-import { validateCEP } from '../../utils/validators';
-import geocodingService from '../../services/geocodingService';
+import React, { useState, useEffect } from "react";
+import { Search, Loader2, MapPin, Star } from "lucide-react";
+import { formatCEP } from "../../utils/formatters";
+import { removeNonNumeric } from "../../utils/validators";
+import { validateCEP } from "../../utils/validators";
+import geocodingService from "../../services/geocodingService";
 
 const InputCEP = ({
   label = "CEP",
-  value = '',
+  value = "",
   onChange,
   onAddressFound,
   placeholder = "12345-678",
   required = false,
   disabled = false,
-  error = '',
-  className = '',
+  error = "",
+  className = "",
   showValidation = true,
   showConsultButton = true,
   autoConsult = false,
   ...props
 }) => {
-  const [formattedValue, setFormattedValue] = useState('');
+  const [formattedValue, setFormattedValue] = useState("");
   const [isValid, setIsValid] = useState(true);
-  const [validationMessage, setValidationMessage] = useState('');
+  const [validationMessage, setValidationMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [addressData, setAddressData] = useState(null);
@@ -32,7 +32,7 @@ const InputCEP = ({
     if (value !== undefined) {
       const formatted = formatCEP(value);
       setFormattedValue(formatted);
-      
+
       // Só validar se tiver valor ou se for required
       if (showValidation && (value || required)) {
         validateInput(value);
@@ -52,26 +52,26 @@ const InputCEP = ({
 
   const validateInput = (inputValue) => {
     const cleanValue = removeNonNumeric(inputValue);
-    
+
     if (!cleanValue && required) {
       setIsValid(false);
-      setValidationMessage('CEP é obrigatório');
+      setValidationMessage("CEP é obrigatório");
       return false;
     }
-    
+
     if (cleanValue && !validateCEP(cleanValue)) {
       setIsValid(false);
-      
+
       if (cleanValue.length < 8) {
-        setValidationMessage('CEP deve ter 8 dígitos');
+        setValidationMessage("CEP deve ter 8 dígitos");
       } else {
-        setValidationMessage('CEP inválido');
+        setValidationMessage("CEP inválido");
       }
       return false;
     }
-    
+
     setIsValid(true);
-    setValidationMessage('');
+    setValidationMessage("");
     return true;
   };
 
@@ -86,23 +86,23 @@ const InputCEP = ({
       const viaCepData = await response.json();
 
       if (viaCepData.erro) {
-        setValidationMessage('CEP não encontrado');
+        setValidationMessage("CEP não encontrado");
         setIsValid(false);
         setAddressData(null);
         return;
       }
 
       // 2. Enriquecer com dados geográficos usando Nominatim
-      console.log('🔍 Enriquecendo endereço com coordenadas...');
+      console.log("🔍 Enriquecendo endereço com coordenadas...");
       const enrichedData = await geocodingService.geocodeBrazilianAddress({
         // Dados básicos do endereço
-        street: viaCepData.logradouro || '',
-        number: '', // Deixar em branco - usuário deve informar manualmente
-        neighborhood: viaCepData.bairro || '',
-        city: viaCepData.localidade || '',
-        state: viaCepData.uf || '',
+        street: viaCepData.logradouro || "",
+        number: "", // Deixar em branco - usuário deve informar manualmente
+        neighborhood: viaCepData.bairro || "",
+        city: viaCepData.localidade || "",
+        state: viaCepData.uf || "",
         zip_code: cep,
-        complement: viaCepData.complemento || '',
+        complement: viaCepData.complemento || "",
 
         // Códigos oficiais brasileiros
         ibge_city_code: viaCepData.ibge || null,
@@ -114,19 +114,25 @@ const InputCEP = ({
         logradouro: viaCepData.logradouro,
         bairro: viaCepData.bairro,
         localidade: viaCepData.localidade,
-        uf: viaCepData.uf
+        uf: viaCepData.uf,
       });
 
       setAddressData(enrichedData);
-      setValidationMessage('');
+      setValidationMessage("");
       setIsValid(true);
 
       // Log para debug
       if (enrichedData?.latitude && enrichedData?.longitude) {
-        console.log(`✅ Endereço enriquecido com coordenadas: ${enrichedData.latitude}, ${enrichedData.longitude}`);
-        console.log(`📍 Fonte: ${enrichedData.geocoding_source} | Precisão: ${enrichedData.geocoding_accuracy}`);
+        console.log(
+          `✅ Endereço enriquecido com coordenadas: ${enrichedData.latitude}, ${enrichedData.longitude}`
+        );
+        console.log(
+          `📍 Fonte: ${enrichedData.geocoding_source} | Precisão: ${enrichedData.geocoding_accuracy}`
+        );
       } else {
-        console.log('⚠️ Coordenadas não encontradas, usando apenas dados ViaCEP');
+        console.log(
+          "⚠️ Coordenadas não encontradas, usando apenas dados ViaCEP"
+        );
       }
 
       // Callback para o componente pai com dados completos
@@ -134,8 +140,8 @@ const InputCEP = ({
         onAddressFound(enrichedData);
       }
     } catch (error) {
-      console.error('❌ Erro ao consultar CEP:', error);
-      setValidationMessage('Erro ao consultar CEP. Tente novamente.');
+      console.error("❌ Erro ao consultar CEP:", error);
+      setValidationMessage("Erro ao consultar CEP. Tente novamente.");
       setIsValid(false);
       setAddressData(null);
     } finally {
@@ -146,23 +152,23 @@ const InputCEP = ({
   const handleChange = (e) => {
     const inputValue = e.target.value;
     const numbersOnly = removeNonNumeric(inputValue);
-    
+
     // Limitar a 8 dígitos
     const limitedNumbers = numbersOnly.slice(0, 8);
     const formatted = formatCEP(limitedNumbers);
-    
+
     setFormattedValue(formatted);
-    
+
     // Limpar dados de endereço se CEP for alterado
     if (addressData) {
       setAddressData(null);
     }
-    
+
     // Validar se necessário
     if (showValidation) {
       validateInput(limitedNumbers);
     }
-    
+
     // Callback para o componente pai
     if (onChange) {
       onChange({
@@ -172,7 +178,7 @@ const InputCEP = ({
         },
         formatted: formatted,
         isValid: validateInput(limitedNumbers),
-        rawValue: limitedNumbers
+        rawValue: limitedNumbers,
       });
     }
   };
@@ -186,12 +192,12 @@ const InputCEP = ({
 
   const handleBlur = (e) => {
     setIsFocused(false);
-    
+
     // Validação final no blur
     if (showValidation) {
       validateInput(removeNonNumeric(formattedValue));
     }
-    
+
     if (props.onBlur) {
       props.onBlur(e);
     }
@@ -205,10 +211,11 @@ const InputCEP = ({
   };
 
   const getInputClasses = () => {
-    const baseClasses = "w-full px-3 py-2 border rounded-md bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none transition-colors";
-    
+    const baseClasses =
+      "w-full px-3 py-2 border rounded-md bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none transition-colors";
+
     let borderColor = "border-border";
-    
+
     if (error || (!isValid && showValidation)) {
       borderColor = "border-red-500 focus:ring-red-500";
     } else if (isValid && formattedValue && showValidation && addressData) {
@@ -216,22 +223,26 @@ const InputCEP = ({
     } else if (isFocused) {
       borderColor = "border-ring";
     }
-    
+
     const disabledClasses = disabled ? "opacity-50 cursor-not-allowed" : "";
-    
+
     return `${baseClasses} ${borderColor} ${disabledClasses} ${className}`;
   };
 
-  const displayError = error || (showValidation && !isValid ? validationMessage : '');
-  const canConsult = isValid && removeNonNumeric(formattedValue).length === 8 && !isLoading;
+  const displayError =
+    error || (showValidation && !isValid ? validationMessage : "");
+  const canConsult =
+    isValid && removeNonNumeric(formattedValue).length === 8 && !isLoading;
 
   return (
     <div className="space-y-1">
       <label className="flex items-center text-sm font-medium text-foreground">
         {label}
-        {required && <Star className="h-3 w-3 text-red-500 ml-1 fill-current" />}
+        {required && (
+          <Star className="h-3 w-3 text-red-500 ml-1 fill-current" />
+        )}
       </label>
-      
+
       <div className="flex gap-2">
         <div className="relative flex-1">
           <input
@@ -247,7 +258,7 @@ const InputCEP = ({
             inputMode="numeric"
             {...props}
           />
-          
+
           {/* Indicador de validação visual */}
           {showValidation && formattedValue && (
             <div className="absolute inset-y-0 right-0 flex items-center pr-3">
@@ -256,18 +267,34 @@ const InputCEP = ({
               ) : isValid && addressData ? (
                 <MapPin className="h-4 w-4 text-green-500" />
               ) : isValid && !addressData ? (
-                <svg className="h-4 w-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                <svg
+                  className="h-4 w-4 text-green-500"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               ) : (
-                <svg className="h-4 w-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                <svg
+                  className="h-4 w-4 text-red-500"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               )}
             </div>
           )}
         </div>
-        
+
         {/* Botão Consultar */}
         {showConsultButton && (
           <button
@@ -276,8 +303,8 @@ const InputCEP = ({
             disabled={!canConsult || disabled}
             className={`px-4 py-2 border rounded-md font-medium transition-colors flex items-center gap-2 ${
               canConsult && !disabled
-                ? 'border-border bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                : 'border-border bg-muted text-muted-foreground cursor-not-allowed'
+                ? "border-border bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                : "border-border bg-muted text-muted-foreground cursor-not-allowed"
             }`}
           >
             {isLoading ? (
@@ -289,76 +316,21 @@ const InputCEP = ({
           </button>
         )}
       </div>
-      
+
       {/* Mensagens de erro/ajuda */}
-      {displayError && (
-        <p className="text-sm text-red-600">{displayError}</p>
-      )}
-      
-       {/* Dados do endereço encontrado */}
-       {addressData && !displayError && (
-         <div className="text-xs text-muted-foreground bg-green-50 border border-green-200 p-3 rounded-lg space-y-3">
-           <div className="flex items-start gap-2">
-             <MapPin className="h-4 w-4 mt-0.5 text-green-600 flex-shrink-0" />
-             <div className="flex-1 min-w-0">
-               {/* Endereço principal */}
-               <div className="space-y-1">
-                 <p className="font-semibold text-green-800">{addressData.logradouro || 'Endereço não informado'}</p>
-                 <p className="text-green-700">
-                   {addressData.bairro && `${addressData.bairro}, `}
-                   {addressData.localidade} - {addressData.uf}
-                 </p>
-                 {addressData.complemento && (
-                   <p className="text-green-600 italic">{addressData.complemento}</p>
-                 )}
-               </div>
+      {displayError && <p className="text-sm text-red-600">{displayError}</p>}
 
-               {/* Códigos oficiais brasileiros */}
-               <div className="mt-3 p-2 bg-white rounded border border-green-200">
-                 <p className="font-medium text-green-800 mb-2">📋 Códigos Oficiais:</p>
-                 <div className="grid grid-cols-2 gap-2 text-xs">
-                   <div className="flex justify-between">
-                     <span className="text-green-700">IBGE:</span>
-                     <span className="font-mono text-green-800">{addressData.ibge || 'N/A'}</span>
-                   </div>
-                   <div className="flex justify-between">
-                     <span className="text-green-700">DDD:</span>
-                     <span className="font-mono text-green-800">{addressData.ddd || 'N/A'}</span>
-                   </div>
-                   <div className="flex justify-between">
-                     <span className="text-green-700">GIA:</span>
-                     <span className="font-mono text-green-800">{addressData.gia || 'N/A'}</span>
-                   </div>
-                   <div className="flex justify-between">
-                     <span className="text-green-700">SIAFI:</span>
-                     <span className="font-mono text-green-800">{addressData.siafi || 'N/A'}</span>
-                   </div>
-                 </div>
-               </div>
 
-               {/* Status de validação */}
-               <div className="mt-2 flex items-center gap-2 text-xs">
-                 <div className="flex items-center gap-1">
-                   <svg className="h-3 w-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                   </svg>
-                   <span className="text-green-700">Validado via ViaCEP</span>
-                 </div>
-                 <span className="text-green-500">•</span>
-                 <span className="text-green-600">
-                   {new Date().toLocaleString('pt-BR')}
-                 </span>
-               </div>
-             </div>
-           </div>
-         </div>
-       )}
-      
-      {!displayError && !addressData && formattedValue && showValidation && isValid && (
-        <p className="text-xs text-muted-foreground">
-          CEP válido • Clique em "Consultar" para buscar endereço
-        </p>
-      )}
+
+      {!displayError &&
+        !addressData &&
+        formattedValue &&
+        showValidation &&
+        isValid && (
+          <p className="text-xs text-muted-foreground">
+            CEP válido • Clique em "Consultar" para buscar endereço
+          </p>
+        )}
     </div>
   );
 };

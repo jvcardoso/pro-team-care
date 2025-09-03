@@ -1,16 +1,15 @@
-import React from 'react';
-import Button from '../../ui/Button';
-import { AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import React from "react";
+import Button from "../../ui/Button";
+import { AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 
 interface AddressNumberConfirmationModalProps {
   show: boolean;
   onConfirm: (confirmed: boolean) => Promise<void>;
 }
 
-const AddressNumberConfirmationModal: React.FC<AddressNumberConfirmationModalProps> = ({
-  show,
-  onConfirm
-}) => {
+const AddressNumberConfirmationModal: React.FC<
+  AddressNumberConfirmationModalProps
+> = ({ show, onConfirm }) => {
   if (!show) {
     return null;
   }
@@ -27,7 +26,8 @@ const AddressNumberConfirmationModal: React.FC<AddressNumberConfirmationModalPro
               Número do Endereço Não Informado
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-              Você não informou o número do endereço. Deseja salvar com "S/N" (Sem Número) ou voltar para corrigir?
+              Você não informou o número do endereço. Deseja salvar com "S/N"
+              (Sem Número) ou voltar para corrigir?
             </p>
 
             <div className="flex gap-3">
@@ -39,10 +39,7 @@ const AddressNumberConfirmationModal: React.FC<AddressNumberConfirmationModalPro
                 <XCircle className="h-4 w-4 mr-2" />
                 Corrigir
               </Button>
-              <Button
-                onClick={() => onConfirm(true)}
-                className="flex-1"
-              >
+              <Button onClick={() => onConfirm(true)} className="flex-1">
                 <CheckCircle className="h-4 w-4 mr-2" />
                 Salvar com S/N
               </Button>

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from typing import Optional, List, Dict
 from datetime import datetime, date, time
 from enum import Enum
@@ -122,7 +122,7 @@ class Phone(PhoneBase):
 
 # Base models for Email
 class EmailBase(BaseModel):
-    email_address: str = Field(..., max_length=255)
+    email_address: EmailStr = Field(..., max_length=255)
     type: EmailType = EmailType.WORK
     is_principal: bool = False
     is_active: bool = True
@@ -153,7 +153,7 @@ class AddressBase(BaseModel):
     street: str = Field(..., max_length=255)
     number: Optional[str] = Field(None, max_length=20)
     details: Optional[str] = Field(None, max_length=100)
-    neighborhood: str = Field(..., max_length=100)
+    neighborhood: Optional[str] = Field(None, max_length=100)
     city: str = Field(..., max_length=100)
     state: str = Field(..., max_length=2)
     zip_code: str = Field(..., max_length=10)

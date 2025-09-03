@@ -1,12 +1,10 @@
-import React from 'react'
+import React from "react";
 
 const DashboardPage = () => {
   return (
     <div className="animate-fade-in">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Dashboard
-        </h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
         <p className="text-gray-600">
           Visão geral das atividades e métricas do sistema
         </p>
@@ -25,7 +23,9 @@ const DashboardPage = () => {
                   <p className="text-sm font-medium text-gray-900">
                     Novo cliente cadastrado
                   </p>
-                  <p className="text-xs text-gray-500">Maria Silva - há 2 horas</p>
+                  <p className="text-xs text-gray-500">
+                    Maria Silva - há 2 horas
+                  </p>
                 </div>
               </div>
               <div className="flex items-start space-x-3">
@@ -34,7 +34,9 @@ const DashboardPage = () => {
                   <p className="text-sm font-medium text-gray-900">
                     Agendamento confirmado
                   </p>
-                  <p className="text-xs text-gray-500">João Santos - há 3 horas</p>
+                  <p className="text-xs text-gray-500">
+                    João Santos - há 3 horas
+                  </p>
                 </div>
               </div>
               <div className="flex items-start space-x-3">
@@ -43,7 +45,9 @@ const DashboardPage = () => {
                   <p className="text-sm font-medium text-gray-900">
                     Profissional atualizado
                   </p>
-                  <p className="text-xs text-gray-500">Dr. Carlos - há 5 horas</p>
+                  <p className="text-xs text-gray-500">
+                    Dr. Carlos - há 5 horas
+                  </p>
                 </div>
               </div>
             </div>
@@ -57,25 +61,33 @@ const DashboardPage = () => {
           <div className="card-content">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-700">API Backend</span>
+                <span className="text-sm font-medium text-gray-700">
+                  API Backend
+                </span>
                 <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
                   ✓ Online
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-700">Banco de Dados</span>
+                <span className="text-sm font-medium text-gray-700">
+                  Banco de Dados
+                </span>
                 <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
                   ✓ Conectado
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-700">Cache Redis</span>
+                <span className="text-sm font-medium text-gray-700">
+                  Cache Redis
+                </span>
                 <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
                   ✓ Ativo
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-700">Monitoramento</span>
+                <span className="text-sm font-medium text-gray-700">
+                  Monitoramento
+                </span>
                 <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
                   ✓ Funcionando
                 </span>
@@ -113,7 +125,7 @@ const DashboardPage = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default DashboardPage
+export default DashboardPage;

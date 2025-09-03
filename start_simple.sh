@@ -35,14 +35,36 @@ NC='\033[0m'
 
 PROJECT_DIR="$(pwd)"
 
+# Função para limpar cache
+clean_cache() {
+    echo "🧹 Limpando cache..."
+
+    # Cache Python
+    echo "  🐍 Limpando cache Python..."
+    find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+    find . -name "*.pyc" -delete 2>/dev/null || true
+    find . -name "*.pyo" -delete 2>/dev/null || true
+
+    # Cache Node.js (opcional - só se necessário)
+    if [ -d "frontend" ]; then
+        echo "  ⚛️  Limpando cache Node.js..."
+        cd frontend
+        rm -rf .vite 2>/dev/null || true
+        npm cache clean --force 2>/dev/null || true
+        cd ..
+    fi
+
+    echo "✅ Cache limpo"
+}
+
 # Função para matar processos existentes
 kill_existing() {
     echo "🔄 Parando processos existentes..."
-    
+
     # Matar processos específicos do projeto
     pkill -f "uvicorn.*app.main:app" 2>/dev/null || true
     pkill -f "vite.*--port 3000" 2>/dev/null || true
-    
+
     # Matar processos nas portas específicas
     echo "🧹 Limpando portas 3000, 3001, 3002, 8000..."
     
@@ -120,6 +142,20 @@ if [ ! -f "app/main.py" ]; then
     echo -e "${RED}❌ Estrutura do projeto não encontrada! Verifique se está no diretório correto.${NC}"
     echo -e "${BLUE}Diretório atual: $(pwd)${NC}"
     exit 1
+fi
+
+# Verificar se deve pular limpeza de cache
+SKIP_CACHE=false
+if [ "${1:-}" = "--skip-cache" ] || [ "${1:-}" = "-s" ]; then
+    SKIP_CACHE=true
+    echo -e "${YELLOW}⚡ Pulando limpeza de cache (--skip-cache)${NC}"
+fi
+
+# Limpar cache antes de iniciar (a menos que seja pulado)
+if [ "$SKIP_CACHE" = false ]; then
+    clean_cache
+else
+    echo -e "${BLUE}🧹 Pulando limpeza de cache...${NC}"
 fi
 
 # Parar processos existentes e limpar portas
@@ -223,6 +259,8 @@ fi
 echo
 echo -e "${BLUE}📊 CONTROLE:${NC}"
 echo -e "   Para parar: ./stop_servers.sh"
+echo -e "   Limpar cache: ./clean_cache.sh"
+echo -e "   Início rápido (sem cache): ./start.sh --skip-cache"
 echo -e "   Logs: tail -f backend.log (se existir)"
 echo
 echo "🔬 Testando conectividade dos serviços..."

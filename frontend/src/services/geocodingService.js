@@ -13,25 +13,29 @@ class GeocodingService {
    */
   async nominatimGeocode(address) {
     // Sempre usar backend diretamente (não proxy do Vite)
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://192.168.11.83:8000';
+    const baseUrl = import.meta.env.DEV
+      ? ""
+      : import.meta.env.VITE_API_URL || "http://192.168.11.83:8000";
 
     const response = await fetch(`${baseUrl}/api/v1/geocoding/geocode`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        address: address
-      })
+        address: address,
+      }),
     });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail || `Geocoding API error: ${response.status}`);
+      throw new Error(
+        errorData.detail || `Geocoding API error: ${response.status}`
+      );
     }
 
     const result = await response.json();
-    
+
     return {
       latitude: result.latitude,
       longitude: result.longitude,
@@ -39,37 +43,35 @@ class GeocodingService {
       geocoding_accuracy: result.geocoding_accuracy,
       geocoding_source: result.geocoding_source,
       google_place_id: null, // Para uso futuro
-      api_data: result.api_data
+      api_data: result.api_data,
     };
   }
-
 
   /**
    * Geocoding principal com cache
    */
   async geocode(address) {
     if (!address || address.trim().length === 0) {
-      throw new Error('Endereço não pode estar vazio');
+      throw new Error("Endereço não pode estar vazio");
     }
 
     // Verificar cache
     const cacheKey = address.toLowerCase().trim();
     if (this.cache.has(cacheKey)) {
-      console.log('🔄 Usando geocoding do cache:', address);
+      console.log("🔄 Usando geocoding do cache:", address);
       return this.cache.get(cacheKey);
     }
 
     try {
       // Usar backend como proxy para Nominatim
       const result = await this.nominatimGeocode(address);
-      
+
       // Salvar no cache
       this.cache.set(cacheKey, result);
-      
+
       return result;
-      
     } catch (error) {
-      console.warn('Geocoding falhou:', error.message);
+      console.warn("Geocoding falhou:", error.message);
       return null;
     }
   }
@@ -86,31 +88,30 @@ class GeocodingService {
       viaCepData.bairro,
       viaCepData.localidade,
       viaCepData.uf,
-      'Brasil'
+      "Brasil",
     ].filter(Boolean);
 
-    const fullAddress = addressParts.join(', ');
+    const fullAddress = addressParts.join(", ");
 
     try {
       const geoData = await this.geocode(fullAddress);
-      
+
       if (geoData) {
         return {
           ...viaCepData,
           ...geoData,
           // Manter campo number em branco se não houver
-          number: viaCepData.number || '',
+          number: viaCepData.number || "",
           // Manter dados de validação do ViaCEP
           is_validated: true,
-          validation_source: 'viacep',
-          last_validated_at: new Date().toISOString()
+          validation_source: "viacep",
+          last_validated_at: new Date().toISOString(),
         };
       }
 
       return viaCepData;
-
     } catch (error) {
-      console.warn('Erro ao enriquecer endereço com coordenadas:', error);
+      console.warn("Erro ao enriquecer endereço com coordenadas:", error);
       return viaCepData;
     }
   }
@@ -120,7 +121,7 @@ class GeocodingService {
    * TODO: Implementar endpoint no backend se necessário
    */
   async reverseGeocode(latitude, longitude) {
-    console.warn('Reverse geocoding não implementado ainda via backend');
+    console.warn("Reverse geocoding não implementado ainda via backend");
     return null;
   }
 

@@ -15,7 +15,7 @@ import CompanyBasicInfo from '../entities/CompanyBasicInfo';
 <CompanyBasicInfo company={company} />
 
 // Com customizações
-<CompanyBasicInfo 
+<CompanyBasicInfo
   company={company}
   title="Dados do Estabelecimento"
   showDescription={false}
@@ -51,7 +51,7 @@ import ReceitaFederalInfo from '../metadata/ReceitaFederalInfo';
 <ReceitaFederalInfo metadata={company.metadata} />
 
 // Com customizações
-<ReceitaFederalInfo 
+<ReceitaFederalInfo
   metadata={entity.metadata}
   title="Dados da Receita Federal"
   className="bg-green-50"
@@ -67,7 +67,7 @@ import ReceitaFederalInfo from '../metadata/ReceitaFederalInfo';
 - `title` (string): Título do card (padrão: "Informações da Receita Federal")
 - `className` (string): Classes CSS (padrão: fundo azul)
 - `showCNAEs` (bool): Mostrar CNAEs secundários (padrão: true)
-- `showSituacao` (bool): Mostrar situação/data/tipo (padrão: true) 
+- `showSituacao` (bool): Mostrar situação/data/tipo (padrão: true)
 - `showCapital` (bool): Mostrar capital/porte (padrão: true)
 - `showLocalizacao` (bool): Mostrar município/UF (padrão: true)
 - `showNaturezaJuridica` (bool): Mostrar natureza jurídica/atualização (padrão: true)
@@ -90,37 +90,40 @@ import ReceitaFederalInfo from '../metadata/ReceitaFederalInfo';
 ## Exemplos de Uso Futuro
 
 ### EstablishmentDetails
+
 ```jsx
-<CompanyBasicInfo 
+<CompanyBasicInfo
   company={establishment}
   title="Dados do Estabelecimento"
 />
-<ReceitaFederalInfo 
+<ReceitaFederalInfo
   metadata={establishment.company.metadata}
   showLocalizacao={false} // Já mostrado no endereço
 />
 ```
 
 ### ClientDetails (PJ)
+
 ```jsx
-<CompanyBasicInfo 
+<CompanyBasicInfo
   company={client}
   title="Dados do Cliente"
   showDescription={true}
 />
-<ReceitaFederalInfo 
+<ReceitaFederalInfo
   metadata={client.company.metadata}
   showCapital={false} // Não relevante para clientes
 />
 ```
 
 ### ProfessionalDetails (PJ - Clínica)
+
 ```jsx
-<CompanyBasicInfo 
+<CompanyBasicInfo
   company={professional}
   title="Dados da Clínica"
 />
-<ReceitaFederalInfo 
+<ReceitaFederalInfo
   metadata={professional.company.metadata}
   showCNAEs={true} // Importante para atividades médicas
   showCapital={false}

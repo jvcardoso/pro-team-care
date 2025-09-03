@@ -17,7 +17,7 @@ class BusinessException(Exception):
 
 class ValidationException(Exception):
     """Exceção para erros de validação"""
-    def __init__(self, message: str, field: str = None):
+    def __init__(self, message: str, field: Optional[str] = None):
         self.message = message
         self.field = field
         super().__init__(self.message)

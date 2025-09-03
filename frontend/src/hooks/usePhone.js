@@ -1,76 +1,86 @@
-import { useState, useCallback } from 'react';
-import { formatPhone } from '../utils/formatters';
-import { removeNonNumeric, validatePhone, validateDDD } from '../utils/validators';
+import { useState, useCallback } from "react";
+import { formatPhone } from "../utils/formatters";
+import {
+  removeNonNumeric,
+  validatePhone,
+  validateDDD,
+} from "../utils/validators";
 
 /**
  * Hook para gerenciar lógica de entrada de telefone
  */
-export const usePhone = (initialValue = '', options = {}) => {
+export const usePhone = (initialValue = "", options = {}) => {
   const {
     required = false,
     onChange,
-    countryCode = '55',
-    showValidation = true
+    countryCode = "55",
+    showValidation = true,
   } = options;
 
   const [formattedValue, setFormattedValue] = useState(() => {
-    return initialValue ? formatPhone(initialValue) : '';
+    return initialValue ? formatPhone(initialValue) : "";
   });
-  
+
   const [isValid, setIsValid] = useState(true);
-  const [validationMessage, setValidationMessage] = useState('');
+  const [validationMessage, setValidationMessage] = useState("");
   const [isDirty, setIsDirty] = useState(false);
 
-  const validateInput = useCallback((inputValue) => {
-    const cleanValue = removeNonNumeric(inputValue);
-    
-    if (!cleanValue && required) {
-      setIsValid(false);
-      setValidationMessage('Telefone é obrigatório');
-      return false;
-    }
-    
-    if (cleanValue && !validatePhone(cleanValue)) {
-      setIsValid(false);
-      
-      if (cleanValue.length < 10) {
-        setValidationMessage('Telefone deve ter pelo menos 10 dígitos');
-      } else if (cleanValue.length > 11) {
-        setValidationMessage('Telefone deve ter no máximo 11 dígitos');
-      } else {
-        const ddd = cleanValue.substring(0, 2);
-        if (!validateDDD(ddd)) {
-          setValidationMessage('DDD inválido');
-        } else {
-          setValidationMessage('Telefone inválido');
-        }
-      }
-      return false;
-    }
-    
-    setIsValid(true);
-    setValidationMessage('');
-    return true;
-  }, [required]);
+  const validateInput = useCallback(
+    (inputValue) => {
+      const cleanValue = removeNonNumeric(inputValue);
 
-  const handleChange = useCallback((value) => {
-    const numbersOnly = removeNonNumeric(value);
-    const limitedNumbers = numbersOnly.slice(0, 11);
-    const formatted = formatPhone(limitedNumbers);
-    
-    setFormattedValue(formatted);
-    setIsDirty(true);
-    
-    const isCurrentlyValid = validateInput(limitedNumbers);
-    
-    // Callback externo
-    onChange?.({
-      value: limitedNumbers,
-      formatted: formatted,
-      isValid: isCurrentlyValid,
-      type: getPhoneType(limitedNumbers)
-    });
-  }, [onChange, validateInput]);
+      if (!cleanValue && required) {
+        setIsValid(false);
+        setValidationMessage("Telefone é obrigatório");
+        return false;
+      }
+
+      if (cleanValue && !validatePhone(cleanValue)) {
+        setIsValid(false);
+
+        if (cleanValue.length < 10) {
+          setValidationMessage("Telefone deve ter pelo menos 10 dígitos");
+        } else if (cleanValue.length > 11) {
+          setValidationMessage("Telefone deve ter no máximo 11 dígitos");
+        } else {
+          const ddd = cleanValue.substring(0, 2);
+          if (!validateDDD(ddd)) {
+            setValidationMessage("DDD inválido");
+          } else {
+            setValidationMessage("Telefone inválido");
+          }
+        }
+        return false;
+      }
+
+      setIsValid(true);
+      setValidationMessage("");
+      return true;
+    },
+    [required]
+  );
+
+  const handleChange = useCallback(
+    (value) => {
+      const numbersOnly = removeNonNumeric(value);
+      const limitedNumbers = numbersOnly.slice(0, 11);
+      const formatted = formatPhone(limitedNumbers);
+
+      setFormattedValue(formatted);
+      setIsDirty(true);
+
+      const isCurrentlyValid = validateInput(limitedNumbers);
+
+      // Callback externo
+      onChange?.({
+        value: limitedNumbers,
+        formatted: formatted,
+        isValid: isCurrentlyValid,
+        type: getPhoneType(limitedNumbers),
+      });
+    },
+    [onChange, validateInput]
+  );
 
   const handleBlur = useCallback(() => {
     if (showValidation) {
@@ -78,25 +88,28 @@ export const usePhone = (initialValue = '', options = {}) => {
     }
   }, [formattedValue, showValidation, validateInput]);
 
-  const setValue = useCallback((newValue) => {
-    const formatted = formatPhone(newValue);
-    setFormattedValue(formatted);
-    validateInput(newValue);
-  }, [validateInput]);
+  const setValue = useCallback(
+    (newValue) => {
+      const formatted = formatPhone(newValue);
+      setFormattedValue(formatted);
+      validateInput(newValue);
+    },
+    [validateInput]
+  );
 
   const clear = useCallback(() => {
-    setFormattedValue('');
+    setFormattedValue("");
     setIsValid(true);
-    setValidationMessage('');
+    setValidationMessage("");
     setIsDirty(false);
   }, []);
 
   const getPhoneType = useCallback((phoneNumber) => {
     const numbers = removeNonNumeric(phoneNumber);
     if (numbers.length === 11) {
-      return 'mobile';
+      return "mobile";
     } else if (numbers.length === 10) {
-      return 'landline';
+      return "landline";
     }
     return null;
   }, []);
@@ -109,17 +122,18 @@ export const usePhone = (initialValue = '', options = {}) => {
     validationMessage,
     isDirty,
     phoneType: getPhoneType(formattedValue),
-    
+
     // Métodos
     handleChange,
     handleBlur,
     setValue,
     clear,
     validate: () => validateInput(removeNonNumeric(formattedValue)),
-    
+
     // Estado computado
-    isEmpty: !formattedValue || formattedValue.trim() === '',
+    isEmpty: !formattedValue || formattedValue.trim() === "",
     isComplete: removeNonNumeric(formattedValue).length >= 10,
-    displayError: showValidation && !isValid && isDirty ? validationMessage : null
+    displayError:
+      showValidation && !isValid && isDirty ? validationMessage : null,
   };
 };

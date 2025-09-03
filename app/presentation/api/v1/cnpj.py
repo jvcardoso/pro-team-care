@@ -26,34 +26,139 @@ class CNPJConsultaResponse(BaseModel):
     message: str = ""
 
 
-@router.get("/consultar/{cnpj}")
+@router.get(
+    "/consultar/{cnpj}",
+    response_model=CNPJConsultaResponse,
+    summary="Consultar CNPJ (Autenticado)",
+    description="""
+    Consulta dados completos de uma empresa pelo CNPJ usando a ReceitaWS.
+    
+    **Funcionalidades:**
+    - Consulta dados na Receita Federal
+    - Enriquecimento automático de dados
+    - Mapeamento para estrutura do sistema
+    - Cache automático de respostas
+    
+    **Dados retornados:**
+    - Informações básicas da empresa
+    - CNAE principal e secundários
+    - Endereço completo
+    - Contatos quando disponíveis
+    - Situação na Receita Federal
+    
+    **Restrições:**
+    - Requer autenticação válida
+    - Sujeito a rate limit da ReceitaWS
+    - Timeout de 30 segundos
+    """,
+    tags=["CNPJ Lookup"],
+    responses={
+        200: {
+            "description": "Dados da empresa encontrados",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "success": True,
+                        "message": "Dados da empresa encontrados com sucesso",
+                        "data": {
+                            "people": {
+                                "name": "EMPRESA EXEMPLO LTDA",
+                                "trade_name": "Exemplo Corp",
+                                "tax_id": "11222333000144",
+                                "status": "active"
+                            },
+                            "phones": [{"number": "11987654321"}],
+                            "addresses": [{
+                                "street": "Avenida Paulista",
+                                "city": "São Paulo",
+                                "state": "SP"
+                            }]
+                        }
+                    }
+                }
+            }
+        },
+        400: {"description": "CNPJ inválido"},
+        404: {"description": "CNPJ não encontrado na Receita Federal"},
+        408: {"description": "Timeout na consulta externa"},
+        429: {"description": "Rate limit excedido na ReceitaWS"},
+        401: {"description": "Não autorizado"}
+    }
+)
 async def consultar_cnpj(
     cnpj: str,
     current_user: dict = Depends(get_current_user)
 ) -> CNPJConsultaResponse:
-    """
-    Consulta dados de empresa pelo CNPJ usando ReceitaWS (requer autenticação)
-    """
     return await _consultar_cnpj_interno(cnpj)
 
 
-@router.get("/publico/consultar/{cnpj}")
+@router.get(
+    "/publico/consultar/{cnpj}",
+    response_model=CNPJConsultaResponse,
+    summary="Consultar CNPJ (Público)",
+    description="""
+    Consulta pública de dados básicos de empresa pelo CNPJ.
+    
+    **ATENÇÃO:** Endpoint público sem autenticação.
+    
+    **Limitações:**
+    - Mesmos rate limits da ReceitaWS aplicam
+    - Pode ser desabilitado por políticas de segurança
+    - Use o endpoint autenticado para uso profissional
+    
+    **Uso recomendado:**
+    - Validação rápida de CNPJ em formulários
+    - Demonstrações públicas
+    - Testes de integração
+    """,
+    tags=["CNPJ Lookup"],
+    responses={
+        200: {"description": "Consulta realizada com sucesso"},
+        400: {"description": "CNPJ inválido"},
+        404: {"description": "CNPJ não encontrado"},
+        429: {"description": "Rate limit excedido"}
+    }
+)
 async def consultar_cnpj_publico(
     cnpj: str
 ) -> CNPJConsultaResponse:
-    """
-    Consulta dados de empresa pelo CNPJ usando ReceitaWS (público - sem autenticação)
-    """
     return await _consultar_cnpj_interno(cnpj)
 
 
-@router.get("/teste/{cnpj}")
+@router.get(
+    "/teste/{cnpj}",
+    summary="Testar CNPJ (Desenvolvimento)",
+    description="""
+    Endpoint de teste que valida formato do CNPJ sem fazer consulta externa.
+    
+    **Finalidade:**
+    - Testes de desenvolvimento
+    - Validação de formato de CNPJ
+    - Debug de integrações
+    
+    **Não faz consulta real na ReceitaWS** - apenas valida formato.
+    """,
+    tags=["CNPJ Lookup", "Development"],
+    responses={
+        200: {
+            "description": "Teste realizado",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "cnpj_original": "11.222.333/0001-44",
+                        "cnpj_limpo": "11222333000144",
+                        "url": "https://receitaws.com.br/v1/cnpj/11222333000144",
+                        "status": "Endpoint de teste ativo"
+                    }
+                }
+            }
+        },
+        400: {"description": "Formato de CNPJ inválido"}
+    }
+)
 async def testar_cnpj(
     cnpj: str
 ):
-    """
-    Endpoint de teste para verificar CNPJ na ReceitaWS
-    """
     try:
         # Limpar CNPJ (apenas números)
         cnpj_limpo = ''.join(filter(str.isdigit, cnpj))
@@ -73,7 +178,7 @@ async def testar_cnpj(
 
     except Exception as e:
         logger.error(f"Erro no teste: {str(e)}")
-        return {"error": str(e)}
+        return {"error": "Erro interno no teste de CNPJ"}
 
 
 

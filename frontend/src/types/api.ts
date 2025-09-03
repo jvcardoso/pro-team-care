@@ -1,301 +1,187 @@
 /**
- * API Types - Sincronizados com Backend Pydantic Models
- * Baseado em: app/presentation/schemas/
+ * Interfaces TypeScript sincronizadas com backend FastAPI
+ * Baseado em: app/domain/entities/models.py
+ * 🔄 MANTER SINCRONIZADO com backend
  */
 
-// ===============================
-// ENUMS - Sincronizados com Backend
-// ===============================
+import {
+  PhoneType,
+  EmailType,
+  AddressType,
+  PersonType,
+  CompanyStatus,
+  TaxRegime,
+  CountryCode,
+  BrazilianState,
+} from "./enums";
 
-export enum PersonType {
-  PF = "PF",
-  PJ = "PJ"
-}
-
-export enum PersonStatus {
-  ACTIVE = "active",
-  INACTIVE = "inactive", 
-  PENDING = "pending",
-  SUSPENDED = "suspended",
-  BLOCKED = "blocked"
-}
-
-export enum PhoneType {
-  LANDLINE = "landline",
-  MOBILE = "mobile",
-  WHATSAPP = "whatsapp",
-  COMMERCIAL = "commercial",
-  EMERGENCY = "emergency",
-  FAX = "fax"
-}
-
-export enum LineType {
-  PREPAID = "prepaid",
-  POSTPAID = "postpaid",
-  CORPORATE = "corporate"
-}
-
-export enum EmailType {
-  PERSONAL = "personal",
-  WORK = "work",
-  BILLING = "billing",
-  CONTACT = "contact"
-}
-
-export enum AddressType {
-  RESIDENTIAL = "residential",
-  COMMERCIAL = "commercial",
-  CORRESPONDENCE = "correspondence",
-  BILLING = "billing",
-  DELIVERY = "delivery"
-}
-
-export enum AccessDifficulty {
-  EASY = "easy",
-  MEDIUM = "medium",
-  HARD = "hard",
-  UNKNOWN = "unknown"
-}
-
-// ===============================
-// BASE INTERFACES
-// ===============================
-
-export interface BaseEntity {
-  id: number;
-  created_at: string;
-  updated_at: string;
-  deleted_at?: string;
-}
-
-// ===============================
-// PHONE INTERFACES
-// ===============================
-
-export interface PhoneBase {
+// 📱 Phone Interface - Sincronizado com Phone model
+export interface Phone {
+  id?: number;
   country_code: string;
+  area_code?: string;
   number: string;
   extension?: string;
   type: PhoneType;
   is_principal: boolean;
-  is_active: boolean;
-  phone_name?: string;
   is_whatsapp: boolean;
-  whatsapp_verified: boolean;
-  whatsapp_business: boolean;
-  whatsapp_name?: string;
-  accepts_whatsapp_marketing: boolean;
-  accepts_whatsapp_notifications: boolean;
-  whatsapp_preferred_time_start?: string;
-  whatsapp_preferred_time_end?: string;
-  carrier?: string;
-  line_type?: LineType;
-  contact_priority: number;
-  can_receive_calls: boolean;
-  can_receive_sms: boolean;
+  description?: string;
 }
 
-export interface Phone extends PhoneBase, BaseEntity {
-  whatsapp_formatted?: string;
-  whatsapp_verified_at?: string;
-  last_contact_attempt?: string;
-  last_contact_success?: string;
-  contact_attempts_count: number;
-  verified_at?: string;
-  verification_method?: string;
-}
-
-export interface PhoneCreate extends PhoneBase {}
-
-export interface PhoneUpdate extends Partial<PhoneBase> {}
-
-// ===============================
-// EMAIL INTERFACES
-// ===============================
-
-export interface EmailBase {
+// 📧 Email Interface - Sincronizado com Email model
+export interface Email {
+  id?: number;
   email_address: string;
   type: EmailType;
   is_principal: boolean;
-  is_active: boolean;
+  is_verified: boolean;
+  description?: string;
 }
 
-export interface Email extends EmailBase, BaseEntity {
-  verified_at?: string;
-}
-
-export interface EmailCreate extends EmailBase {}
-export interface EmailUpdate extends Partial<EmailBase> {}
-
-// ===============================
-// ADDRESS INTERFACES
-// ===============================
-
-export interface AddressBase {
+// 🏠 Address Interface - Sincronizado com Address model
+export interface Address {
+  id?: number;
+  type: AddressType;
   street: string;
   number?: string;
-  details?: string;
+  complement?: string;
   neighborhood: string;
   city: string;
-  state: string;
+  state: BrazilianState;
   zip_code: string;
-  country: string;
-  type: AddressType;
+  country: CountryCode;
   is_principal: boolean;
-  
-  // Geocoding fields
   latitude?: number;
   longitude?: number;
-  google_place_id?: string;
-  geocoding_accuracy?: string;
-  geocoding_source?: string;
-  formatted_address?: string;
-  coordinates_added_at?: string;
-  coordinates_source?: string;
-  
-  // Enrichment metadata
-  enriched_at?: string;
-  enrichment_source?: string;
-  validation_source?: string;
-  last_validated_at?: string;
-  is_validated: boolean;
-  
-  // Códigos oficiais brasileiros (ViaCEP)
-  ibge_city_code?: number;
-  ibge_state_code?: number;
+  ibge_city_code?: string;
   gia_code?: string;
   siafi_code?: string;
   area_code?: string;
+  description?: string;
 }
 
-export interface Address extends AddressBase, BaseEntity {
-  region?: string;
-  microregion?: string;
-  mesoregion?: string;
-  within_coverage?: boolean;
-  distance_to_establishment?: number;
-  estimated_travel_time?: number;
-  access_difficulty?: AccessDifficulty;
-  access_notes?: string;
-  quality_score?: number;
-  api_data?: Record<string, any>;
-}
-
-export interface AddressCreate extends AddressBase {}
-export interface AddressUpdate extends Partial<AddressBase> {}
-
-// ===============================
-// PEOPLE INTERFACES
-// ===============================
-
-export interface PeopleBase {
+// 👥 People Interface - Sincronizado com People model
+export interface People {
+  id?: number;
   person_type: PersonType;
   name: string;
   trade_name?: string;
   tax_id: string;
   secondary_tax_id?: string;
   incorporation_date?: string;
-  tax_regime?: string;
   legal_nature?: string;
-  municipal_registration?: string;
-  website?: string;
+  status: CompanyStatus;
+  tax_regime?: TaxRegime;
+  share_capital?: number;
   description?: string;
-  status: PersonStatus;
-}
-
-export interface People extends PeopleBase, BaseEntity {
-  lgpd_consent_version?: string;
-  lgpd_consent_given_at?: string;
-  lgpd_data_retention_expires_at?: string;
-}
-
-export interface PeopleCreate extends PeopleBase {}
-export interface PeopleUpdate extends Partial<PeopleBase> {}
-
-// ===============================
-// COMPANY INTERFACES
-// ===============================
-
-export interface CompanyBase {
-  settings?: Record<string, any>;
   metadata?: Record<string, any>;
-  display_order: number;
 }
 
-export interface Company extends CompanyBase, BaseEntity {
-  person_id: number;
-}
-
-export interface CompanyDetailed extends Company {
+// 🏢 Company Interface - Sincronizado com Company model
+export interface Company {
+  id?: number;
   people: People;
   phones: Phone[];
   emails: Email[];
   addresses: Address[];
+  created_at?: string;
+  updated_at?: string;
+  metadata?: Record<string, any>;
 }
 
-export interface CompanyCreate {
-  people: PeopleCreate;
-  company: CompanyBase;
-  phones?: PhoneCreate[];
-  emails?: EmailCreate[];
-  addresses?: AddressCreate[];
+// 🔐 Auth Interfaces - Sincronizado com auth models
+export interface LoginRequest {
+  username: string;
+  password: string;
 }
-
-export interface CompanyUpdate {
-  people?: PeopleUpdate;
-  company?: Partial<CompanyBase>;
-  phones?: PhoneCreate[];
-  emails?: EmailCreate[];
-  addresses?: AddressCreate[];
-}
-
-export interface CompanyList {
-  id: number;
-  person_id: number;
-  name: string;
-  trade_name?: string;
-  tax_id: string;
-  status: PersonStatus;
-  phones_count: number;
-  emails_count: number;
-  addresses_count: number;
-  created_at: string;
-  updated_at: string;
-}
-
-// ===============================
-// AUTH INTERFACES
-// ===============================
 
 export interface Token {
   access_token: string;
   token_type: string;
+  expires_in?: number;
+  user?: UserInfo;
 }
 
-export interface TokenData {
-  email?: string;
+export interface UserInfo {
+  id: number;
+  email: string;
+  name?: string;
+  is_active: boolean;
+  created_at?: string;
 }
 
-// ===============================
-// API RESPONSE TYPES
-// ===============================
-
-export interface ApiResponse<T> {
-  data: T;
-  message?: string;
-  success: boolean;
+// 📊 API Response Interfaces
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  size: number;
+  pages: number;
 }
 
 export interface ApiError {
   detail: string;
   type?: string;
-  status_code: number;
+  code?: string;
 }
 
-export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  per_page: number;
-  total_pages: number;
+// 🔍 Search/Filter Interfaces
+export interface CompanyFilters {
+  search?: string;
+  status?: CompanyStatus;
+  tax_regime?: TaxRegime;
+  person_type?: PersonType;
+  city?: string;
+  state?: BrazilianState;
+  page?: number;
+  size?: number;
 }
+
+// 📝 Form Data Interfaces (para uso interno do frontend)
+export interface CompanyFormData {
+  people: Partial<People>;
+  phones: Phone[];
+  emails: Email[];
+  addresses: Address[];
+}
+
+// 🏥 Health Check Interface
+export interface HealthStatus {
+  status: "healthy" | "unhealthy";
+  timestamp: string;
+  version?: string;
+  database?: {
+    status: string;
+    response_time_ms?: number;
+  };
+  external_services?: Record<
+    string,
+    {
+      status: string;
+      response_time_ms?: number;
+    }
+  >;
+}
+
+// 🔄 Utility type para criar requests de update (Partial de todos os campos)
+export type CompanyUpdateRequest = Partial<Company>;
+export type PeopleUpdateRequest = Partial<People>;
+
+// 🎯 Type guards para runtime validation
+export const isCompany = (obj: any): obj is Company => {
+  return obj && typeof obj === "object" && "people" in obj;
+};
+
+export const isPhone = (obj: any): obj is Phone => {
+  return obj && typeof obj === "object" && "number" in obj && "type" in obj;
+};
+
+export const isEmail = (obj: any): obj is Email => {
+  return (
+    obj && typeof obj === "object" && "email_address" in obj && "type" in obj
+  );
+};
+
+export const isAddress = (obj: any): obj is Address => {
+  return obj && typeof obj === "object" && "street" in obj && "city" in obj;
+};

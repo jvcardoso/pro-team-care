@@ -1,12 +1,35 @@
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, Users, UserPlus, Activity, Heart, 
-  Calendar, FileText, BarChart3, PieChart, TrendingUp,
-  Palette, LayoutGrid, Table, FormInput, BookOpen, Kanban,
-  Mail, Image, Receipt, User, Building, FileX,
-  LogIn, Lock, Settings, ChevronDown, ChevronRight, Bell
-} from 'lucide-react';
+import React, { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import {
+  LayoutDashboard,
+  Users,
+  UserPlus,
+  Activity,
+  Heart,
+  Calendar,
+  FileText,
+  BarChart3,
+  PieChart,
+  TrendingUp,
+  Palette,
+  LayoutGrid,
+  Table,
+  FormInput,
+  BookOpen,
+  Kanban,
+  Mail,
+  Image,
+  Receipt,
+  User,
+  Building,
+  FileX,
+  LogIn,
+  Lock,
+  Settings,
+  ChevronDown,
+  ChevronRight,
+  Bell,
+} from "lucide-react";
 
 const Sidebar = ({ collapsed }) => {
   const location = useLocation();
@@ -16,97 +39,189 @@ const Sidebar = ({ collapsed }) => {
     examples: false,
     pages: false,
     healthcare: false,
-    extras: false
+    extras: false,
   });
 
   const toggleSubmenu = (menuKey) => {
-    setExpandedMenus(prev => ({
+    setExpandedMenus((prev) => ({
       ...prev,
-      [menuKey]: !prev[menuKey]
+      [menuKey]: !prev[menuKey],
     }));
   };
 
   const menuItems = [
     {
-      key: 'dashboard',
-      label: 'Dashboard',
+      key: "dashboard",
+      label: "Dashboard",
       icon: <LayoutDashboard className="h-5 w-5" />,
-      badge: { text: 'Hot', color: 'bg-red-500' },
+      badge: { text: "Hot", color: "bg-red-500" },
       submenu: [
-        { label: 'Dashboard v1', path: '/admin/dashboard', icon: <BarChart3 className="h-4 w-4" /> },
-        { label: 'Dashboard v2', path: '/admin/dashboard-v2', icon: <PieChart className="h-4 w-4" /> },
-        { label: 'Dashboard v3', path: '/admin/dashboard-v3', icon: <TrendingUp className="h-4 w-4" /> }
-      ]
-    },
-    {
-      key: 'components',
-      label: 'Componentes',
-      icon: <LayoutGrid className="h-5 w-5" />,
-      badge: { text: 'New', color: 'bg-blue-500' },
-      submenu: [
-        { 
-          label: 'Widgets', 
-          path: '/admin/widgets', 
-          icon: <Palette className="h-4 w-4" />,
-          badge: { text: '12', color: 'bg-green-500' }
+        {
+          label: "Dashboard v1",
+          path: "/admin/dashboard",
+          icon: <BarChart3 className="h-4 w-4" />,
         },
-        { label: 'Charts', path: '/admin/charts', icon: <BarChart3 className="h-4 w-4" /> },
-        { label: 'UI Elements', path: '/admin/ui', icon: <LayoutGrid className="h-4 w-4" /> },
-        { label: 'Forms', path: '/admin/forms', icon: <FormInput className="h-4 w-4" /> },
-        { label: 'Tables', path: '/admin/tables', icon: <Table className="h-4 w-4" /> }
-      ]
+        {
+          label: "Dashboard v2",
+          path: "/admin/dashboard-v2",
+          icon: <PieChart className="h-4 w-4" />,
+        },
+        {
+          label: "Dashboard v3",
+          path: "/admin/dashboard-v3",
+          icon: <TrendingUp className="h-4 w-4" />,
+        },
+      ],
     },
     {
-      key: 'examples',
-      label: 'Exemplos',
+      key: "components",
+      label: "Componentes",
+      icon: <LayoutGrid className="h-5 w-5" />,
+      badge: { text: "New", color: "bg-blue-500" },
+      submenu: [
+        {
+          label: "Widgets",
+          path: "/admin/widgets",
+          icon: <Palette className="h-4 w-4" />,
+          badge: { text: "12", color: "bg-green-500" },
+        },
+        {
+          label: "Charts",
+          path: "/admin/charts",
+          icon: <BarChart3 className="h-4 w-4" />,
+        },
+        {
+          label: "UI Elements",
+          path: "/admin/ui",
+          icon: <LayoutGrid className="h-4 w-4" />,
+        },
+        {
+          label: "Forms",
+          path: "/admin/forms",
+          icon: <FormInput className="h-4 w-4" />,
+        },
+        {
+          label: "Tables",
+          path: "/admin/tables",
+          icon: <Table className="h-4 w-4" />,
+        },
+      ],
+    },
+    {
+      key: "examples",
+      label: "Exemplos",
       icon: <BookOpen className="h-5 w-5" />,
       submenu: [
-        { label: 'Calendar', path: '/admin/calendar', icon: <Calendar className="h-4 w-4" /> },
-        { label: 'Gallery', path: '/admin/gallery', icon: <Image className="h-4 w-4" /> },
-        { label: 'Kanban', path: '/admin/kanban', icon: <Kanban className="h-4 w-4" /> },
-        { label: 'Mailbox', path: '/admin/mailbox', icon: <Mail className="h-4 w-4" /> }
-      ]
+        {
+          label: "Calendar",
+          path: "/admin/calendar",
+          icon: <Calendar className="h-4 w-4" />,
+        },
+        {
+          label: "Gallery",
+          path: "/admin/gallery",
+          icon: <Image className="h-4 w-4" />,
+        },
+        {
+          label: "Kanban",
+          path: "/admin/kanban",
+          icon: <Kanban className="h-4 w-4" />,
+        },
+        {
+          label: "Mailbox",
+          path: "/admin/mailbox",
+          icon: <Mail className="h-4 w-4" />,
+        },
+      ],
     },
     {
-      key: 'pages',
-      label: 'Páginas',
+      key: "pages",
+      label: "Páginas",
       icon: <FileText className="h-5 w-5" />,
       submenu: [
-        { label: 'Invoice', path: '/admin/invoice', icon: <Receipt className="h-4 w-4" /> },
-        { label: 'Profile', path: '/admin/profile', icon: <User className="h-4 w-4" /> },
-        { label: 'Projects', path: '/admin/projects', icon: <Building className="h-4 w-4" /> },
-        { label: 'Contacts', path: '/admin/contacts', icon: <Users className="h-4 w-4" /> }
-      ]
-    },
-    {
-      key: 'healthcare',
-      label: 'Home Care',
-      icon: <Heart className="h-5 w-5" />,
-      badge: { text: 'Pro', color: 'bg-purple-500' },
-      submenu: [
-        { 
-          label: 'Pacientes', 
-          path: '/admin/patients', 
-          icon: <Activity className="h-4 w-4" />,
-          badge: { text: '24', color: 'bg-blue-500' }
+        {
+          label: "Invoice",
+          path: "/admin/invoice",
+          icon: <Receipt className="h-4 w-4" />,
         },
-        { label: 'Consultas', path: '/admin/consultas', icon: <Calendar className="h-4 w-4" /> },
-        { label: 'Profissionais', path: '/admin/profissionais', icon: <Users className="h-4 w-4" /> },
-        { label: 'Empresas', path: '/admin/empresas', icon: <Building className="h-4 w-4" /> },
-        { label: 'Relatórios', path: '/admin/reports', icon: <FileText className="h-4 w-4" /> }
-      ]
+        {
+          label: "Profile",
+          path: "/admin/profile",
+          icon: <User className="h-4 w-4" />,
+        },
+        {
+          label: "Projects",
+          path: "/admin/projects",
+          icon: <Building className="h-4 w-4" />,
+        },
+        {
+          label: "Contacts",
+          path: "/admin/contacts",
+          icon: <Users className="h-4 w-4" />,
+        },
+      ],
     },
     {
-      key: 'extras',
-      label: 'Extras',
+      key: "healthcare",
+      label: "Home Care",
+      icon: <Heart className="h-5 w-5" />,
+      badge: { text: "Pro", color: "bg-purple-500" },
+      submenu: [
+        {
+          label: "Pacientes",
+          path: "/admin/patients",
+          icon: <Activity className="h-4 w-4" />,
+          badge: { text: "24", color: "bg-blue-500" },
+        },
+        {
+          label: "Consultas",
+          path: "/admin/consultas",
+          icon: <Calendar className="h-4 w-4" />,
+        },
+        {
+          label: "Profissionais",
+          path: "/admin/profissionais",
+          icon: <Users className="h-4 w-4" />,
+        },
+        {
+          label: "Empresas",
+          path: "/admin/empresas",
+          icon: <Building className="h-4 w-4" />,
+        },
+        {
+          label: "Relatórios",
+          path: "/admin/reports",
+          icon: <FileText className="h-4 w-4" />,
+        },
+      ],
+    },
+    {
+      key: "extras",
+      label: "Extras",
       icon: <Settings className="h-5 w-5" />,
       submenu: [
-        { label: 'Login', path: '/admin/login-demo', icon: <LogIn className="h-4 w-4" /> },
-        { label: 'Register', path: '/admin/register-demo', icon: <UserPlus className="h-4 w-4" /> },
-        { label: 'Lockscreen', path: '/admin/lockscreen', icon: <Lock className="h-4 w-4" /> },
-        { label: 'Error 404', path: '/admin/404-demo', icon: <FileX className="h-4 w-4" /> }
-      ]
-    }
+        {
+          label: "Login",
+          path: "/admin/login-demo",
+          icon: <LogIn className="h-4 w-4" />,
+        },
+        {
+          label: "Register",
+          path: "/admin/register-demo",
+          icon: <UserPlus className="h-4 w-4" />,
+        },
+        {
+          label: "Lockscreen",
+          path: "/admin/lockscreen",
+          icon: <Lock className="h-4 w-4" />,
+        },
+        {
+          label: "Error 404",
+          path: "/admin/404-demo",
+          icon: <FileX className="h-4 w-4" />,
+        },
+      ],
+    },
   ];
 
   const isActiveItem = (path) => {
@@ -114,7 +229,7 @@ const Sidebar = ({ collapsed }) => {
   };
 
   const hasActiveSubmenu = (submenu) => {
-    return submenu.some(item => isActiveItem(item.path));
+    return submenu.some((item) => isActiveItem(item.path));
   };
 
   return (
@@ -148,64 +263,6 @@ const Sidebar = ({ collapsed }) => {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4">
         <div className="px-3 space-y-1">
-          {/* Demo Links */}
-          <Link
-            to="/admin/demo"
-            className={`group flex items-center px-2 py-2 text-sm font-medium rounded-lg transition-colors ${
-              isActiveItem('/admin/demo')
-                ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            }`}
-          >
-            <LayoutGrid className="h-5 w-5 mr-3 flex-shrink-0" />
-            {!collapsed && (
-              <>
-                <span>Layout Demo</span>
-                <span className="ml-auto inline-block py-0.5 px-2 text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-full">
-                  Demo
-                </span>
-              </>
-            )}
-          </Link>
-
-          <Link
-            to="/admin/inputs-demo"
-            className={`group flex items-center px-2 py-2 text-sm font-medium rounded-lg transition-colors ${
-              isActiveItem('/admin/inputs-demo')
-                ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            }`}
-          >
-            <FormInput className="h-5 w-5 mr-3 flex-shrink-0" />
-            {!collapsed && (
-              <>
-                <span>Inputs Demo</span>
-                <span className="ml-auto inline-block py-0.5 px-2 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full">
-                  CEP
-                </span>
-              </>
-            )}
-          </Link>
-
-          <Link
-            to="/admin/notifications"
-            className={`group flex items-center px-2 py-2 text-sm font-medium rounded-lg transition-colors ${
-              isActiveItem('/admin/notifications')
-                ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            }`}
-          >
-            <Bell className="h-5 w-5 mr-3 flex-shrink-0" />
-            {!collapsed && (
-              <>
-                <span>Notifications</span>
-                <span className="ml-auto inline-block py-0.5 px-2 text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-full">
-                  NEW
-                </span>
-              </>
-            )}
-          </Link>
-
           {/* Menu Items */}
           {menuItems.map((item) => (
             <div key={item.key}>
@@ -214,9 +271,9 @@ const Sidebar = ({ collapsed }) => {
                   <button
                     onClick={() => toggleSubmenu(item.key)}
                     className={`group w-full flex items-center px-2 py-2 text-sm font-medium rounded-lg transition-colors ${
-                      hasActiveSubmenu(item.submenu) 
-                        ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' 
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      hasActiveSubmenu(item.submenu)
+                        ? "bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                     }`}
                   >
                     <div className="flex items-center flex-1 min-w-0">
@@ -225,7 +282,9 @@ const Sidebar = ({ collapsed }) => {
                         <>
                           <span className="ml-3 truncate">{item.label}</span>
                           {item.badge && (
-                            <span className={`ml-auto inline-block py-0.5 px-2 text-xs text-white rounded-full ${item.badge.color}`}>
+                            <span
+                              className={`ml-auto inline-block py-0.5 px-2 text-xs text-white rounded-full ${item.badge.color}`}
+                            >
                               {item.badge.text}
                             </span>
                           )}
@@ -233,7 +292,11 @@ const Sidebar = ({ collapsed }) => {
                       )}
                     </div>
                     {!collapsed && (
-                      <ChevronDown className={`ml-2 h-4 w-4 transition-transform ${expandedMenus[item.key] ? 'rotate-180' : ''}`} />
+                      <ChevronDown
+                        className={`ml-2 h-4 w-4 transition-transform ${
+                          expandedMenus[item.key] ? "rotate-180" : ""
+                        }`}
+                      />
                     )}
                   </button>
 
@@ -246,14 +309,18 @@ const Sidebar = ({ collapsed }) => {
                           to={subItem.path}
                           className={`group flex items-center px-2 py-2 text-sm rounded-lg transition-colors ${
                             isActiveItem(subItem.path)
-                              ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                              ? "bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
+                              : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                           }`}
                         >
                           {subItem.icon}
-                          <span className="ml-3 flex-1 truncate">{subItem.label}</span>
+                          <span className="ml-3 flex-1 truncate">
+                            {subItem.label}
+                          </span>
                           {subItem.badge && (
-                            <span className={`ml-auto inline-block py-0.5 px-1.5 text-xs text-white rounded-full ${subItem.badge.color}`}>
+                            <span
+                              className={`ml-auto inline-block py-0.5 px-1.5 text-xs text-white rounded-full ${subItem.badge.color}`}
+                            >
                               {subItem.badge.text}
                             </span>
                           )}
@@ -267,8 +334,8 @@ const Sidebar = ({ collapsed }) => {
                   to={item.path}
                   className={`group flex items-center px-2 py-2 text-sm font-medium rounded-lg transition-colors ${
                     isActiveItem(item.path)
-                      ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      ? "bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
                 >
                   {item.icon}
@@ -276,7 +343,9 @@ const Sidebar = ({ collapsed }) => {
                     <>
                       <span className="ml-3 flex-1 truncate">{item.label}</span>
                       {item.badge && (
-                        <span className={`ml-auto inline-block py-0.5 px-2 text-xs text-white rounded-full ${item.badge.color}`}>
+                        <span
+                          className={`ml-auto inline-block py-0.5 px-2 text-xs text-white rounded-full ${item.badge.color}`}
+                        >
                           {item.badge.text}
                         </span>
                       )}

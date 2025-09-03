@@ -65,10 +65,23 @@ async def check_memory() -> Dict[str, Any]:
         }
 
 
-@router.get("/health")
+@router.get(
+    "/health",
+    summary="Health Check Básico",
+    description="""
+    Verificação rápida de status do serviço.
+    
+    **Uso:**
+    - Load balancers
+    - Monitoring básico
+    - Status page público
+    
+    **Rate limit:** 10 requisições por minuto
+    """,
+    tags=["Health"]
+)
 @limiter.limit("10/minute")
 async def basic_health_check(request: Request) -> Dict[str, Any]:
-    """Health check básico - mais rápido"""
     return {
         "status": "healthy",
         "service": "Pro Team Care API",
@@ -77,10 +90,24 @@ async def basic_health_check(request: Request) -> Dict[str, Any]:
     }
 
 
-@router.get("/health/detailed")
+@router.get(
+    "/health/detailed",
+    summary="Health Check Detalhado",
+    description="""
+    Verificação completa de todas as dependências do sistema.
+    
+    **Verifica:**
+    - Conectividade com PostgreSQL
+    - Uso de memória do sistema
+    - Status do sistema de cache Redis
+    - Tempo de resposta de cada componente
+    
+    **Rate limit:** 5 requisições por minuto (operação mais custosa)
+    """,
+    tags=["Health"]
+)
 @limiter.limit("5/minute")
 async def detailed_health_check(request: Request, db: AsyncSession = Depends(get_db)) -> Dict[str, Any]:
-    """Health check detalhado com verificação de dependências"""
     start_time = datetime.utcnow()
     
     # Executar checks em paralelo
@@ -147,16 +174,42 @@ async def detailed_health_check(request: Request, db: AsyncSession = Depends(get
     return response
 
 
-@router.get("/live")
+@router.get(
+    "/live",
+    summary="Liveness Probe",
+    description="""
+    Probe de vitalidade para orquestração Kubernetes.
+    
+    **Kubernetes:**
+    - Usado para determinar se o pod deve ser reiniciado
+    - Resposta rápida sem verificações pesadas
+    - Falha apenas se o processo está travado
+    """,
+    tags=["Health"]
+)
 async def liveness_probe() -> Dict[str, str]:
-    """Liveness probe para Kubernetes"""
     return {"status": "alive"}
 
 
-@router.get("/ready")
+@router.get(
+    "/ready",
+    summary="Readiness Probe", 
+    description="""
+    Probe de prontidão para orquestração Kubernetes.
+    
+    **Kubernetes:**
+    - Usado para determinar se o pod pode receber tráfego
+    - Verifica conectividade com banco de dados
+    - Rate limit mais alto (20/min) para uso frequente
+    
+    **Status codes:**
+    - 200: Pronto para receber requests
+    - 503: Não pronto (remover do load balancer)
+    """,
+    tags=["Health"]
+)
 @limiter.limit("20/minute") 
 async def readiness_probe(request: Request, db: AsyncSession = Depends(get_db)) -> Dict[str, Any]:
-    """Readiness probe para Kubernetes"""
     try:
         # Verificar apenas banco - mais rápido que health detalhado
         await db.execute(text("SELECT 1"))
@@ -176,10 +229,27 @@ async def readiness_probe(request: Request, db: AsyncSession = Depends(get_db)) 
         )
 
 
-@router.get("/cache/stats")
+@router.get(
+    "/cache/stats",
+    summary="Estatísticas do Cache",
+    description="""
+    Métricas detalhadas do sistema de cache Redis.
+    
+    **Métricas incluídas:**
+    - Hit/miss ratio
+    - Número de chaves ativas
+    - Uso de memória
+    - Estatísticas de performance
+    
+    **Uso:**
+    - Monitoramento de performance
+    - Debugging de cache
+    - Otimização de aplicação
+    """,
+    tags=["Health"]
+)
 @limiter.limit("10/minute")
 async def cache_stats(request: Request) -> Dict[str, Any]:
-    """Estatísticas do sistema de cache"""
     try:
         stats = await cache_manager.get_cache_stats()
         return {

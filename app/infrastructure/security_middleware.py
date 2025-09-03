@@ -26,13 +26,13 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
                 "font-src 'self' https://cdn.jsdelivr.net"
             )
         else:
-            # Strict policy for application endpoints
+            # Strict policy for application endpoints - allow frontend to connect to backend
             response.headers["Content-Security-Policy"] = (
                 "default-src 'self'; "
                 "script-src 'self'; "
                 "style-src 'self'; "
                 "img-src 'self' data:; "
-                "connect-src 'self'; "
+                "connect-src 'self' http://192.168.11.83:8000 http://192.168.11.83:3000; "
                 "font-src 'self'; "
                 "object-src 'none'; "
                 "base-uri 'self'"

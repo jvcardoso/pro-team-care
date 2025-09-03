@@ -1,35 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { Building2, Check, X, Search, Loader2, Star } from 'lucide-react';
-import { formatCNPJ } from '../../utils/formatters';
-import { removeNonNumeric, validateCNPJ } from '../../utils/validators';
-import { consultarCNPJ } from '../../services/cnpjService';
+import React, { useState, useEffect } from "react";
+import { Building2, Search, Loader2 } from "lucide-react";
+import BaseInputField from "./BaseInputField";
+import { cnpjConfig } from "../../utils/inputHelpers.tsx";
+import { removeNonNumeric } from "../../utils/validators";
+import { consultarCNPJ } from "../../services/cnpjService";
 
 const InputCNPJ = ({
   label = "CNPJ",
-  value = '',
+  value = "",
   onChange,
   onCompanyFound,
   onEnrichmentStart,
   onEnrichmentEnd,
-  placeholder = "00.000.000/0000-00",
-  required = false,
-  disabled = false,
-  error = '',
-  className = '',
-  showValidation = true,
-  showIcon = true,
   showConsultButton = true,
   autoConsult = false,
   ...props
 }) => {
-  const [formattedValue, setFormattedValue] = useState('');
-  const [isValid, setIsValid] = useState(true);
-  const [validationMessage, setValidationMessage] = useState('');
-  const [isFocused, setIsFocused] = useState(false);
-  const [isDirty, setIsDirty] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isEnriching, setIsEnriching] = useState(false);
   const [companyData, setCompanyData] = useState(null);
+  const [currentValue, setCurrentValue] = useState(value || "");
+  const [isValid, setIsValid] = useState(true);
+  const [validationMessage, setValidationMessage] = useState("");
 
   // Função para finalizar enriquecimento
   const finishEnrichment = () => {
@@ -39,32 +31,27 @@ const InputCNPJ = ({
     }
   };
 
-  // Sincronizar valor externo com estado interno
+  // Sincronizar currentValue com o valor das props
   useEffect(() => {
-    if (value !== undefined) {
-      const formatted = formatCNPJ(value);
-      setFormattedValue(formatted);
-      
-      if (showValidation && value) {
-        validateInput(value);
-      }
+    if (value !== undefined && value !== currentValue) {
+      setCurrentValue(value);
     }
-  }, [value, showValidation]);
+  }, [value, currentValue]);
 
-  // Auto-consulta quando CNPJ estiver válido (desabilitado por padrão para evitar loops)
+  // Auto-consulta quando CNPJ estiver válido
   useEffect(() => {
-    if (autoConsult && isValid && formattedValue.length === 18 && !isLoading) {
-      const cleanCNPJ = removeNonNumeric(formattedValue);
-      if (cleanCNPJ.length === 14) {
-        // Pequeno delay para evitar múltiplas chamadas
-        const timeoutId = setTimeout(() => {
-          consultCompany(cleanCNPJ);
-        }, 500);
-
-        return () => clearTimeout(timeoutId);
-      }
+    if (
+      autoConsult &&
+      currentValue &&
+      currentValue.length === 14 &&
+      !isLoading
+    ) {
+      const timeoutId = setTimeout(() => {
+        consultCompany(currentValue);
+      }, 500);
+      return () => clearTimeout(timeoutId);
     }
-  }, [autoConsult, isValid, formattedValue, isLoading]);
+  }, [autoConsult, currentValue, isLoading]);
 
   const consultCompany = async (cnpj) => {
     if (!cnpj || cnpj.length !== 14) return;
@@ -73,9 +60,9 @@ const InputCNPJ = ({
 
     try {
       const result = await consultarCNPJ(cnpj);
-      
+
       setCompanyData(result);
-      setValidationMessage('');
+      setValidationMessage("");
       setIsValid(true);
 
       // Notificar início do enriquecimento se houver callback
@@ -92,57 +79,67 @@ const InputCNPJ = ({
       // Notificar fim do enriquecimento (será chamado pelo componente pai)
       // O componente pai deve chamar onEnrichmentEnd quando terminar
     } catch (error) {
-      console.error('Erro ao consultar CNPJ:', error);
+      console.error("Erro ao consultar CNPJ:", error);
 
       // Mesmo com erro na consulta, se o CNPJ for válido, criar dados básicos
       if (cnpj.length === 14 && /^\d+$/.test(cnpj)) {
-        console.log('CNPJ válido mas não encontrado na Receita Federal - criando dados básicos');
+        console.log(
+          "CNPJ válido mas não encontrado na Receita Federal - criando dados básicos"
+        );
 
         const basicCompanyData = {
           people: {
-            person_type: 'PJ',
-            name: '',
-            trade_name: '',
+            person_type: "PJ",
+            name: "",
+            trade_name: "",
             tax_id: cnpj,
-            incorporation_date: '',
-            tax_regime: 'simples_nacional',
-            legal_nature: '',
-            status: 'active',
-            description: ''
+            incorporation_date: "",
+            tax_regime: "simples_nacional",
+            legal_nature: "",
+            status: "active",
+            description: "",
           },
           company: {
             settings: {},
             metadata: {},
-            display_order: 0
+            display_order: 0,
           },
-          phones: [{
-            country_code: '55',
-            number: '',
-            type: 'commercial',
-            is_principal: true,
-            is_whatsapp: false
-          }],
-          emails: [{
-            email_address: '',
-            type: 'work',
-            is_principal: true
-          }],
-          addresses: [{
-            street: '',
-            number: '',
-            details: '',
-            neighborhood: '',
-            city: '',
-            state: '',
-            zip_code: '',
-            country: 'BR',
-            type: 'commercial',
-            is_principal: true
-          }]
+          phones: [
+            {
+              country_code: "55",
+              number: "",
+              type: "commercial",
+              is_principal: true,
+              is_whatsapp: false,
+            },
+          ],
+          emails: [
+            {
+              email_address: "",
+              type: "work",
+              is_principal: true,
+            },
+          ],
+          addresses: [
+            {
+              street: "",
+              number: "",
+              details: "",
+              neighborhood: "",
+              city: "",
+              state: "",
+              zip_code: "",
+              country: "BR",
+              type: "commercial",
+              is_principal: true,
+            },
+          ],
         };
 
         setCompanyData(basicCompanyData);
-        setValidationMessage('CNPJ válido, mas dados não encontrados na Receita Federal');
+        setValidationMessage(
+          "CNPJ válido, mas dados não encontrados na Receita Federal"
+        );
         setIsValid(true);
 
         // Chamar callback mesmo com dados básicos
@@ -156,7 +153,7 @@ const InputCNPJ = ({
           onEnrichmentStart();
         }
       } else {
-        setValidationMessage(error.message || 'Erro ao consultar CNPJ');
+        setValidationMessage(error.message || "Erro ao consultar CNPJ");
         setIsValid(false);
         setCompanyData(null);
       }
@@ -165,207 +162,112 @@ const InputCNPJ = ({
     }
   };
 
-  const validateInput = (inputValue) => {
-    const cleanValue = removeNonNumeric(inputValue);
-    
-    if (!cleanValue && required) {
-      setIsValid(false);
-      setValidationMessage('CNPJ é obrigatório');
-      return false;
-    }
-    
-    if (cleanValue && cleanValue.length < 14) {
-      setIsValid(false);
-      setValidationMessage('CNPJ deve ter 14 dígitos');
-      return false;
-    }
-    
-    if (cleanValue && !validateCNPJ(cleanValue)) {
-      setIsValid(false);
-      setValidationMessage('CNPJ inválido');
-      return false;
-    }
-    
-    setIsValid(true);
-    setValidationMessage('');
-    return true;
-  };
+  const handleBaseInputChange = (event) => {
+    setCurrentValue(event.rawValue);
 
-  const handleChange = (e) => {
-    const inputValue = e.target.value;
-    const numbersOnly = removeNonNumeric(inputValue);
-    
-    // Limitar a 14 dígitos
-    const limitedNumbers = numbersOnly.slice(0, 14);
-    const formatted = formatCNPJ(limitedNumbers);
-    
-    setFormattedValue(formatted);
-    setIsDirty(true);
-    
-    // Validação em tempo real apenas após o primeiro blur
-    if (showValidation && isDirty) {
-      validateInput(limitedNumbers);
-    }
-    
-    // Callback para o componente pai
     if (onChange) {
-      onChange({
-        target: {
-          name: e.target.name,
-          value: limitedNumbers, // Valor limpo para o backend
-        },
-        formatted: formatted,
-        isValid: validateInput(limitedNumbers),
-        rawValue: limitedNumbers
-      });
+      onChange(event);
     }
   };
 
   const handleConsult = () => {
-    const cleanCNPJ = removeNonNumeric(formattedValue);
-    if (cleanCNPJ.length === 14) {
-      consultCompany(cleanCNPJ);
+    if (currentValue && currentValue.length === 14) {
+      consultCompany(currentValue);
     }
   };
 
-  // O finishEnrichment agora é exposto via useImperativeHandle
+  const canConsult = currentValue && currentValue.length === 14 && !isLoading;
 
-  const handleFocus = (e) => {
-    setIsFocused(true);
-    if (props.onFocus) {
-      props.onFocus(e);
+  // Ícone customizado baseado no estado
+  const getRightIcon = () => {
+    if (isLoading) {
+      return <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />;
     }
+    if (isEnriching) {
+      return (
+        <div className="flex items-center space-x-1">
+          <Loader2 className="h-4 w-4 text-purple-500 animate-spin" />
+          <span className="text-xs text-purple-600 hidden sm:inline">
+            Completando...
+          </span>
+        </div>
+      );
+    }
+    if (companyData && currentValue && currentValue.length === 14) {
+      return <Building2 className="h-4 w-4 text-green-500" />;
+    }
+    return null;
   };
-
-  const handleBlur = (e) => {
-    setIsFocused(false);
-    setIsDirty(true);
-    
-    // Validação final no blur
-    if (showValidation) {
-      validateInput(removeNonNumeric(formattedValue));
-    }
-    
-    if (props.onBlur) {
-      props.onBlur(e);
-    }
-  };
-
-  const getInputClasses = () => {
-    const baseClasses = "w-full px-3 py-2 border rounded-md bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none transition-colors";
-    
-    // Ajustar padding se houver ícone
-    const paddingClasses = showIcon ? "pl-10" : "px-3";
-    
-    let borderColor = "border-border";
-    
-    if (error || (!isValid && showValidation && isDirty)) {
-      borderColor = "border-red-500 focus:ring-red-500";
-    } else if (isValid && formattedValue && showValidation && isDirty && formattedValue.length === 18) {
-      borderColor = "border-green-500 focus:ring-green-500";
-    } else if (isFocused) {
-      borderColor = "border-ring";
-    }
-    
-    const disabledClasses = disabled ? "opacity-50 cursor-not-allowed" : "";
-    
-    return `${baseClasses} ${paddingClasses} ${borderColor} ${disabledClasses} ${className}`;
-  };
-
-  const displayError = error || (showValidation && !isValid && isDirty ? validationMessage : '');
-  const isComplete = formattedValue.length === 18; // 00.000.000/0000-00
-  const canConsult = isValid && removeNonNumeric(formattedValue).length === 14 && !isLoading;
 
   return (
     <div className="space-y-1">
-      <label className="flex items-center text-sm font-medium text-foreground">
-        {label}
-        {required && <Star className="h-3 w-3 text-red-500 ml-1 fill-current" />}
-      </label>
-      
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          {/* Ícone de empresa */}
-          {showIcon && (
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3">
-              <Building2 className="h-4 w-4 text-muted-foreground" />
-            </div>
-          )}
-          
-          <input
-            type="text"
-            value={formattedValue}
-            onChange={handleChange}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-            placeholder={placeholder}
-            disabled={disabled}
-            className={getInputClasses()}
-            autoComplete="off"
-            inputMode="numeric"
+      <div className="flex gap-3 items-start">
+        <div className="flex-1 min-h-[60px]">
+          <BaseInputField
+            label={label}
+            value={value}
+            onChange={handleBaseInputChange}
+            formatterConfig={cnpjConfig.formatter}
+            validatorConfig={cnpjConfig.validator}
+            leftIcon={cnpjConfig.icon}
+            rightIcon={getRightIcon()}
+            placeholder={cnpjConfig.placeholder}
+            inputMode={cnpjConfig.inputMode}
+            autoComplete={cnpjConfig.autoComplete}
+            successMessage={cnpjConfig.successMessage}
+            progressMessage={cnpjConfig.progressMessage}
+            showProgressIndicator
             {...props}
           />
-          
-          {/* Indicador de validação visual */}
-          {showValidation && formattedValue && isDirty && (
-            <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />
-              ) : isEnriching ? (
-                <div className="flex items-center space-x-1">
-                  <Loader2 className="h-4 w-4 text-purple-500 animate-spin" />
-                  <span className="text-xs text-purple-600 hidden sm:inline">Completando...</span>
-                </div>
-              ) : isValid && isComplete && companyData ? (
-                <Building2 className="h-4 w-4 text-green-500" />
-              ) : isValid && isComplete ? (
-                <Check className="h-4 w-4 text-green-500" />
-              ) : !isValid ? (
-                <X className="h-4 w-4 text-red-500" />
-              ) : null}
-            </div>
-          )}
         </div>
-        
+
         {/* Botão Consultar */}
         {showConsultButton && (
-          <button
-            type="button"
-            onClick={handleConsult}
-            disabled={!canConsult || disabled}
-            className={`px-4 py-2 border rounded-md font-medium transition-colors flex items-center gap-2 ${
-              canConsult && !disabled
-                ? 'border-border bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                : 'border-border bg-muted text-muted-foreground cursor-not-allowed'
-            }`}
-          >
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Search className="h-4 w-4" />
-            )}
-            Consultar
-          </button>
+          <div className="flex items-start pt-[22px]">
+            <button
+              type="button"
+              onClick={handleConsult}
+              disabled={!canConsult || props.disabled}
+              className={`px-4 py-2 border rounded-md font-medium transition-colors flex items-center gap-2 h-10 flex-shrink-0 ${
+                canConsult && !props.disabled
+                  ? "border-border bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                  : "border-border bg-muted text-muted-foreground cursor-not-allowed"
+              }`}
+            >
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Search className="h-4 w-4" />
+              )}
+              <span className="hidden sm:inline">Consultar</span>
+              <span className="sm:hidden">Buscar</span>
+            </button>
+          </div>
         )}
       </div>
-      
-      {/* Mensagens de erro */}
-      {displayError && (
-        <p className="text-sm text-red-600">{displayError}</p>
-      )}
-      
+
       {/* Dados da empresa encontrada */}
-      {companyData && !displayError && (
+      {companyData && (
         <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded border">
           <div className="flex items-start gap-2">
             <Building2 className="h-4 w-4 mt-0.5 text-green-600" />
             <div className="flex-1">
-              <p className="font-medium text-foreground">{companyData.people.name}</p>
-              {companyData.people.trade_name && companyData.people.trade_name !== companyData.people.name && (
-                <p className="text-xs opacity-75">Nome Fantasia: {companyData.people.trade_name}</p>
-              )}
+              <p className="font-medium text-foreground">
+                {companyData.people.name}
+              </p>
+              {companyData.people.trade_name &&
+                companyData.people.trade_name !== companyData.people.name && (
+                  <p className="text-xs opacity-75">
+                    Nome Fantasia: {companyData.people.trade_name}
+                  </p>
+                )}
               <div className="mt-1 space-y-1">
-                <p>Status: <span className="capitalize">{companyData.people.status}</span></p>
+                <p>
+                  Status:{" "}
+                  <span className="capitalize">
+                    {companyData.people.status}
+                  </span>
+                </p>
                 {companyData.people.metadata?.situacao && (
                   <p>Situação: {companyData.people.metadata.situacao}</p>
                 )}
@@ -377,23 +279,11 @@ const InputCNPJ = ({
           </div>
         </div>
       )}
-      
-      {/* Mensagem de ajuda */}
-      {!displayError && !companyData && formattedValue && showValidation && isValid && isDirty && isComplete && (
+
+      {/* Mensagem de ajuda customizada */}
+      {!companyData && currentValue && currentValue.length === 14 && (
         <p className="text-xs text-muted-foreground">
           CNPJ válido • Clique em "Consultar" para buscar dados da empresa
-        </p>
-      )}
-      
-      {!displayError && !formattedValue && isFocused && (
-        <p className="text-xs text-muted-foreground">
-          Digite o CNPJ com 14 dígitos
-        </p>
-      )}
-      
-      {!displayError && formattedValue && !isComplete && isDirty && (
-        <p className="text-xs text-muted-foreground">
-          {14 - removeNonNumeric(formattedValue).length} dígitos restantes
         </p>
       )}
     </div>

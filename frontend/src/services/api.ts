@@ -3,14 +3,22 @@
  * Migrado para TypeScript com type safety
  */
 
-import axios, { AxiosInstance, AxiosResponse, AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { ApiResponse, ApiError, RequestOptions } from '@/types';
+import axios, {
+  AxiosInstance,
+  AxiosResponse,
+  AxiosError,
+  InternalAxiosRequestConfig,
+} from "axios";
+import { ApiResponse, ApiError, RequestOptions } from "@/types";
 
 // ===============================
 // API CONFIGURATION
 // ===============================
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://192.168.11.83:8000';
+// Usar proxy do Vite em desenvolvimento, URL absoluta em produção
+const API_BASE_URL = import.meta.env.DEV
+  ? ""
+  : import.meta.env.VITE_API_URL || "http://192.168.11.83:8000";
 
 /**
  * Instância principal do Axios com configuração padrão
@@ -19,7 +27,7 @@ const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -29,7 +37,7 @@ const api: AxiosInstance = axios.create({
 
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem("access_token");
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -51,18 +59,19 @@ api.interceptors.response.use(
   (error: AxiosError<ApiError>) => {
     // Handle 401 Unauthorized
     if (error.response?.status === 401) {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("user");
+      window.location.href = "/login";
     }
-    
+
     // Handle other HTTP errors
     const apiError: ApiError = {
-      detail: error.response?.data?.detail || error.message || 'Erro desconhecido',
-      type: error.response?.data?.type || 'api_error',
-      status_code: error.response?.status || 500
+      detail:
+        error.response?.data?.detail || error.message || "Erro desconhecido",
+      type: error.response?.data?.type || "api_error",
+      status_code: error.response?.status || 500,
     };
-    
+
     return Promise.reject(apiError);
   }
 );
@@ -75,7 +84,7 @@ api.interceptors.response.use(
  * GET request tipado
  */
 export const get = async <T>(
-  url: string, 
+  url: string,
   options?: RequestOptions
 ): Promise<T> => {
   const response: AxiosResponse<T> = await api.get(url, options);
@@ -142,20 +151,22 @@ export const uploadFile = async <T>(
   onUploadProgress?: (progress: number) => void
 ): Promise<T> => {
   const formData = new FormData();
-  formData.append('file', file);
-  
+  formData.append("file", file);
+
   const response: AxiosResponse<T> = await api.post(url, formData, {
     headers: {
-      'Content-Type': 'multipart/form-data',
+      "Content-Type": "multipart/form-data",
     },
     onUploadProgress: (progressEvent) => {
       if (onUploadProgress && progressEvent.total) {
-        const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        const progress = Math.round(
+          (progressEvent.loaded * 100) / progressEvent.total
+        );
         onUploadProgress(progress);
       }
     },
   });
-  
+
   return response.data;
 };
 
@@ -167,14 +178,14 @@ export const downloadFile = async (
   filename?: string
 ): Promise<void> => {
   const response: AxiosResponse<Blob> = await api.get(url, {
-    responseType: 'blob',
+    responseType: "blob",
   });
-  
+
   const blob = new Blob([response.data]);
   const downloadUrl = window.URL.createObjectURL(blob);
-  const link = document.createElement('a');
+  const link = document.createElement("a");
   link.href = downloadUrl;
-  link.download = filename || 'download';
+  link.download = filename || "download";
   document.body.appendChild(link);
   link.click();
   link.remove();
@@ -196,7 +207,7 @@ export interface HealthCheckResponse {
  * Health check da API
  */
 export const healthCheck = async (): Promise<HealthCheckResponse> => {
-  return get<HealthCheckResponse>('/api/v1/health');
+  return get<HealthCheckResponse>("/api/v1/health");
 };
 
 // ===============================

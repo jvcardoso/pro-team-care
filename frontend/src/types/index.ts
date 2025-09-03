@@ -3,33 +3,50 @@
  * Ponto único de importação para todos os tipos
  */
 
-// API Types (sincronizados com backend)
-export * from './api';
+// 🔄 Enums sincronizados com backend
+export * from "./enums";
 
-// Component Types (frontend específicos)  
-export * from './components';
+// 🏢 API Types (sincronizados com backend)
+export * from "./api";
+
+// 🎨 Component Types (frontend específicos)
+export * from "./components";
 
 // Re-exports mais utilizados (tipos)
 export type {
   Company,
-  CompanyDetailed,
-  CompanyCreate,
-  CompanyUpdate,
-  CompanyList,
   People,
   Phone,
   Email,
-  Address
-} from './api';
+  Address,
+  Token,
+  UserInfo,
+  CompanyFormData,
+  PaginatedResponse,
+  HealthStatus,
+} from "./api";
 
-// Re-exports de enums (valores)
+// Re-exports de enums (valores) - SINCRONIZADOS
 export {
   PersonType,
-  PersonStatus,
   PhoneType,
   EmailType,
-  AddressType
-} from './api';
+  AddressType,
+  CompanyStatus,
+  TaxRegime,
+  CountryCode,
+  BrazilianState,
+} from "./enums";
+
+// Re-exports de labels para display
+export {
+  PhoneTypeLabels,
+  EmailTypeLabels,
+  AddressTypeLabels,
+  PersonTypeLabels,
+  CompanyStatusLabels,
+  TaxRegimeLabels,
+} from "./enums";
 
 export type {
   FormState,
@@ -38,5 +55,5 @@ export type {
   CompanyFormProps,
   ButtonProps,
   TableProps,
-  UseFormReturn
-} from './components';
+  UseFormReturn,
+} from "./components";

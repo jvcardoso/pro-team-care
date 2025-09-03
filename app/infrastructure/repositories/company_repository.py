@@ -11,6 +11,7 @@ from app.presentation.schemas.company import AddressCreate, CompanyCreate, Compa
 from typing import Dict, Any
 from app.utils.validators import validate_contacts_quality
 from app.infrastructure.services.address_enrichment_service import address_enrichment_service
+from app.infrastructure.exceptions import ValidationException
 
 
 class CompanyRepository:
@@ -140,8 +141,14 @@ class CompanyRepository:
             # Create related addresses with automatic enrichment
             if company_data.addresses:
                 # 🚀 HOOK: Enriquecimento automático de endereços
-                enriched_addresses = await self._enrich_addresses_automatically(company_data.addresses)
-                
+                enriched_addresses = []
+                for addr in company_data.addresses:
+                    addr_dict = addr.model_dump()
+                    # Adicionar campos obrigatórios se não existirem
+                    if 'neighborhood' not in addr_dict or addr_dict['neighborhood'] is None:
+                        addr_dict['neighborhood'] = ''
+                    enriched_addresses.append(addr_dict)
+
                 for address_dict in enriched_addresses:
                     self.logger.info("Criando endereço enriquecido", address_data=address_dict)
 
@@ -180,26 +187,37 @@ class CompanyRepository:
                         api_data=address_dict.get('api_data')
                     )
 
-                self.logger.info("Endereço criado no banco", address_db_data={
-                    'latitude': address_db.latitude,
-                    'longitude': address_db.longitude,
-                    'geocoding_accuracy': address_db.geocoding_accuracy,
-                    'geocoding_source': address_db.geocoding_source,
-                    'ibge_city_code': address_db.ibge_city_code,
-                    'gia_code': address_db.gia_code,
-                    'siafi_code': address_db.siafi_code,
-                    'area_code': address_db.area_code
-                })
+                    self.logger.info("Endereço criado no banco", address_db_data={
+                        'latitude': address_db.latitude,
+                        'longitude': address_db.longitude,
+                        'geocoding_accuracy': address_db.geocoding_accuracy,
+                        'geocoding_source': address_db.geocoding_source,
+                        'ibge_city_code': address_db.ibge_city_code,
+                        'gia_code': address_db.gia_code,
+                        'siafi_code': address_db.siafi_code,
+                        'area_code': address_db.area_code
+                    })
 
-                self.db.add(address_db)
+                    self.db.add(address_db)
             
             await self.db.commit()
             
             # Return the complete company data
-            return await self.get_company(company_db.id)
-            
+            await self.db.refresh(company_db)  # Ensure we have the latest data
+            return await self.get_company(int(company_db.id))
+
         except Exception as e:
             await self.db.rollback()
+
+            # Handle email validation errors specifically
+            error_message = str(e).lower()
+            if "email" in error_message and ("invalid" in error_message or "format" in error_message):
+                raise ValidationException("Formato de e-mail inválido", field="emails")
+
+            # Handle other validation errors
+            if "validation" in error_message or "invalid" in error_message:
+                raise ValidationException(str(e))
+
             raise e
 
     async def get_company(self, company_id: int) -> Optional[CompanyDetailed]:
@@ -213,10 +231,10 @@ class CompanyRepository:
             )
             .where(and_(Company.id == company_id, Company.deleted_at.is_(None)))
         )
-        
+
         result = await self.db.execute(query)
         company_db = result.scalars().first()
-        
+
         if not company_db:
             return None
         

@@ -5,7 +5,7 @@ from structlog import get_logger
 
 from app.infrastructure.database import get_db
 from app.infrastructure.repositories.company_repository import CompanyRepository
-from app.presentation.schemas.company_legacy import (
+from app.presentation.schemas.company import (
     CompanyCreate, CompanyUpdate, CompanyDetailed, CompanyList
 )
 
@@ -71,7 +71,9 @@ async def create_company(
     repository: CompanyRepository = Depends(get_company_repository)
 ):
     try:
-        logger.info("Criando empresa", company_data=company_data.model_dump())
+        logger.info("=== INÍCIO CRIAÇÃO EMPRESA ===")
+        logger.info("Dados recebidos", company_data=company_data.model_dump())
+        logger.info("Repository obtido", repository_type=type(repository).__name__)
 
         # Log específico dos endereços
         addresses_data = company_data.addresses or []
@@ -89,8 +91,10 @@ async def create_company(
                 'area_code': getattr(addr, 'area_code', None)
             })
 
+        logger.info("Chamando repository.create_company...")
         result = await repository.create_company(company_data)
         logger.info("Empresa criada com sucesso", company_id=result.id)
+        logger.info("=== FIM CRIAÇÃO EMPRESA ===")
 
         # Verificar se os dados foram salvos corretamente
         if result.addresses:
