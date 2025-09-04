@@ -257,3 +257,82 @@ class Address(Base):
 
     # Relationships
     people = relationship("People", back_populates="addresses")
+
+
+class Menu(Base):
+    """Model ORM otimizado para Menus Dinâmicos"""
+    __tablename__ = "menus"
+    __table_args__ = (
+        CheckConstraint("menu_type IN ('folder', 'page', 'external_link', 'separator')", name="menus_type_check"),
+        CheckConstraint("status IN ('active', 'inactive', 'draft')", name="menus_status_check"),
+        CheckConstraint("level >= 0 AND level <= 4", name="menus_level_check"),
+        CheckConstraint("sort_order >= 0", name="menus_sort_order_check"),
+        
+        # Índices otimizados para performance
+        Index("menus_parent_sort_idx", "parent_id", "sort_order"),
+        Index("menus_hierarchy_idx", "level", "parent_id", "sort_order"),
+        Index("menus_slug_parent_idx", "slug", "parent_id"),
+        Index("menus_permission_idx", "permission_name"),
+        Index("menus_status_visible_idx", "status", "is_visible", "visible_in_menu"),
+        Index("menus_context_idx", "company_specific", "establishment_specific"),
+        Index("menus_fulltext_idx", "full_path_name", postgresql_using="gin"),
+        
+        # Constraint de slug único por nível
+        UniqueConstraint("slug", "parent_id", name="menus_slug_parent_unique"),
+        
+        {"schema": "master"}
+    )
+
+    # Identificação
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    parent_id = Column(BigInteger, ForeignKey("master.menus.id"), nullable=True)
+    
+    # Dados principais
+    name = Column(String(100), nullable=False)
+    slug = Column(String(50), nullable=False)
+    url = Column(String(255), nullable=True)
+    route_name = Column(String(100), nullable=True)
+    route_params = Column(Text, nullable=True)
+    
+    # Hierarquia e ordenação
+    level = Column(Integer, nullable=False, default=0)
+    sort_order = Column(Integer, nullable=False, default=0)
+    
+    # Tipo e status
+    menu_type = Column(String(20), nullable=False, default='page')
+    status = Column(String(20), nullable=False, default='active')
+    
+    # Visibilidade
+    is_visible = Column(Boolean, nullable=False, default=True)
+    visible_in_menu = Column(Boolean, nullable=False, default=True)
+    
+    # Permissões e contexto
+    permission_name = Column(String(100), nullable=True)
+    company_specific = Column(Boolean, nullable=False, default=False)
+    establishment_specific = Column(Boolean, nullable=False, default=False)
+    
+    # Customização visual
+    icon = Column(String(50), nullable=True)
+    badge_text = Column(String(20), nullable=True)
+    badge_color = Column(String(20), nullable=True)
+    css_class = Column(String(100), nullable=True)
+    
+    # Metadados
+    description = Column(String(255), nullable=True)
+    help_text = Column(Text, nullable=True)
+    keywords = Column(JSON, nullable=True)  # Array de strings
+    
+    # Hierarquia computada (para performance)
+    full_path_name = Column(String(500), nullable=True)
+    id_path = Column(JSON, nullable=True)  # Array de IDs do caminho
+    
+    # Auditoria
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_at = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
+    deleted_at = Column(DateTime, nullable=True)
+    created_by = Column(BigInteger, nullable=True)  # FK para users será adicionada posteriormente
+    updated_by = Column(BigInteger, nullable=True)  # FK para users será adicionada posteriormente
+    
+    # Relationships
+    parent = relationship("Menu", remote_side=[id], back_populates="children")
+    children = relationship("Menu", back_populates="parent", cascade="all, delete-orphan")
