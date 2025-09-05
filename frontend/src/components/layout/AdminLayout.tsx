@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
+import DynamicSidebar from "../navigation/DynamicSidebar";
 import Footer from "./Footer";
 
 const AdminLayout: React.FC = React.memo(() => {
@@ -10,6 +11,7 @@ const AdminLayout: React.FC = React.memo(() => {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [useDynamicMenus, setUseDynamicMenus] = useState<boolean>(true);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -106,6 +108,14 @@ const AdminLayout: React.FC = React.memo(() => {
     }
   }, [location.pathname, isMobile, sidebarOpen]);
 
+  // Garantir consistência do estado da sidebar em mobile
+  useEffect(() => {
+    if (isMobile) {
+      // Em mobile, sempre manter sidebarCollapsed como true
+      setSidebarCollapsed(true);
+    }
+  }, [isMobile]);
+
   // Generate breadcrumb
   const generateBreadcrumb = (): string => {
     const pathnames = location.pathname.split("/").filter((x) => x);
@@ -130,6 +140,39 @@ const AdminLayout: React.FC = React.memo(() => {
 
     return breadcrumbs.join(" / ");
   };
+
+  // Toggle para desenvolvimento: alternar entre menus dinâmicos e estáticos
+  const toggleMenuType = (): void => {
+    setUseDynamicMenus(prev => {
+      const newValue = !prev;
+      console.log(`🔄 Alternando menus: ${newValue ? 'Dinâmicos' : 'Estáticos'}`);
+      
+      // Salvar preferência localmente
+      localStorage.setItem('useDynamicMenus', newValue.toString());
+      
+      return newValue;
+    });
+  };
+
+  // Toggle para desenvolvimento: alternar entre usuário normal e ROOT
+  const toggleUserType = (): void => {
+    const isRoot = localStorage.getItem('testAsRoot') === 'true';
+    const newValue = !isRoot;
+    
+    localStorage.setItem('testAsRoot', newValue.toString());
+    console.log(`🔄 Alternando usuário: ${newValue ? 'ROOT (ID: 2)' : 'Normal (ID: 1)'}`);
+    
+    // Recarregar página para aplicar mudança
+    window.location.reload();
+  };
+
+  // Carregar preferência salva
+  useEffect(() => {
+    const saved = localStorage.getItem('useDynamicMenus');
+    if (saved !== null) {
+      setUseDynamicMenus(saved === 'true');
+    }
+  }, []);
 
   // Mostrar loading enquanto verifica autenticação
   if (isLoading) {
@@ -173,7 +216,11 @@ const AdminLayout: React.FC = React.memo(() => {
           role="navigation"
           aria-label="Menu principal"
         >
-          <Sidebar collapsed={sidebarCollapsed} />
+          {useDynamicMenus ? (
+            <DynamicSidebar collapsed={sidebarCollapsed} />
+          ) : (
+            <Sidebar collapsed={sidebarCollapsed} />
+          )}
         </aside>
       )}
 
@@ -198,7 +245,11 @@ const AdminLayout: React.FC = React.memo(() => {
             aria-label="Menu principal"
             aria-hidden={!sidebarOpen}
           >
-            <Sidebar collapsed={false} />
+            {useDynamicMenus ? (
+              <DynamicSidebar collapsed={false} />
+            ) : (
+              <Sidebar collapsed={false} />
+            )}
           </aside>
         </>
       )}
@@ -213,6 +264,36 @@ const AdminLayout: React.FC = React.memo(() => {
           isMobile={isMobile}
           sidebarOpen={sidebarOpen}
         />
+
+        {/* Development Controls - Only in development */}
+        {import.meta.env.DEV && (
+          <div className="bg-yellow-100 border-b border-yellow-200 px-4 py-2">
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center space-x-4">
+                <span className="text-yellow-800">
+                  🔧 Menus: {useDynamicMenus ? 'Dinâmicos (API)' : 'Estáticos (Mock)'}
+                </span>
+                <span className="text-yellow-800">
+                  👤 Usuário: {localStorage.getItem('testAsRoot') === 'true' ? 'ROOT (ID: 2)' : 'Normal (ID: 1)'}
+                </span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={toggleMenuType}
+                  className="text-yellow-700 hover:text-yellow-900 underline text-xs"
+                >
+                  Alternar Menus
+                </button>
+                <button
+                  onClick={toggleUserType}
+                  className="text-yellow-700 hover:text-yellow-900 underline text-xs"
+                >
+                  Alternar Usuário
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Main Content Area */}
         <main

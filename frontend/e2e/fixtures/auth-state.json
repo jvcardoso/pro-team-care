@@ -1,0 +1,30 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://192.168.11.83:3000",
+      "localStorage": [
+        {
+          "name": "testAsRoot",
+          "value": "false"
+        },
+        {
+          "name": "useDynamicMenus",
+          "value": "true"
+        },
+        {
+          "name": "access_token",
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBleGFtcGxlLmNvbSIsImV4cCI6MTc1NzAyMDY2Nn0.vTiA4pY8SVAKsIFYWNR078CXfAexRIh_-bI_FIPMaWA"
+        },
+        {
+          "name": "user",
+          "value": "{\"id\":1,\"email\":\"admin@example.com\",\"name\":\"Admin Teste\"}"
+        },
+        {
+          "name": "pro-team-care-theme",
+          "value": "light"
+        }
+      ]
+    }
+  ]
+}

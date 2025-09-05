@@ -11,7 +11,7 @@ from app.infrastructure.monitoring.metrics import performance_metrics
 from app.infrastructure.rate_limiting import limiter
 from app.infrastructure.logging import logger
 
-router = APIRouter()
+router = APIRouter(tags=["Monitoring"])
 
 
 @router.get("/metrics")

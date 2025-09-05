@@ -7,7 +7,7 @@ from structlog import get_logger
 
 logger = get_logger()
 
-router = APIRouter()
+router = APIRouter(tags=["Geocoding"])
 
 class GeocodingRequest(BaseModel):
     address: str
@@ -171,7 +171,7 @@ async def geocode_address(request: GeocodingRequest):
             detail="Erro interno no serviço de geocoding"
         )
 
-@router.get("/health")
+@router.get("/geocoding/health")
 async def geocoding_health():
     """Health check do serviço de geocoding"""
     return {
