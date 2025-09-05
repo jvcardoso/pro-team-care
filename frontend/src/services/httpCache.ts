@@ -18,6 +18,8 @@ class HttpCache {
     addresses: 30 * 60 * 1000, // 30 minutos - dados de endereço (ViaCEP)
     cnpj: 60 * 60 * 1000, // 60 minutos - dados do CNPJ
     health: 2 * 60 * 1000, // 2 minutos - health check
+    menus: 5 * 60 * 1000, // 5 minutos - dados de menus (podem ser editados)
+    auth: 24 * 60 * 60 * 1000, // 24 horas - dados de auth
     static: 24 * 60 * 60 * 1000, // 24 horas - dados estáticos
   } as const;
 
@@ -38,6 +40,8 @@ class HttpCache {
       return this.DEFAULT_TTLS.addresses;
     if (url.includes("/cnpj")) return this.DEFAULT_TTLS.cnpj;
     if (url.includes("/health")) return this.DEFAULT_TTLS.health;
+    if (url.includes("/menus") || url.includes("/menu")) return this.DEFAULT_TTLS.menus;
+    if (url.includes("/auth")) return this.DEFAULT_TTLS.auth;
     return this.DEFAULT_TTLS.static;
   }
 

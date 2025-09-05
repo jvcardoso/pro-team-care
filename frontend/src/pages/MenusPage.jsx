@@ -14,12 +14,14 @@ import {
   EyeOff,
   ChevronRight,
   ChevronDown,
+  ChevronUp,
   Save,
   X,
   AlertTriangle,
   RefreshCw
 } from 'lucide-react';
 import api from '../services/api';
+import { httpCache } from '../services/httpCache';
 
 const MenusPage = () => {
   const [menus, setMenus] = useState([]);
@@ -70,6 +72,28 @@ const MenusPage = () => {
     loadMenus();
   };
 
+  // Função para recarregar com cache bypass
+  const forceReloadMenus = async () => {
+    try {
+      setLoading(true);
+      setError('🔄 Forçando atualização com bypass de cache...');
+
+      // Adicionar timestamp para bypass de cache
+      const timestamp = new Date().getTime();
+      const response = await api.get(`/api/v1/menus/user/2?context_type=establishment&context_id=1&_t=${timestamp}`);
+      setMenus(response.data.menus || []);
+      
+      setError('✅ Menus atualizados com sucesso!');
+      setTimeout(() => setError(null), 2000);
+
+    } catch (err) {
+      console.error('Erro ao forçar reload:', err);
+      setError('❌ Erro ao atualizar: ' + (err.response?.data?.detail || err.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Toggle expansão de menu
   const toggleExpanded = (menuId) => {
     const newExpanded = new Set(expandedMenus);
@@ -100,23 +124,44 @@ const MenusPage = () => {
             sort_order: menuData.sort_order || 0
           });
 
-          // Atualizar menu na lista local imediatamente
-          setMenus(prevMenus =>
-            prevMenus.map(menu =>
-              menu.id === menuData.id ? { ...menu, ...response.data } : menu
-            )
-          );
+          // Atualizar menu na lista local imediatamente com mapeamento recursivo
+          const updateMenuInTree = (menuList) => {
+            return menuList.map(menu => {
+              if (menu.id === menuData.id) {
+                // Atualizar menu principal
+                return { 
+                  ...menu, 
+                  name: response.data.name || menuData.name,
+                  slug: response.data.slug || menuData.slug,
+                  url: response.data.url || menuData.url,
+                  icon: response.data.icon || menuData.icon,
+                  permission_name: response.data.permission_name || menuData.permission_name,
+                  is_visible: response.data.is_visible !== undefined ? response.data.is_visible : menuData.is_visible,
+                  description: response.data.description || menuData.description,
+                  sort_order: response.data.sort_order || menuData.sort_order,
+                  updated_at: response.data.updated_at || new Date().toISOString()
+                };
+              } else if (menu.children && menu.children.length > 0) {
+                // Verificar nos filhos também
+                return { ...menu, children: updateMenuInTree(menu.children) };
+              }
+              return menu;
+            });
+          };
 
+          // Invalidar cache de menus para garantir dados atualizados
+          httpCache.invalidatePattern('/menus');
+          
+          setMenus(prevMenus => updateMenuInTree(prevMenus));
           setError('✅ Menu atualizado com sucesso! Alterações visíveis na tela.');
 
           // Fechar formulário de edição
           setEditingMenu(null);
 
-          // Pequeno delay para mostrar a mensagem de sucesso
+          // Recarregar com cache limpo após um delay
           setTimeout(() => {
-            setError(null);
-            loadMenus(); // Recarregar para garantir consistência
-          }, 2000);
+            forceReloadMenus();
+          }, 1000);
 
         } catch (crudError) {
           console.error('Erro no endpoint CRUD:', crudError);
@@ -212,6 +257,70 @@ const MenusPage = () => {
       const errorMsg = err.response?.data?.detail || err.message || 'Erro desconhecido';
       setError(`❌ Erro ao alterar visibilidade: ${errorMsg}`);
     }
+  };
+
+  // Mover menu para cima ou para baixo
+  const moveMenu = async (menuId, direction) => {
+    try {
+      setError(null);
+
+      // Chamar o endpoint de movimento
+      const response = await api.post(`/api/v1/menus/crud/${menuId}/move/${direction}`);
+      
+      if (response.data.no_change) {
+        // Menu já está na primeira/última posição
+        setError(`ℹ️ ${response.data.message}`);
+        return;
+      }
+      
+      // Invalidar cache de menus para garantir dados atualizados
+      httpCache.invalidatePattern('/menus');
+      
+      // Mostrar sucesso
+      setError(`✅ ${response.data.message}`);
+      
+      // Recarregar menus para mostrar nova ordem
+      setTimeout(() => {
+        forceReloadMenus();
+      }, 500);
+
+    } catch (err) {
+      console.error('Erro ao mover menu:', err);
+      const errorMsg = err.response?.data?.detail || err.message || 'Erro desconhecido';
+      setError(`❌ Erro ao mover menu: ${errorMsg}`);
+    }
+  };
+
+  // Converter árvore de menus em lista plana
+  const flattenMenus = (menuTree) => {
+    const result = [];
+    const addMenuAndChildren = (menu) => {
+      result.push(menu);
+      if (menu.children) {
+        menu.children.forEach(addMenuAndChildren);
+      }
+    };
+    menuTree.forEach(addMenuAndChildren);
+    return result;
+  };
+
+  // Verificar se menu pode ser movido para cima/baixo
+  const canMoveUp = (menuIndex, menuList, currentMenu) => {
+    // Buscar menus do mesmo nível (mesmo parent_id) ordenados por sort_order
+    const siblings = menuList
+      .filter(m => m.parent_id === currentMenu.parent_id)
+      .sort((a, b) => a.sort_order - b.sort_order);
+    const siblingIndex = siblings.findIndex(m => m.id === currentMenu.id);
+    return siblingIndex > 0;
+  };
+
+  const canMoveDown = (menuIndex, menuList, currentMenu) => {
+    // Buscar menus do mesmo nível (mesmo parent_id) ordenados por sort_order
+    const siblings = menuList
+      .filter(m => m.parent_id === currentMenu.parent_id)
+      .sort((a, b) => a.sort_order - b.sort_order);
+    const siblingIndex = siblings.findIndex(m => m.id === currentMenu.id);
+    return siblingIndex < siblings.length - 1;
   };
 
   // Componente de formulário
@@ -371,6 +480,33 @@ const MenusPage = () => {
                 {menu.is_visible ? <Eye size={16} /> : <EyeOff size={16} />}
               </button>
               
+              {/* Botões de ordenação */}
+              <button
+                onClick={() => moveMenu(menu.id, 'up')}
+                disabled={!canMoveUp(0, flattenMenus(menus), menu)}
+                className={`p-2 rounded ${
+                  canMoveUp(0, flattenMenus(menus), menu) 
+                    ? 'hover:bg-blue-100 text-blue-600' 
+                    : 'text-gray-300 cursor-not-allowed'
+                }`}
+                title="Mover para cima"
+              >
+                <ChevronUp size={16} />
+              </button>
+              
+              <button
+                onClick={() => moveMenu(menu.id, 'down')}
+                disabled={!canMoveDown(0, flattenMenus(menus), menu)}
+                className={`p-2 rounded ${
+                  canMoveDown(0, flattenMenus(menus), menu) 
+                    ? 'hover:bg-blue-100 text-blue-600' 
+                    : 'text-gray-300 cursor-not-allowed'
+                }`}
+                title="Mover para baixo"
+              >
+                <ChevronDown size={16} />
+              </button>
+              
               <button
                 onClick={() => setEditingMenu(menu)}
                 className="p-2 hover:bg-gray-100 rounded"
@@ -440,12 +576,13 @@ const MenusPage = () => {
         
         <div className="flex gap-2">
           <button
-            onClick={refreshMenus}
+            onClick={forceReloadMenus}
             className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-            title="Atualizar lista de menus"
+            title="Atualizar lista de menus (bypass cache)"
+            disabled={loading}
           >
-            <RefreshCw size={20} />
-            Atualizar
+            <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+            {loading ? 'Atualizando...' : 'Atualizar'}
           </button>
 
           <button

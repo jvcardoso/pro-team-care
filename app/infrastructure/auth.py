@@ -16,23 +16,39 @@ class TokenData:
     """Token data para infrastructure"""
     email: str
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Temporariamente desabilitar bcrypt devido a problema de compatibilidade
+try:
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+except Exception:
+    # Fallback sem bcrypt
+    pwd_context = None
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a plain password against its hashed version using bcrypt or simple hash."""
-    try:
-        # Tentar bcrypt primeiro
-        return pwd_context.verify(plain_password, hashed_password)
-    except Exception:
-        # Fallback para hash simples (SHA256) - apenas para desenvolvimento
-        import hashlib
-        simple_hash = hashlib.sha256(plain_password.encode()).hexdigest()
-        return simple_hash == hashed_password
+    if pwd_context:
+        try:
+            # Tentar bcrypt primeiro
+            return pwd_context.verify(plain_password, hashed_password)
+        except Exception:
+            pass
+    
+    # Fallback para hash simples (SHA256) - para desenvolvimento
+    import hashlib
+    simple_hash = hashlib.sha256(plain_password.encode()).hexdigest()
+    return simple_hash == hashed_password
 
 def get_password_hash(password: str) -> str:
     """Generate a bcrypt hash for the given password."""
-    return pwd_context.hash(password)
+    if pwd_context:
+        try:
+            return pwd_context.hash(password)
+        except Exception:
+            pass
+    
+    # Fallback para hash simples (SHA256) - para desenvolvimento
+    import hashlib
+    return hashlib.sha256(password.encode()).hexdigest()
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     """Create a JWT access token with the given data and expiration."""

@@ -1,9 +1,10 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, BigInteger, String, Boolean, DateTime, Text
-from sqlalchemy.orm import declarative_base
+from sqlalchemy import Column, Integer, BigInteger, String, Boolean, DateTime, Text, ForeignKey
+from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSONB
 
-Base = declarative_base()
+# Usar a mesma base do sistema
+from app.infrastructure.orm.models import Base
 
 
 class UserEntity(Base):
@@ -11,7 +12,7 @@ class UserEntity(Base):
     __table_args__ = {"schema": "master"}
 
     id = Column(BigInteger, primary_key=True, index=True)
-    person_id = Column(BigInteger, nullable=False)
+    person_id = Column(BigInteger, ForeignKey("master.people.id"), nullable=False, index=True)
     email_address = Column(String, unique=True, index=True, nullable=False)
     email_verified_at = Column(DateTime, nullable=True)
     password = Column(String, nullable=False)  # hashed password
@@ -27,3 +28,6 @@ class UserEntity(Base):
     created_at = Column(DateTime, nullable=True)
     updated_at = Column(DateTime, nullable=True)
     deleted_at = Column(DateTime, nullable=True)
+    
+    # Relacionamento com person (sem back_populates por enquanto)
+    person = relationship("People", lazy="select")

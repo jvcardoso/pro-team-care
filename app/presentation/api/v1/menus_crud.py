@@ -109,128 +109,28 @@ class MenuOperationResultSchema(BaseModel):
 
 @router.post(
     "/",
-    response_model=MenuDetailedSchema,
-    status_code=status.HTTP_201_CREATED,
-    summary="Criar Menu",
-    description="Cria um novo menu compatível com a estrutura real do banco de dados"
+    response_model=dict,
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    summary="Criar Menu (Temporariamente Desabilitado)",
+    description="Funcionalidade CREATE temporariamente desabilitada devido à estrutura do banco"
 )
 async def create_menu(
     menu_data: MenuCreateSchema,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Criar novo menu usando apenas colunas que existem no banco"""
-
-    try:
-        # Verificar se slug já existe no mesmo nível
-        check_slug_query = text("""
-            SELECT id FROM master.menus
-            WHERE slug = :slug AND parent_id IS NOT DISTINCT FROM :parent_id
-            AND deleted_at IS NULL
-        """)
-
-        result = await db.execute(check_slug_query, {
-            "slug": menu_data.slug,
-            "parent_id": menu_data.parent_id
-        })
-
-        if result.fetchone():
-            raise HTTPException(status_code=400, detail="Slug já existe neste nível")
-
-        # Determinar nível baseado no parent
-        level = 0
-        if menu_data.parent_id:
-            level_query = text("SELECT level FROM master.menus WHERE id = :parent_id AND deleted_at IS NULL")
-            result = await db.execute(level_query, {"parent_id": menu_data.parent_id})
-            parent = result.fetchone()
-            if parent:
-                level = parent.level + 1
-            else:
-                raise HTTPException(status_code=400, detail="Menu pai não encontrado")
-
-        # Inserir novo menu
-        insert_query = text("""
-            INSERT INTO master.menus (
-                parent_id, name, slug, url, route_name, route_params, icon,
-                permission_name, description, level, sort_order,
-                is_visible, visible_in_menu, created_at, updated_at
-            ) VALUES (
-                :parent_id, :name, :slug, :url, :route_name, :route_params, :icon,
-                :permission_name, :description, :level, :sort_order,
-                :is_visible, :visible_in_menu, NOW(), NOW()
-            ) RETURNING id
-        """)
-
-        result = await db.execute(insert_query, {
-            "parent_id": menu_data.parent_id,
-            "name": menu_data.name,
-            "slug": menu_data.slug,
-            "url": menu_data.url,
-            "route_name": menu_data.route_name,
-            "route_params": menu_data.route_params,
-            "icon": menu_data.icon,
-            "permission_name": menu_data.permission_name,
-            "description": menu_data.description,
-            "level": level,
-            "sort_order": 0,  # TODO: implementar auto-ordenação
-            "is_visible": menu_data.is_visible,
-            "visible_in_menu": menu_data.visible_in_menu
-        })
-
-        new_menu_row = result.fetchone()
-        if not new_menu_row:
-            raise HTTPException(status_code=500, detail="Erro ao obter ID do menu criado")
-
-        new_menu_id = new_menu_row.id
-        await db.commit()
-
-        # Buscar menu criado
-        select_query = text("""
-            SELECT id, parent_id, name, slug, url, route_name, route_params,
-                   icon, permission_name, description, level, sort_order,
-                   is_visible, visible_in_menu, created_at, updated_at
-            FROM master.menus
-            WHERE id = :menu_id AND deleted_at IS NULL
-        """)
-
-        result = await db.execute(select_query, {"menu_id": new_menu_id})
-        menu = result.fetchone()
-
-        if not menu:
-            raise HTTPException(status_code=500, detail="Erro ao buscar menu criado")
-
-        logger.info("Menu criado via CRUD", menu_id=new_menu_id, user_id=current_user.id)
-
-        return MenuDetailedSchema(
-            id=menu.id,
-            parent_id=menu.parent_id,
-            name=menu.name,
-            slug=menu.slug,
-            url=menu.url,
-            route_name=menu.route_name,
-            route_params=menu.route_params,
-            level=menu.level,
-            sort_order=menu.sort_order,
-            is_visible=menu.is_visible,
-            visible_in_menu=menu.visible_in_menu,
-            permission_name=menu.permission_name,
-            icon=menu.icon,
-            description=menu.description,
-            has_children=False,  # Novo menu não tem filhos
-            children_count=0,
-            created_at=menu.created_at.isoformat() if menu.created_at else "",
-            updated_at=menu.updated_at.isoformat() if menu.updated_at else "",
-            created_by=current_user.id,
-            updated_by=current_user.id
-        )
-
-    except HTTPException:
-        await db.rollback()
-        raise
-    except Exception as e:
-        await db.rollback()
-        logger.error("Erro ao criar menu", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
+    """Funcionalidade CREATE temporariamente desabilitada"""
+    
+    return {
+        "error": "CREATE temporariamente desabilitado",
+        "message": "A funcionalidade de criação de menus está temporariamente desabilitada devido à estrutura do banco de dados. Use a interface para visualização e edição apenas.",
+        "available_operations": [
+            "GET /menus/crud/ - Listar menus",
+            "GET /menus/crud/{id} - Buscar menu específico", 
+            "PUT /menus/crud/{id} - Atualizar menu existente",
+            "DELETE /menus/crud/{id} - Excluir menu"
+        ]
+    }
 
 
 @router.get(
@@ -603,4 +503,135 @@ async def delete_menu(
     except Exception as e:
         await db.rollback()
         logger.error("Erro ao excluir menu", error=str(e), menu_id=menu_id)
+        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
+
+
+@router.post(
+    "/{menu_id}/move/{direction}",
+    response_model=dict,
+    summary="Mover Menu",
+    description="Move um menu para cima ou para baixo na ordenação"
+)
+async def move_menu(
+    menu_id: int,
+    direction: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Mover menu para cima ou para baixo na ordenação"""
+    
+    if direction not in ["up", "down"]:
+        raise HTTPException(status_code=400, detail="Direção deve ser 'up' ou 'down'")
+    
+    try:
+        # Buscar informações do menu atual
+        menu_query = text("""
+            SELECT id, parent_id, sort_order, level, name 
+            FROM master.menus 
+            WHERE id = :menu_id AND deleted_at IS NULL
+        """)
+        result = await db.execute(menu_query, {"menu_id": menu_id})
+        current_menu = result.fetchone()
+        
+        if not current_menu:
+            raise HTTPException(status_code=404, detail="Menu não encontrado")
+        
+        # Buscar menu para trocar posição (mesmo parent_id e level)
+        if direction == "up":
+            # Buscar menu com sort_order menor (anterior)
+            target_query = text("""
+                SELECT id, sort_order 
+                FROM master.menus 
+                WHERE parent_id IS NOT DISTINCT FROM :parent_id 
+                AND level = :level 
+                AND sort_order < :current_sort_order 
+                AND deleted_at IS NULL
+                ORDER BY sort_order DESC
+                LIMIT 1
+            """)
+        else:  # down
+            # Buscar menu com sort_order maior (posterior)
+            target_query = text("""
+                SELECT id, sort_order 
+                FROM master.menus 
+                WHERE parent_id IS NOT DISTINCT FROM :parent_id 
+                AND level = :level 
+                AND sort_order > :current_sort_order 
+                AND deleted_at IS NULL
+                ORDER BY sort_order ASC
+                LIMIT 1
+            """)
+        
+        result = await db.execute(target_query, {
+            "parent_id": current_menu.parent_id,
+            "level": current_menu.level,
+            "current_sort_order": current_menu.sort_order
+        })
+        target_menu = result.fetchone()
+        
+        if not target_menu:
+            # Não há menu para trocar (já é o primeiro/último)
+            return {
+                "success": False,
+                "message": f"Menu já está na {'primeira' if direction == 'up' else 'última'} posição",
+                "menu_id": menu_id,
+                "direction": direction,
+                "no_change": True
+            }
+        
+        # Trocar as posições (swap)
+        current_sort = current_menu.sort_order
+        target_sort = target_menu.sort_order
+        
+        # Atualizar posições em transação
+        update_current_query = text("""
+            UPDATE master.menus 
+            SET sort_order = :new_sort_order, updated_at = NOW()
+            WHERE id = :menu_id
+        """)
+        
+        update_target_query = text("""
+            UPDATE master.menus 
+            SET sort_order = :new_sort_order, updated_at = NOW()
+            WHERE id = :target_id
+        """)
+        
+        # Executar as atualizações
+        await db.execute(update_current_query, {
+            "menu_id": menu_id,
+            "new_sort_order": target_sort
+        })
+        
+        await db.execute(update_target_query, {
+            "target_id": target_menu.id,
+            "new_sort_order": current_sort
+        })
+        
+        await db.commit()
+        
+        logger.info("Menu reordenado", 
+                   menu_id=menu_id, 
+                   direction=direction,
+                   from_position=current_sort,
+                   to_position=target_sort,
+                   swapped_with=target_menu.id,
+                   user_id=current_user.id)
+        
+        return {
+            "success": True,
+            "message": f"Menu '{current_menu.name}' movido para {'cima' if direction == 'up' else 'baixo'}",
+            "menu_id": menu_id,
+            "direction": direction,
+            "previous_sort_order": current_sort,
+            "new_sort_order": target_sort,
+            "swapped_with_menu_id": target_menu.id,
+            "no_change": False
+        }
+        
+    except HTTPException:
+        await db.rollback()
+        raise
+    except Exception as e:
+        await db.rollback()
+        logger.error("Erro ao mover menu", error=str(e), menu_id=menu_id, direction=direction)
         raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")

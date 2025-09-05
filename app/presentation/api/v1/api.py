@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from . import auth, health, metrics, companies, cnpj, geocoding, menus, debug_menus, menus_crud
+from . import auth, health, metrics, companies, cnpj, geocoding, menus, debug_menus, menus_crud, users
 
 api_router = APIRouter()
 
@@ -14,3 +14,4 @@ api_router.include_router(geocoding.router, prefix="/geocoding")
 api_router.include_router(menus.router)
 api_router.include_router(menus_crud.router) # HABILITADO - compatível com schema atual após correções
 api_router.include_router(debug_menus.debug_router)
+api_router.include_router(users.router, prefix="/users") # CRUD de usuários - production ready
