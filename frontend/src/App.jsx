@@ -9,6 +9,7 @@ import PacientesPage from "./pages/PacientesPage";
 import ProfissionaisPage from "./pages/ProfissionaisPage";
 import ConsultasPage from "./pages/ConsultasPage";
 import EmpresasPage from "./pages/EmpresasPage";
+import MenusPage from "./pages/MenusPage";
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
               <Route path="profissionais" element={<ProfissionaisPage />} />
               <Route path="consultas" element={<ConsultasPage />} />
               <Route path="empresas" element={<EmpresasPage />} />
+              <Route path="menus" element={<MenusPage />} />
             </Route>
 
             {/* 404 Page */}

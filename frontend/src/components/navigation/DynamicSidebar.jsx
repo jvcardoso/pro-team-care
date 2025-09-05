@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDynamicMenus } from '../../hooks/useDynamicMenus';
 import { MenuItem } from './MenuItem';
+import { MobileSafeMenuItem } from './MobileSafeMenuItem';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { Alert } from '../ui/Alert';
 import { 
@@ -25,6 +26,8 @@ import {
  * @param {string} className - Classes CSS adicionais
  */
 export const DynamicSidebar = ({ collapsed = false, className = "" }) => {
+    console.log('🔧 DEBUG: DynamicSidebar renderizado - collapsed:', collapsed);
+    
     const { 
         menus, 
         loading, 
@@ -37,8 +40,22 @@ export const DynamicSidebar = ({ collapsed = false, className = "" }) => {
         cacheAge
     } = useDynamicMenus();
     
+    console.log('🔧 DEBUG: Hook retornou - loading:', loading, 'menus:', menus?.length, 'error:', error);
+    
     const [expandedMenus, setExpandedMenus] = useState(new Set());
     const [showDebugInfo, setShowDebugInfo] = useState(false);
+    const [isTouchDevice, setIsTouchDevice] = useState(false);
+    
+    // Detect touch device
+    useEffect(() => {
+        const hasTouch = (
+            'ontouchstart' in window ||
+            navigator.maxTouchPoints > 0 ||
+            navigator.msMaxTouchPoints > 0 ||
+            (window.DocumentTouch && document instanceof window.DocumentTouch)
+        );
+        setIsTouchDevice(hasTouch);
+    }, []);
     
     /**
      * Handler para expandir/colapsar menus
@@ -242,15 +259,20 @@ export const DynamicSidebar = ({ collapsed = false, className = "" }) => {
         return (
             <nav className="flex-1 overflow-y-auto py-4">
                 <div className="px-3 space-y-1">
-                    {menus.map((menu) => (
-                        <MenuItem 
-                            key={menu.id} 
-                            menu={menu}
-                            level={0}
-                            collapsed={collapsed}
-                            onToggle={handleMenuToggle}
-                        />
-                    ))}
+                    {menus.map((menu) => {
+                        // Use MobileSafeMenuItem for touch devices to prevent toggle issues
+                        const MenuComponent = isTouchDevice ? MobileSafeMenuItem : MenuItem;
+                        
+                        return (
+                            <MenuComponent
+                                key={menu.id} 
+                                menu={menu}
+                                level={0}
+                                collapsed={collapsed}
+                                onToggle={handleMenuToggle}
+                            />
+                        );
+                    })}
                 </div>
             </nav>
         );

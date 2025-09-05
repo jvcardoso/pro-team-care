@@ -15,14 +15,135 @@ createCacheInterceptor(api);
 // Interceptor para adicionar token de autenticação
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("access_token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    // 🔧 DEVELOPMENT: Skip auth header if bypassing authentication
+    if (import.meta.env.DEV && !localStorage.getItem("access_token")) {
+      console.info("🔧 Development mode: skipping auth header for", config.url);
+    } else {
+      const token = localStorage.getItem("access_token");
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
   (error) => {
     return Promise.reject(error);
+  }
+);
+
+// 🔧 DEVELOPMENT: Mock interceptor for menus API
+api.interceptors.request.use(
+  (config) => {
+    // Mock menus response for development
+    if (import.meta.env.DEV && config.url?.includes('/api/v1/menus/user/')) {
+      console.info("🔧 Development mode: mocking menus API response");
+
+      // Simulate network delay
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            ...config,
+            mockResponse: {
+              data: {
+                menus: [
+                  {
+                    id: 1,
+                    parent_id: null,
+                    name: "Dashboard",
+                    slug: "dashboard",
+                    url: "/admin/dashboard",
+                    icon: "LayoutDashboard",
+                    sort_order: 1,
+                    is_visible: true,
+                    permission_name: "view_dashboard",
+                    children: []
+                  },
+                  {
+                    id: 2,
+                    parent_id: null,
+                    name: "Pacientes",
+                    slug: "pacientes",
+                    url: "/admin/pacientes",
+                    icon: "Users",
+                    sort_order: 2,
+                    is_visible: true,
+                    permission_name: "view_patients",
+                    children: []
+                  },
+                  {
+                    id: 3,
+                    parent_id: null,
+                    name: "Profissionais",
+                    slug: "profissionais",
+                    url: "/admin/profissionais",
+                    icon: "UserCheck",
+                    sort_order: 3,
+                    is_visible: true,
+                    permission_name: "view_professionals",
+                    children: []
+                  },
+                  {
+                    id: 4,
+                    parent_id: null,
+                    name: "Consultas",
+                    slug: "consultas",
+                    url: "/admin/consultas",
+                    icon: "Calendar",
+                    sort_order: 4,
+                    is_visible: true,
+                    permission_name: "view_appointments",
+                    children: []
+                  },
+                  {
+                    id: 5,
+                    parent_id: null,
+                    name: "Empresas",
+                    slug: "empresas",
+                    url: "/admin/empresas",
+                    icon: "Building",
+                    sort_order: 5,
+                    is_visible: true,
+                    permission_name: "view_companies",
+                    children: []
+                  },
+                  {
+                    id: 6,
+                    parent_id: null,
+                    name: "Sistema",
+                    slug: "sistema",
+                    url: null,
+                    icon: "Settings",
+                    sort_order: 6,
+                    is_visible: true,
+                    permission_name: "system_admin",
+                    children: [
+                      {
+                        id: 7,
+                        parent_id: 6,
+                        name: "Menus",
+                        slug: "menus",
+                        url: "/admin/menus",
+                        icon: "Menu",
+                        sort_order: 1,
+                        is_visible: true,
+                        permission_name: "manage_menus",
+                        children: []
+                      }
+                    ]
+                  }
+                ]
+              },
+              status: 200,
+              statusText: "OK",
+              headers: {},
+              config
+            }
+          });
+        }, 500); // 500ms delay
+      });
+    }
+
+    return config;
   }
 );
 
@@ -32,6 +153,11 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    // Handle mock responses
+    if (error.config?.mockResponse) {
+      return Promise.resolve(error.config.mockResponse);
+    }
+
     // Log seguro para debug (sem dados sensíveis)
     const isDevelopment =
       import.meta.env?.DEV ||

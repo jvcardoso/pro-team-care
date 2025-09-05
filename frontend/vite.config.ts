@@ -25,7 +25,7 @@ export default defineConfig({
     },
     proxy: {
       "/api": {
-        target: "http://192.168.11.83:8000", // Backend API
+        target: "http://localhost:8000", // Backend API (local para desenvolvimento)
         changeOrigin: true,
         secure: false,
         // Configurar headers CORS diretamente

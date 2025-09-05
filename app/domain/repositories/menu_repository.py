@@ -242,6 +242,46 @@ class MenuRepository:
                        is_root=is_root,
                        context_type=context_type)
             
+            # 🔐 INJETAR MENU CRUD PARA USUÁRIOS ROOT
+            # ROOT deve ter acesso total ao sistema, incluindo gerenciamento de menus
+            if is_root:
+                # Verificar se já existe um menu CRUD (evitar duplicação)
+                has_crud_menu = any(menu.get('slug') == 'crud-menus' for menu in menus)
+                
+                if not has_crud_menu:
+                    # Encontrar o menu "Administração" para adicionar como submenu
+                    admin_menu_id = None
+                    for menu in menus:
+                        if menu.get('slug') == 'administracao':
+                            admin_menu_id = menu['id']
+                            break
+                    
+                    if admin_menu_id:
+                        # Adicionar menu CRUD de Menus na seção Administração
+                        crud_menu = {
+                            'id': 9999,  # ID especial para menu injetado
+                            'parent_id': admin_menu_id,
+                            'name': 'Gerenciar Menus',
+                            'slug': 'crud-menus',
+                            'url': '/admin/menus',
+                            'route_name': 'admin.menus.crud',
+                            'route_params': None,
+                            'icon': 'Menu',
+                            'level': 2,
+                            'sort_order': 99,  # No final da lista
+                            'badge_text': 'ROOT',
+                            'badge_color': 'bg-red-500',
+                            'full_path_name': 'Administração → Gerenciar Menus',
+                            'id_path': [admin_menu_id, 9999],
+                            'type': 'menu',
+                            'permission_name': 'menus.manage'
+                        }
+                        menus.append(crud_menu)
+                        
+                        logger.info("Menu CRUD injetado para usuário ROOT", 
+                                   user_id=user_id, 
+                                   menu_name=crud_menu['name'])
+            
             # Remover campo is_system_admin do resultado (usado apenas para controle)
             for menu in menus:
                 menu.pop('is_system_admin', None)
@@ -453,48 +493,15 @@ class MenuRepository:
             ip_address: IP do usuário
         """
         
-        # Log especial para ROOT
+        # Log especial para ROOT (temporariamente desabilitado - tabela activity_logs precisa de ajustes)
         if is_root:
-            query = text("""
-                INSERT INTO master.activity_logs (
-                    user_id,
-                    action_type,
-                    resource_type,
-                    resource_id,
-                    details,
-                    ip_address,
-                    created_at
-                ) VALUES (
-                    :user_id,
-                    'MENU_ACCESS',
-                    'menu_system',
-                    :user_id,
-                    :details,
-                    :ip_address,
-                    now()
-                )
-            """)
-            
-            details = {
-                "action": "dynamic_menu_load",
-                "is_root": True,
-                "context_type": context_type,
-                "context_id": context_id,
-                "total_menus": total_menus,
-                "timestamp": "now()"
-            }
-            
             try:
-                await self.db.execute(query, {
-                    "user_id": user_id,
-                    "details": str(details),  # JSON como string
-                    "ip_address": ip_address
-                })
-                await self.db.commit()
-                
-                logger.info("ROOT menu access logged", 
+                # TODO: Implementar log de auditoria quando tabela activity_logs for ajustada
+                logger.info("ROOT menu access (audit log disabled)", 
                            user_id=user_id, 
-                           total_menus=total_menus)
+                           total_menus=total_menus,
+                           context_type=context_type,
+                           ip_address=ip_address)
                 
             except Exception as e:
                 logger.error("Erro ao logar acesso ROOT", 

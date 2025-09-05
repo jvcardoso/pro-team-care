@@ -17,7 +17,7 @@ from app.infrastructure.auth import get_current_user
 from app.domain.entities.user import User
 
 logger = structlog.get_logger()
-router = APIRouter(prefix="/menus", tags=["Menus"])
+router = APIRouter(prefix="/menus", tags=["menus"])
 
 
 # Pydantic models para documentação OpenAPI

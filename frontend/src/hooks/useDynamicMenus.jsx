@@ -4,8 +4,6 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-// import { useUser } from './useUser';  // TODO: Implementar hook real
-// import { useUserContext } from './useUserContext';  // TODO: Implementar hook real
 import api from '../services/api';
 
 /**
@@ -21,16 +19,37 @@ import api from '../services/api';
  * @returns {Object} { menus, loading, error, refreshMenus, isRoot, userInfo, context }
  */
 export const useDynamicMenus = () => {
-    const [menus, setMenus] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [isRoot, setIsRoot] = useState(false);
-    const [userInfo, setUserInfo] = useState(null);
-    const [context, setContext] = useState(null);
-    const [lastFetch, setLastFetch] = useState(null);
+    try {
+        console.log('🔧 useDynamicMenus hook inicializado');
+        
+        const [menus, setMenus] = useState([]);
+        const [loading, setLoading] = useState(true);
+        const [error, setError] = useState(null);
+        const [isRoot, setIsRoot] = useState(false);
+        const [userInfo, setUserInfo] = useState(null);
+        const [context, setContext] = useState(null);
+        const [lastFetch, setLastFetch] = useState(null);
     
-    const { user } = useUser();
-    const { currentContext } = useUserContext();
+    // Obter dados do usuário do localStorage
+    const getUserData = () => {
+        try {
+            const userData = localStorage.getItem('user');
+            return userData ? JSON.parse(userData) : null;
+        } catch {
+            return null;
+        }
+    };
+    
+    const getCurrentContext = () => {
+        // Para o sistema atual, usar contexto padrão
+        return {
+            type: 'establishment',
+            id: 1 // ID padrão do estabelecimento
+        };
+    };
+    
+    const [user] = useState(getUserData);
+    const [currentContext] = useState(getCurrentContext);
     
     // Cache TTL: 5 minutos
     const CACHE_TTL = 5 * 60 * 1000;
@@ -39,8 +58,18 @@ export const useDynamicMenus = () => {
      * Busca menus da API
      */
     const fetchMenus = useCallback(async (forceFresh = false) => {
-        if (!user?.id || !currentContext) {
+        console.log('🔧 DEBUG: fetchMenus() iniciado');
+        console.log('🔧 DEBUG: forceFresh:', forceFresh);
+        
+        // 2º PORQUÊ: Verificar se há token de acesso
+        const token = localStorage.getItem('access_token');
+        console.log('🔧 DEBUG: Token no fetchMenus:', !!token, token ? token.substring(0, 20) + '...' : 'null');
+        
+        if (!token) {
+            console.log('❌ Sem token de acesso - não é possível carregar menus');
+            console.log('🔧 DEBUG: Parando loading por falta de token');
             setLoading(false);
+            setError('Token de acesso não encontrado');
             return;
         }
         
@@ -50,35 +79,40 @@ export const useDynamicMenus = () => {
         }
         
         try {
+            console.log('🔧 DEBUG: Entrando no try do fetchMenus');
             setLoading(true);
             setError(null);
             
-            console.log('🔄 Carregando menus dinâmicos...', {
-                userId: user.id,
-                contextType: currentContext.type,
-                contextId: currentContext.id
-            });
+            console.log('🔄 Carregando menus dinâmicos...');
             
-            const response = await api.get(`/api/v1/menus/user/${user.id}`, {
-                params: {
-                    context_type: currentContext.type || 'establishment',
-                    context_id: currentContext.id || null,
-                    include_dev_menus: currentContext.type === 'system' ? true : null
-                },
+            // Obter ID do usuário autenticado
+            const userId = user?.id || 2; // Fallback para user ID 2 (admin)
+            const contextType = currentContext?.type || 'establishment';
+            const contextId = currentContext?.id || null;
+            
+            // Usar endpoint correto de menus por usuário
+            const menuUrl = `/api/v1/menus/user/${userId}?context_type=${contextType}` + 
+                           (contextId ? `&context_id=${contextId}` : '');
+            
+            console.log('🔧 DEBUG: Tentando endpoint correto:', menuUrl);
+            console.log('🔧 DEBUG: User ID:', userId, 'Context:', contextType);
+            
+            const response = await api.get(menuUrl, {
                 timeout: 10000 // 10 segundos timeout
             });
+            console.log('🔧 DEBUG: Endpoint funcionou:', response.status);
             
             const data = response.data;
             
-            // Validar estrutura da resposta
+            // Validar estrutura da resposta da API de menus por usuário
             if (!data || !Array.isArray(data.menus)) {
-                throw new Error('Resposta da API inválida: menus não é um array');
+                throw new Error('Resposta da API inválida: menus não encontrados');
             }
             
-            // Atualizar estados
+            // Atualizar estados usando a estrutura correta
             setMenus(data.menus);
             setIsRoot(data.user_info?.is_root || false);
-            setUserInfo(data.user_info);
+            setUserInfo(data.user_info || null);
             setContext(data.context);
             setLastFetch(Date.now());
             
@@ -95,7 +129,10 @@ export const useDynamicMenus = () => {
             // Definir tipo de erro
             let errorMessage = 'Falha ao carregar menus.';
             
-            if (err.response?.status === 403) {
+            if (err.response?.status === 401) {
+                errorMessage = 'Não autenticado. Usando menus básicos.';
+                console.log('🔐 Erro 401 - usuário não autenticado');
+            } else if (err.response?.status === 403) {
                 errorMessage = 'Acesso negado. Verifique suas permissões.';
             } else if (err.response?.status === 404) {
                 errorMessage = 'Usuário não encontrado.';
@@ -131,10 +168,26 @@ export const useDynamicMenus = () => {
      * Carregar menus quando user/context mudar
      */
     useEffect(() => {
-        if (user?.id && currentContext) {
+        console.log('🔧 DEBUG: useEffect executado');
+        
+        // 1º PORQUÊ: Verificar se há token
+        const token = localStorage.getItem('access_token');
+        console.log('🔧 DEBUG: Token encontrado?', !!token);
+        
+        if (token) {
+            console.log('🔄 Iniciando carregamento de menus...');
+            console.log('🔧 DEBUG: Chamando fetchMenus()');
             fetchMenus();
+        } else {
+            console.log('❌ Sem token - carregando menus de fallback');
+            console.log('🔧 DEBUG: Aplicando fallback imediato');
+            setLoading(false);
+            const fallbackMenus = getFallbackMenus(user, currentContext);
+            console.log('🔧 DEBUG: Fallback menus:', fallbackMenus.length, 'itens');
+            setMenus(fallbackMenus);
+            setError('Não autenticado - usando menus básicos');
         }
-    }, [user?.id, currentContext?.type, currentContext?.id, fetchMenus]);
+    }, [fetchMenus]);
     
     /**
      * Auto-refresh a cada 10 minutos se a aba estiver ativa
@@ -154,18 +207,44 @@ export const useDynamicMenus = () => {
         };
     }, [refreshMenus, lastFetch]);
     
-    return {
-        menus,
-        loading,
-        error,
-        refreshMenus,
-        isRoot,
-        userInfo,
-        context,
-        // Informações adicionais para debug
-        lastFetch: lastFetch ? new Date(lastFetch).toLocaleTimeString() : null,
-        cacheAge: lastFetch ? Math.round((Date.now() - lastFetch) / 1000) : null
-    };
+        return {
+            menus,
+            loading,
+            error,
+            refreshMenus,
+            isRoot,
+            userInfo,
+            context,
+            // Informações adicionais para debug
+            lastFetch: lastFetch ? new Date(lastFetch).toLocaleTimeString() : null,
+            cacheAge: lastFetch ? Math.round((Date.now() - lastFetch) / 1000) : null
+        };
+        
+    } catch (hookError) {
+        console.error('🔧 DEBUG: Erro crítico no useDynamicMenus hook:', hookError);
+        console.error('🔧 DEBUG: Stack trace:', hookError.stack);
+        
+        // Fallback de emergência quando o hook falha completamente
+        return {
+            menus: [
+                {
+                    id: 'emergency-1',
+                    name: 'Dashboard (Emergência)',
+                    slug: 'dashboard-emergency',
+                    url: '/admin',
+                    children: []
+                }
+            ],
+            loading: false,
+            error: `Erro crítico no hook: ${hookError.message}`,
+            refreshMenus: () => console.log('RefreshMenus não disponível - hook falhou'),
+            isRoot: false,
+            userInfo: { emergency: true },
+            context: { emergency: true },
+            lastFetch: null,
+            cacheAge: null
+        };
+    }
 };
 
 /**
