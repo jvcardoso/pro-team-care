@@ -92,7 +92,7 @@ async def create_user(
     """Criar novo usuário (apenas admins)"""
     try:
         # Verificar se o usuário atual é admin
-        if not current_user.is_superuser:
+        if not current_user.is_system_admin:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Apenas administradores podem criar usuários"
@@ -156,7 +156,7 @@ async def list_users(
     """Listar usuários com filtros e paginação"""
     try:
         # Verificar permissões
-        if not current_user.is_superuser:
+        if not current_user.is_system_admin:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Apenas administradores podem listar usuários"
@@ -222,7 +222,7 @@ async def count_users(
 ):
     """Contar usuários por status"""
     try:
-        if not current_user.is_superuser:
+        if not current_user.is_system_admin:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Apenas administradores podem ver estatísticas"
@@ -268,7 +268,7 @@ async def get_user(
     """Buscar usuário por ID"""
     try:
         # Verificar permissões: admin pode ver todos, usuário normal só o próprio
-        if not current_user.is_superuser and current_user.id != user_id:
+        if not current_user.is_system_admin and current_user.id != user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Você só pode visualizar seu próprio perfil"
@@ -331,7 +331,7 @@ async def update_user(
     """Atualizar usuário"""
     try:
         # Verificar permissões
-        if not current_user.is_superuser and current_user.id != user_id:
+        if not current_user.is_system_admin and current_user.id != user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Você só pode atualizar seu próprio perfil"
@@ -390,7 +390,7 @@ async def delete_user(
     """Excluir usuário (soft delete)"""
     try:
         # Apenas admins podem excluir
-        if not current_user.is_superuser:
+        if not current_user.is_system_admin:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Apenas administradores podem excluir usuários"
@@ -459,7 +459,7 @@ async def change_password(
     try:
         # Verificar permissões
         is_self = current_user.id == user_id
-        is_admin = current_user.is_superuser
+        is_admin = current_user.is_system_admin
         
         if not is_self and not is_admin:
             raise HTTPException(
