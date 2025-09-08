@@ -66,7 +66,7 @@ npm run test:all
 Testa especificamente o sistema de menus dinâmicos:
 
 - ✅ Carregamento de menus para usuário normal (6 menus)
-- ✅ Alternância entre usuário normal e ROOT (11 menus para ROOT)  
+- ✅ Alternância entre usuário normal e ROOT (11 menus para ROOT)
 - ✅ Alternância entre menus dinâmicos e estáticos
 - ✅ Expansão e colapso de submenus
 - ✅ Exibição de badges nos menus
@@ -81,6 +81,7 @@ Testa especificamente o sistema de menus dinâmicos:
 Testa o fluxo E2E completo do usuário:
 
 **Fluxo Principal:**
+
 1. 🔍 Verificação de conectividade (backend + frontend)
 2. 🔐 Simulação de processo de login
 3. 🏠 Navegação para área administrativa
@@ -93,6 +94,7 @@ Testa o fluxo E2E completo do usuário:
 10. 🎯 Validação final do sistema
 
 **Fluxo de Recuperação:**
+
 - 🚨 Teste de recuperação graciosamente de erros de API
 
 ### 3. Testes de Performance (`performance.spec.ts`)
@@ -101,19 +103,21 @@ Valida aspectos de performance do sistema:
 
 - ⚡ Tempo de carregamento de menus (< 3s)
 - 🔄 Performance ao alternar entre usuários múltiplas vezes
-- 🧭 Eficiência em múltiplas navegações  
+- 🧭 Eficiência em múltiplas navegações
 - 📱 Performance em diferentes resoluções
 - 💾 Eficiência do sistema de cache
 
 ## 🎯 Critérios de Sucesso
 
 ### Performance
+
 - **Carregamento inicial**: < 3 segundos
 - **Alternância de usuário**: < 5 segundos
 - **Navegação entre páginas**: < 2 segundos
 - **Responsividade**: Funcional em 4 resoluções diferentes
 
 ### Funcionalidade
+
 - **Usuário Normal**: 6 menus básicos carregados
 - **Usuário ROOT**: 11 menus (básicos + admin + dev)
 - **Menus Hierárquicos**: Expansão/colapso funcionando
@@ -121,6 +125,7 @@ Valida aspectos de performance do sistema:
 - **Error Recovery**: Fallback funcional para erros de API
 
 ### Compatibilidade
+
 - **Browsers**: Chrome, Firefox, Safari
 - **Dispositivos**: Desktop, Tablet, Mobile
 - **Resoluções**: 1920x1080, 1280x720, 768x1024, 375x667
@@ -130,18 +135,21 @@ Valida aspectos de performance do sistema:
 ### Problemas Comuns
 
 1. **Backend não está rodando**
+
    ```bash
    # Verificar se backend está ativo
    curl http://192.168.11.83:8000/api/v1/health
    ```
 
 2. **Frontend não inicia automaticamente**
+
    ```bash
    # Iniciar manualmente
    npm run dev
    ```
 
 3. **Testes falham por timeout**
+
    - Verificar se o sistema está sobrecarregado
    - Aumentar timeouts no `playwright.config.ts`
 
@@ -204,10 +212,10 @@ use: {
 ```typescript
 projects: [
   {
-    name: 'Microsoft Edge',
-    use: { ...devices['Desktop Edge'], channel: 'msedge' },
+    name: "Microsoft Edge",
+    use: { ...devices["Desktop Edge"], channel: "msedge" },
   },
-]
+];
 ```
 
 ### Configurar CI/CD

@@ -40,7 +40,8 @@ class HttpCache {
       return this.DEFAULT_TTLS.addresses;
     if (url.includes("/cnpj")) return this.DEFAULT_TTLS.cnpj;
     if (url.includes("/health")) return this.DEFAULT_TTLS.health;
-    if (url.includes("/menus") || url.includes("/menu")) return this.DEFAULT_TTLS.menus;
+    if (url.includes("/menus") || url.includes("/menu"))
+      return this.DEFAULT_TTLS.menus;
     if (url.includes("/auth")) return this.DEFAULT_TTLS.auth;
     return this.DEFAULT_TTLS.static;
   }

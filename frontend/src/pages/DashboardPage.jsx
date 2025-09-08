@@ -1,13 +1,23 @@
 import React from "react";
+import ContextSwitcher from "../components/security/ContextSwitcher";
 
 const DashboardPage = () => {
   return (
     <div className="animate-fade-in">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
-        <p className="text-gray-600">
-          Visão geral das atividades e métricas do sistema
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
+            <p className="text-gray-600">
+              Visão geral das atividades e métricas do sistema
+            </p>
+          </div>
+
+          {/* Context Switcher */}
+          <div className="flex items-center space-x-4">
+            <ContextSwitcher />
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

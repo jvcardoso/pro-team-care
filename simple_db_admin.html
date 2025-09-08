@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Database Administration</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        .auth-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .admin-section {
+            display: none;
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        input[type="text"], input[type="email"], input[type="password"], select, textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 2rem;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .tab {
+            flex: 1;
+            background: #f8f9fa;
+            border: none;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab:hover {
+            background: #e9ecef;
+        }
+        
+        .tab.active {
+            background: white;
+            border-bottom-color: #667eea;
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #555;
+            position: sticky;
+            top: 0;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border: 1px solid #fcc;
+        }
+        
+        .success {
+            background: #efe;
+            color: #363;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border: 1px solid #cfc;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .container {
+                padding: 0 0.5rem;
+            }
+        }
+        
+        .json-display {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🗄️ Simple Database Administration</h1>
+        <p>Interface simples para administração do banco SQLAlchemy</p>
+    </div>
+    
+    <div class="container">
+        <!-- Seção de Autenticação -->
+        <div id="authSection" class="auth-section">
+            <h2>🔐 Autenticação Necessária</h2>
+            <p>Para acessar o painel de administração do banco, você precisa fazer login:</p>
+            
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" placeholder="admin@example.com" value="admin@example.com">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Senha:</label>
+                <input type="password" id="password" placeholder="password" value="password">
+            </div>
+            
+            <button onclick="login()" id="loginBtn">Fazer Login</button>
+            
+            <div id="loginStatus"></div>
+        </div>
+        
+        <!-- Seção de Administração -->
+        <div id="adminSection" class="admin-section">
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('tables')">📋 Tabelas</button>
+                <button class="tab" onclick="showTab('structure')">🏗️ Estrutura</button>
+                <button class="tab" onclick="showTab('data')">📊 Dados</button>
+                <button class="tab" onclick="showTab('query')">🔍 Query</button>
+                <button class="tab" onclick="showTab('search')">🔎 Buscar</button>
+            </div>
+            
+            <!-- Tab: Listar Tabelas -->
+            <div id="tabTables" class="tab-content active">
+                <h3>📋 Tabelas do Banco</h3>
+                <div class="form-group">
+                    <label for="schema">Schema:</label>
+                    <input type="text" id="schema" value="master" placeholder="Nome do schema">
+                </div>
+                <button onclick="listTables()">Listar Tabelas</button>
+                <div id="tablesResult"></div>
+            </div>
+            
+            <!-- Tab: Estrutura da Tabela -->
+            <div id="tabStructure" class="tab-content">
+                <h3>🏗️ Estrutura da Tabela</h3>
+                <div class="grid">
+                    <div class="form-group">
+                        <label for="structureTable">Nome da Tabela:</label>
+                        <input type="text" id="structureTable" placeholder="users">
+                    </div>
+                    <div class="form-group">
+                        <label for="structureSchema">Schema:</label>
+                        <input type="text" id="structureSchema" value="master">
+                    </div>
+                </div>
+                <button onclick="getTableStructure()">Ver Estrutura</button>
+                <div id="structureResult"></div>
+            </div>
+            
+            <!-- Tab: Dados da Tabela -->
+            <div id="tabData" class="tab-content">
+                <h3>📊 Dados da Tabela</h3>
+                <div class="grid">
+                    <div class="form-group">
+                        <label for="dataTable">Nome da Tabela:</label>
+                        <input type="text" id="dataTable" placeholder="users">
+                    </div>
+                    <div class="form-group">
+                        <label for="dataSchema">Schema:</label>
+                        <input type="text" id="dataSchema" value="master">
+                    </div>
+                </div>
+                <div class="grid">
+                    <div class="form-group">
+                        <label for="dataLimit">Limite:</label>
+                        <input type="text" id="dataLimit" value="50" placeholder="50">
+                    </div>
+                    <div class="form-group">
+                        <label for="dataOffset">Offset:</label>
+                        <input type="text" id="dataOffset" value="0" placeholder="0">
+                    </div>
+                </div>
+                <button onclick="getTableData()">Ver Dados</button>
+                <div id="dataResult"></div>
+            </div>
+            
+            <!-- Tab: Query Customizada -->
+            <div id="tabQuery" class="tab-content">
+                <h3>🔍 Query Customizada</h3>
+                <div class="form-group">
+                    <label for="customQuery">SQL Query (apenas SELECT):</label>
+                    <textarea id="customQuery" rows="5" placeholder="SELECT * FROM master.users LIMIT 10"></textarea>
+                </div>
+                <button onclick="executeQuery()">Executar Query</button>
+                <div id="queryResult"></div>
+            </div>
+            
+            <!-- Tab: Buscar -->
+            <div id="tabSearch" class="tab-content">
+                <h3>🔎 Buscar na Tabela</h3>
+                <div class="grid">
+                    <div class="form-group">
+                        <label for="searchTable">Nome da Tabela:</label>
+                        <input type="text" id="searchTable" placeholder="users">
+                    </div>
+                    <div class="form-group">
+                        <label for="searchSchema">Schema:</label>
+                        <input type="text" id="searchSchema" value="master">
+                    </div>
+                </div>
+                <div class="grid">
+                    <div class="form-group">
+                        <label for="searchColumn">Coluna:</label>
+                        <input type="text" id="searchColumn" placeholder="name">
+                    </div>
+                    <div class="form-group">
+                        <label for="searchValue">Valor:</label>
+                        <input type="text" id="searchValue" placeholder="João">
+                    </div>
+                </div>
+                <button onclick="searchTable()">Buscar</button>
+                <div id="searchResult"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let authToken = null;
+        const API_BASE = 'http://192.168.11.83:8000/api/v1';
+        
+        // Função de Login
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const loginStatus = document.getElementById('loginStatus');
+            
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Fazendo login...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('username', email);
+                formData.append('password', password);
+                
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.access_token;
+                    
+                    loginStatus.innerHTML = '<div class="success">✅ Login realizado com sucesso!</div>';
+                    
+                    // Ocultar seção de auth e mostrar admin
+                    document.getElementById('authSection').style.display = 'none';
+                    document.getElementById('adminSection').style.display = 'block';
+                    
+                    // Listar tabelas automaticamente
+                    listTables();
+                } else {
+                    const errorData = await response.json();
+                    loginStatus.innerHTML = `<div class="error">❌ Erro: ${errorData.detail || 'Login falhou'}</div>`;
+                }
+            } catch (error) {
+                loginStatus.innerHTML = `<div class="error">❌ Erro de conexão: ${error.message}</div>`;
+            }
+            
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Fazer Login';
+        }
+        
+        // Função para fazer requisições autenticadas
+        async function authenticatedRequest(url, options = {}) {
+            if (!authToken) {
+                throw new Error('Token de autenticação não encontrado');
+            }
+            
+            const defaultHeaders = {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json',
+            };
+            
+            return fetch(url, {
+                ...options,
+                headers: {
+                    ...defaultHeaders,
+                    ...options.headers
+                }
+            });
+        }
+        
+        // Gerenciamento de Tabs
+        function showTab(tabName) {
+            // Remover active de todas as tabs
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Ativar tab selecionada
+            event.target.classList.add('active');
+            document.getElementById(`tab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`).classList.add('active');
+        }
+        
+        // Listar Tabelas
+        async function listTables() {
+            const schema = document.getElementById('schema').value || 'master';
+            const resultDiv = document.getElementById('tablesResult');
+            
+            resultDiv.innerHTML = '<div class="loading">⏳ Carregando tabelas...</div>';
+            
+            try {
+                const response = await authenticatedRequest(
+                    `${API_BASE}/simple-db-admin/tables?schema=${encodeURIComponent(schema)}`
+                );
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    let html = `
+                        <h4>📋 Schema: ${data.schema} (${data.tables_count} tabelas)</h4>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Nome da Tabela</th>
+                                        <th>Tipo</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    
+                    data.tables.forEach(table => {
+                        html += `
+                            <tr>
+                                <td><strong>${table.name}</strong></td>
+                                <td>${table.type}</td>
+                                <td>
+                                    <button onclick="quickViewTable('${table.name}', '${schema}')">Ver Dados</button>
+                                    <button onclick="quickStructureTable('${table.name}', '${schema}')">Estrutura</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += '</tbody></table></div>';
+                    resultDiv.innerHTML = html;
+                } else {
+                    const errorData = await response.json();
+                    resultDiv.innerHTML = `<div class="error">❌ Erro: ${errorData.detail}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Erro de conexão: ${error.message}</div>`;
+            }
+        }
+        
+        // Ver estrutura da tabela
+        async function getTableStructure() {
+            const table = document.getElementById('structureTable').value;
+            const schema = document.getElementById('structureSchema').value || 'master';
+            const resultDiv = document.getElementById('structureResult');
+            
+            if (!table) {
+                resultDiv.innerHTML = '<div class="error">❌ Por favor, informe o nome da tabela</div>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<div class="loading">⏳ Carregando estrutura...</div>';
+            
+            try {
+                const response = await authenticatedRequest(
+                    `${API_BASE}/simple-db-admin/table/${encodeURIComponent(table)}/structure?schema=${encodeURIComponent(schema)}`
+                );
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    let html = `
+                        <h4>🏗️ Estrutura da tabela: ${data.table_name}</h4>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Coluna</th>
+                                        <th>Tipo</th>
+                                        <th>Nullable</th>
+                                        <th>Default</th>
+                                        <th>Max Length</th>
+                                        <th>Precision</th>
+                                        <th>Scale</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    
+                    data.columns.forEach(col => {
+                        html += `
+                            <tr>
+                                <td><strong>${col.name}</strong></td>
+                                <td>${col.type}</td>
+                                <td>${col.nullable ? 'Sim' : 'Não'}</td>
+                                <td>${col.default || '-'}</td>
+                                <td>${col.max_length || '-'}</td>
+                                <td>${col.precision || '-'}</td>
+                                <td>${col.scale || '-'}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += '</tbody></table></div>';
+                    resultDiv.innerHTML = html;
+                } else {
+                    const errorData = await response.json();
+                    resultDiv.innerHTML = `<div class="error">❌ Erro: ${errorData.detail}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Erro de conexão: ${error.message}</div>`;
+            }
+        }
+        
+        // Ver dados da tabela
+        async function getTableData() {
+            const table = document.getElementById('dataTable').value;
+            const schema = document.getElementById('dataSchema').value || 'master';
+            const limit = document.getElementById('dataLimit').value || '50';
+            const offset = document.getElementById('dataOffset').value || '0';
+            const resultDiv = document.getElementById('dataResult');
+            
+            if (!table) {
+                resultDiv.innerHTML = '<div class="error">❌ Por favor, informe o nome da tabela</div>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<div class="loading">⏳ Carregando dados...</div>';
+            
+            try {
+                const response = await authenticatedRequest(
+                    `${API_BASE}/simple-db-admin/table/${encodeURIComponent(table)}/data?schema=${encodeURIComponent(schema)}&limit=${limit}&offset=${offset}`
+                );
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.data.length === 0) {
+                        resultDiv.innerHTML = '<div class="error">📭 Nenhum registro encontrado</div>';
+                        return;
+                    }
+                    
+                    let html = `
+                        <h4>📊 Dados da tabela: ${data.table_name}</h4>
+                        <p>Total: ${data.total_records} | Exibindo: ${data.showing_records} | Offset: ${data.offset}</p>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                    `;
+                    
+                    // Cabeçalhos
+                    data.columns.forEach(col => {
+                        html += `<th>${col}</th>`;
+                    });
+                    
+                    html += '</tr></thead><tbody>';
+                    
+                    // Dados
+                    data.data.forEach(row => {
+                        html += '<tr>';
+                        data.columns.forEach(col => {
+                            const value = row[col];
+                            const displayValue = value === null ? '-' : String(value);
+                            html += `<td>${displayValue}</td>`;
+                        });
+                        html += '</tr>';
+                    });
+                    
+                    html += '</tbody></table></div>';
+                    resultDiv.innerHTML = html;
+                } else {
+                    const errorData = await response.json();
+                    resultDiv.innerHTML = `<div class="error">❌ Erro: ${errorData.detail}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Erro de conexão: ${error.message}</div>`;
+            }
+        }
+        
+        // Executar query customizada
+        async function executeQuery() {
+            const query = document.getElementById('customQuery').value.trim();
+            const resultDiv = document.getElementById('queryResult');
+            
+            if (!query) {
+                resultDiv.innerHTML = '<div class="error">❌ Por favor, informe a query SQL</div>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<div class="loading">⏳ Executando query...</div>';
+            
+            try {
+                const response = await authenticatedRequest(
+                    `${API_BASE}/simple-db-admin/query`,
+                    {
+                        method: 'POST',
+                        body: JSON.stringify({ query: query })
+                    }
+                );
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.data && data.data.length > 0) {
+                        let html = `
+                            <h4>✅ Query executada com sucesso</h4>
+                            <p>Registros retornados: ${data.rows_returned}</p>
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                        `;
+                        
+                        // Cabeçalhos
+                        data.columns.forEach(col => {
+                            html += `<th>${col}</th>`;
+                        });
+                        
+                        html += '</tr></thead><tbody>';
+                        
+                        // Dados
+                        data.data.forEach(row => {
+                            html += '<tr>';
+                            data.columns.forEach(col => {
+                                const value = row[col];
+                                const displayValue = value === null ? '-' : String(value);
+                                html += `<td>${displayValue}</td>`;
+                            });
+                            html += '</tr>';
+                        });
+                        
+                        html += '</tbody></table></div>';
+                        resultDiv.innerHTML = html;
+                    } else {
+                        resultDiv.innerHTML = `<div class="success">✅ ${data.message || 'Query executada com sucesso'}</div>`;
+                    }
+                } else {
+                    const errorData = await response.json();
+                    resultDiv.innerHTML = `<div class="error">❌ Erro: ${errorData.detail}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Erro de conexão: ${error.message}</div>`;
+            }
+        }
+        
+        // Buscar na tabela
+        async function searchTable() {
+            const table = document.getElementById('searchTable').value;
+            const schema = document.getElementById('searchSchema').value || 'master';
+            const column = document.getElementById('searchColumn').value;
+            const value = document.getElementById('searchValue').value;
+            const resultDiv = document.getElementById('searchResult');
+            
+            if (!table || !column || !value) {
+                resultDiv.innerHTML = '<div class="error">❌ Por favor, preencha todos os campos</div>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<div class="loading">⏳ Buscando...</div>';
+            
+            try {
+                const response = await authenticatedRequest(
+                    `${API_BASE}/simple-db-admin/table/${encodeURIComponent(table)}/search?schema=${encodeURIComponent(schema)}&column=${encodeURIComponent(column)}&value=${encodeURIComponent(value)}`
+                );
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.data.length === 0) {
+                        resultDiv.innerHTML = '<div class="error">📭 Nenhum resultado encontrado</div>';
+                        return;
+                    }
+                    
+                    let html = `
+                        <h4>🔎 Resultados da busca</h4>
+                        <p>Tabela: ${data.table_name} | Coluna: ${data.search_column} | Valor: "${data.search_value}" | Resultados: ${data.results_count}</p>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                    `;
+                    
+                    // Cabeçalhos (usando primeira linha para obter colunas)
+                    const columns = Object.keys(data.data[0]);
+                    columns.forEach(col => {
+                        html += `<th>${col}</th>`;
+                    });
+                    
+                    html += '</tr></thead><tbody>';
+                    
+                    // Dados
+                    data.data.forEach(row => {
+                        html += '<tr>';
+                        columns.forEach(col => {
+                            const value = row[col];
+                            const displayValue = value === null ? '-' : String(value);
+                            html += `<td>${displayValue}</td>`;
+                        });
+                        html += '</tr>';
+                    });
+                    
+                    html += '</tbody></table></div>';
+                    resultDiv.innerHTML = html;
+                } else {
+                    const errorData = await response.json();
+                    resultDiv.innerHTML = `<div class="error">❌ Erro: ${errorData.detail}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Erro de conexão: ${error.message}</div>`;
+            }
+        }
+        
+        // Funções auxiliares para botões das tabelas
+        function quickViewTable(tableName, schema) {
+            // Trocar para aba de dados
+            showTabByName('data');
+            
+            // Preencher campos
+            document.getElementById('dataTable').value = tableName;
+            document.getElementById('dataSchema').value = schema;
+            
+            // Executar
+            getTableData();
+        }
+        
+        function quickStructureTable(tableName, schema) {
+            // Trocar para aba de estrutura
+            showTabByName('structure');
+            
+            // Preencher campos
+            document.getElementById('structureTable').value = tableName;
+            document.getElementById('structureSchema').value = schema;
+            
+            // Executar
+            getTableStructure();
+        }
+        
+        function showTabByName(tabName) {
+            // Remover active de todas as tabs
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Ativar tab selecionada
+            const tabButton = Array.from(document.querySelectorAll('.tab')).find(tab => {
+                return tab.textContent.toLowerCase().includes(tabName.toLowerCase()) ||
+                       tab.onclick.toString().includes(`'${tabName}'`);
+            });
+            
+            if (tabButton) {
+                tabButton.classList.add('active');
+            }
+            
+            document.getElementById(`tab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`).classList.add('active');
+        }
+        
+        // Auto login com Enter
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('password').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    login();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

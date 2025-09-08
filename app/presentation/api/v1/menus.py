@@ -13,7 +13,7 @@ import structlog
 
 from app.infrastructure.database import get_db
 from app.domain.repositories.menu_repository import MenuRepository
-from app.infrastructure.auth import get_current_user
+from app.infrastructure.auth import get_current_user, get_current_user_skip_options
 from app.domain.entities.user import User
 
 logger = structlog.get_logger()
@@ -87,7 +87,7 @@ async def get_user_dynamic_menus(
     context_type: str = Query("establishment", description="Tipo de contexto (system/company/establishment)"),
     context_id: Optional[int] = Query(None, description="ID do contexto específico"),
     include_dev_menus: Optional[bool] = Query(None, description="Incluir menus de desenvolvimento (apenas ROOT)"),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_skip_options),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -112,6 +112,28 @@ async def get_user_dynamic_menus(
     - Validação dupla de permissões
     """
     # Removido o exemplo JSON da docstring para usar response_model
+    
+    # Handle OPTIONS requests (CORS preflight)
+    if request.method == "OPTIONS":
+        return MenuResponse(
+            success=True,
+            menus=[],
+            user_info={},
+            context={},
+            total_menus=0,
+            message="OPTIONS request"
+        )
+    
+    # current_user pode ser None para requests OPTIONS
+    if current_user is None:
+        return MenuResponse(
+            success=False,
+            menus=[],
+            user_info={},
+            context={},
+            total_menus=0,
+            message="Authentication required"
+        )
     
     # Capturar IP para auditoria
     client_ip = request.client.host if request.client else None
@@ -250,7 +272,7 @@ async def get_user_menus_by_context(
     context_type: str,
     request: Request,
     context_id: Optional[int] = Query(None, description="ID do contexto específico"),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_skip_options),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -266,6 +288,28 @@ async def get_user_menus_by_context(
     - context_type deve ser válido (system/company/establishment)
     - Mesmas validações de segurança do endpoint principal
     """
+    
+    # Handle OPTIONS requests (CORS preflight)
+    if request.method == "OPTIONS":
+        return MenuResponse(
+            success=True,
+            menus=[],
+            user_info={},
+            context={},
+            total_menus=0,
+            message="OPTIONS request"
+        )
+    
+    # current_user pode ser None para requests OPTIONS
+    if current_user is None:
+        return MenuResponse(
+            success=False,
+            menus=[],
+            user_info={},
+            context={},
+            total_menus=0,
+            message="Authentication required"
+        )
     
     # Validar context_type
     valid_contexts = ['system', 'company', 'establishment']
@@ -309,13 +353,20 @@ async def menu_service_health():
 
 @router.get("/debug/structure")
 async def debug_menu_structure(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_skip_options),
     db: AsyncSession = Depends(get_db)
 ):
     """
     Endpoint de debug para visualizar estrutura completa de menus.
     Apenas para ROOT e environment development.
     """
+    
+    # current_user pode ser None para requests OPTIONS
+    if current_user is None:
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required"
+        )
     
     # Só ROOT em development
     if not current_user.is_system_admin:

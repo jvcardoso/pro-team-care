@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { authService } from "../../services/api";
+import ProfileSwitcher from "../security/ProfileSwitcher";
 import {
   Sun,
   Moon,
@@ -173,6 +174,9 @@ const Header = ({
                 />
               </div>
             </div>
+
+            {/* Profile Switcher - ROOT controls */}
+            <ProfileSwitcher />
 
             {/* Theme Toggle */}
             <button

@@ -3,6 +3,7 @@
 ## 🚨 Problema Reportado
 
 **Sintomas:**
+
 - Menu mobile não carrega ❌
 - Variáveis de debug na tela ficam todas "não iniciadas" ❌
 - Hook `useDynamicMenus` parece não executar ❌
@@ -11,18 +12,23 @@
 ## 🔍 Metodologia dos 5 Porquês Aplicada
 
 ### 1️⃣ **Primeiro Porquê: Por que as variáveis não são iniciadas?**
+
 **Resposta:** Hook `useDynamicMenus` pode não estar sendo executado ou está falhando silenciosamente.
 
 ### 2️⃣ **Segundo Porquê: Por que o hook não executa?**
+
 **Resposta:** Pode haver erro JavaScript não tratado que quebra a execução.
 
 ### 3️⃣ **Terceiro Porquê: Por que não há tratamento de erro?**
+
 **Resposta:** Hook original não tinha try-catch abrangente para capturar falhas críticas.
 
 ### 4️⃣ **Quarto Porquê: Por que não há fallback de emergência?**
+
 **Resposta:** Sistema dependia totalmente do hook funcionar corretamente.
 
 ### 5️⃣ **Quinto Porquê: Por que não há visibilidade do problema?**
+
 **Resposta:** Faltavam logs de debug suficientes para diagnosticar o problema.
 
 ## 🛠️ Soluções Implementadas
@@ -30,62 +36,65 @@
 ### 1. **Sistema de Debug Completo**
 
 #### **MenuDebugPanel.jsx** - NOVO
+
 ```jsx
 // Painel visual de debug no canto da tela
 export const MenuDebugPanel = () => {
-    const { menus, loading, error, isRoot, userInfo } = useDynamicMenus();
-    
-    return (
-        <div className="fixed top-4 right-4 bg-black text-white p-4 rounded">
-            <div>Loading: {loading ? 'TRUE' : 'FALSE'}</div>
-            <div>Menus: {menus?.length || 0} itens</div>
-            <div>Error: {error ? 'YES' : 'NO'}</div>
-            <div>Token: {localStorage.getItem('access_token') ? 'EXISTS' : 'MISSING'}</div>
-            {/* ... mais info debug */}
-        </div>
-    );
+  const { menus, loading, error, isRoot, userInfo } = useDynamicMenus();
+
+  return (
+    <div className="fixed top-4 right-4 bg-black text-white p-4 rounded">
+      <div>Loading: {loading ? "TRUE" : "FALSE"}</div>
+      <div>Menus: {menus?.length || 0} itens</div>
+      <div>Error: {error ? "YES" : "NO"}</div>
+      <div>
+        Token: {localStorage.getItem("access_token") ? "EXISTS" : "MISSING"}
+      </div>
+      {/* ... mais info debug */}
+    </div>
+  );
 };
 ```
 
 ### 2. **Hook Blindado com Try-Catch**
 
 #### **useDynamicMenus.jsx** - MODIFICADO
+
 ```javascript
 export const useDynamicMenus = () => {
-    try {
-        console.log('🔧 useDynamicMenus hook inicializado');
-        
-        // Todo o código do hook aqui...
-        
-        return {
-            menus,
-            loading,
-            error,
-            refreshMenus,
-            // ... resto das variáveis
-        };
-        
-    } catch (hookError) {
-        console.error('🔧 DEBUG: Erro crítico no hook:', hookError);
-        
-        // 🚨 FALLBACK DE EMERGÊNCIA
-        return {
-            menus: [
-                {
-                    id: 'emergency-1',
-                    name: 'Dashboard (Emergência)',
-                    url: '/admin',
-                    children: []
-                }
-            ],
-            loading: false,
-            error: `Erro crítico no hook: ${hookError.message}`,
-            refreshMenus: () => console.log('Hook falhou'),
-            isRoot: false,
-            userInfo: { emergency: true },
-            context: { emergency: true }
-        };
-    }
+  try {
+    console.log("🔧 useDynamicMenus hook inicializado");
+
+    // Todo o código do hook aqui...
+
+    return {
+      menus,
+      loading,
+      error,
+      refreshMenus,
+      // ... resto das variáveis
+    };
+  } catch (hookError) {
+    console.error("🔧 DEBUG: Erro crítico no hook:", hookError);
+
+    // 🚨 FALLBACK DE EMERGÊNCIA
+    return {
+      menus: [
+        {
+          id: "emergency-1",
+          name: "Dashboard (Emergência)",
+          url: "/admin",
+          children: [],
+        },
+      ],
+      loading: false,
+      error: `Erro crítico no hook: ${hookError.message}`,
+      refreshMenus: () => console.log("Hook falhou"),
+      isRoot: false,
+      userInfo: { emergency: true },
+      context: { emergency: true },
+    };
+  }
 };
 ```
 
@@ -93,16 +102,17 @@ export const useDynamicMenus = () => {
 
 ```javascript
 // Logs em cada etapa crítica
-console.log('🔧 DEBUG: useEffect executado');
-console.log('🔧 DEBUG: Token encontrado?', !!token);
-console.log('🔧 DEBUG: fetchMenus() iniciado');
-console.log('🔧 DEBUG: Tentando endpoint principal...');
-console.log('🔧 DEBUG: Endpoint funcionou:', response.status);
+console.log("🔧 DEBUG: useEffect executado");
+console.log("🔧 DEBUG: Token encontrado?", !!token);
+console.log("🔧 DEBUG: fetchMenus() iniciado");
+console.log("🔧 DEBUG: Tentando endpoint principal...");
+console.log("🔧 DEBUG: Endpoint funcionou:", response.status);
 ```
 
 ### 4. **Endpoint Debug Público Garantido**
 
 #### **debug_menus.py** - NOVO
+
 ```python
 @debug_router.get("/menus-public")
 async def get_debug_menus_public_simple():
@@ -122,7 +132,7 @@ async def get_debug_menus_public_simple():
 ```javascript
 // 1º Fallback: Endpoint debug público
 if (authError.response?.status === 401) {
-    response = await api.get('/api/v1/debug/menus-public');
+  response = await api.get("/api/v1/debug/menus-public");
 }
 
 // 2º Fallback: Menus estáticos
@@ -131,9 +141,9 @@ setMenus(fallbackMenus);
 
 // 3º Fallback: Emergência (se hook falhar completamente)
 return {
-    menus: [{ id: 'emergency-1', name: 'Dashboard (Emergência)' }],
-    loading: false,
-    error: 'Sistema de emergência ativo'
+  menus: [{ id: "emergency-1", name: "Dashboard (Emergência)" }],
+  loading: false,
+  error: "Sistema de emergência ativo",
 };
 ```
 
@@ -147,27 +157,32 @@ return {
 4. **Teste diferentes cenários:**
 
 #### Cenário 1: Sem Token
+
 - **Limpar localStorage:** `localStorage.clear()`
 - **Esperado:** Debug panel mostra "Token: MISSING" + menus de fallback
 
 #### Cenário 2: Hook Funcionando
+
 - **Esperado:** Debug panel mostra "Loading: FALSE" + menus carregados
 
 #### Cenário 3: Hook Falhando
+
 - **Esperado:** Debug panel mostra menus de emergência + erro no console
 
 ## 📊 Análise dos Resultados
 
 ### ✅ **SUCESSO - Variáveis Iniciadas:**
+
 ```
 Debug Panel:
    Loading: FALSE
-   Menus: 2+ itens  
+   Menus: 2+ itens
    Error: NO ou error específico
    Token: EXISTS ou MISSING
 ```
 
 ### ❌ **FALHA - Variáveis NÃO Iniciadas:**
+
 ```
 Debug Panel não aparece OU:
    Loading: TRUE (por mais de 5 segundos)
@@ -178,6 +193,7 @@ Debug Panel não aparece OU:
 ## 🎯 Diagnóstico Baseado no Debug Panel
 
 ### Se Debug Panel **NÃO APARECE:**
+
 ```
 🔍 CAUSA: Erro crítico impede renderização
 🛠️ SOLUÇÃO: Verificar console para erro JavaScript
@@ -185,6 +201,7 @@ Debug Panel não aparece OU:
 ```
 
 ### Se Debug Panel **APARECE mas Loading: TRUE:**
+
 ```
 🔍 CAUSA: Hook executa mas trava no carregamento
 🛠️ SOLUÇÃO: API não responde ou timeout
@@ -192,6 +209,7 @@ Debug Panel não aparece OU:
 ```
 
 ### Se Debug Panel **APARECE com Menus: 0:**
+
 ```
 🔍 CAUSA: Hook funciona mas não consegue carregar dados
 🛠️ SOLUÇÃO: Problemas na API ou fallbacks
@@ -201,14 +219,16 @@ Debug Panel não aparece OU:
 ## 🚀 Resultado Final
 
 ### **ANTES da Correção:**
+
 ```
 ❌ Variáveis não iniciadas
-❌ Nenhuma visibilidade do problema  
+❌ Nenhuma visibilidade do problema
 ❌ Sistema falha silenciosamente
 ❌ Usuário vê tela em branco
 ```
 
 ### **DEPOIS da Correção:**
+
 ```
 ✅ Debug panel sempre visível
 ✅ Logs detalhados no console
@@ -220,16 +240,19 @@ Debug Panel não aparece OU:
 ## 📋 Arquivos Modificados
 
 1. **`frontend/src/hooks/useDynamicMenus.jsx`** - PROTEGIDO
+
    - Try-catch abrangente
-   - Logs de debug extensivos  
+   - Logs de debug extensivos
    - Fallback de emergência
 
 2. **`frontend/src/components/debug/MenuDebugPanel.jsx`** - NOVO
+
    - Painel visual de debug
    - Mostra todas as variáveis em tempo real
    - Botão de refresh manual
 
 3. **`frontend/src/components/layout/AdminLayout.tsx`** - MODIFICADO
+
    - Import do MenuDebugPanel
    - Renderização condicional (apenas dev/localhost)
 

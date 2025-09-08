@@ -42,7 +42,7 @@ class PersonCreatePF(BaseModel):
     person_type: PersonType = Field(PersonType.PF, description="Tipo de pessoa (sempre PF)")
     
     # Metadados opcionais
-    notes: Optional[str] = Field(None, max_length=2000, description="Observações")
+    description: Optional[str] = Field(None, max_length=2000, description="Observações/Descrição")
     
     @validator('tax_id')
     def validate_cpf(cls, v):
@@ -75,13 +75,13 @@ class PersonDetailed(BaseModel):
     id: int
     name: str
     tax_id: str
-    birth_date: Optional[date]
-    gender: Optional[str]
+    birth_date: Optional[date] = None
+    gender: Optional[str] = None
     person_type: PersonType
     status: PersonStatus
-    notes: Optional[str]
-    created_at: Optional[datetime]
-    updated_at: Optional[datetime]
+    description: Optional[str] = None  # Campo que existe no modelo People
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
     
     model_config = ConfigDict(from_attributes=True)
 

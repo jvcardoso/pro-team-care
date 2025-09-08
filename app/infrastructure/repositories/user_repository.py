@@ -48,6 +48,28 @@ class UserRepository(UserRepositoryInterface):
         """Verify password against hash"""
         return self.pwd_context.verify(plain_password, hashed_password)
 
+    def _entity_to_domain_user(self, user_entity: UserEntity) -> User:
+        """Convert UserEntity to User domain entity"""
+        return User(
+            id=user_entity.id,
+            person_id=user_entity.person_id,
+            email_address=user_entity.email_address,
+            password=user_entity.password,
+            is_active=user_entity.is_active,
+            is_system_admin=user_entity.is_system_admin,
+            created_at=self._to_naive_datetime(user_entity.created_at),
+            updated_at=self._to_naive_datetime(user_entity.updated_at),
+            email_verified_at=self._to_naive_datetime(user_entity.email_verified_at),
+            remember_token=user_entity.remember_token,
+            preferences=user_entity.preferences,
+            notification_settings=user_entity.notification_settings,
+            two_factor_secret=user_entity.two_factor_secret,
+            two_factor_recovery_codes=user_entity.two_factor_recovery_codes,
+            last_login_at=self._to_naive_datetime(user_entity.last_login_at),
+            password_changed_at=self._to_naive_datetime(user_entity.password_changed_at),
+            deleted_at=self._to_naive_datetime(user_entity.deleted_at)
+        )
+
     async def create(self, user_data: UserCreate) -> UserDetailed:
         """
         Cria usuário completo com pessoa e relacionamentos
@@ -171,7 +193,7 @@ class UserRepository(UserRepositoryInterface):
             self.logger.error("Error fetching user by ID", user_id=user_id, error=str(e))
             raise
 
-    async def get_by_email(self, email: str) -> Optional[UserDetailed]:
+    async def get_by_email(self, email: str) -> Optional[User]:
         """Buscar usuário por email"""
         try:
             query = (
@@ -184,15 +206,15 @@ class UserRepository(UserRepositoryInterface):
                     )
                 )
             )
-            
+
             result = await self.db.execute(query)
             user_entity = result.scalar_one_or_none()
-            
+
             if not user_entity:
                 return None
-            
-            return await self._entity_to_detailed_schema(user_entity)
-            
+
+            return self._entity_to_domain_user(user_entity)
+
         except Exception as e:
             self.logger.error("Error fetching user by email", email=email, error=str(e))
             raise
@@ -222,7 +244,7 @@ class UserRepository(UserRepositoryInterface):
                 .select_from(
                     UserEntity.__table__
                     .join(People, UserEntity.person_id == People.id)
-                    .outerjoin(Phone, People.id == Phone.person_id)
+                    .outerjoin(Phone, People.id == Phone.phoneable_id)
                 )
                 .where(UserEntity.deleted_at.is_(None))
                 .group_by(
@@ -466,7 +488,6 @@ class UserRepository(UserRepositoryInterface):
                 'gender': user_entity.person.gender,
                 'person_type': user_entity.person.person_type,
                 'status': user_entity.person.status,
-                'notes': user_entity.person.notes,
                 'created_at': self._to_naive_datetime(user_entity.person.created_at),
                 'updated_at': self._to_naive_datetime(user_entity.person.updated_at)
             }
@@ -484,10 +505,10 @@ class UserRepository(UserRepositoryInterface):
                     user_data['phones'].append({
                         'id': phone.id,
                         'number': phone.number,
-                        'phone_type': phone.phone_type,
+                        'phone_type': phone.type,
                         'line_type': phone.line_type,
                         'is_whatsapp': phone.is_whatsapp or False,
-                        'is_primary': phone.is_primary or False
+                        'is_primary': phone.is_principal or False
                     })
             
             if hasattr(user_entity.person, 'emails') and user_entity.person.emails:
@@ -495,9 +516,9 @@ class UserRepository(UserRepositoryInterface):
                     user_data['emails'].append({
                         'id': email.id,
                         'email_address': email.email_address,
-                        'email_type': email.email_type,
-                        'is_primary': email.is_primary or False,
-                        'is_verified': email.is_verified or False
+                        'email_type': email.type,
+                        'is_primary': email.is_principal or False,
+                        'is_verified': email.verified_at is not None
                     })
             
             if hasattr(user_entity.person, 'addresses') and user_entity.person.addresses:
@@ -506,13 +527,14 @@ class UserRepository(UserRepositoryInterface):
                         'id': address.id,
                         'street': address.street,
                         'number': address.number,
-                        'complement': address.complement,
+                        'complement': address.details,
                         'neighborhood': address.neighborhood,
                         'city': address.city,
                         'state': address.state,
                         'country': address.country,
-                        'postal_code': address.postal_code,
-                        'address_type': address.address_type
+                        'postal_code': address.zip_code,
+                        'address_type': address.type,
+                        'is_primary': address.is_principal or False
                     })
             
             return UserDetailed(**user_data)

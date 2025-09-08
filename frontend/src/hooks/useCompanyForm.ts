@@ -638,20 +638,24 @@ export const useCompanyForm = ({ companyId, onSave }: UseCompanyFormProps) => {
         return;
       }
 
-       // Validate email formats
-       const invalidEmails = cleanedData.emails.filter(
-         (email) => !validateEmail(email.email_address)
-       );
+      // Validate email formats
+      const invalidEmails = cleanedData.emails.filter(
+        (email) => !validateEmail(email.email_address)
+      );
 
-       if (invalidEmails.length > 0) {
-         setError(`E-mail(s) inválido(s): ${invalidEmails.map(e => e.email_address).join(", ")}`);
-         return;
-       }
+      if (invalidEmails.length > 0) {
+        setError(
+          `E-mail(s) inválido(s): ${invalidEmails
+            .map((e) => e.email_address)
+            .join(", ")}`
+        );
+        return;
+      }
 
-       if (cleanedData.emails.length === 0) {
-         setError("Pelo menos um email deve ser válido");
-         return;
-       }
+      if (cleanedData.emails.length === 0) {
+        setError("Pelo menos um email deve ser válido");
+        return;
+      }
 
       if (cleanedData.addresses.length === 0) {
         setError("Pelo menos um endereço deve ser válido");

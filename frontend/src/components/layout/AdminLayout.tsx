@@ -4,6 +4,7 @@ import Header from "./Header";
 import Sidebar from "./Sidebar";
 import DynamicSidebar from "../navigation/DynamicSidebar";
 import Footer from "./Footer";
+import ImpersonationBanner from "../security/ImpersonationBanner";
 
 const AdminLayout: React.FC = React.memo(() => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
@@ -19,14 +20,15 @@ const AdminLayout: React.FC = React.memo(() => {
   useEffect(() => {
     const checkAuth = async (): Promise<void> => {
       try {
-        // 🔧 DEVELOPMENT: Bypass authentication for testing
-        if (import.meta.env.DEV) {
-          console.info("🔧 Development mode: bypassing authentication");
-          setIsAuthenticated(true);
-          setIsLoading(false);
+        // Primeiro, verificar se existe token no localStorage
+        const token = localStorage.getItem("access_token");
+        if (!token) {
+          console.info("Token não encontrado - redirecionando para login");
+          navigate("/login");
           return;
         }
 
+        // Se tem token, tentar validar com backend
         const { authService } = await import("../../services/api");
         const validation = await authService.validateToken();
 
@@ -96,7 +98,10 @@ const AdminLayout: React.FC = React.memo(() => {
       if (event && event.target) {
         const target = event.target as Element;
         // Don't close if clicking on menu items or their children
-        if (target.closest('.menu-item-container') || target.closest('[data-testid="menu-item"]')) {
+        if (
+          target.closest(".menu-item-container") ||
+          target.closest('[data-testid="menu-item"]')
+        ) {
           return;
         }
       }
@@ -124,7 +129,7 @@ const AdminLayout: React.FC = React.memo(() => {
       const timeoutId = setTimeout(() => {
         setSidebarOpen(false);
       }, 100);
-      
+
       return () => clearTimeout(timeoutId);
     }
   }, [location.pathname]);
@@ -164,34 +169,38 @@ const AdminLayout: React.FC = React.memo(() => {
 
   // Toggle para desenvolvimento: alternar entre menus dinâmicos e estáticos
   const toggleMenuType = (): void => {
-    setUseDynamicMenus(prev => {
+    setUseDynamicMenus((prev) => {
       const newValue = !prev;
-      console.log(`🔄 Alternando menus: ${newValue ? 'Dinâmicos' : 'Estáticos'}`);
-      
+      console.log(
+        `🔄 Alternando menus: ${newValue ? "Dinâmicos" : "Estáticos"}`
+      );
+
       // Salvar preferência localmente
-      localStorage.setItem('useDynamicMenus', newValue.toString());
-      
+      localStorage.setItem("useDynamicMenus", newValue.toString());
+
       return newValue;
     });
   };
 
   // Toggle para desenvolvimento: alternar entre usuário normal e ROOT
   const toggleUserType = (): void => {
-    const isRoot = localStorage.getItem('testAsRoot') === 'true';
+    const isRoot = localStorage.getItem("testAsRoot") === "true";
     const newValue = !isRoot;
-    
-    localStorage.setItem('testAsRoot', newValue.toString());
-    console.log(`🔄 Alternando usuário: ${newValue ? 'ROOT (ID: 2)' : 'Normal (ID: 1)'}`);
-    
+
+    localStorage.setItem("testAsRoot", newValue.toString());
+    console.log(
+      `🔄 Alternando usuário: ${newValue ? "ROOT (ID: 2)" : "Normal (ID: 1)"}`
+    );
+
     // Recarregar página para aplicar mudança
     window.location.reload();
   };
 
   // Carregar preferência salva
   useEffect(() => {
-    const saved = localStorage.getItem('useDynamicMenus');
+    const saved = localStorage.getItem("useDynamicMenus");
     if (saved !== null) {
-      setUseDynamicMenus(saved === 'true');
+      setUseDynamicMenus(saved === "true");
     }
   }, []);
 
@@ -286,16 +295,23 @@ const AdminLayout: React.FC = React.memo(() => {
           sidebarOpen={sidebarOpen}
         />
 
+        {/* Impersonation Banner */}
+        <ImpersonationBanner />
+
         {/* Development Controls - Only in development */}
         {import.meta.env.DEV && (
           <div className="bg-yellow-100 border-b border-yellow-200 px-4 py-2">
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center space-x-4">
                 <span className="text-yellow-800">
-                  🔧 Menus: {useDynamicMenus ? 'Dinâmicos (API)' : 'Estáticos (Mock)'}
+                  🔧 Menus:{" "}
+                  {useDynamicMenus ? "Dinâmicos (API)" : "Estáticos (Mock)"}
                 </span>
                 <span className="text-yellow-800">
-                  👤 Usuário: {localStorage.getItem('testAsRoot') === 'true' ? 'ROOT (ID: 2)' : 'Normal (ID: 1)'}
+                  👤 Usuário:{" "}
+                  {localStorage.getItem("testAsRoot") === "true"
+                    ? "ROOT (ID: 2)"
+                    : "Normal (ID: 1)"}
                 </span>
               </div>
               <div className="flex items-center space-x-2">
@@ -335,7 +351,6 @@ const AdminLayout: React.FC = React.memo(() => {
         {/* Footer */}
         <Footer />
       </div>
-      
     </div>
   );
 });

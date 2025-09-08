@@ -19,6 +19,7 @@ from app.infrastructure.services.auth_service import AuthService
 router = APIRouter()
 
 
+
 @router.post(
     "/login", 
     response_model=Token,
@@ -77,19 +78,36 @@ async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_db)
 ):
+    # Directly use repository and auth functions to avoid circular imports
+    from app.infrastructure.auth import verify_password, create_access_token
+    
     user_repository = UserRepository(db)
-    auth_service = AuthService()
-    auth_use_case = AuthUseCase(user_repository, auth_service)
-
-    user = await auth_use_case.authenticate_user(form_data.username, form_data.password)
+    
+    # Get user by email
+    user = await user_repository.get_by_email(form_data.username)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
-    return await auth_use_case.create_access_token_for_user(user)
+    
+    # Verify password
+    if not verify_password(form_data.password, user.password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Create access token
+    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
+    access_token = create_access_token(
+        data={"sub": user.email_address}, 
+        expires_delta=access_token_expires
+    )
+    
+    return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post(
     "/register", 
@@ -182,4 +200,4 @@ async def read_users_me(current_user: User = Depends(get_current_active_user)):
 
 @router.get("/users/me/items/")
 async def read_own_items(current_user: User = Depends(get_current_active_user)):
-    return [{"item_id": "Foo", "owner": current_user.email}]
+    return [{"item_id": "Foo", "owner": current_user.email_address}]

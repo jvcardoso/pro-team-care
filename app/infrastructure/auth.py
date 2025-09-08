@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -69,23 +69,18 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
     )
     try:
         payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
-        email: str = payload.get("sub")
-        if email is None:
+        email = payload.get("sub")
+        if email is None or not isinstance(email, str):
             raise credentials_exception
         token_data = TokenData(email=email)
     except JWTError:
         raise credentials_exception
 
-    # Query the database for the user
+    # Query the database for the user DIRETAMENTE - evita importação circular
     from app.infrastructure.repositories.user_repository import UserRepository
-    from app.application.use_cases.auth_use_case import AuthUseCase
-    from app.infrastructure.services.auth_service import AuthService
 
     user_repository = UserRepository(db)
-    auth_service = AuthService()
-    auth_use_case = AuthUseCase(user_repository, auth_service)
-
-    user = await auth_use_case.get_user_by_email(token_data.email)
+    user = await user_repository.get_by_email(token_data.email)
     if user is None:
         raise credentials_exception
     return user
@@ -96,9 +91,41 @@ async def get_current_active_user(current_user = Depends(get_current_user)):
     return current_user
 
 async def get_current_superuser(current_user = Depends(get_current_user)):
-    if not current_user.is_superuser:
+    if not current_user.is_system_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
     return current_user
+
+async def get_current_user_skip_options(
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Versão modificada de get_current_user que ignora requisições OPTIONS
+    para resolver problemas de CORS preflight
+    """
+    # Skip authentication for OPTIONS requests (CORS preflight)
+    if request.method == "OPTIONS":
+        return None
+
+    # Para outros métodos, obter token do header Authorization
+    auth_header = request.headers.get("authorization", "")
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token not provided",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    token = auth_header[7:]  # Remove 'Bearer '
+
+    if not token or token.strip() == "":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token not provided",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return await get_current_user(token, db)

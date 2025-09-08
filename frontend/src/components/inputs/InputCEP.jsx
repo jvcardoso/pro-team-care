@@ -320,8 +320,6 @@ const InputCEP = ({
       {/* Mensagens de erro/ajuda */}
       {displayError && <p className="text-sm text-red-600">{displayError}</p>}
 
-
-
       {!displayError &&
         !addressData &&
         formattedValue &&

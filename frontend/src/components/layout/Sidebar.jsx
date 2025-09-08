@@ -29,6 +29,7 @@ import {
   ChevronDown,
   ChevronRight,
   Bell,
+  Database,
 } from "lucide-react";
 
 const Sidebar = ({ collapsed }) => {
@@ -220,6 +221,14 @@ const Sidebar = ({ collapsed }) => {
           path: "/admin/404-demo",
           icon: <FileX className="h-4 w-4" />,
         },
+        {
+          label: "DB Admin",
+          path: "#",
+          icon: <Database className="h-4 w-4" />,
+          badge: { text: "New", color: "bg-green-500" },
+          onClick: () => window.open("/simple_db_admin.html", "_blank"),
+          external: true,
+        },
       ],
     },
   ];
@@ -233,7 +242,10 @@ const Sidebar = ({ collapsed }) => {
   };
 
   return (
-    <div className="h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col" data-testid="static-sidebar">
+    <div
+      className="h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col"
+      data-testid="static-sidebar"
+    >
       {/* Sidebar Header */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         {!collapsed && (

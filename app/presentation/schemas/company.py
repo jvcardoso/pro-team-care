@@ -114,8 +114,8 @@ class Phone(PhoneBase):
     contact_attempts_count: int = 0
     verified_at: Optional[datetime] = None
     verification_method: Optional[str] = None
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -142,8 +142,8 @@ class EmailUpdate(BaseModel):
 class Email(EmailBase):
     id: int
     verified_at: Optional[datetime] = None
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -156,7 +156,7 @@ class AddressBase(BaseModel):
     neighborhood: Optional[str] = Field(None, max_length=100)
     city: str = Field(..., max_length=100)
     state: str = Field(..., max_length=2)
-    zip_code: str = Field(..., max_length=10)
+    zip_code: Optional[str] = Field(None, max_length=10)
     country: str = Field(default="BR", max_length=2)
     type: AddressType = AddressType.COMMERCIAL
     is_principal: bool = False
@@ -235,8 +235,8 @@ class Address(AddressBase):
     access_notes: Optional[str] = None
     quality_score: Optional[int] = Field(None, ge=0, le=100)
     api_data: Optional[Dict] = None
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 

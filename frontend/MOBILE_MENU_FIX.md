@@ -29,21 +29,21 @@ Em dispositivos móveis, os menus dinâmicos apresentavam o seguinte comportamen
 
 ```javascript
 const handleMobileToggle = (e) => {
-    if (hasChildren && !collapsed) {
-        e.preventDefault();
-        e.stopPropagation();
+  if (hasChildren && !collapsed) {
+    e.preventDefault();
+    e.stopPropagation();
 
-        // Usar setTimeout para evitar conflitos de re-renderização
-        setTimeout(() => {
-            setIsExpanded(prev => {
-                const newExpanded = !prev;
-                if (onToggle) {
-                    onToggle(menu.id, newExpanded);
-                }
-                return newExpanded;
-            });
-        }, 0);
-    }
+    // Usar setTimeout para evitar conflitos de re-renderização
+    setTimeout(() => {
+      setIsExpanded((prev) => {
+        const newExpanded = !prev;
+        if (onToggle) {
+          onToggle(menu.id, newExpanded);
+        }
+        return newExpanded;
+      });
+    }, 0);
+  }
 };
 ```
 
@@ -51,7 +51,7 @@ const handleMobileToggle = (e) => {
 
 ```javascript
 // Detectar se estamos em um dispositivo móvel/touch
-const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
 ```
 
 ### 3. Eventos Touch Adequados
@@ -74,10 +74,10 @@ onTouchEnd={(e) => {
 
 ```javascript
 useEffect(() => {
-    // Se a sidebar foi colapsada, recolher todos os submenus
-    if (collapsed && isExpanded) {
-        setIsExpanded(false);
-    }
+  // Se a sidebar foi colapsada, recolher todos os submenus
+  if (collapsed && isExpanded) {
+    setIsExpanded(false);
+  }
 }, [collapsed, isExpanded]);
 ```
 
@@ -85,10 +85,10 @@ useEffect(() => {
 
 ```javascript
 useEffect(() => {
-    if (isMobile) {
-        // Em mobile, sempre manter sidebarCollapsed como true
-        setSidebarCollapsed(true);
-    }
+  if (isMobile) {
+    // Em mobile, sempre manter sidebarCollapsed como true
+    setSidebarCollapsed(true);
+  }
 }, [isMobile]);
 ```
 
@@ -150,11 +150,11 @@ Se o problema persistir, verifique:
 O componente agora inclui logs detalhados:
 
 ```javascript
-console.log('📊 Menu clicked:', {
-    menuId: menu.id,
-    menuName: menu.name,
-    url: menu.url,
-    level: level
+console.log("📊 Menu clicked:", {
+  menuId: menu.id,
+  menuName: menu.name,
+  url: menu.url,
+  level: level,
 });
 ```
 

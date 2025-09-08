@@ -3,10 +3,9 @@
  * 🔄 Padronização de timeouts, headers e configurações
  */
 
-// 🌐 Base URLs - usar proxy do Vite em desenvolvimento
-export const API_BASE_URL = import.meta.env.DEV
-  ? ""
-  : import.meta.env.VITE_API_URL || "http://192.168.11.83:8000";
+// 🌐 Base URLs - usar URL relativa quando em desenvolvimento para usar proxy do Vite
+export const API_BASE_URL =
+  import.meta.env.DEV ? "" : (import.meta.env.VITE_API_URL || "http://192.168.11.83:8000");
 
 // ⏱️ Timeouts padronizados (em milliseconds)
 export const HTTP_TIMEOUTS = {

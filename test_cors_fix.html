@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste CORS - Pro Team Care</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Teste de CORS - Pro Team Care</h1>
+
+    <button onclick="testOptions()">Testar OPTIONS (Preflight)</button>
+    <button onclick="testLogin()">Testar Login (POST)</button>
+    <button onclick="clearResults()">Limpar Resultados</button>
+
+    <div id="results"></div>
+
+    <script>
+        const API_URL = 'http://192.168.11.83:8000/api/v1/auth/login';
+
+        function addResult(message, isSuccess = true) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${isSuccess ? 'success' : 'error'}`;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            results.appendChild(div);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testOptions() {
+            try {
+                addResult('Iniciando teste OPTIONS...');
+
+                const response = await fetch(API_URL, {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Origin': 'http://192.168.11.83:3000',
+                        'Access-Control-Request-Method': 'POST',
+                        'Access-Control-Request-Headers': 'Content-Type'
+                    }
+                });
+
+                addResult(`OPTIONS Response: ${response.status} ${response.statusText}`, response.ok);
+
+                // Verificar headers CORS
+                const allowOrigin = response.headers.get('access-control-allow-origin');
+                const allowMethods = response.headers.get('access-control-allow-methods');
+                const allowCredentials = response.headers.get('access-control-allow-credentials');
+
+                addResult(`CORS Origin: ${allowOrigin}`);
+                addResult(`CORS Methods: ${allowMethods}`);
+                addResult(`CORS Credentials: ${allowCredentials}`);
+
+            } catch (error) {
+                addResult(`Erro no teste OPTIONS: ${error.message}`, false);
+            }
+        }
+
+        async function testLogin() {
+            try {
+                addResult('Iniciando teste de login...');
+
+                const formData = new URLSearchParams();
+                formData.append('username', 'test@example.com');
+                formData.append('password', 'test123');
+
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Origin': 'http://192.168.11.83:3000'
+                    },
+                    body: formData
+                });
+
+                addResult(`Login Response: ${response.status} ${response.statusText}`, response.ok);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult(`Login Success: ${JSON.stringify(data)}`);
+                } else {
+                    const error = await response.text();
+                    addResult(`Login Error: ${error}`);
+                }
+
+            } catch (error) {
+                addResult(`Erro no teste de login: ${error.message}`, false);
+            }
+        }
+    </script>
+</body>
+</html>

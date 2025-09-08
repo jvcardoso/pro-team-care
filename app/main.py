@@ -80,6 +80,14 @@ app = FastAPI(
             "description": "Consulta e enriquecimento de dados via CNPJ"
         },
         {
+            "name": "Hierarchical Users",
+            "description": "Sistema hierárquico de usuários com controle de acesso avançado"
+        },
+        {
+            "name": "Secure Sessions",
+            "description": "Sistema de sessões seguras com troca de perfil e personificação"
+        },
+        {
             "name": "Development",
             "description": "Endpoints para desenvolvimento e debugging"
         },
@@ -95,15 +103,7 @@ from app.infrastructure.security_middleware import SecurityHeadersMiddleware
 from app.infrastructure.rate_limiting import setup_rate_limiting
 from app.infrastructure.monitoring.middleware import setup_monitoring_middleware
 
-app.add_middleware(SecurityHeadersMiddleware)
-
-# Setup rate limiting
-rate_limiter = setup_rate_limiting(app)
-
-# Setup monitoring middleware
-setup_monitoring_middleware(app)
-
-# CORS configuration with validation
+# CORS configuration with validation - MUST be first
 def get_cors_origins():
     """Get and validate CORS origins"""
     origins = settings.cors_origins_list
@@ -117,6 +117,14 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization", "X-Requested-With"],  # More restrictive
 )
+
+app.add_middleware(SecurityHeadersMiddleware)
+
+# Setup rate limiting
+rate_limiter = setup_rate_limiting(app)
+
+# Setup monitoring middleware
+setup_monitoring_middleware(app)
 
 app.add_middleware(
     TrustedHostMiddleware,
@@ -140,20 +148,30 @@ app.include_router(api_router, prefix="/api/v1")
 
 # Static files configuration for frontend
 frontend_dist_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")
+
+# Specific routes (must come before catch-all)
+@app.get("/simple_db_admin.html")
+async def serve_db_admin():
+    """Serve the database admin HTML page"""
+    db_admin_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "simple_db_admin.html")
+    if os.path.exists(db_admin_path):
+        return FileResponse(db_admin_path)
+    raise HTTPException(status_code=404, detail="Database admin page not found")
+
 if os.path.exists(frontend_dist_path):
     # Serve static assets (CSS, JS, images, etc.)
     app.mount("/static", StaticFiles(directory=frontend_dist_path), name="static")
-    
+
     # Serve frontend index.html for SPA routing
     @app.get("/")
     @app.get("/{path:path}")
     async def serve_frontend(path: str = ""):
         """Serve React frontend for all non-API routes"""
         # Skip API routes
-        if (path.startswith("api/") or path.startswith("docs") or 
+        if (path.startswith("api/") or path.startswith("docs") or
             path.startswith("redoc") or path.startswith("openapi.json")):
             raise HTTPException(status_code=404, detail="Not found")
-        
+
         index_path = os.path.join(frontend_dist_path, "index.html")
         if os.path.exists(index_path):
             return FileResponse(index_path)

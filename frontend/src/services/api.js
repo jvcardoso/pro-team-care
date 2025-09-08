@@ -2,6 +2,7 @@ import axios from "axios";
 import axiosRetry from "axios-retry";
 import { createAxiosConfig, RETRY_CONFIG } from "../config/http.ts";
 import { createCacheInterceptor, httpCache } from "./httpCache.ts";
+import secureSessionService from "./secureSessionService";
 
 // 🔄 Configuração HTTP padronizada
 const api = axios.create(createAxiosConfig("main"));
@@ -31,121 +32,7 @@ api.interceptors.request.use(
   }
 );
 
-// 🔧 DEVELOPMENT: Mock interceptor for menus API
-api.interceptors.request.use(
-  (config) => {
-    // Mock menus response for development
-    if (import.meta.env.DEV && config.url?.includes('/api/v1/menus/user/')) {
-      console.info("🔧 Development mode: mocking menus API response");
-
-      // Simulate network delay
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve({
-            ...config,
-            mockResponse: {
-              data: {
-                menus: [
-                  {
-                    id: 1,
-                    parent_id: null,
-                    name: "Dashboard",
-                    slug: "dashboard",
-                    url: "/admin/dashboard",
-                    icon: "LayoutDashboard",
-                    sort_order: 1,
-                    is_visible: true,
-                    permission_name: "view_dashboard",
-                    children: []
-                  },
-                  {
-                    id: 2,
-                    parent_id: null,
-                    name: "Pacientes",
-                    slug: "pacientes",
-                    url: "/admin/pacientes",
-                    icon: "Users",
-                    sort_order: 2,
-                    is_visible: true,
-                    permission_name: "view_patients",
-                    children: []
-                  },
-                  {
-                    id: 3,
-                    parent_id: null,
-                    name: "Profissionais",
-                    slug: "profissionais",
-                    url: "/admin/profissionais",
-                    icon: "UserCheck",
-                    sort_order: 3,
-                    is_visible: true,
-                    permission_name: "view_professionals",
-                    children: []
-                  },
-                  {
-                    id: 4,
-                    parent_id: null,
-                    name: "Consultas",
-                    slug: "consultas",
-                    url: "/admin/consultas",
-                    icon: "Calendar",
-                    sort_order: 4,
-                    is_visible: true,
-                    permission_name: "view_appointments",
-                    children: []
-                  },
-                  {
-                    id: 5,
-                    parent_id: null,
-                    name: "Empresas",
-                    slug: "empresas",
-                    url: "/admin/empresas",
-                    icon: "Building",
-                    sort_order: 5,
-                    is_visible: true,
-                    permission_name: "view_companies",
-                    children: []
-                  },
-                  {
-                    id: 6,
-                    parent_id: null,
-                    name: "Sistema",
-                    slug: "sistema",
-                    url: null,
-                    icon: "Settings",
-                    sort_order: 6,
-                    is_visible: true,
-                    permission_name: "system_admin",
-                    children: [
-                      {
-                        id: 7,
-                        parent_id: 6,
-                        name: "Menus",
-                        slug: "menus",
-                        url: "/admin/menus",
-                        icon: "Menu",
-                        sort_order: 1,
-                        is_visible: true,
-                        permission_name: "manage_menus",
-                        children: []
-                      }
-                    ]
-                  }
-                ]
-              },
-              status: 200,
-              statusText: "OK",
-              headers: {},
-              config
-            }
-          });
-        }, 500); // 500ms delay
-      });
-    }
-
-    return config;
-  }
-);
+// ✅ Mock interceptor removido para permitir requests reais ao backend
 
 // Interceptor para tratar respostas e erros
 api.interceptors.response.use(
@@ -153,10 +40,7 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    // Handle mock responses
-    if (error.config?.mockResponse) {
-      return Promise.resolve(error.config.mockResponse);
-    }
+    // ✅ Mock response handling removido
 
     // Log seguro para debug (sem dados sensíveis)
     const isDevelopment =
@@ -342,5 +226,87 @@ export const companiesService = {
   },
 };
 
-export { api };
+export const usersService = {
+  // Listar usuários com paginação e filtros
+  getUsers: async (params = {}) => {
+    const response = await api.get("/api/v1/users/", { params });
+    return response.data;
+  },
+
+  // Contar total de usuários
+  getUsersCount: async (params = {}) => {
+    const response = await api.get("/api/v1/users/count", { params });
+    return response.data;
+  },
+
+  // Obter usuário por ID
+  getUser: async (id) => {
+    const response = await api.get(`/api/v1/users/${id}`);
+    return response.data;
+  },
+
+  // Obter usuário por email
+  getUserByEmail: async (email) => {
+    const response = await api.get(`/api/v1/users/email/${email}`);
+    return response.data;
+  },
+
+  // Criar novo usuário
+  createUser: async (userData) => {
+    const response = await api.post("/api/v1/users/", userData);
+    // Invalidar cache de usuários após criação
+    httpCache.invalidatePattern("/api/v1/users");
+    return response.data;
+  },
+
+  // Atualizar usuário
+  updateUser: async (id, userData) => {
+    const response = await api.put(`/api/v1/users/${id}`, userData);
+    // Invalidar cache específico do usuário e listagem geral
+    httpCache.invalidatePattern("/api/v1/users");
+    httpCache.delete(`/api/v1/users/${id}`);
+    return response.data;
+  },
+
+  // Deletar usuário (soft delete) - DEPRECATED: usar toggleUserStatus
+  deleteUser: async (id) => {
+    const response = await api.delete(`/api/v1/users/${id}`);
+    // Invalidar cache específico do usuário e listagem geral
+    httpCache.invalidatePattern("/api/v1/users");
+    httpCache.delete(`/api/v1/users/${id}`);
+    return response.data;
+  },
+
+  // Ativar/Inativar usuário
+  toggleUserStatus: async (id, isActive) => {
+    const response = await api.patch(`/api/v1/users/${id}/status`, { 
+      is_active: isActive 
+    });
+    // Invalidar cache específico do usuário e listagem geral
+    httpCache.invalidatePattern("/api/v1/users");
+    httpCache.delete(`/api/v1/users/${id}`);
+    return response.data;
+  },
+
+  // Alterar senha do usuário
+  changePassword: async (id, passwordData) => {
+    const response = await api.patch(`/api/v1/users/${id}/password`, passwordData);
+    return response.data;
+  },
+
+  // Obter roles do usuário
+  getUserRoles: async (id) => {
+    const response = await api.get(`/api/v1/users/${id}/roles`);
+    return response.data;
+  },
+
+  // Atualizar roles do usuário
+  updateUserRoles: async (id, roles) => {
+    const response = await api.put(`/api/v1/users/${id}/roles`, { roles });
+    httpCache.invalidatePattern("/api/v1/users");
+    return response.data;
+  },
+};
+
+export { api, secureSessionService };
 export default api;

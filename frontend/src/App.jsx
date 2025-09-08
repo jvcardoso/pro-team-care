@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AppErrorBoundary } from "./components/error";
@@ -10,8 +10,21 @@ import ProfissionaisPage from "./pages/ProfissionaisPage";
 import ConsultasPage from "./pages/ConsultasPage";
 import EmpresasPage from "./pages/EmpresasPage";
 import MenusPage from "./pages/MenusPage";
+import UsersPage from "./pages/UsersPage";
+import secureSessionService from "./services/secureSessionService";
 
 function App() {
+  // Initialize secure session service on app start
+  useEffect(() => {
+    // Initialize security service if user is authenticated
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      secureSessionService.initialize();
+      // Make service available globally for debugging
+      window.secureSessionService = secureSessionService;
+    }
+  }, []);
+
   return (
     <AppErrorBoundary>
       <ThemeProvider>
@@ -32,6 +45,7 @@ function App() {
               <Route path="consultas" element={<ConsultasPage />} />
               <Route path="empresas" element={<EmpresasPage />} />
               <Route path="menus" element={<MenusPage />} />
+              <Route path="usuarios" element={<UsersPage />} />
             </Route>
 
             {/* 404 Page */}
