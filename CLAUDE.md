@@ -75,6 +75,8 @@ O projeto segue arquitetura hexagonal (Clean Architecture) com separação clara
 ### Database Configuration
 - PostgreSQL remoto: `192.168.11.62:5432`
 - Database: `pro_team_care_11`
+- Username: `postgres`
+- Password: `Jvc@1702`
 - Schema: `master`
 - Conexão assíncrona via SQLAlchemy + asyncpg
 
@@ -119,13 +121,28 @@ O projeto segue arquitetura hexagonal (Clean Architecture) com separação clara
 
 ### Database Structure
 - Utiliza banco PostgreSQL remoto existente (192.168.11.62:5432)
+- Database: `pro_team_care_11`
+- Username: `postgres` 
+- Password: `Jvc@1702`
 - Schema `master` com 46 tabelas já estruturadas
 - Tabela `users` mapeada corretamente
 - Relacionamentos com `people`, `establishments`, `roles`
 
 ### Environment Variables
 Configuradas em `.env` (com secrets seguros):
-- Database credentials (PostgreSQL remoto)
+
+**Database credentials (PostgreSQL remoto):**
+```bash
+DB_CONNECTION=pgsql
+DB_HOST=192.168.11.62
+DB_PORT=5432
+DB_DATABASE=pro_team_care_11
+DB_USERNAME=postgres
+DB_PASSWORD=Jvc@1702
+DB_SCHEMA=master
+```
+
+**Outras configurações:**
 - JWT secret key (256-bit)
 - CORS origins (rede local)
 - Allowed hosts (específicos)
