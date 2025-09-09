@@ -144,6 +144,11 @@ if [ ! -f "app/main.py" ]; then
     exit 1
 fi
 
+# Limpar variáveis de ambiente antigas que podem interferir
+echo "🧹 Limpando variáveis de ambiente antigas..."
+unset DB_HOST DB_PASSWORD DB_USERNAME DB_DATABASE DB_SCHEMA 2>/dev/null || true
+echo "✅ Variáveis de ambiente limpas"
+
 # Verificar se deve pular limpeza de cache
 SKIP_CACHE=false
 if [ "${1:-}" = "--skip-cache" ] || [ "${1:-}" = "-s" ]; then

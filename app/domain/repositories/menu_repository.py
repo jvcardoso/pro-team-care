@@ -438,11 +438,13 @@ class MenuRepository:
             query = text("""
                 SELECT 
                     e.id, 
-                    e.trade_name, 
-                    e.email,
-                    c.social_name as company_name
+                    p.name, 
+                    p.trade_name,
+                    cp.name as company_name
                 FROM master.establishments e
+                JOIN master.people p ON e.person_id = p.id
                 JOIN master.companies c ON e.company_id = c.id
+                JOIN master.people cp ON c.person_id = cp.id
                 WHERE e.id = :id AND e.deleted_at IS NULL
             """)
             

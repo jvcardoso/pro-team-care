@@ -172,6 +172,7 @@ class SecureSessionManager:
                         r.level,
                         ur.context_type,
                         ur.context_id,
+                        ur.user_id,
                         CASE 
                             WHEN ur.context_type = 'system' THEN 'Sistema Global'
                             WHEN ur.context_type = 'company' THEN 

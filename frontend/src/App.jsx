@@ -9,6 +9,7 @@ import PacientesPage from "./pages/PacientesPage";
 import ProfissionaisPage from "./pages/ProfissionaisPage";
 import ConsultasPage from "./pages/ConsultasPage";
 import EmpresasPage from "./pages/EmpresasPage";
+import EstablishmentsPage from "./pages/EstablishmentsPage";
 import MenusPage from "./pages/MenusPage";
 import UsersPage from "./pages/UsersPage";
 import secureSessionService from "./services/secureSessionService";
@@ -44,6 +45,7 @@ function App() {
               <Route path="profissionais" element={<ProfissionaisPage />} />
               <Route path="consultas" element={<ConsultasPage />} />
               <Route path="empresas" element={<EmpresasPage />} />
+              <Route path="estabelecimentos" element={<EstablishmentsPage />} />
               <Route path="menus" element={<MenusPage />} />
               <Route path="usuarios" element={<UsersPage />} />
             </Route>

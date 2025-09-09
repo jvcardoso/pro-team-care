@@ -87,6 +87,45 @@ class Company(Base):
     people = relationship("People", back_populates="company")
 
 
+class Establishments(Base):
+    __tablename__ = "establishments"
+    __table_args__ = (
+        CheckConstraint("type IN ('matriz', 'filial', 'unidade', 'posto')", name="establishments_type_check"),
+        CheckConstraint("category IN ('clinica', 'hospital', 'laboratorio', 'farmacia', 'consultorio', 'upa', 'ubs', 'outro')", name="establishments_category_check"),
+        UniqueConstraint("company_id", "code", name="establishments_company_code_unique"),
+        UniqueConstraint("company_id", "display_order", name="establishments_company_display_unique"),
+        Index("establishments_company_idx", "company_id"),
+        Index("establishments_person_idx", "person_id"),
+        Index("establishments_active_idx", "is_active"),
+        Index("establishments_principal_idx", "is_principal"),
+        Index("establishments_type_idx", "type"),
+        Index("establishments_category_idx", "category"),
+        Index("establishments_display_order_idx", "company_id", "display_order"),
+        {"schema": "master"}
+    )
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    person_id = Column(BigInteger, ForeignKey("master.people.id"), nullable=False)
+    company_id = Column(BigInteger, ForeignKey("master.companies.id"), nullable=False)
+    code = Column(String(50), nullable=False)
+    type = Column(String(20), nullable=False)
+    category = Column(String(30), nullable=False)
+    is_active = Column(Boolean, nullable=False, default=True)
+    is_principal = Column(Boolean, nullable=False, default=False)
+    display_order = Column(Integer, nullable=False, default=0)
+    settings = Column(JSON, nullable=True)
+    meta_data = Column('metadata', JSON, nullable=True)
+    operating_hours = Column(JSON, nullable=True)
+    service_areas = Column(JSON, nullable=True)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+    deleted_at = Column(DateTime, nullable=True)
+
+    # Relationships
+    person = relationship("People", foreign_keys=[person_id])
+    company = relationship("Company", foreign_keys=[company_id])
+
+
 class Phone(Base):
     __tablename__ = "phones"
     __table_args__ = (

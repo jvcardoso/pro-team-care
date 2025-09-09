@@ -308,5 +308,85 @@ export const usersService = {
   },
 };
 
+export const establishmentsService = {
+  // Listar estabelecimentos com paginação e filtros
+  getEstablishments: async (params = {}) => {
+    const response = await api.get("/api/v1/establishments/", { params });
+    return response.data;
+  },
+
+  // Obter estabelecimento por ID
+  getEstablishment: async (id) => {
+    const response = await api.get(`/api/v1/establishments/${id}`);
+    return response.data;
+  },
+
+  // Listar estabelecimentos por empresa
+  getEstablishmentsByCompany: async (companyId, params = {}) => {
+    const response = await api.get(`/api/v1/establishments/company/${companyId}`, { params });
+    return response.data;
+  },
+
+  // Criar estabelecimento
+  createEstablishment: async (data) => {
+    const response = await api.post("/api/v1/establishments/", data);
+    httpCache.invalidatePattern("/api/v1/establishments");
+    return response.data;
+  },
+
+  // Atualizar estabelecimento
+  updateEstablishment: async (id, data) => {
+    const response = await api.put(`/api/v1/establishments/${id}`, data);
+    httpCache.invalidatePattern("/api/v1/establishments");
+    return response.data;
+  },
+
+  // Alterar status do estabelecimento (ativar/desativar)
+  toggleEstablishmentStatus: async (id, isActive) => {
+    const response = await api.patch(`/api/v1/establishments/${id}/status`, { 
+      is_active: isActive 
+    });
+    httpCache.invalidatePattern("/api/v1/establishments");
+    return response.data;
+  },
+
+  // Excluir estabelecimento (soft delete)
+  deleteEstablishment: async (id) => {
+    const response = await api.delete(`/api/v1/establishments/${id}`);
+    httpCache.invalidatePattern("/api/v1/establishments");
+    return response.data;
+  },
+
+  // Reordenar estabelecimentos
+  reorderEstablishments: async (companyId, establishmentOrders) => {
+    const response = await api.post("/api/v1/establishments/reorder", {
+      company_id: companyId,
+      establishment_orders: establishmentOrders
+    });
+    httpCache.invalidatePattern("/api/v1/establishments");
+    return response.data;
+  },
+
+  // Validar criação de estabelecimento
+  validateEstablishmentCreation: async (companyId, code, isPrincipal = false) => {
+    const response = await api.post("/api/v1/establishments/validate", null, {
+      params: {
+        company_id: companyId,
+        code: code,
+        is_principal: isPrincipal
+      }
+    });
+    return response.data;
+  },
+
+  // Contar estabelecimentos (usado para paginação)
+  countEstablishments: async (params = {}) => {
+    const establishmentsResponse = await api.get("/api/v1/establishments/", { 
+      params: { ...params, page: 1, size: 1 } 
+    });
+    return { total: establishmentsResponse.data.total || 0 };
+  },
+};
+
 export { api, secureSessionService };
 export default api;

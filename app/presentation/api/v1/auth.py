@@ -78,35 +78,41 @@ async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_db)
 ):
-    # Directly use repository and auth functions to avoid circular imports
+    # Use direct SQL query to avoid ORM issues
+    from sqlalchemy import text
     from app.infrastructure.auth import verify_password, create_access_token
-    
-    user_repository = UserRepository(db)
-    
-    # Get user by email
-    user = await user_repository.get_by_email(form_data.username)
-    if not user:
+
+    # Get user by email using direct SQL
+    result = await db.execute(text('''
+        SELECT id, email_address, password, is_active
+        FROM users
+        WHERE email_address = :email AND deleted_at IS NULL
+    '''), {'email': form_data.username})
+
+    user_row = result.fetchone()
+
+    if not user_row:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     # Verify password
-    if not verify_password(form_data.password, user.password):
+    if not verify_password(form_data.password, user_row.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     # Create access token
     access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
     access_token = create_access_token(
-        data={"sub": user.email_address}, 
+        data={"sub": user_row.email_address},
         expires_delta=access_token_expires
     )
-    
+
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post(
