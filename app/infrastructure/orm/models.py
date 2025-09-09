@@ -108,8 +108,8 @@ class Establishments(Base):
     person_id = Column(BigInteger, ForeignKey("master.people.id"), nullable=False)
     company_id = Column(BigInteger, ForeignKey("master.companies.id"), nullable=False)
     code = Column(String(50), nullable=False)
-    type = Column(String(20), nullable=False)
-    category = Column(String(30), nullable=False)
+    type = Column(String(20), nullable=True)  # Corrigido: banco permite NULL
+    category = Column(String(30), nullable=True)  # Corrigido: banco permite NULL
     is_active = Column(Boolean, nullable=False, default=True)
     is_principal = Column(Boolean, nullable=False, default=False)
     display_order = Column(Integer, nullable=False, default=0)
@@ -375,3 +375,157 @@ class Menu(Base):
     # Relationships
     parent = relationship("Menu", remote_side=[id], back_populates="children")
     children = relationship("Menu", back_populates="parent", cascade="all, delete-orphan")
+
+
+# =====================================
+# SPRINT 1: FOUNDATION & SECURITY
+# =====================================
+
+class User(Base):
+    """Modelo de usuários do sistema"""
+    __tablename__ = "users"
+    __table_args__ = (
+        Index("users_person_id_idx", "person_id"),
+        Index("users_email_idx", "email_address"),
+        Index("users_active_idx", "is_active"),
+        UniqueConstraint("email_address", name="users_email_unique"),
+        {"schema": "master"}
+    )
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    person_id = Column(BigInteger, ForeignKey("master.people.id"), nullable=False)
+    email_address = Column(String(255), nullable=False, unique=True)
+    email_verified_at = Column(DateTime, nullable=True)
+    password = Column(String(255), nullable=False)
+    remember_token = Column(String(100), nullable=True)
+    is_active = Column(Boolean, nullable=True, default=True)
+    is_system_admin = Column(Boolean, nullable=True, default=False)
+    preferences = Column(JSON, nullable=True)
+    notification_settings = Column(JSON, nullable=True)
+    two_factor_secret = Column(Text, nullable=True)
+    two_factor_recovery_codes = Column(Text, nullable=True)
+    last_login_at = Column(DateTime, nullable=True)
+    password_changed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, nullable=True, default=func.now())
+    updated_at = Column(DateTime, nullable=True, default=func.now(), onupdate=func.now())
+    deleted_at = Column(DateTime, nullable=True)
+
+    # Relationships
+    person = relationship("People", back_populates="user")
+    user_roles = relationship("UserRole", back_populates="user", cascade="all, delete-orphan")
+
+
+class Role(Base):
+    """Modelo de perfis/roles do sistema"""
+    __tablename__ = "roles"
+    __table_args__ = (
+        CheckConstraint("context_type IN ('system', 'company', 'establishment')", name="roles_context_type_check"),
+        Index("roles_name_idx", "name"),
+        Index("roles_level_idx", "level"),
+        Index("roles_context_idx", "context_type"),
+        UniqueConstraint("name", name="roles_name_unique"),
+        {"schema": "master"}
+    )
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    name = Column(String(125), nullable=False, unique=True)
+    display_name = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    level = Column(Integer, nullable=False, default=0)
+    context_type = Column(String(255), nullable=False, default='establishment')
+    is_active = Column(Boolean, nullable=True, default=True)
+    is_system_role = Column(Boolean, nullable=True, default=False)
+    settings = Column(JSON, nullable=True)
+    created_at = Column(DateTime, nullable=True, default=func.now())
+    updated_at = Column(DateTime, nullable=True, default=func.now(), onupdate=func.now())
+
+    # Relationships
+    role_permissions = relationship("RolePermission", back_populates="role", cascade="all, delete-orphan")
+    user_roles = relationship("UserRole", back_populates="role")
+
+
+class Permission(Base):
+    """Modelo de permissões granulares"""
+    __tablename__ = "permissions"
+    __table_args__ = (
+        CheckConstraint("context_level IN ('system', 'company', 'establishment')", name="permissions_context_level_check"),
+        Index("permissions_name_idx", "name"),
+        Index("permissions_module_idx", "module"),
+        Index("permissions_context_idx", "context_level"),
+        UniqueConstraint("name", name="permissions_name_unique"),
+        {"schema": "master"}
+    )
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    name = Column(String(125), nullable=False, unique=True)
+    display_name = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    module = Column(String(50), nullable=False)
+    action = Column(String(50), nullable=False)
+    resource = Column(String(50), nullable=False)
+    context_level = Column(String(255), nullable=False, default='establishment')
+    is_active = Column(Boolean, nullable=True, default=True)
+    created_at = Column(DateTime, nullable=True, default=func.now())
+    updated_at = Column(DateTime, nullable=True, default=func.now(), onupdate=func.now())
+
+    # Relationships
+    role_permissions = relationship("RolePermission", back_populates="permission")
+
+
+class UserRole(Base):
+    """Relacionamento usuário-perfil com contexto"""
+    __tablename__ = "user_roles"
+    __table_args__ = (
+        CheckConstraint("context_type IN ('system', 'company', 'establishment')", name="user_roles_context_type_check"),
+        CheckConstraint("status IN ('active', 'inactive', 'suspended', 'expired')", name="user_roles_status_check"),
+        Index("user_roles_user_idx", "user_id"),
+        Index("user_roles_role_idx", "role_id"),
+        Index("user_roles_context_idx", "context_type", "context_id"),
+        Index("user_roles_status_idx", "status"),
+        UniqueConstraint("user_id", "role_id", "context_type", "context_id", name="user_roles_unique"),
+        {"schema": "master"}
+    )
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    user_id = Column(BigInteger, ForeignKey("master.users.id"), nullable=False)
+    role_id = Column(BigInteger, ForeignKey("master.roles.id"), nullable=False)
+    context_type = Column(String(255), nullable=False)
+    context_id = Column(BigInteger, nullable=False)
+    status = Column(String(255), nullable=False, default='active')
+    assigned_by_user_id = Column(BigInteger, ForeignKey("master.users.id"), nullable=True)
+    assigned_at = Column(DateTime, nullable=True, default=func.now())
+    expires_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, nullable=True, default=func.now())
+    updated_at = Column(DateTime, nullable=True, default=func.now(), onupdate=func.now())
+    deleted_at = Column(DateTime, nullable=True)
+
+    # Relationships - especificar foreign_keys explicitamente
+    user = relationship("User", foreign_keys=[user_id], back_populates="user_roles")
+    role = relationship("Role", back_populates="user_roles")
+    assigned_by = relationship("User", foreign_keys=[assigned_by_user_id])
+
+
+class RolePermission(Base):
+    """Relacionamento perfil-permissão"""
+    __tablename__ = "role_permissions"
+    __table_args__ = (
+        Index("role_permissions_role_idx", "role_id"),
+        Index("role_permissions_permission_idx", "permission_id"),
+        UniqueConstraint("role_id", "permission_id", name="role_permissions_unique"),
+        {"schema": "master"}
+    )
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    role_id = Column(BigInteger, ForeignKey("master.roles.id"), nullable=False)
+    permission_id = Column(BigInteger, ForeignKey("master.permissions.id"), nullable=False)
+    granted_by_user_id = Column(BigInteger, ForeignKey("master.users.id"), nullable=True)
+    granted_at = Column(DateTime, nullable=True, default=func.now())
+
+    # Relationships
+    role = relationship("Role", back_populates="role_permissions")
+    permission = relationship("Permission", back_populates="role_permissions")
+    granted_by = relationship("User", foreign_keys=[granted_by_user_id])
+
+
+# Adicionar relacionamento inverso em People
+People.user = relationship("User", back_populates="person", uselist=False)
