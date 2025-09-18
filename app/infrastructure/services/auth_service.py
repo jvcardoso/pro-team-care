@@ -6,7 +6,11 @@ from datetime import timedelta
 from typing import Optional
 
 from app.application.interfaces.services import AuthServiceInterface
-from app.infrastructure.auth import verify_password, get_password_hash, create_access_token
+from app.infrastructure.auth import (
+    create_access_token,
+    get_password_hash,
+    verify_password,
+)
 
 
 class AuthService(AuthServiceInterface):
@@ -20,6 +24,8 @@ class AuthService(AuthServiceInterface):
         """Gerar hash da senha"""
         return get_password_hash(password)
 
-    def create_access_token(self, data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    def create_access_token(
+        self, data: dict, expires_delta: Optional[timedelta] = None
+    ) -> str:
         """Criar token de acesso"""
         return create_access_token(data, expires_delta)

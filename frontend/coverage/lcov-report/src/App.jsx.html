@@ -212,7 +212,7 @@ function <span class="fstat-no" title="function not covered" >App(</span>) {
 &nbsp;
           {/* Redirect root to admin */}
           &lt;Route path="/" element={&lt;Navigate to="/admin" replace /&gt;} /&gt;
-          
+
           {/* Admin routes with AdminLTE layout */}
           &lt;Route path="/admin" element={&lt;AdminLayout /&gt;}&gt;
             &lt;Route index element={&lt;DashboardPage /&gt;} /&gt;
@@ -225,15 +225,15 @@ function <span class="fstat-no" title="function not covered" >App(</span>) {
             &lt;Route path="demo" element={&lt;LayoutDemo /&gt;} /&gt;
             &lt;Route path="notifications" element={&lt;NotificationDemo /&gt;} /&gt;
           &lt;/Route&gt;
-          
+
           {/* 404 Page */}
           &lt;Route path="*" element={
             &lt;div className="h-screen flex items-center justify-center bg-background"&gt;
               &lt;div className="text-center"&gt;
                 &lt;h1 className="text-6xl font-bold text-foreground"&gt;404&lt;/h1&gt;
                 &lt;p className="text-xl text-muted-foreground mt-4"&gt;Página não encontrada&lt;/p&gt;
-                &lt;a 
-                  href="/admin" 
+                &lt;a
+                  href="/admin"
                   className="mt-6 inline-block px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
                 &gt;
                   Voltar ao Dashboard

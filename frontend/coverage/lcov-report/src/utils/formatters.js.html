@@ -456,7 +456,7 @@ export const formatCEP = <span class="cstat-no" title="statement not covered" ><
  */
 export const formatPhone = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(v</span>alue) =&gt; {</span>
   const numbers = <span class="cstat-no" title="statement not covered" >removeNonNumeric(value);</span>
-  
+
 <span class="cstat-no" title="statement not covered" >  if (numbers.length &lt;= 2) <span class="cstat-no" title="statement not covered" >return numbers;</span></span>
 <span class="cstat-no" title="statement not covered" >  if (numbers.length &lt;= 6) <span class="cstat-no" title="statement not covered" >return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;</span></span>
 <span class="cstat-no" title="statement not covered" >  if (numbers.length &lt;= 10) {</span>
@@ -473,7 +473,7 @@ export const formatPhone = <span class="cstat-no" title="statement not covered" 
 export const formatCurrency = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(v</span>alue) =&gt; {</span>
   const numbers = <span class="cstat-no" title="statement not covered" >removeNonNumeric(value);</span>
 <span class="cstat-no" title="statement not covered" >  if (!numbers) <span class="cstat-no" title="statement not covered" >return '';</span></span>
-  
+
   const numValue = <span class="cstat-no" title="statement not covered" >parseFloat(numbers) / 100;</span>
 <span class="cstat-no" title="statement not covered" >  return new Intl.NumberFormat('pt-BR', {</span>
     style: 'currency',
@@ -496,12 +496,12 @@ export const formatDate = <span class="cstat-no" title="statement not covered" >
  */
 export const parseCurrency = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(f</span>ormattedValue) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  if (!formattedValue) <span class="cstat-no" title="statement not covered" >return 0;</span></span>
-  
+
   const numbers = <span class="cstat-no" title="statement not covered" >formattedValue</span>
     .replace(/[R$\s]/g, '')
     .replace(/\./g, '')
     .replace(',', '.');
-    
+
 <span class="cstat-no" title="statement not covered" >  return parseFloat(numbers) || 0;</span>
 };
 &nbsp;
@@ -510,10 +510,10 @@ export const parseCurrency = <span class="cstat-no" title="statement not covered
  */
 export const parseDate = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(f</span>ormattedDate) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  if (!formattedDate) <span class="cstat-no" title="statement not covered" >return '';</span></span>
-  
+
   const parts = <span class="cstat-no" title="statement not covered" >formattedDate.split('/');</span>
 <span class="cstat-no" title="statement not covered" >  if (parts.length !== 3) <span class="cstat-no" title="statement not covered" >return '';</span></span>
-  
+
   const [day, month, year] = <span class="cstat-no" title="statement not covered" >parts;</span>
 <span class="cstat-no" title="statement not covered" >  return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;</span>
 };
@@ -523,11 +523,11 @@ export const parseDate = <span class="cstat-no" title="statement not covered" ><
  */
 export const applyMask = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(v</span>alue, mask) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  if (!value || !mask) <span class="cstat-no" title="statement not covered" >return value;</span></span>
-  
+
   const numbers = <span class="cstat-no" title="statement not covered" >removeNonNumeric(value);</span>
   let masked = <span class="cstat-no" title="statement not covered" >'';</span>
   let numberIndex = <span class="cstat-no" title="statement not covered" >0;</span>
-  
+
 <span class="cstat-no" title="statement not covered" >  for (let i = <span class="cstat-no" title="statement not covered" >0;</span> i &lt; mask.length &amp;&amp; numberIndex &lt; numbers.length; i++) {</span>
 <span class="cstat-no" title="statement not covered" >    if (mask[i] === '#') {</span>
 <span class="cstat-no" title="statement not covered" >      masked += numbers[numberIndex];</span>
@@ -536,7 +536,7 @@ export const applyMask = <span class="cstat-no" title="statement not covered" ><
 <span class="cstat-no" title="statement not covered" >      masked += mask[i];</span>
     }
   }
-  
+
 <span class="cstat-no" title="statement not covered" >  return masked;</span>
 };
 &nbsp;
@@ -557,7 +557,7 @@ export const MASKS = <span class="cstat-no" title="statement not covered" >{</sp
  */
 export const formatPhoneAuto = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(v</span>alue) =&gt; {</span>
   const numbers = <span class="cstat-no" title="statement not covered" >removeNonNumeric(value);</span>
-  
+
 <span class="cstat-no" title="statement not covered" >  if (numbers.length &lt;= 10) {</span>
 <span class="cstat-no" title="statement not covered" >    return applyMask(value, MASKS.PHONE_LANDLINE);</span>
   }

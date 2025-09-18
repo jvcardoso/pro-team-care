@@ -691,8 +691,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, Users, UserPlus, Activity, Heart, 
+import {
+  LayoutDashboard, Users, UserPlus, Activity, Heart,
   Calendar, FileText, BarChart3, PieChart, TrendingUp,
   Palette, LayoutGrid, Table, FormInput, BookOpen, Kanban,
   Mail, Image, Receipt, User, Building, FileX,
@@ -735,9 +735,9 @@ const Sidebar = <span class="cstat-no" title="statement not covered" ><span clas
       icon: &lt;LayoutGrid className="h-5 w-5" /&gt;,
       badge: { text: 'New', color: 'bg-blue-500' },
       submenu: [
-        { 
-          label: 'Widgets', 
-          path: '/admin/widgets', 
+        {
+          label: 'Widgets',
+          path: '/admin/widgets',
           icon: &lt;Palette className="h-4 w-4" /&gt;,
           badge: { text: '12', color: 'bg-green-500' }
         },
@@ -775,9 +775,9 @@ const Sidebar = <span class="cstat-no" title="statement not covered" ><span clas
       icon: &lt;Heart className="h-5 w-5" /&gt;,
       badge: { text: 'Pro', color: 'bg-purple-500' },
       submenu: [
-        { 
-          label: 'Pacientes', 
-          path: '/admin/patients', 
+        {
+          label: 'Pacientes',
+          path: '/admin/patients',
           icon: &lt;Activity className="h-4 w-4" /&gt;,
           badge: { text: '24', color: 'bg-blue-500' }
         },
@@ -905,8 +905,8 @@ const Sidebar = <span class="cstat-no" title="statement not covered" ><span clas
                   &lt;button
                     onClick={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >toggleSubmenu(item.key)}</span>
                     className={`group w-full flex items-center px-2 py-2 text-sm font-medium rounded-lg transition-colors ${
-                      hasActiveSubmenu(item.submenu) 
-                        ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' 
+                      hasActiveSubmenu(item.submenu)
+                        ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                     }`}
                   &gt;

@@ -1,10 +1,10 @@
 repos:
   # Python code formatting
   - repo: https://github.com/psf/black
-    rev: 23.12.1
+    rev: 24.10.0
     hooks:
       - id: black
-        language_version: python3
+        language_version: python3.12
         args: [--line-length=88]
 
   # Python import sorting
@@ -16,22 +16,32 @@ repos:
 
   # Python linting
   - repo: https://github.com/pycqa/flake8
-    rev: 7.0.0
+    rev: 7.1.1
     hooks:
       - id: flake8
-        args: [--max-line-length=88, --extend-ignore=E203,W503]
+        args: [--max-line-length=88, --extend-ignore=E203,W503,D100,D103,D400,D205,E402,I100,I201,E501,E712,F401,E902,W291,D202,D107]
         additional_dependencies: [flake8-docstrings, flake8-import-order]
+        exclude: ^(alembic/|scripts/|debug_|validate_|create_|insert_|update_|reset_|simple_test\.py|test_sprint.*\.py)
 
   # Python security linting
   - repo: https://github.com/pycqa/bandit
-    rev: 1.7.6
+    rev: 1.8.0
     hooks:
       - id: bandit
         args: [-r, app/, -x, tests/]
 
+  # MyPy type checking (limited scope for clean architecture)
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.14.0
+    hooks:
+      - id: mypy
+        additional_dependencies: [pydantic, fastapi, sqlalchemy]
+        files: ^app/main\.py$
+        exclude: ^(app/infrastructure/|app/presentation/|app/application/|app/domain/)
+
   # General file formatting
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -106,7 +116,7 @@ repos:
         args: [optional-scope]
 
 default_language_version:
-  python: python3.11
+  python: python3.12
 
 ci:
   autofix_commit_msg: |

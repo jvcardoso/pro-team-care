@@ -16,9 +16,17 @@ import {
 } from "lucide-react";
 
 const UserMobileCard = React.memo(
-  ({ user, onView, onEdit, onToggleStatus, getStatusBadge, getStatusLabel }) => {
-    const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
-    
+  ({
+    user,
+    onView,
+    onEdit,
+    onToggleStatus,
+    getStatusBadge,
+    getStatusLabel,
+  }) => {
+    const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] =
+      useState(false);
+
     if (!user) return null;
 
     return (
@@ -29,24 +37,25 @@ const UserMobileCard = React.memo(
             <div className="flex-1 min-w-0">
               <h3 className="font-medium text-gray-900 dark:text-white text-base break-words">
                 {user.person_name ||
-                  user.name ||
-                  user.email_address ||
+                  user.user_email ||
                   "Usuário não identificado"}
               </h3>
               {/* Sempre mostrar email quando disponível */}
-              {user.email_address && (
+              {user.user_email && (
                 <div className="flex items-center mt-1">
                   <Mail className="h-3 w-3 mr-1 text-gray-500 flex-shrink-0" />
                   <p className="text-sm text-gray-600 dark:text-gray-300 break-words font-mono">
-                    {user.email_address}
+                    {user.user_email}
                   </p>
                 </div>
               )}
             </div>
             <span
-              className={getStatusBadge(user.is_active ? "active" : "inactive")}
+              className={getStatusBadge(
+                user.user_is_active ? "active" : "inactive"
+              )}
             >
-              {getStatusLabel(user.is_active ? "active" : "inactive")}
+              {getStatusLabel(user.user_is_active ? "active" : "inactive")}
             </span>
           </div>
 
@@ -54,14 +63,14 @@ const UserMobileCard = React.memo(
             <div className="flex items-center">
               <User className="h-4 w-4 mr-2 text-gray-500" />
               <span className="text-gray-900 dark:text-white">
-                ID: {user.id}
+                ID: {user.user_id}
               </span>
             </div>
             <div className="flex items-center">
               <Calendar className="h-4 w-4 mr-2 text-gray-500" />
               <span className="text-gray-600 dark:text-gray-300">
-                {user.created_at
-                  ? new Date(user.created_at).toLocaleDateString("pt-BR")
+                {user.user_created_at
+                  ? new Date(user.user_created_at).toLocaleDateString("pt-BR")
                   : "-"}
               </span>
             </div>
@@ -117,32 +126,40 @@ const UserMobileCard = React.memo(
           <ActionDropdown>
             <ActionDropdown.Item
               icon={<Eye className="h-4 w-4" />}
-              onClick={() => onView?.(user.id)}
+              onClick={() => onView?.(user.user_id)}
             >
               Ver Detalhes
             </ActionDropdown.Item>
-            
+
             <ActionDropdown.Item
               icon={<Edit className="h-4 w-4" />}
-              onClick={() => onEdit?.(user.id)}
+              onClick={() => onEdit?.(user.user_id)}
               variant="default"
             >
               Editar Usuário
             </ActionDropdown.Item>
-            
+
             <ActionDropdown.Item
               icon={<Key className="h-4 w-4" />}
               onClick={() => setIsChangePasswordModalOpen(true)}
             >
               Alterar Senha
             </ActionDropdown.Item>
-            
+
             <ActionDropdown.Item
-              icon={user.is_active ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
-              onClick={() => onToggleStatus?.(user.id, !user.is_active)}
-              variant={user.is_active ? "warning" : "success"}
+              icon={
+                user.user_is_active ? (
+                  <UserX className="h-4 w-4" />
+                ) : (
+                  <UserCheck className="h-4 w-4" />
+                )
+              }
+              onClick={() =>
+                onToggleStatus?.(user.user_id, !user.user_is_active)
+              }
+              variant={user.user_is_active ? "warning" : "success"}
             >
-              {user.is_active ? "Inativar Usuário" : "Ativar Usuário"}
+              {user.user_is_active ? "Inativar Usuário" : "Ativar Usuário"}
             </ActionDropdown.Item>
           </ActionDropdown>
         </div>

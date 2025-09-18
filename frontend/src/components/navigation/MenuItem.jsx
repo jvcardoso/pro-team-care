@@ -27,25 +27,25 @@ export const MenuItem = ({
   const location = useLocation();
 
   const hasChildren = menu.children && menu.children.length > 0;
-  
+
   /**
    * Lógica de seleção universal para qualquer URL navegada
    * Funciona para qualquer página que o usuário acesse diretamente
    */
   const isActive = React.useMemo(() => {
     if (!menu.url || menu.url === "#") return false;
-    
+
     const currentPath = location.pathname;
-    
+
     // 1. CORRESPONDÊNCIA EXATA - Prioridade máxima
     const isExactMatch = currentPath === menu.url;
-    
+
     // 2. CASOS ESPECIAIS - Dashboard
     if (menu.url === "/admin/dashboard") {
       // Dashboard ativo quando estamos em /admin ou /admin/dashboard
       return currentPath === "/admin" || currentPath === "/admin/dashboard";
     }
-    
+
     // 3. RESOLVER CONFLITOS DE URLs DUPLICADAS
     if (menu.url === "/admin" && currentPath === "/admin") {
       // Se estamos na raiz /admin, isso é o Dashboard
@@ -53,36 +53,62 @@ export const MenuItem = ({
       const conflictingMenus = ["relatorios-homecare", "perfis", "auditoria"];
       return !conflictingMenus.includes(menu.slug);
     }
-    
+
     // 4. CORRESPONDÊNCIA EXATA NORMAL
     if (isExactMatch) {
       // Se tem filhos, só ativar se não houver filhos mais específicos ativos
       if (hasChildren) {
-        const hasActiveChild = menu.children.some(child => 
-          child.url && currentPath === child.url
+        const hasActiveChild = menu.children.some(
+          (child) => child.url && currentPath === child.url
         );
         return !hasActiveChild;
       }
       return true;
     }
-    
+
     // 5. CORRESPONDÊNCIA POR INÍCIO DE PATH (Para navegação hierárquica)
     // Ex: Se estamos em /admin/usuarios/123, ativar menu /admin/usuarios
     if (menu.url !== "/admin" && currentPath.startsWith(menu.url + "/")) {
       // Verificar se não há um menu filho mais específico
       if (hasChildren) {
-        const hasMoreSpecificChild = menu.children.some(child => 
-          child.url && (currentPath === child.url || currentPath.startsWith(child.url + "/"))
+        const hasMoreSpecificChild = menu.children.some(
+          (child) =>
+            child.url &&
+            (currentPath === child.url ||
+              currentPath.startsWith(child.url + "/"))
         );
         return !hasMoreSpecificChild;
       }
       return true;
     }
-    
+
     return false;
   }, [menu.url, menu.slug, location.pathname, hasChildren, menu.children]);
-  
-  const indentClass = level > 0 ? `ml-${Math.min(level * 4, 12)}` : "";
+
+  // Usar classes explícitas + inline styles como backup para garantir indentação
+  const getIndentClass = (level) => {
+    switch (level) {
+      case 0:
+        return "";
+      case 1:
+        return "ml-4";
+      case 2:
+        return "ml-8";
+      case 3:
+        return "ml-12";
+      default:
+        return "ml-12"; // máximo 12 (3rem)
+    }
+  };
+
+  const getIndentStyle = (level) => {
+    // Backup inline styles caso as classes Tailwind não funcionem
+    const marginValue = Math.min(level * 16, 48); // 16px = 1rem, máximo 48px = 3rem
+    return level > 0 ? { marginLeft: `${marginValue}px` } : {};
+  };
+
+  const indentClass = getIndentClass(level);
+  const indentStyle = getIndentStyle(level);
 
   /**
    * Efeito para detectar mudanças no estado collapsed e ajustar expansão
@@ -216,6 +242,15 @@ export const MenuItem = ({
       hasChildren && !collapsed ? "cursor-pointer" : "";
 
     return `${baseClasses} ${stateClasses} ${interactionClasses}`.trim();
+  };
+
+  /**
+   * Estilos combinados (CSS classes + inline styles como backup)
+   */
+  const getItemStyles = () => {
+    return {
+      ...indentStyle, // Adiciona margin-left inline como backup
+    };
   };
 
   /**

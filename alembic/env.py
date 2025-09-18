@@ -2,9 +2,11 @@ import asyncio
 import os
 import sys
 from logging.config import fileConfig
+
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
+
 from alembic import context
 
 # Add project root to path
@@ -25,11 +27,12 @@ if config.config_file_name is not None:
 
 # Set the database URL from our settings
 # Handle special characters in URL by replacing % with %%
-database_url = str(settings.database_url).replace('%', '%%')
+database_url = str(settings.database_url).replace("%", "%%")
 config.set_main_option("sqlalchemy.url", database_url)
 
 # Add your model's MetaData object here for 'autogenerate' support
 target_metadata = Base.metadata
+
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
@@ -57,7 +60,7 @@ def run_migrations_offline() -> None:
 
 def do_run_migrations(connection: Connection) -> None:
     context.configure(
-        connection=connection, 
+        connection=connection,
         target_metadata=target_metadata,
         version_table_schema=settings.db_schema,
         include_schemas=True,

@@ -756,11 +756,11 @@ const NotificationDemo = <span class="cstat-no" title="statement not covered" ><
 &nbsp;
   const testSequence = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    notify.info('Iniciando sequência de testes...');</span>
-    
+
 <span class="cstat-no" title="statement not covered" >    setTimeout(<span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >      notify.warning('Processando dados...');</span>
     }, 1000);
-    
+
 <span class="cstat-no" title="statement not covered" >    setTimeout(<span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >      notify.success('Sequência de testes concluída!');</span>
     }, 2000);
@@ -784,7 +784,7 @@ const NotificationDemo = <span class="cstat-no" title="statement not covered" ><
       'Tempo limite de requisição excedido',
       'Usuário não autenticado'
     ];
-    
+
     const randomScenario = <span class="cstat-no" title="statement not covered" >scenarios[Math.floor(Math.random() * scenarios.length)];</span>
 <span class="cstat-no" title="statement not covered" >    notify.error(randomScenario);</span>
   };
@@ -807,24 +807,24 @@ const NotificationDemo = <span class="cstat-no" title="statement not covered" ><
       {/* Botões Básicos */}
       &lt;Card title="🎯 Tipos Básicos de Notificação"&gt;
         &lt;div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"&gt;
-          &lt;Button 
-            onClick={testSuccess} 
+          &lt;Button
+            onClick={testSuccess}
             variant="primary"
             icon={&lt;CheckCircle className="h-4 w-4" /&gt;}
             className="bg-green-600 hover:bg-green-700"
           &gt;
             Sucesso
           &lt;/Button&gt;
-          
-          &lt;Button 
+
+          &lt;Button
             onClick={testError}
             variant="danger"
             icon={&lt;XCircle className="h-4 w-4" /&gt;}
           &gt;
             Erro
           &lt;/Button&gt;
-          
-          &lt;Button 
+
+          &lt;Button
             onClick={testInfo}
             variant="primary"
             icon={&lt;Info className="h-4 w-4" /&gt;}
@@ -832,8 +832,8 @@ const NotificationDemo = <span class="cstat-no" title="statement not covered" ><
           &gt;
             Informação
           &lt;/Button&gt;
-          
-          &lt;Button 
+
+          &lt;Button
             onClick={testWarning}
             variant="primary"
             icon={&lt;AlertCircle className="h-4 w-4" /&gt;}
@@ -847,7 +847,7 @@ const NotificationDemo = <span class="cstat-no" title="statement not covered" ><
       {/* Confirmações */}
       &lt;Card title="❓ Modais de Confirmação"&gt;
         &lt;div className="grid grid-cols-1 sm:grid-cols-2 gap-4"&gt;
-          &lt;Button 
+          &lt;Button
             onClick={testConfirm}
             variant="primary"
             icon={&lt;HelpCircle className="h-4 w-4" /&gt;}
@@ -855,8 +855,8 @@ const NotificationDemo = <span class="cstat-no" title="statement not covered" ><
           &gt;
             Confirmação Simples
           &lt;/Button&gt;
-          
-          &lt;Button 
+
+          &lt;Button
             onClick={testConfirmDelete}
             variant="danger"
             icon={&lt;Trash2 className="h-4 w-4" /&gt;}
@@ -869,39 +869,39 @@ const NotificationDemo = <span class="cstat-no" title="statement not covered" ><
       {/* Testes Avançados */}
       &lt;Card title="⚡ Testes Avançados"&gt;
         &lt;div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"&gt;
-          &lt;Button 
+          &lt;Button
             onClick={testLongMessage}
             variant="secondary"
             icon={&lt;Zap className="h-4 w-4" /&gt;}
           &gt;
             Mensagem Longa
           &lt;/Button&gt;
-          
-          &lt;Button 
+
+          &lt;Button
             onClick={testSequence}
             variant="secondary"
             icon={&lt;Star className="h-4 w-4" /&gt;}
           &gt;
             Sequência de Toasts
           &lt;/Button&gt;
-          
-          &lt;Button 
+
+          &lt;Button
             onClick={testCounter}
             variant="secondary"
             icon={&lt;Heart className="h-4 w-4" /&gt;}
           &gt;
             Contador ({counter})
           &lt;/Button&gt;
-          
-          &lt;Button 
+
+          &lt;Button
             onClick={testCustomDuration}
             variant="secondary"
             icon={&lt;Coffee className="h-4 w-4" /&gt;}
           &gt;
             Duração Personalizada
           &lt;/Button&gt;
-          
-          &lt;Button 
+
+          &lt;Button
             onClick={testErrorScenarios}
             variant="secondary"
             icon={&lt;Gift className="h-4 w-4" /&gt;}
@@ -915,7 +915,7 @@ const NotificationDemo = <span class="cstat-no" title="statement not covered" ><
       &lt;Card title="💼 Exemplos de Uso Real"&gt;
         &lt;div className="space-y-4"&gt;
           &lt;div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"&gt;
-            &lt;Button 
+            &lt;Button
               onClick={<span class="fstat-no" title="function not covered" >()</span> =&gt; {
 <span class="cstat-no" title="statement not covered" >                notify.success('Login realizado com sucesso!');</span>
               }}
@@ -924,8 +924,8 @@ const NotificationDemo = <span class="cstat-no" title="statement not covered" ><
             &gt;
               ✅ Login Bem-sucedido
             &lt;/Button&gt;
-            
-            &lt;Button 
+
+            &lt;Button
               onClick={<span class="fstat-no" title="function not covered" >()</span> =&gt; {
 <span class="cstat-no" title="statement not covered" >                notify.error('Falha na autenticação. Verifique suas credenciais.');</span>
               }}
@@ -933,8 +933,8 @@ const NotificationDemo = <span class="cstat-no" title="statement not covered" ><
             &gt;
               ❌ Erro de Login
             &lt;/Button&gt;
-            
-            &lt;Button 
+
+            &lt;Button
               onClick={<span class="fstat-no" title="function not covered" >()</span> =&gt; {
 <span class="cstat-no" title="statement not covered" >                notify.info('Dados da empresa preenchidos automaticamente!');</span>
               }}
@@ -943,8 +943,8 @@ const NotificationDemo = <span class="cstat-no" title="statement not covered" ><
             &gt;
               ℹ️ CNPJ Consultado
             &lt;/Button&gt;
-            
-            &lt;Button 
+
+            &lt;Button
               onClick={<span class="fstat-no" title="function not covered" >()</span> =&gt; {
 <span class="cstat-no" title="statement not covered" >                notify.warning('Preencha todos os campos obrigatórios.');</span>
               }}
@@ -953,8 +953,8 @@ const NotificationDemo = <span class="cstat-no" title="statement not covered" ><
             &gt;
               ⚠️ Validação de Form
             &lt;/Button&gt;
-            
-            &lt;Button 
+
+            &lt;Button
               onClick={<span class="fstat-no" title="function not covered" >()</span> =&gt; {
 <span class="cstat-no" title="statement not covered" >                notify.confirmDelete(</span>
                   'Excluir Empresa',
@@ -967,8 +967,8 @@ const NotificationDemo = <span class="cstat-no" title="statement not covered" ><
             &gt;
               🗑️ Excluir Empresa
             &lt;/Button&gt;
-            
-            &lt;Button 
+
+            &lt;Button
               onClick={<span class="fstat-no" title="function not covered" >()</span> =&gt; {
 <span class="cstat-no" title="statement not covered" >                notify.confirm(</span>
                   'Salvar Alterações',
@@ -995,7 +995,7 @@ const NotificationDemo = <span class="cstat-no" title="statement not covered" ><
               import {`{ notify }`} from '../utils/notifications.jsx';
             &lt;/code&gt;
           &lt;/div&gt;
-          
+
           &lt;div&gt;
             &lt;h4 className="font-medium text-foreground mb-2"&gt;Uso Básico:&lt;/h4&gt;
             &lt;div className="space-y-1 font-mono text-xs bg-gray-100 dark:bg-gray-800 p-3 rounded"&gt;
@@ -1005,7 +1005,7 @@ const NotificationDemo = <span class="cstat-no" title="statement not covered" ><
               &lt;div&gt;notify.warning('Mensagem de aviso');&lt;/div&gt;
             &lt;/div&gt;
           &lt;/div&gt;
-          
+
           &lt;div&gt;
             &lt;h4 className="font-medium text-foreground mb-2"&gt;Confirmações:&lt;/h4&gt;
             &lt;div className="space-y-1 font-mono text-xs bg-gray-100 dark:bg-gray-800 p-3 rounded"&gt;

@@ -2,8 +2,10 @@
 Testes para o sistema de menus dinâmicos
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+
 from app.domain.repositories.menu_repository import MenuRepository
 
 
@@ -30,8 +32,14 @@ class TestMenuRepository:
     async def test_get_menu_tree_single_level(self, menu_repo):
         """Testa conversão de menus de nível único"""
         flat_menus = [
-            {"id": 1, "parent_id": None, "name": "Dashboard", "level": 0, "sort_order": 1},
-            {"id": 2, "parent_id": None, "name": "Users", "level": 0, "sort_order": 2}
+            {
+                "id": 1,
+                "parent_id": None,
+                "name": "Dashboard",
+                "level": 0,
+                "sort_order": 1,
+            },
+            {"id": 2, "parent_id": None, "name": "Users", "level": 0, "sort_order": 2},
         ]
 
         result = await menu_repo.get_menu_tree(flat_menus)
@@ -49,7 +57,13 @@ class TestMenuRepository:
             {"id": 1, "parent_id": None, "name": "Admin", "level": 0, "sort_order": 1},
             {"id": 2, "parent_id": 1, "name": "Users", "level": 1, "sort_order": 1},
             {"id": 3, "parent_id": 1, "name": "Roles", "level": 1, "sort_order": 2},
-            {"id": 4, "parent_id": None, "name": "Reports", "level": 0, "sort_order": 2}
+            {
+                "id": 4,
+                "parent_id": None,
+                "name": "Reports",
+                "level": 0,
+                "sort_order": 2,
+            },
         ]
 
         result = await menu_repo.get_menu_tree(flat_menus)
@@ -85,7 +99,7 @@ class TestMenuRepository:
             2: False,  # is_system_admin
             3: True,  # is_active
             4: "John Doe",  # name
-            5: "person"  # person_type
+            5: "person",  # person_type
         }[key]
 
         mock_result = MagicMock()
@@ -114,11 +128,11 @@ class TestMenuEndpoints:
         assert len(router.routes) > 0
 
         # Verificar se tem as funções esperadas
-        route_names = [getattr(route, 'name', '') for route in router.routes]
-        assert 'get_user_dynamic_menus' in route_names
-        assert 'get_user_menus_by_context' in route_names
-        assert 'menu_service_health' in route_names
-        assert 'debug_menu_structure' in route_names
+        route_names = [getattr(route, "name", "") for route in router.routes]
+        assert "get_user_dynamic_menus" in route_names
+        assert "get_user_menus_by_context" in route_names
+        assert "menu_service_health" in route_names
+        assert "debug_menu_structure" in route_names
 
     def test_menu_router_prefix(self):
         """Testa se o router tem o prefixo correto"""
@@ -132,13 +146,33 @@ class TestMenuEndpoints:
 
         assert "menus" in router.tags
 
-
     def test_get_menu_tree_with_none_parent(self, menu_repo):
         """Testa conversão quando há menus com parent_id None"""
         flat_menus = [
-            {"id": 1, "parent_id": None, "name": "Root 1", "level": 0, "sort_order": 1, "children": []},
-            {"id": 2, "parent_id": None, "name": "Root 2", "level": 0, "sort_order": 2, "children": []},
-            {"id": 3, "parent_id": 1, "name": "Child", "level": 1, "sort_order": 1, "children": []}
+            {
+                "id": 1,
+                "parent_id": None,
+                "name": "Root 1",
+                "level": 0,
+                "sort_order": 1,
+                "children": [],
+            },
+            {
+                "id": 2,
+                "parent_id": None,
+                "name": "Root 2",
+                "level": 0,
+                "sort_order": 2,
+                "children": [],
+            },
+            {
+                "id": 3,
+                "parent_id": 1,
+                "name": "Child",
+                "level": 1,
+                "sort_order": 1,
+                "children": [],
+            },
         ]
 
         result = menu_repo.get_menu_tree(flat_menus)
@@ -151,8 +185,22 @@ class TestMenuEndpoints:
     def test_get_menu_tree_orphaned_children(self, menu_repo):
         """Testa tratamento de filhos órfãos (parent não existe)"""
         flat_menus = [
-            {"id": 1, "parent_id": None, "name": "Root", "level": 0, "sort_order": 1, "children": []},
-            {"id": 2, "parent_id": 999, "name": "Orphan", "level": 1, "sort_order": 1, "children": []}  # Parent não existe
+            {
+                "id": 1,
+                "parent_id": None,
+                "name": "Root",
+                "level": 0,
+                "sort_order": 1,
+                "children": [],
+            },
+            {
+                "id": 2,
+                "parent_id": 999,
+                "name": "Orphan",
+                "level": 1,
+                "sort_order": 1,
+                "children": [],
+            },  # Parent não existe
         ]
 
         result = menu_repo.get_menu_tree(flat_menus)
@@ -165,9 +213,30 @@ class TestMenuEndpoints:
     def test_get_menu_tree_deep_hierarchy(self, menu_repo):
         """Testa conversão de hierarquia profunda (3 níveis)"""
         flat_menus = [
-            {"id": 1, "parent_id": None, "name": "Level 1", "level": 0, "sort_order": 1, "children": []},
-            {"id": 2, "parent_id": 1, "name": "Level 2", "level": 1, "sort_order": 1, "children": []},
-            {"id": 3, "parent_id": 2, "name": "Level 3", "level": 2, "sort_order": 1, "children": []}
+            {
+                "id": 1,
+                "parent_id": None,
+                "name": "Level 1",
+                "level": 0,
+                "sort_order": 1,
+                "children": [],
+            },
+            {
+                "id": 2,
+                "parent_id": 1,
+                "name": "Level 2",
+                "level": 1,
+                "sort_order": 1,
+                "children": [],
+            },
+            {
+                "id": 3,
+                "parent_id": 2,
+                "name": "Level 3",
+                "level": 2,
+                "sort_order": 1,
+                "children": [],
+            },
         ]
 
         result = menu_repo.get_menu_tree(flat_menus)
@@ -188,9 +257,30 @@ class TestMenuEndpoints:
     def test_get_menu_tree_sorting(self, menu_repo):
         """Testa ordenação por sort_order"""
         flat_menus = [
-            {"id": 1, "parent_id": None, "name": "Z Menu", "level": 0, "sort_order": 3, "children": []},
-            {"id": 2, "parent_id": None, "name": "A Menu", "level": 0, "sort_order": 1, "children": []},
-            {"id": 3, "parent_id": None, "name": "M Menu", "level": 0, "sort_order": 2, "children": []}
+            {
+                "id": 1,
+                "parent_id": None,
+                "name": "Z Menu",
+                "level": 0,
+                "sort_order": 3,
+                "children": [],
+            },
+            {
+                "id": 2,
+                "parent_id": None,
+                "name": "A Menu",
+                "level": 0,
+                "sort_order": 1,
+                "children": [],
+            },
+            {
+                "id": 3,
+                "parent_id": None,
+                "name": "M Menu",
+                "level": 0,
+                "sort_order": 2,
+                "children": [],
+            },
         ]
 
         result = menu_repo.get_menu_tree(flat_menus)
@@ -203,9 +293,30 @@ class TestMenuEndpoints:
     def test_get_menu_tree_children_sorting(self, menu_repo):
         """Testa ordenação de filhos"""
         flat_menus = [
-            {"id": 1, "parent_id": None, "name": "Parent", "level": 0, "sort_order": 1, "children": []},
-            {"id": 2, "parent_id": 1, "name": "Child Z", "level": 1, "sort_order": 2, "children": []},
-            {"id": 3, "parent_id": 1, "name": "Child A", "level": 1, "sort_order": 1, "children": []}
+            {
+                "id": 1,
+                "parent_id": None,
+                "name": "Parent",
+                "level": 0,
+                "sort_order": 1,
+                "children": [],
+            },
+            {
+                "id": 2,
+                "parent_id": 1,
+                "name": "Child Z",
+                "level": 1,
+                "sort_order": 2,
+                "children": [],
+            },
+            {
+                "id": 3,
+                "parent_id": 1,
+                "name": "Child A",
+                "level": 1,
+                "sort_order": 1,
+                "children": [],
+            },
         ]
 
         result = menu_repo.get_menu_tree(flat_menus)

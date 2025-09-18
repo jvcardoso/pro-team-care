@@ -9,15 +9,7 @@ import { MenuItem } from "./MenuItem";
 import { MobileSafeMenuItem } from "./MobileSafeMenuItem";
 import { LoadingSpinner } from "../ui/LoadingSpinner";
 import { Alert } from "../ui/Alert";
-import {
-  RefreshCw,
-  AlertCircle,
-  Crown,
-  Clock,
-  Database,
-  Wifi,
-  WifiOff,
-} from "lucide-react";
+import { AlertCircle, Crown, Database } from "lucide-react";
 
 /**
  * Componente DynamicSidebar
@@ -26,28 +18,8 @@ import {
  * @param {string} className - Classes CSS adicionais
  */
 export const DynamicSidebar = ({ collapsed = false, className = "" }) => {
-  console.log("🔧 DEBUG: DynamicSidebar renderizado - collapsed:", collapsed);
-
-  const {
-    menus,
-    loading,
-    error,
-    refreshMenus,
-    isRoot,
-    userInfo,
-    context,
-    lastFetch,
-    cacheAge,
-  } = useDynamicMenus();
-
-  console.log(
-    "🔧 DEBUG: Hook retornou - loading:",
-    loading,
-    "menus:",
-    menus?.length,
-    "error:",
-    error
-  );
+  const { menus, loading, error, isRoot, userInfo, context, refreshMenus } =
+    useDynamicMenus();
 
   const [expandedMenus, setExpandedMenus] = useState(new Set());
   const [showDebugInfo, setShowDebugInfo] = useState(false);
@@ -127,9 +99,7 @@ export const DynamicSidebar = ({ collapsed = false, className = "" }) => {
             {/* Contexto atual */}
             <div className="flex items-center space-x-1 text-xs text-gray-500 dark:text-gray-400">
               <Database size={12} />
-              <span className="truncate">
-                {context?.name || "Carregando..."}
-              </span>
+              <span className="truncate">{context?.name || "Sistema"}</span>
             </div>
           </div>
         </div>
@@ -150,24 +120,11 @@ export const DynamicSidebar = ({ collapsed = false, className = "" }) => {
   );
 
   /**
-   * Renderiza estado de loading
+   * Renderiza estado de loading - simplificado
    */
   const renderLoading = () => (
-    <div
-      className={`${className} flex items-center justify-center p-8`}
-      data-testid="loading-spinner"
-    >
-      <div className="text-center">
-        <LoadingSpinner className="mx-auto mb-3" />
-        {!collapsed && (
-          <div className="space-y-1">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Carregando menus...
-            </p>
-            <p className="text-xs text-gray-500">Aguarde um momento</p>
-          </div>
-        )}
-      </div>
+    <div className="p-4">
+      {!collapsed && <p className="text-sm text-gray-500">Carregando...</p>}
     </div>
   );
 
@@ -183,35 +140,11 @@ export const DynamicSidebar = ({ collapsed = false, className = "" }) => {
       >
         {collapsed ? (
           <div className="flex flex-col items-center space-y-2">
-            <WifiOff size={20} className="text-red-500" />
-            <button
-              onClick={refreshMenus}
-              className="text-xs text-red-600 hover:underline"
-              title="Tentar novamente"
-            >
-              Tentar
-            </button>
+            <AlertCircle size={20} className="text-red-500" />
           </div>
         ) : (
           <div className="space-y-2">
-            <p className="text-sm">{error}</p>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={refreshMenus}
-                className="text-sm text-red-600 hover:underline flex items-center space-x-1"
-              >
-                <RefreshCw size={14} />
-                <span>Tentar novamente</span>
-              </button>
-
-              {/* Toggle debug info */}
-              <button
-                onClick={() => setShowDebugInfo(!showDebugInfo)}
-                className="text-xs text-gray-500 hover:underline"
-              >
-                Debug
-              </button>
-            </div>
+            <p className="text-sm text-red-600">Erro ao carregar menus</p>
 
             {/* Debug info */}
             {showDebugInfo && (
@@ -289,69 +222,26 @@ export const DynamicSidebar = ({ collapsed = false, className = "" }) => {
           {/* Info do usuário */}
           <div className="text-center">
             <p className="text-xs font-medium text-gray-900 dark:text-white truncate">
-              {userInfo?.name || "Pro Team Care"}
+              {context?.name || "Pro Team Care"}
             </p>
             <div className="flex items-center justify-center space-x-1 text-xs text-gray-500 dark:text-gray-400">
               <span>v1.0.0</span>
-              {error ? (
-                <WifiOff size={10} className="text-red-500" title="Offline" />
-              ) : (
-                <Wifi size={10} className="text-green-500" title="Online" />
-              )}
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  error ? "bg-red-500" : "bg-green-500"
+                }`}
+              ></div>
             </div>
-          </div>
-
-          {/* Cache info (só em development) */}
-          {process.env.NODE_ENV === "development" && lastFetch && (
-            <div className="flex items-center justify-center space-x-1 text-xs text-gray-400">
-              <Clock size={10} />
-              <span title={`Última atualização: ${lastFetch}`}>
-                Cache: {cacheAge}s
-              </span>
-            </div>
-          )}
-
-          {/* Botão de refresh */}
-          <div className="flex justify-center">
-            <button
-              onClick={refreshMenus}
-              disabled={loading}
-              className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
-              title="Atualizar menus"
-              data-testid="refresh-menus-button"
-            >
-              <RefreshCw
-                size={14}
-                className={`text-gray-500 ${loading ? "animate-spin" : ""}`}
-              />
-            </button>
           </div>
         </div>
       ) : (
         <div className="flex flex-col items-center space-y-2">
-          {/* Status indicator */}
-          {error ? (
-            <WifiOff
-              size={14}
-              className="text-red-500"
-              title="Erro de conexão"
-            />
-          ) : (
-            <Wifi size={14} className="text-green-500" title="Conectado" />
-          )}
-
-          {/* Refresh button */}
-          <button
-            onClick={refreshMenus}
-            disabled={loading}
-            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
-            title="Atualizar menus"
-          >
-            <RefreshCw
-              size={12}
-              className={`text-gray-500 ${loading ? "animate-spin" : ""}`}
-            />
-          </button>
+          {/* Status simplificado */}
+          <div
+            className={`w-2 h-2 rounded-full ${
+              error ? "bg-red-500" : "bg-green-500"
+            }`}
+          ></div>
         </div>
       )}
     </div>

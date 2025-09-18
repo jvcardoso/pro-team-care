@@ -497,7 +497,7 @@ class ErrorBoundary extends Component&lt;Props, State&gt; {
 &nbsp;
 <span class="fstat-no" title="function not covered" >  pu</span>blic componentDidCatch(error: Error, errorInfo: ErrorInfo) {
 <span class="cstat-no" title="statement not covered" >    console.error('ErrorBoundary caught an error:', error, errorInfo);</span>
-    
+
 <span class="cstat-no" title="statement not covered" >    this.setState({</span>
       error,
       errorInfo
@@ -557,14 +557,14 @@ class ErrorBoundary extends Component&lt;Props, State&gt; {
                 A aplicação encontrou um erro inesperado. Nossa equipe foi notificada.
               &lt;/p&gt;
               &lt;div className="space-y-3"&gt;
-                &lt;Button 
+                &lt;Button
                   onClick={this.handleRetry}
                   className="w-full"
                 &gt;
                   &lt;RefreshCw className="w-4 h-4 mr-2" /&gt;
                   Tentar Novamente
                 &lt;/Button&gt;
-                &lt;Button 
+                &lt;Button
                   variant="secondary"
                   onClick={this.handleGoHome}
                   className="w-full"
@@ -621,9 +621,9 @@ class ErrorBoundary extends Component&lt;Props, State&gt; {
                 &lt;p className="text-sm text-red-700 dark:text-red-300 mt-1"&gt;
                   Ocorreu um erro ao processar o formulário. Tente novamente.
                 &lt;/p&gt;
-                &lt;Button 
-                  variant="secondary" 
-                  size="sm" 
+                &lt;Button
+                  variant="secondary"
+                  size="sm"
                   onClick={this.handleRetry}
                   className="mt-2"
                 &gt;

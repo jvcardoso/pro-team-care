@@ -3,9 +3,23 @@
  * 🔄 Padronização de timeouts, headers e configurações
  */
 
-// 🌐 Base URLs - usar URL relativa quando em desenvolvimento para usar proxy do Vite
-export const API_BASE_URL =
-  import.meta.env.DEV ? "" : (import.meta.env.VITE_API_URL || "http://192.168.11.83:8000");
+// 🌐 Base URLs - usar proxy do Vite em desenvolvimento
+export const API_BASE_URL = (() => {
+  // Jest environment detection
+  if (typeof process !== "undefined" && process.env.NODE_ENV === "test") {
+    return "http://localhost:8000";
+  }
+
+  // Vite environment
+  if (typeof import.meta !== "undefined" && import.meta.env) {
+    return import.meta.env.DEV
+      ? ""
+      : import.meta.env.VITE_API_URL || "http://192.168.11.83:8000";
+  }
+
+  // Fallback
+  return "http://192.168.11.83:8000";
+})();
 
 // ⏱️ Timeouts padronizados (em milliseconds)
 export const HTTP_TIMEOUTS = {
@@ -107,6 +121,17 @@ export const ENV_CONFIG = {
 
 // 🎯 Get current environment config
 export const getCurrentEnvConfig = () => {
-  const env = import.meta.env.MODE as keyof typeof ENV_CONFIG;
-  return ENV_CONFIG[env] || ENV_CONFIG.development;
+  // Jest environment
+  if (typeof process !== "undefined" && process.env.NODE_ENV === "test") {
+    return ENV_CONFIG.development;
+  }
+
+  // Vite environment
+  if (typeof import.meta !== "undefined" && import.meta.env) {
+    const env = import.meta.env.MODE as keyof typeof ENV_CONFIG;
+    return ENV_CONFIG[env] || ENV_CONFIG.development;
+  }
+
+  // Fallback
+  return ENV_CONFIG.development;
 };

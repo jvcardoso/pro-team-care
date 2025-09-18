@@ -6,9 +6,10 @@ Este teste identifica problemas no layout mobile do CRUD de usuários,
 comparando como os dados são exibidos no desktop vs mobile.
 """
 
-import pytest
 import json
-from typing import Dict, Any
+from typing import Any, Dict
+
+import pytest
 
 
 class TestUserMobileLayout:
@@ -26,15 +27,12 @@ class TestUserMobileLayout:
             "is_system_admin": False,
             "created_at": "2024-01-15T10:30:00Z",
             "last_login_at": "2024-01-20T14:45:00Z",
-            "roles": [
-                {"id": 1, "name": "Administrador"},
-                {"id": 2, "name": "Usuário"}
-            ],
+            "roles": [{"id": 1, "name": "Administrador"}, {"id": 2, "name": "Usuário"}],
             "person": {
                 "name": "João Silva",
                 "document_type": "cpf",
-                "document_number": "12345678901"
-            }
+                "document_number": "12345678901",
+            },
         }
 
         # Verificar campos obrigatórios
@@ -52,25 +50,30 @@ class TestUserMobileLayout:
 
         # Mapeamento desktop (tabela)
         desktop_mapping = {
-            "nome": user_data.get("person_name") or user_data.get("name") or user_data.get("email"),
+            "nome": user_data.get("person_name")
+            or user_data.get("name")
+            or user_data.get("email"),
             "email": user_data.get("email"),
             "status": "active" if user_data.get("is_active") else "inactive",
             "funcoes": [role["name"] for role in user_data.get("roles", [])],
             "criado_em": user_data.get("created_at"),
-            "ultimo_login": user_data.get("last_login_at")
+            "ultimo_login": user_data.get("last_login_at"),
         }
 
         # Mapeamento mobile (card)
         mobile_mapping = {
-            "nome": user_data.get("person", {}).get("name") or user_data.get("email") or "Usuário não identificado",
+            "nome": user_data.get("person", {}).get("name")
+            or user_data.get("email")
+            or "Usuário não identificado",
             "email": user_data.get("email"),
-            "status": user_data.get("status") or "active",  # Problema identificado aqui!
+            "status": user_data.get("status")
+            or "active",  # Problema identificado aqui!
             "id": user_data.get("id"),
             "criado_em": user_data.get("created_at"),
             "documento": user_data.get("person", {}).get("document_number"),
             "tipo_documento": user_data.get("person", {}).get("document_type"),
             "funcoes": [role["name"] for role in user_data.get("roles", [])],
-            "ultimo_login": user_data.get("last_login_at")
+            "ultimo_login": user_data.get("last_login_at"),
         }
 
         print("📊 Mapeamento Desktop:")
@@ -84,10 +87,14 @@ class TestUserMobileLayout:
         # Identificar diferenças
         differences = []
         if desktop_mapping["status"] != mobile_mapping["status"]:
-            differences.append(f"Status: Desktop usa 'is_active' ({desktop_mapping['status']}), Mobile usa 'status' ({mobile_mapping['status']})")
+            differences.append(
+                f"Status: Desktop usa 'is_active' ({desktop_mapping['status']}), Mobile usa 'status' ({mobile_mapping['status']})"
+            )
 
         if desktop_mapping["nome"] != mobile_mapping["nome"]:
-            differences.append(f"Nome: Desktop = '{desktop_mapping['nome']}', Mobile = '{mobile_mapping['nome']}'")
+            differences.append(
+                f"Nome: Desktop = '{desktop_mapping['nome']}', Mobile = '{mobile_mapping['nome']}'"
+            )
 
         if differences:
             print("\n⚠️  DIFERENÇAS IDENTIFICADAS:")
@@ -107,16 +114,19 @@ class TestUserMobileLayout:
 
         # Simular como o componente acessa os dados
         access_patterns = {
-            "nome_principal": user_data.get("person", {}).get("name") or user_data.get("email") or "Usuário não identificado",
+            "nome_principal": user_data.get("person", {}).get("name")
+            or user_data.get("email")
+            or "Usuário não identificado",
             "email_secundario": user_data.get("email"),
-            "status_incorreto": user_data.get("status") or "active",  # Este é o problema!
+            "status_incorreto": user_data.get("status")
+            or "active",  # Este é o problema!
             "status_correto": "active" if user_data.get("is_active") else "inactive",
             "id_usuario": user_data.get("id"),
             "data_criacao": user_data.get("created_at"),
             "documento": user_data.get("person", {}).get("document_number"),
             "tipo_documento": user_data.get("person", {}).get("document_type"),
             "funcoes": user_data.get("roles", []),
-            "ultimo_login": user_data.get("last_login_at")
+            "ultimo_login": user_data.get("last_login_at"),
         }
 
         print("📱 Padrões de acesso identificados:")
@@ -127,9 +137,15 @@ class TestUserMobileLayout:
         issues = []
 
         if access_patterns["status_incorreto"] != access_patterns["status_correto"]:
-            issues.append("PROBLEMA CRÍTICO: Status está sendo acessado incorretamente no mobile")
-            issues.append(f"   - Usando: user.status (valor: {access_patterns['status_incorreto']})")
-            issues.append(f"   - Deveria usar: user.is_active (valor correto: {access_patterns['status_correto']})")
+            issues.append(
+                "PROBLEMA CRÍTICO: Status está sendo acessado incorretamente no mobile"
+            )
+            issues.append(
+                f"   - Usando: user.status (valor: {access_patterns['status_incorreto']})"
+            )
+            issues.append(
+                f"   - Deveria usar: user.is_active (valor correto: {access_patterns['status_correto']})"
+            )
 
         if not access_patterns["nome_principal"]:
             issues.append("Nome do usuário pode estar vazio")
@@ -150,10 +166,10 @@ class TestUserMobileLayout:
         """Testa os breakpoints responsivos usados no layout"""
 
         breakpoints = {
-            "mobile": "lg:hidden",      # Esconde em telas grandes (desktop)
-            "desktop": "hidden lg:block", # Esconde em telas pequenas (mobile)
-            "tablet": "sm:grid-cols-2",   # Grid de 2 colunas em tablets
-            "large": "md:grid-cols-4"     # Grid de 4 colunas em telas grandes
+            "mobile": "lg:hidden",  # Esconde em telas grandes (desktop)
+            "desktop": "hidden lg:block",  # Esconde em telas pequenas (mobile)
+            "tablet": "sm:grid-cols-2",  # Grid de 2 colunas em tablets
+            "large": "md:grid-cols-4",  # Grid de 4 colunas em telas grandes
         }
 
         print("📱 Breakpoints responsivos analisados:")
@@ -193,7 +209,7 @@ class TestUserMobileLayout:
                 "linha": "~40",
                 "atual": 'getStatusBadge(user.status || "active")',
                 "correcao": 'getStatusBadge(user.is_active ? "active" : "inactive")',
-                "impacto": "Alto - Corrige exibição do status no mobile"
+                "impacto": "Alto - Corrige exibição do status no mobile",
             },
             {
                 "componente": "UserMobileCard.jsx",
@@ -201,7 +217,7 @@ class TestUserMobileLayout:
                 "linha": "~32",
                 "atual": 'user.person?.name || user.email || "Usuário não identificado"',
                 "correcao": 'user.person_name || user.name || user.email || "Usuário não identificado"',
-                "impacto": "Médio - Padroniza acesso ao nome"
+                "impacto": "Médio - Padroniza acesso ao nome",
             },
             {
                 "componente": "UsersPage.jsx",
@@ -209,8 +225,8 @@ class TestUserMobileLayout:
                 "linha": "Verificar linhas ~392 e ~478",
                 "atual": "Acesso diferente entre desktop e mobile",
                 "correcao": "Padronizar acesso aos campos do usuário",
-                "impacto": "Alto - Garante consistência"
-            }
+                "impacto": "Alto - Garante consistência",
+            },
         ]
 
         for i, rec in enumerate(recommendations, 1):

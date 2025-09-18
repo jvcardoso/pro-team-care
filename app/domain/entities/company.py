@@ -3,10 +3,10 @@ Company Domain Entities - Entidades de domínio puras
 Sem dependências externas (Pydantic, SQLAlchemy, etc.)
 """
 
-from dataclasses import dataclass
-from typing import Optional, List, Dict, Any
-from datetime import datetime, date, time
+from dataclasses import dataclass, field
+from datetime import date, datetime, time
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class PersonType(Enum):
@@ -62,6 +62,7 @@ class AccessDifficulty(Enum):
 @dataclass
 class PhoneEntity:
     """Entidade de domínio para Telefone"""
+
     id: Optional[int] = None
     country_code: str = "55"
     number: str = ""
@@ -97,7 +98,7 @@ class PhoneEntity:
         """Verifica se é um celular válido no Brasil"""
         if not self.number or len(self.number) != 11:
             return False
-        return self.number[2] == '9'
+        return self.number[2] == "9"
 
     def format_whatsapp(self) -> str:
         """Formata número para WhatsApp"""
@@ -109,6 +110,7 @@ class PhoneEntity:
 @dataclass
 class EmailEntity:
     """Entidade de domínio para Email"""
+
     id: Optional[int] = None
     email_address: str = ""
     type: EmailType = EmailType.WORK
@@ -121,13 +123,15 @@ class EmailEntity:
     def is_valid_email(self) -> bool:
         """Validação básica de email"""
         import re
-        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+
+        pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         return bool(re.match(pattern, self.email_address))
 
 
 @dataclass
 class AddressEntity:
     """Entidade de domínio para Endereço"""
+
     id: Optional[int] = None
     street: str = ""
     number: Optional[str] = None
@@ -139,7 +143,7 @@ class AddressEntity:
     country: str = "BR"
     type: AddressType = AddressType.COMMERCIAL
     is_principal: bool = False
-    
+
     # Geocoding fields
     latitude: Optional[float] = None
     longitude: Optional[float] = None
@@ -149,14 +153,14 @@ class AddressEntity:
     formatted_address: Optional[str] = None
     coordinates_added_at: Optional[datetime] = None
     coordinates_source: Optional[str] = None
-    
+
     # Enrichment metadata
     enriched_at: Optional[datetime] = None
     enrichment_source: Optional[str] = None
     validation_source: Optional[str] = None
     last_validated_at: Optional[datetime] = None
     is_validated: bool = False
-    
+
     # Códigos oficiais brasileiros (ViaCEP)
     ibge_city_code: Optional[int] = None
     ibge_state_code: Optional[int] = None
@@ -188,6 +192,7 @@ class AddressEntity:
 @dataclass
 class PeopleEntity:
     """Entidade de domínio para Pessoa"""
+
     id: Optional[int] = None
     person_type: PersonType = PersonType.PJ
     name: str = ""
@@ -220,10 +225,10 @@ class PeopleEntity:
         """Validação básica do documento"""
         if not self.tax_id:
             return False
-        
+
         # Remove caracteres não numéricos
-        clean_tax_id = ''.join(filter(str.isdigit, self.tax_id))
-        
+        clean_tax_id = "".join(filter(str.isdigit, self.tax_id))
+
         if self.person_type == PersonType.PJ:
             return len(clean_tax_id) == 14  # CNPJ
         else:
@@ -233,6 +238,7 @@ class PeopleEntity:
 @dataclass
 class CompanyEntity:
     """Entidade de domínio para Empresa"""
+
     id: Optional[int] = None
     person_id: Optional[int] = None
     settings: Optional[Dict[str, Any]] = None
@@ -241,12 +247,12 @@ class CompanyEntity:
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     deleted_at: Optional[datetime] = None
-    
+
     # Relacionamentos
     people: Optional[PeopleEntity] = None
-    phones: List[PhoneEntity] = None
-    emails: List[EmailEntity] = None
-    addresses: List[AddressEntity] = None
+    phones: List[PhoneEntity] = field(default_factory=list)
+    emails: List[EmailEntity] = field(default_factory=list)
+    addresses: List[AddressEntity] = field(default_factory=list)
 
     def __post_init__(self):
         """Inicializa listas vazias se None"""
@@ -263,9 +269,11 @@ class CompanyEntity:
 
     def is_active(self) -> bool:
         """Verifica se a empresa está ativa"""
-        return (self.deleted_at is None and 
-                self.people is not None and 
-                self.people.is_active())
+        return (
+            self.deleted_at is None
+            and self.people is not None
+            and self.people.is_active()
+        )
 
     def get_principal_phone(self) -> Optional[PhoneEntity]:
         """Obtém o telefone principal"""

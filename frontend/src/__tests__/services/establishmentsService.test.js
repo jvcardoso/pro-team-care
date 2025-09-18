@@ -19,7 +19,7 @@ jest.mock("../../services/api", () => ({
   },
 }));
 
-import { establishmentsService } from "../../services/api";
+import { establishmentsService } from "../../services/establishmentsService";
 import { api, httpCache } from "../../services/api";
 
 describe("establishmentsService", () => {
@@ -31,14 +31,12 @@ describe("establishmentsService", () => {
     test("deve chamar API corretamente com parâmetros", async () => {
       const mockResponse = {
         data: {
-          establishments: [
-            { id: 1, code: "EST001", type: "matriz" }
-          ],
+          establishments: [{ id: 1, code: "EST001", type: "matriz" }],
           total: 1,
           page: 1,
           size: 10,
           pages: 1,
-        }
+        },
       };
 
       api.get.mockResolvedValue(mockResponse);
@@ -46,7 +44,9 @@ describe("establishmentsService", () => {
       const params = { page: 1, size: 10, search: "teste" };
       const result = await establishmentsService.getEstablishments(params);
 
-      expect(api.get).toHaveBeenCalledWith("/api/v1/establishments/", { params });
+      expect(api.get).toHaveBeenCalledWith("/api/v1/establishments/", {
+        params,
+      });
       expect(result).toEqual(mockResponse.data);
     });
 
@@ -63,7 +63,9 @@ describe("establishmentsService", () => {
       const error = new Error("API Error");
       api.get.mockRejectedValue(error);
 
-      await expect(establishmentsService.getEstablishments()).rejects.toThrow("API Error");
+      await expect(establishmentsService.getEstablishments()).rejects.toThrow(
+        "API Error"
+      );
     });
   });
 
@@ -73,7 +75,7 @@ describe("establishmentsService", () => {
         id: 1,
         code: "EST001",
         type: "matriz",
-        person: { name: "Clínica Teste" }
+        person: { name: "Clínica Teste" },
       };
       const mockResponse = { data: mockEstablishment };
 
@@ -90,16 +92,18 @@ describe("establishmentsService", () => {
     test("deve obter estabelecimentos por empresa", async () => {
       const mockEstablishments = [
         { id: 1, code: "EST001" },
-        { id: 2, code: "EST002" }
+        { id: 2, code: "EST002" },
       ];
       const mockResponse = { data: mockEstablishments };
 
       api.get.mockResolvedValue(mockResponse);
 
-      const result = await establishmentsService.getEstablishmentsByCompany(1, { is_active: true });
+      const result = await establishmentsService.getEstablishmentsByCompany(1, {
+        is_active: true,
+      });
 
       expect(api.get).toHaveBeenCalledWith("/api/v1/establishments/company/1", {
-        params: { is_active: true }
+        params: { is_active: true },
       });
       expect(result).toEqual(mockEstablishments);
     });
@@ -114,17 +118,24 @@ describe("establishmentsService", () => {
         category: "clinica",
         person: {
           name: "Clínica Teste",
-          tax_id: "11222333000144"
-        }
+          tax_id: "11222333000144",
+        },
       };
 
       const mockResponse = { data: { id: 1, ...establishmentData } };
       api.post.mockResolvedValue(mockResponse);
 
-      const result = await establishmentsService.createEstablishment(establishmentData);
+      const result = await establishmentsService.createEstablishment(
+        establishmentData
+      );
 
-      expect(api.post).toHaveBeenCalledWith("/api/v1/establishments/", establishmentData);
-      expect(httpCache.invalidatePattern).toHaveBeenCalledWith("/api/v1/establishments");
+      expect(api.post).toHaveBeenCalledWith(
+        "/api/v1/establishments/",
+        establishmentData
+      );
+      expect(httpCache.invalidatePattern).toHaveBeenCalledWith(
+        "/api/v1/establishments"
+      );
       expect(result).toEqual({ id: 1, ...establishmentData });
     });
 
@@ -136,7 +147,9 @@ describe("establishmentsService", () => {
 
       await establishmentsService.createEstablishment(establishmentData);
 
-      expect(httpCache.invalidatePattern).toHaveBeenCalledWith("/api/v1/establishments");
+      expect(httpCache.invalidatePattern).toHaveBeenCalledWith(
+        "/api/v1/establishments"
+      );
     });
   });
 
@@ -145,16 +158,24 @@ describe("establishmentsService", () => {
       const updateData = {
         code: "EST002",
         type: "filial",
-        person: { name: "Clínica Atualizada" }
+        person: { name: "Clínica Atualizada" },
       };
 
       const mockResponse = { data: { id: 1, ...updateData } };
       api.put.mockResolvedValue(mockResponse);
 
-      const result = await establishmentsService.updateEstablishment(1, updateData);
+      const result = await establishmentsService.updateEstablishment(
+        1,
+        updateData
+      );
 
-      expect(api.put).toHaveBeenCalledWith("/api/v1/establishments/1", updateData);
-      expect(httpCache.invalidatePattern).toHaveBeenCalledWith("/api/v1/establishments");
+      expect(api.put).toHaveBeenCalledWith(
+        "/api/v1/establishments/1",
+        updateData
+      );
+      expect(httpCache.invalidatePattern).toHaveBeenCalledWith(
+        "/api/v1/establishments"
+      );
       expect(result).toEqual({ id: 1, ...updateData });
     });
   });
@@ -164,12 +185,20 @@ describe("establishmentsService", () => {
       const mockResponse = { data: { id: 1, is_active: true } };
       api.patch.mockResolvedValue(mockResponse);
 
-      const result = await establishmentsService.toggleEstablishmentStatus(1, true);
+      const result = await establishmentsService.toggleEstablishmentStatus(
+        1,
+        true
+      );
 
-      expect(api.patch).toHaveBeenCalledWith("/api/v1/establishments/1/status", {
-        is_active: true
-      });
-      expect(httpCache.invalidatePattern).toHaveBeenCalledWith("/api/v1/establishments");
+      expect(api.patch).toHaveBeenCalledWith(
+        "/api/v1/establishments/1/status",
+        {
+          is_active: true,
+        }
+      );
+      expect(httpCache.invalidatePattern).toHaveBeenCalledWith(
+        "/api/v1/establishments"
+      );
       expect(result).toEqual({ id: 1, is_active: true });
     });
 
@@ -177,11 +206,17 @@ describe("establishmentsService", () => {
       const mockResponse = { data: { id: 1, is_active: false } };
       api.patch.mockResolvedValue(mockResponse);
 
-      const result = await establishmentsService.toggleEstablishmentStatus(1, false);
+      const result = await establishmentsService.toggleEstablishmentStatus(
+        1,
+        false
+      );
 
-      expect(api.patch).toHaveBeenCalledWith("/api/v1/establishments/1/status", {
-        is_active: false
-      });
+      expect(api.patch).toHaveBeenCalledWith(
+        "/api/v1/establishments/1/status",
+        {
+          is_active: false,
+        }
+      );
       expect(result).toEqual({ id: 1, is_active: false });
     });
   });
@@ -194,7 +229,9 @@ describe("establishmentsService", () => {
       const result = await establishmentsService.deleteEstablishment(1);
 
       expect(api.delete).toHaveBeenCalledWith("/api/v1/establishments/1");
-      expect(httpCache.invalidatePattern).toHaveBeenCalledWith("/api/v1/establishments");
+      expect(httpCache.invalidatePattern).toHaveBeenCalledWith(
+        "/api/v1/establishments"
+      );
       expect(result).toEqual({});
     });
   });
@@ -204,19 +241,24 @@ describe("establishmentsService", () => {
       const companyId = 1;
       const establishmentOrders = [
         { id: 1, order: 1 },
-        { id: 2, order: 2 }
+        { id: 2, order: 2 },
       ];
 
       const mockResponse = { data: { message: "Reordenado com sucesso" } };
       api.post.mockResolvedValue(mockResponse);
 
-      const result = await establishmentsService.reorderEstablishments(companyId, establishmentOrders);
+      const result = await establishmentsService.reorderEstablishments(
+        companyId,
+        establishmentOrders
+      );
 
       expect(api.post).toHaveBeenCalledWith("/api/v1/establishments/reorder", {
         company_id: companyId,
-        establishment_orders: establishmentOrders
+        establishment_orders: establishmentOrders,
       });
-      expect(httpCache.invalidatePattern).toHaveBeenCalledWith("/api/v1/establishments");
+      expect(httpCache.invalidatePattern).toHaveBeenCalledWith(
+        "/api/v1/establishments"
+      );
       expect(result).toEqual({ message: "Reordenado com sucesso" });
     });
   });
@@ -226,15 +268,23 @@ describe("establishmentsService", () => {
       const mockResponse = { data: { is_valid: true, error_message: "" } };
       api.post.mockResolvedValue(mockResponse);
 
-      const result = await establishmentsService.validateEstablishmentCreation(1, "EST001", false);
+      const result = await establishmentsService.validateEstablishmentCreation(
+        1,
+        "EST001",
+        false
+      );
 
-      expect(api.post).toHaveBeenCalledWith("/api/v1/establishments/validate", null, {
-        params: {
-          company_id: 1,
-          code: "EST001",
-          is_principal: false
+      expect(api.post).toHaveBeenCalledWith(
+        "/api/v1/establishments/validate",
+        null,
+        {
+          params: {
+            company_id: 1,
+            code: "EST001",
+            is_principal: false,
+          },
         }
-      });
+      );
       expect(result).toEqual({ is_valid: true, error_message: "" });
     });
 
@@ -242,15 +292,23 @@ describe("establishmentsService", () => {
       const mockResponse = { data: { is_valid: true, error_message: "" } };
       api.post.mockResolvedValue(mockResponse);
 
-      const result = await establishmentsService.validateEstablishmentCreation(1, "EST001", true);
+      const result = await establishmentsService.validateEstablishmentCreation(
+        1,
+        "EST001",
+        true
+      );
 
-      expect(api.post).toHaveBeenCalledWith("/api/v1/establishments/validate", null, {
-        params: {
-          company_id: 1,
-          code: "EST001",
-          is_principal: true
+      expect(api.post).toHaveBeenCalledWith(
+        "/api/v1/establishments/validate",
+        null,
+        {
+          params: {
+            company_id: 1,
+            code: "EST001",
+            is_principal: true,
+          },
         }
-      });
+      );
       expect(result).toEqual({ is_valid: true, error_message: "" });
     });
   });
@@ -260,15 +318,17 @@ describe("establishmentsService", () => {
       const mockResponse = {
         data: {
           establishments: [],
-          total: 25
-        }
+          total: 25,
+        },
       };
       api.get.mockResolvedValue(mockResponse);
 
-      const result = await establishmentsService.countEstablishments({ company_id: 1 });
+      const result = await establishmentsService.countEstablishments({
+        company_id: 1,
+      });
 
       expect(api.get).toHaveBeenCalledWith("/api/v1/establishments/", {
-        params: { company_id: 1, page: 1, size: 1 }
+        params: { company_id: 1, page: 1, size: 1 },
       });
       expect(result).toEqual({ total: 25 });
     });
@@ -288,7 +348,9 @@ describe("establishmentsService", () => {
       const error = new Error("Network Error");
       api.get.mockRejectedValue(error);
 
-      await expect(establishmentsService.getEstablishments()).rejects.toThrow("Network Error");
+      await expect(establishmentsService.getEstablishments()).rejects.toThrow(
+        "Network Error"
+      );
     });
 
     test("deve propagar erro da API em createEstablishment", async () => {
@@ -297,21 +359,27 @@ describe("establishmentsService", () => {
 
       const establishmentData = { company_id: 1, code: "EST001" };
 
-      await expect(establishmentsService.createEstablishment(establishmentData)).rejects.toThrow("Validation Error");
+      await expect(
+        establishmentsService.createEstablishment(establishmentData)
+      ).rejects.toThrow("Validation Error");
     });
 
     test("deve propagar erro da API em updateEstablishment", async () => {
       const error = new Error("Not Found");
       api.put.mockRejectedValue(error);
 
-      await expect(establishmentsService.updateEstablishment(1, {})).rejects.toThrow("Not Found");
+      await expect(
+        establishmentsService.updateEstablishment(1, {})
+      ).rejects.toThrow("Not Found");
     });
 
     test("deve propagar erro da API em deleteEstablishment", async () => {
       const error = new Error("Forbidden");
       api.delete.mockRejectedValue(error);
 
-      await expect(establishmentsService.deleteEstablishment(1)).rejects.toThrow("Forbidden");
+      await expect(
+        establishmentsService.deleteEstablishment(1)
+      ).rejects.toThrow("Forbidden");
     });
   });
 
@@ -321,8 +389,13 @@ describe("establishmentsService", () => {
 
       // Test create
       api.post.mockResolvedValue(mockResponse);
-      await establishmentsService.createEstablishment({ company_id: 1, code: "EST001" });
-      expect(httpCache.invalidatePattern).toHaveBeenCalledWith("/api/v1/establishments");
+      await establishmentsService.createEstablishment({
+        company_id: 1,
+        code: "EST001",
+      });
+      expect(httpCache.invalidatePattern).toHaveBeenCalledWith(
+        "/api/v1/establishments"
+      );
 
       // Reset mock
       httpCache.invalidatePattern.mockClear();
@@ -330,7 +403,9 @@ describe("establishmentsService", () => {
       // Test update
       api.put.mockResolvedValue(mockResponse);
       await establishmentsService.updateEstablishment(1, { code: "EST002" });
-      expect(httpCache.invalidatePattern).toHaveBeenCalledWith("/api/v1/establishments");
+      expect(httpCache.invalidatePattern).toHaveBeenCalledWith(
+        "/api/v1/establishments"
+      );
 
       // Reset mock
       httpCache.invalidatePattern.mockClear();
@@ -338,7 +413,9 @@ describe("establishmentsService", () => {
       // Test toggle status
       api.patch.mockResolvedValue(mockResponse);
       await establishmentsService.toggleEstablishmentStatus(1, false);
-      expect(httpCache.invalidatePattern).toHaveBeenCalledWith("/api/v1/establishments");
+      expect(httpCache.invalidatePattern).toHaveBeenCalledWith(
+        "/api/v1/establishments"
+      );
 
       // Reset mock
       httpCache.invalidatePattern.mockClear();
@@ -346,15 +423,21 @@ describe("establishmentsService", () => {
       // Test delete
       api.delete.mockResolvedValue(mockResponse);
       await establishmentsService.deleteEstablishment(1);
-      expect(httpCache.invalidatePattern).toHaveBeenCalledWith("/api/v1/establishments");
+      expect(httpCache.invalidatePattern).toHaveBeenCalledWith(
+        "/api/v1/establishments"
+      );
 
       // Reset mock
       httpCache.invalidatePattern.mockClear();
 
       // Test reorder
       api.post.mockResolvedValue(mockResponse);
-      await establishmentsService.reorderEstablishments(1, [{ id: 1, order: 1 }]);
-      expect(httpCache.invalidatePattern).toHaveBeenCalledWith("/api/v1/establishments");
+      await establishmentsService.reorderEstablishments(1, [
+        { id: 1, order: 1 },
+      ]);
+      expect(httpCache.invalidatePattern).toHaveBeenCalledWith(
+        "/api/v1/establishments"
+      );
     });
 
     test("não deve invalidar cache em operações de leitura", async () => {

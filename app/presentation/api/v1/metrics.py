@@ -1,15 +1,20 @@
 """
 Metrics and monitoring endpoints
 """
-from datetime import datetime
-from typing import Dict, Any
 
-from fastapi import APIRouter, Response, Request
+from datetime import datetime
+from typing import Any, Dict
+
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import PlainTextResponse
 
+from app.domain.entities.user import User
+from app.infrastructure.auth import get_current_user_skip_options
+from app.infrastructure.database import get_db
+from app.infrastructure.logging import logger
 from app.infrastructure.monitoring.metrics import performance_metrics
 from app.infrastructure.rate_limiting import limiter
-from app.infrastructure.logging import logger
+from app.infrastructure.services.tenant_context_service import get_tenant_context
 
 router = APIRouter(tags=["Monitoring"])
 
@@ -20,14 +25,13 @@ async def prometheus_metrics() -> PlainTextResponse:
     try:
         metrics_data = performance_metrics.export_prometheus_metrics()
         return PlainTextResponse(
-            content=metrics_data.decode('utf-8'),
-            media_type="text/plain; version=0.0.4; charset=utf-8"
+            content=metrics_data.decode("utf-8"),
+            media_type="text/plain; version=0.0.4; charset=utf-8",
         )
     except Exception as e:
         logger.error(f"Failed to export Prometheus metrics: {e}")
         return PlainTextResponse(
-            content=f"# Error exporting metrics: {e}",
-            media_type="text/plain"
+            content=f"# Error exporting metrics: {e}", media_type="text/plain"
         )
 
 
@@ -38,17 +42,14 @@ async def metrics_summary(request: Request) -> Dict[str, Any]:
     try:
         summary = performance_metrics.get_metrics_summary()
         summary["timestamp_iso"] = datetime.utcnow().isoformat()
-        
-        return {
-            "status": "success",
-            "data": summary
-        }
+
+        return {"status": "success", "data": summary}
     except Exception as e:
         logger.error(f"Failed to get metrics summary: {e}")
         return {
             "status": "error",
             "error": str(e),
-            "timestamp_iso": datetime.utcnow().isoformat()
+            "timestamp_iso": datetime.utcnow().isoformat(),
         }
 
 
@@ -59,25 +60,27 @@ async def metrics_health_check(request: Request) -> Dict[str, Any]:
     try:
         # Test basic metrics functionality
         test_summary = performance_metrics.get_metrics_summary()
-        
+
         return {
             "status": "healthy",
             "metrics_system": "operational",
             "prometheus_export": "available",
-            "system_monitoring": "active" if performance_metrics._system_monitor_task else "inactive",
-            "timestamp": datetime.utcnow().isoformat()
+            "system_monitoring": (
+                "active" if performance_metrics._system_monitor_task else "inactive"
+            ),
+            "timestamp": datetime.utcnow().isoformat(),
         }
     except Exception as e:
         logger.error(f"Metrics health check failed: {e}")
         return {
             "status": "unhealthy",
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
         }
 
 
 @router.post("/metrics/test")
-@limiter.limit("5/minute")  
+@limiter.limit("5/minute")
 async def test_metrics(request: Request) -> Dict[str, Any]:
     """Test endpoint to generate sample metrics"""
     try:
@@ -88,30 +91,86 @@ async def test_metrics(request: Request) -> Dict[str, Any]:
         performance_metrics.record_cache_operation("get", "miss")
         performance_metrics.record_auth_attempt("success")
         performance_metrics.update_active_users(10)
-        
+
         await performance_metrics.update_system_metrics()
-        
+
         logger.info("Generated test metrics")
-        
+
         return {
             "status": "success",
             "message": "Test metrics generated",
             "metrics_generated": [
                 "http_requests_total",
-                "http_request_duration_seconds", 
+                "http_request_duration_seconds",
                 "cache_operations_total",
                 "auth_attempts_total",
                 "active_users",
                 "system_cpu_usage_percent",
-                "system_memory_usage_percent"
+                "system_memory_usage_percent",
             ],
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to generate test metrics: {e}")
         return {
             "status": "error",
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+
+
+@router.get("/metrics/company-isolation")
+async def company_isolation_metrics(
+    current_user: User = Depends(get_current_user_skip_options),
+    db=Depends(get_db),
+) -> Dict[str, Any]:
+    """Métricas de isolamento multi-tenant por empresa"""
+    try:
+        tenant_service = get_tenant_context()
+
+        # Métricas básicas de isolamento
+        metrics = {
+            "current_user_company_id": current_user.company_id,
+            "is_admin": current_user.is_system_admin,
+            "isolation_status": "active",
+        }
+
+        # Contar dados visíveis para a empresa atual
+        if not current_user.is_system_admin:
+            # Definir contexto da empresa
+            await tenant_service.set_database_context(db, current_user.company_id)
+
+            # Contar registros por tabela crítica
+            from sqlalchemy import text
+
+            result = await db.execute(text("SELECT COUNT(*) FROM master.people"))
+            metrics["visible_people_count"] = result.scalar()
+
+            result = await db.execute(text("SELECT COUNT(*) FROM master.users"))
+            metrics["visible_users_count"] = result.scalar()
+
+            result = await db.execute(text("SELECT COUNT(*) FROM master.clients"))
+            metrics["visible_clients_count"] = result.scalar()
+
+            result = await db.execute(
+                text("SELECT COUNT(*) FROM master.establishments")
+            )
+            metrics["visible_establishments_count"] = result.scalar()
+        else:
+            # Admin vê tudo
+            metrics["admin_access"] = "full_system_visibility"
+
+        return {
+            "status": "success",
+            "data": metrics,
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to get company isolation metrics: {e}")
+        return {
+            "status": "error",
+            "error": str(e),
+            "timestamp": datetime.utcnow().isoformat(),
         }

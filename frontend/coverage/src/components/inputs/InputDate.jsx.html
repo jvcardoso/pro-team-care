@@ -709,7 +709,7 @@ const InputDate = <span class="cstat-no" title="statement not covered" ><span cl
 <span class="cstat-no" title="statement not covered" >  useEffect(<span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    if (value !== undefined) {</span>
       let formatted = <span class="cstat-no" title="statement not covered" >'';</span>
-      
+
 <span class="cstat-no" title="statement not covered" >      if (value) {</span>
         // Se valor é string no formato YYYY-MM-DD, converter para DD/MM/YYYY
 <span class="cstat-no" title="statement not covered" >        if (typeof value === 'string' &amp;&amp; value.includes('-')) {</span>
@@ -722,9 +722,9 @@ const InputDate = <span class="cstat-no" title="statement not covered" ><span cl
 <span class="cstat-no" title="statement not covered" >          formatted = formatDate(value);</span>
         }
       }
-      
+
 <span class="cstat-no" title="statement not covered" >      setFormattedValue(formatted);</span>
-      
+
 <span class="cstat-no" title="statement not covered" >      if (showValidation &amp;&amp; formatted) {</span>
 <span class="cstat-no" title="statement not covered" >        validateInput(formatted);</span>
       }
@@ -733,44 +733,44 @@ const InputDate = <span class="cstat-no" title="statement not covered" ><span cl
 &nbsp;
   const validateInput = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(i</span>nputValue) =&gt; {</span>
     const cleanValue = <span class="cstat-no" title="statement not covered" >removeNonNumeric(inputValue);</span>
-    
+
 <span class="cstat-no" title="statement not covered" >    if (!cleanValue &amp;&amp; required) {</span>
 <span class="cstat-no" title="statement not covered" >      setIsValid(false);</span>
 <span class="cstat-no" title="statement not covered" >      setValidationMessage('Data é obrigatória');</span>
 <span class="cstat-no" title="statement not covered" >      return false;</span>
     }
-    
+
 <span class="cstat-no" title="statement not covered" >    if (cleanValue &amp;&amp; cleanValue.length &lt; 8) {</span>
 <span class="cstat-no" title="statement not covered" >      setIsValid(false);</span>
 <span class="cstat-no" title="statement not covered" >      setValidationMessage('Data deve ter 8 dígitos');</span>
 <span class="cstat-no" title="statement not covered" >      return false;</span>
     }
-    
+
 <span class="cstat-no" title="statement not covered" >    if (cleanValue &amp;&amp; cleanValue.length === 8) {</span>
       // Validar formato DD/MM/YYYY
       const day = <span class="cstat-no" title="statement not covered" >parseInt(cleanValue.substring(0, 2));</span>
       const month = <span class="cstat-no" title="statement not covered" >parseInt(cleanValue.substring(2, 4));</span>
       const year = <span class="cstat-no" title="statement not covered" >parseInt(cleanValue.substring(4, 8));</span>
-      
+
       // Validações básicas
 <span class="cstat-no" title="statement not covered" >      if (day &lt; 1 || day &gt; 31) {</span>
 <span class="cstat-no" title="statement not covered" >        setIsValid(false);</span>
 <span class="cstat-no" title="statement not covered" >        setValidationMessage('Dia inválido (1-31)');</span>
 <span class="cstat-no" title="statement not covered" >        return false;</span>
       }
-      
+
 <span class="cstat-no" title="statement not covered" >      if (month &lt; 1 || month &gt; 12) {</span>
 <span class="cstat-no" title="statement not covered" >        setIsValid(false);</span>
 <span class="cstat-no" title="statement not covered" >        setValidationMessage('Mês inválido (1-12)');</span>
 <span class="cstat-no" title="statement not covered" >        return false;</span>
       }
-      
+
 <span class="cstat-no" title="statement not covered" >      if (year &lt; 1900 || year &gt; 2100) {</span>
 <span class="cstat-no" title="statement not covered" >        setIsValid(false);</span>
 <span class="cstat-no" title="statement not covered" >        setValidationMessage('Ano inválido (1900-2100)');</span>
 <span class="cstat-no" title="statement not covered" >        return false;</span>
       }
-      
+
       // Criar data e verificar se é válida
       const date = <span class="cstat-no" title="statement not covered" >new Date(year, month - 1, day);</span>
 <span class="cstat-no" title="statement not covered" >      if (date.getDate() !== day || date.getMonth() !== month - 1 || date.getFullYear() !== year) {</span>
@@ -778,7 +778,7 @@ const InputDate = <span class="cstat-no" title="statement not covered" ><span cl
 <span class="cstat-no" title="statement not covered" >        setValidationMessage('Data inválida');</span>
 <span class="cstat-no" title="statement not covered" >        return false;</span>
       }
-      
+
       // Validar se permite datas passadas
 <span class="cstat-no" title="statement not covered" >      if (!allowPast) {</span>
         const today = <span class="cstat-no" title="statement not covered" >new Date();</span>
@@ -789,7 +789,7 @@ const InputDate = <span class="cstat-no" title="statement not covered" ><span cl
 <span class="cstat-no" title="statement not covered" >          return false;</span>
         }
       }
-      
+
       // Validar se permite datas futuras
 <span class="cstat-no" title="statement not covered" >      if (!allowFuture) {</span>
         const today = <span class="cstat-no" title="statement not covered" >new Date();</span>
@@ -800,7 +800,7 @@ const InputDate = <span class="cstat-no" title="statement not covered" ><span cl
 <span class="cstat-no" title="statement not covered" >          return false;</span>
         }
       }
-      
+
       // Validar data mínima
 <span class="cstat-no" title="statement not covered" >      if (minDate) {</span>
         const minDateObj = <span class="cstat-no" title="statement not covered" >new Date(minDate);</span>
@@ -810,7 +810,7 @@ const InputDate = <span class="cstat-no" title="statement not covered" ><span cl
 <span class="cstat-no" title="statement not covered" >          return false;</span>
         }
       }
-      
+
       // Validar data máxima
 <span class="cstat-no" title="statement not covered" >      if (maxDate) {</span>
         const maxDateObj = <span class="cstat-no" title="statement not covered" >new Date(maxDate);</span>
@@ -821,7 +821,7 @@ const InputDate = <span class="cstat-no" title="statement not covered" ><span cl
         }
       }
     }
-    
+
 <span class="cstat-no" title="statement not covered" >    setIsValid(true);</span>
 <span class="cstat-no" title="statement not covered" >    setValidationMessage('');</span>
 <span class="cstat-no" title="statement not covered" >    return true;</span>
@@ -830,23 +830,23 @@ const InputDate = <span class="cstat-no" title="statement not covered" ><span cl
   const handleChange = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>) =&gt; {</span>
     const inputValue = <span class="cstat-no" title="statement not covered" >e.target.value;</span>
     const numbersOnly = <span class="cstat-no" title="statement not covered" >removeNonNumeric(inputValue);</span>
-    
+
     // Limitar a 8 dígitos
     const limitedNumbers = <span class="cstat-no" title="statement not covered" >numbersOnly.slice(0, 8);</span>
     const formatted = <span class="cstat-no" title="statement not covered" >formatDate(limitedNumbers);</span>
-    
+
 <span class="cstat-no" title="statement not covered" >    setFormattedValue(formatted);</span>
 <span class="cstat-no" title="statement not covered" >    setIsDirty(true);</span>
-    
+
     // Validação em tempo real apenas após o primeiro blur ou quando completo
 <span class="cstat-no" title="statement not covered" >    if (showValidation &amp;&amp; (isDirty || limitedNumbers.length === 8)) {</span>
 <span class="cstat-no" title="statement not covered" >      validateInput(formatted);</span>
     }
-    
+
     // Callback para o componente pai
 <span class="cstat-no" title="statement not covered" >    if (onChange) {</span>
       const isoDate = <span class="cstat-no" title="statement not covered" >limitedNumbers.length === 8 ? parseDate(formatted) : '';</span>
-      
+
 <span class="cstat-no" title="statement not covered" >      onChange({</span>
         target: {
           name: e.target.name,
@@ -870,12 +870,12 @@ const InputDate = <span class="cstat-no" title="statement not covered" ><span cl
   const handleBlur = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    setIsFocused(false);</span>
 <span class="cstat-no" title="statement not covered" >    setIsDirty(true);</span>
-    
+
     // Validação final no blur
 <span class="cstat-no" title="statement not covered" >    if (showValidation) {</span>
 <span class="cstat-no" title="statement not covered" >      validateInput(formattedValue);</span>
     }
-    
+
 <span class="cstat-no" title="statement not covered" >    if (props.onBlur) {</span>
 <span class="cstat-no" title="statement not covered" >      props.onBlur(e);</span>
     }
@@ -883,12 +883,12 @@ const InputDate = <span class="cstat-no" title="statement not covered" ><span cl
 &nbsp;
   const getInputClasses = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
     const baseClasses = <span class="cstat-no" title="statement not covered" >"w-full px-3 py-2 border rounded-md bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none transition-colors";</span>
-    
+
     // Ajustar padding se houver ícone
     const paddingClasses = <span class="cstat-no" title="statement not covered" >showIcon ? "pl-10" : "px-3";</span>
-    
+
     let borderColor = <span class="cstat-no" title="statement not covered" >"border-border";</span>
-    
+
 <span class="cstat-no" title="statement not covered" >    if (error || (!isValid &amp;&amp; showValidation &amp;&amp; isDirty)) {</span>
 <span class="cstat-no" title="statement not covered" >      borderColor = "border-red-500 focus:ring-red-500";</span>
     } else <span class="cstat-no" title="statement not covered" >if (isValid &amp;&amp; formattedValue &amp;&amp; showValidation &amp;&amp; formattedValue.length === 10) {</span>
@@ -896,9 +896,9 @@ const InputDate = <span class="cstat-no" title="statement not covered" ><span cl
     } else <span class="cstat-no" title="statement not covered" >if (isFocused) {</span>
 <span class="cstat-no" title="statement not covered" >      borderColor = "border-ring";</span>
     }
-    
+
     const disabledClasses = <span class="cstat-no" title="statement not covered" >disabled ? "opacity-50 cursor-not-allowed" : "";</span>
-    
+
 <span class="cstat-no" title="statement not covered" >    return `${baseClasses} ${paddingClasses} ${borderColor} ${disabledClasses} ${className}`;</span>
   };
 &nbsp;
@@ -911,7 +911,7 @@ const InputDate = <span class="cstat-no" title="statement not covered" ><span cl
         {label}
         {required &amp;&amp; &lt;Star className="h-3 w-3 text-red-500 ml-1 fill-current" /&gt;}
       &lt;/label&gt;
-      
+
       &lt;div className="relative"&gt;
         {/* Ícone de calendário */}
         {showIcon &amp;&amp; (
@@ -919,7 +919,7 @@ const InputDate = <span class="cstat-no" title="statement not covered" ><span cl
             &lt;Calendar className="h-4 w-4 text-muted-foreground" /&gt;
           &lt;/div&gt;
         )}
-        
+
         &lt;input
           type="text"
           value={formattedValue}
@@ -933,7 +933,7 @@ const InputDate = <span class="cstat-no" title="statement not covered" ><span cl
           inputMode="numeric"
           {...props}
         /&gt;
-        
+
         {/* Indicador de validação visual */}
         {showValidation &amp;&amp; formattedValue &amp;&amp; isDirty &amp;&amp; (
           &lt;div className="absolute inset-y-0 right-0 flex items-center pr-3"&gt;
@@ -945,31 +945,31 @@ const InputDate = <span class="cstat-no" title="statement not covered" ><span cl
           &lt;/div&gt;
         )}
       &lt;/div&gt;
-      
+
       {/* Mensagens de erro */}
       {displayError &amp;&amp; (
         &lt;p className="text-sm text-red-600"&gt;{displayError}&lt;/p&gt;
       )}
-      
+
       {/* Mensagem de ajuda */}
       {!displayError &amp;&amp; formattedValue &amp;&amp; showValidation &amp;&amp; isValid &amp;&amp; isDirty &amp;&amp; isComplete &amp;&amp; (
         &lt;p className="text-xs text-muted-foreground"&gt;
           Data válida
         &lt;/p&gt;
       )}
-      
+
       {!displayError &amp;&amp; !formattedValue &amp;&amp; isFocused &amp;&amp; (
         &lt;p className="text-xs text-muted-foreground"&gt;
           Digite a data no formato dd/mm/aaaa
         &lt;/p&gt;
       )}
-      
+
       {!displayError &amp;&amp; formattedValue &amp;&amp; !isComplete &amp;&amp; isDirty &amp;&amp; (
         &lt;p className="text-xs text-muted-foreground"&gt;
           {8 - removeNonNumeric(formattedValue).length} dígitos restantes
         &lt;/p&gt;
       )}
-      
+
       {/* Dicas de range */}
       {!displayError &amp;&amp; !formattedValue &amp;&amp; !isFocused &amp;&amp; (minDate || maxDate) &amp;&amp; (
         &lt;p className="text-xs text-muted-foreground"&gt;

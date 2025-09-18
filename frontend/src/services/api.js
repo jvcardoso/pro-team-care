@@ -16,13 +16,68 @@ createCacheInterceptor(api);
 // Interceptor para adicionar token de autenticação
 api.interceptors.request.use(
   (config) => {
-    // 🔧 DEVELOPMENT: Skip auth header if bypassing authentication
-    if (import.meta.env.DEV && !localStorage.getItem("access_token")) {
-      console.info("🔧 Development mode: skipping auth header for", config.url);
-    } else {
-      const token = localStorage.getItem("access_token");
-      if (token) {
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      // Verificar se o token não está expirado
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const currentTime = Math.floor(Date.now() / 1000);
+
+        if (payload.exp && payload.exp < currentTime) {
+          console.warn(
+            "⚠️ Token expirado detectado, removendo do localStorage"
+          );
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("user");
+
+          // Só redirecionar se não estiver já na página de login
+          if (!window.location.pathname.includes("/login")) {
+            const currentPath =
+              window.location.pathname + window.location.search;
+            sessionStorage.setItem("redirectAfterLogin", currentPath);
+            window.location.replace("/login");
+          }
+          return Promise.reject(new Error("Token expirado"));
+        }
+
         config.headers.Authorization = `Bearer ${token}`;
+        console.info("🔐 Token válido adicionado para", config.url);
+      } catch (e) {
+        console.warn(
+          "⚠️ Token com formato inválido, removendo do localStorage"
+        );
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("user");
+
+        if (!window.location.pathname.includes("/login")) {
+          const currentPath = window.location.pathname + window.location.search;
+          sessionStorage.setItem("redirectAfterLogin", currentPath);
+          window.location.replace("/login");
+        }
+        return Promise.reject(new Error("Token inválido"));
+      }
+    } else {
+      console.warn("⚠️ Token não encontrado para", config.url);
+
+      // Para endpoints que requerem autenticação, aguardar um pouco e tentar novamente
+      if (
+        config.url.includes("/menus/") ||
+        config.url.includes("/secure-sessions/")
+      ) {
+        console.info("🔄 Aguardando 100ms para token ser disponibilizado...");
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const retryToken = localStorage.getItem("access_token");
+            if (retryToken) {
+              config.headers.Authorization = `Bearer ${retryToken}`;
+              console.info(
+                "🔐 Token encontrado na segunda tentativa para",
+                config.url
+              );
+            }
+            resolve(config);
+          }, 100);
+        });
       }
     }
     return config;
@@ -58,17 +113,29 @@ api.interceptors.response.use(
     }
 
     if (error.response?.status === 401) {
-      // Token inválido ou expirado
-      localStorage.removeItem("access_token");
+      const url = error.config?.url || "";
 
-      // Evitar loop infinito - só redirecionar se não estiver na página de login
-      if (!window.location.pathname.includes("/login")) {
-        // Salvar URL atual para redirecionar após login
-        const currentPath = window.location.pathname + window.location.search;
-        sessionStorage.setItem("redirectAfterLogin", currentPath);
+      // Só forçar logout para endpoints críticos de autenticação
+      const criticalEndpoints = ["/api/v1/auth/me", "/api/v1/auth/refresh"];
+      const isCriticalAuth = criticalEndpoints.some((endpoint) =>
+        url.includes(endpoint)
+      );
 
-        // Usar window.location.replace para evitar problemas de histórico
-        window.location.replace("/login");
+      if (isCriticalAuth) {
+        console.error("🚨 Token inválido detectado em endpoint crítico:", url);
+        localStorage.removeItem("access_token");
+
+        if (!window.location.pathname.includes("/login")) {
+          const currentPath = window.location.pathname + window.location.search;
+          sessionStorage.setItem("redirectAfterLogin", currentPath);
+          window.location.replace("/login");
+        }
+      } else {
+        console.warn(
+          "⚠️ Erro 401 em endpoint não crítico:",
+          url,
+          "- Não forçando logout"
+        );
       }
     }
 
@@ -279,8 +346,8 @@ export const usersService = {
 
   // Ativar/Inativar usuário
   toggleUserStatus: async (id, isActive) => {
-    const response = await api.patch(`/api/v1/users/${id}/status`, { 
-      is_active: isActive 
+    const response = await api.patch(`/api/v1/users/${id}/status`, {
+      is_active: isActive,
     });
     // Invalidar cache específico do usuário e listagem geral
     httpCache.invalidatePattern("/api/v1/users");
@@ -290,7 +357,10 @@ export const usersService = {
 
   // Alterar senha do usuário
   changePassword: async (id, passwordData) => {
-    const response = await api.patch(`/api/v1/users/${id}/password`, passwordData);
+    const response = await api.patch(
+      `/api/v1/users/${id}/password`,
+      passwordData
+    );
     return response.data;
   },
 
@@ -315,6 +385,12 @@ export const establishmentsService = {
     return response.data;
   },
 
+  // Contar total de estabelecimentos
+  getEstablishmentsCount: async (params = {}) => {
+    const response = await api.get("/api/v1/establishments/", { params });
+    return response.data.total || 0;
+  },
+
   // Obter estabelecimento por ID
   getEstablishment: async (id) => {
     const response = await api.get(`/api/v1/establishments/${id}`);
@@ -323,7 +399,10 @@ export const establishmentsService = {
 
   // Listar estabelecimentos por empresa
   getEstablishmentsByCompany: async (companyId, params = {}) => {
-    const response = await api.get(`/api/v1/establishments/company/${companyId}`, { params });
+    const response = await api.get(
+      `/api/v1/establishments/company/${companyId}`,
+      { params }
+    );
     return response.data;
   },
 
@@ -343,9 +422,9 @@ export const establishmentsService = {
 
   // Alterar status do estabelecimento (ativar/desativar)
   toggleEstablishmentStatus: async (id, isActive) => {
-    const response = await api.patch(`/api/v1/establishments/${id}/status`, { 
-      is_active: isActive 
-    });
+    const response = await api.patch(
+      `/api/v1/establishments/${id}/status?is_active=${isActive}`
+    );
     httpCache.invalidatePattern("/api/v1/establishments");
     return response.data;
   },
@@ -361,31 +440,128 @@ export const establishmentsService = {
   reorderEstablishments: async (companyId, establishmentOrders) => {
     const response = await api.post("/api/v1/establishments/reorder", {
       company_id: companyId,
-      establishment_orders: establishmentOrders
+      establishment_orders: establishmentOrders,
     });
     httpCache.invalidatePattern("/api/v1/establishments");
     return response.data;
   },
 
   // Validar criação de estabelecimento
-  validateEstablishmentCreation: async (companyId, code, isPrincipal = false) => {
+  validateEstablishmentCreation: async (
+    companyId,
+    code,
+    isPrincipal = false
+  ) => {
     const response = await api.post("/api/v1/establishments/validate", null, {
       params: {
         company_id: companyId,
         code: code,
-        is_principal: isPrincipal
-      }
+        is_principal: isPrincipal,
+      },
     });
     return response.data;
   },
 
   // Contar estabelecimentos (usado para paginação)
   countEstablishments: async (params = {}) => {
-    const establishmentsResponse = await api.get("/api/v1/establishments/", { 
-      params: { ...params, page: 1, size: 1 } 
+    const establishmentsResponse = await api.get("/api/v1/establishments/", {
+      params: { ...params, page: 1, size: 1 },
     });
     return { total: establishmentsResponse.data.total || 0 };
   },
+};
+
+export const menusService = {
+  // Listar menus com paginação e filtros
+  getMenus: async (params = {}) => {
+    const response = await api.get("/api/v1/menus/crud/", { params });
+    return response.data;
+  },
+
+  // Obter menu por ID
+  getMenu: async (id) => {
+    const response = await api.get(`/api/v1/menus/crud/${id}`);
+    return response.data;
+  },
+
+  // Obter menus do usuário (endpoint dinâmico)
+  getUserMenus: async (
+    userId,
+    contextType = "establishment",
+    contextId = null
+  ) => {
+    const params = { context_type: contextType };
+    if (contextId) params.context_id = contextId;
+
+    const response = await api.get(`/api/v1/menus/user/${userId}`, { params });
+    return response.data;
+  },
+
+  // Criar novo menu
+  createMenu: async (menuData) => {
+    const response = await api.post("/api/v1/menus/crud/", menuData);
+    httpCache.invalidatePattern("/api/v1/menus");
+    return response.data;
+  },
+
+  // Atualizar menu
+  updateMenu: async (id, menuData) => {
+    const response = await api.put(`/api/v1/menus/crud/${id}`, menuData);
+    httpCache.invalidatePattern("/api/v1/menus");
+    return response.data;
+  },
+
+  // Deletar menu (soft delete)
+  deleteMenu: async (id) => {
+    const response = await api.delete(`/api/v1/menus/crud/${id}`);
+    httpCache.invalidatePattern("/api/v1/menus");
+    return response.data;
+  },
+
+  // Mover menu (reordenar)
+  moveMenu: async (id, direction) => {
+    const response = await api.post(
+      `/api/v1/menus/crud/${id}/move/${direction}`
+    );
+    httpCache.invalidatePattern("/api/v1/menus");
+    return response.data;
+  },
+
+  // Toggle visibilidade do menu
+  toggleMenuVisibility: async (id, isVisible) => {
+    const response = await api.put(`/api/v1/menus/crud/${id}`, {
+      is_visible: isVisible,
+      visible_in_menu: isVisible,
+    });
+    httpCache.invalidatePattern("/api/v1/menus");
+    return response.data;
+  },
+};
+
+// Função genérica para fazer requests HTTP
+export const apiRequest = async (method, url, data = null, params = {}) => {
+  try {
+    const config = {
+      method: method.toUpperCase(),
+      url,
+      params,
+    };
+
+    if (
+      data &&
+      (method.toUpperCase() === "POST" ||
+        method.toUpperCase() === "PUT" ||
+        method.toUpperCase() === "PATCH")
+    ) {
+      config.data = data;
+    }
+
+    const response = await api(config);
+    return response.data;
+  } catch (error) {
+    console.error(`API ${method.toUpperCase()} ${url} failed:`, error);
+    throw error;
+  }
 };
 
 export { api, secureSessionService };

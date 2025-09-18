@@ -132,7 +132,7 @@ const AppErrorBoundary: React.FC&lt;AppErrorBoundaryProps&gt; = <span class="cst
   const handleError = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>rror: Error) =&gt; {</span>
     // Log application-level errors
 <span class="cstat-no" title="statement not covered" >    console.error('[APP] Application error:', error);</span>
-    
+
     // TODO: Send to error tracking service
     // analytics.track('app_error', {
     //   message: error.message,
@@ -142,8 +142,8 @@ const AppErrorBoundary: React.FC&lt;AppErrorBoundaryProps&gt; = <span class="cst
   };
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  return (</span>
-    &lt;ErrorBoundary 
-      level="app" 
+    &lt;ErrorBoundary
+      level="app"
       onError={handleError}
     &gt;
       {children}

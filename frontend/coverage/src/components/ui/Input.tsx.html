@@ -368,7 +368,7 @@ const Input = <span class="cstat-no" title="statement not covered" >forwardRef&l
   className = <span class="branch-0 cbranch-no" title="branch not covered" >'',</span>
   containerClassName = <span class="branch-0 cbranch-no" title="branch not covered" >'',</span>
   type = <span class="branch-0 cbranch-no" title="branch not covered" >'text',</span>
-  ...props 
+  ...props
 }, ref) =&gt; {
   const baseClasses = <span class="cstat-no" title="statement not covered" >[</span>
     'w-full border rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2',
@@ -415,7 +415,7 @@ const Input = <span class="cstat-no" title="statement not covered" >forwardRef&l
 <span class="cstat-no" title="statement not covered" >  return (</span>
     &lt;div className={containerClasses}&gt;
       {label &amp;&amp; (
-        &lt;label 
+        &lt;label
           htmlFor={inputId}
           id={labelId}
           className="flex items-center text-sm font-medium text-foreground mb-2"
@@ -429,7 +429,7 @@ const Input = <span class="cstat-no" title="statement not covered" >forwardRef&l
           )}
         &lt;/label&gt;
       )}
-      
+
       &lt;div className="relative"&gt;
         {leftIcon &amp;&amp; (
           &lt;div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"&gt;
@@ -438,7 +438,7 @@ const Input = <span class="cstat-no" title="statement not covered" >forwardRef&l
             &lt;/span&gt;
           &lt;/div&gt;
         )}
-        
+
         &lt;input
           ref={ref}
           id={inputId}
@@ -452,7 +452,7 @@ const Input = <span class="cstat-no" title="statement not covered" >forwardRef&l
           {...props}
           value={props.value ?? ''}
         /&gt;
-        
+
         {rightIcon &amp;&amp; (
           &lt;div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"&gt;
             &lt;span className="text-muted-foreground" aria-hidden="true"&gt;
@@ -461,13 +461,13 @@ const Input = <span class="cstat-no" title="statement not covered" >forwardRef&l
           &lt;/div&gt;
         )}
       &lt;/div&gt;
-      
+
       {error &amp;&amp; (
         &lt;p id={errorId} className="mt-1 text-sm text-red-500" role="alert" aria-live="polite"&gt;
           {error}
         &lt;/p&gt;
       )}
-      
+
       {helper &amp;&amp; !error &amp;&amp; (
         &lt;p id={helperId} className="mt-1 text-sm text-muted-foreground"&gt;
           {helper}

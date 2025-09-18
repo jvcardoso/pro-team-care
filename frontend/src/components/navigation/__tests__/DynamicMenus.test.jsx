@@ -97,7 +97,7 @@ describe("MenuItem", () => {
     name: "Test Menu",
     slug: "test-menu",
     url: "/test",
-    icon: "TestIcon",
+    icon: "Settings",
     level: 0,
     children: [],
   };

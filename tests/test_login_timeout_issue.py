@@ -11,10 +11,11 @@ Cenário de teste:
 - Erro: Axios timeout após 10 segundos
 """
 
+import time
+from typing import Any, Dict
+
 import pytest
 import requests
-import time
-from typing import Dict, Any
 
 
 class TestLoginTimeoutIssue:
@@ -23,20 +24,20 @@ class TestLoginTimeoutIssue:
     FRONTEND_URL = "http://localhost:3000"
     BACKEND_URL = "http://localhost:8000"
     TIMEOUT_FRONTEND = 10  # Mesmo timeout do frontend (10s)
-    TIMEOUT_TEST = 5       # Timeout menor para testes rápidos
+    TIMEOUT_TEST = 5  # Timeout menor para testes rápidos
 
     def test_exact_login_scenario(self):
         """Reproduz exatamente o cenário de erro do usuário"""
         # Simula os dados que o frontend envia
         login_data = {
             "username": "admin@example.com",  # Usuário padrão
-            "password": "password"
+            "password": "password",
         }
 
         # Headers que o frontend usa
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
-            "Accept": "application/json"
+            "Accept": "application/json",
         }
 
         print("🔍 Testando login via proxy do frontend...")
@@ -52,7 +53,7 @@ class TestLoginTimeoutIssue:
                 f"{self.FRONTEND_URL}/api/v1/auth/login",
                 data=login_data,
                 headers=headers,
-                timeout=self.TIMEOUT_FRONTEND
+                timeout=self.TIMEOUT_FRONTEND,
             )
 
             elapsed = time.time() - start_time
@@ -86,14 +87,11 @@ class TestLoginTimeoutIssue:
 
     def test_backend_login_direct(self):
         """Verifica se o backend responde diretamente ao login"""
-        login_data = {
-            "username": "admin@example.com",
-            "password": "password"
-        }
+        login_data = {"username": "admin@example.com", "password": "password"}
 
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
-            "Accept": "application/json"
+            "Accept": "application/json",
         }
 
         try:
@@ -101,7 +99,7 @@ class TestLoginTimeoutIssue:
                 f"{self.BACKEND_URL}/api/v1/auth/login",
                 data=login_data,
                 headers=headers,
-                timeout=self.TIMEOUT_TEST
+                timeout=self.TIMEOUT_TEST,
             )
 
             print(f"✅ Backend direto: {response.status_code}")
@@ -116,14 +114,13 @@ class TestLoginTimeoutIssue:
         try:
             # Testa OPTIONS request (preflight)
             response = requests.options(
-                f"{self.FRONTEND_URL}/api/v1/auth/login",
-                timeout=self.TIMEOUT_TEST
+                f"{self.FRONTEND_URL}/api/v1/auth/login", timeout=self.TIMEOUT_TEST
             )
 
             cors_headers = {
-                'Access-Control-Allow-Origin',
-                'Access-Control-Allow-Methods',
-                'Access-Control-Allow-Headers'
+                "Access-Control-Allow-Origin",
+                "Access-Control-Allow-Methods",
+                "Access-Control-Allow-Headers",
             }
 
             present_headers = set(response.headers.keys()) & cors_headers
@@ -145,8 +142,7 @@ class TestLoginTimeoutIssue:
         # Tenta acessar o backend através do proxy
         try:
             response = requests.get(
-                f"{self.FRONTEND_URL}/api/v1/health",
-                timeout=self.TIMEOUT_TEST
+                f"{self.FRONTEND_URL}/api/v1/health", timeout=self.TIMEOUT_TEST
             )
 
             if response.status_code == 200:
@@ -155,7 +151,9 @@ class TestLoginTimeoutIssue:
                     print("✅ Proxy funcionando corretamente")
                     return True
 
-            print(f"❌ Proxy não está redirecionando corretamente: {response.status_code}")
+            print(
+                f"❌ Proxy não está redirecionando corretamente: {response.status_code}"
+            )
             return False
 
         except requests.exceptions.Timeout:
@@ -196,11 +194,9 @@ class TestLoginTimeoutIssue:
 
         return results
 
-    @pytest.mark.parametrize("endpoint", [
-        "/api/v1/auth/login",
-        "/api/v1/health",
-        "/api/v1/companies/"
-    ])
+    @pytest.mark.parametrize(
+        "endpoint", ["/api/v1/auth/login", "/api/v1/health", "/api/v1/companies/"]
+    )
     def test_multiple_endpoints_via_proxy(self, endpoint: str):
         """Testa múltiplos endpoints via proxy"""
         try:
@@ -209,12 +205,11 @@ class TestLoginTimeoutIssue:
                     f"{self.FRONTEND_URL}{endpoint}",
                     data={"username": "test", "password": "test"},
                     headers={"Content-Type": "application/x-www-form-urlencoded"},
-                    timeout=self.TIMEOUT_TEST
+                    timeout=self.TIMEOUT_TEST,
                 )
             else:
                 response = requests.get(
-                    f"{self.FRONTEND_URL}{endpoint}",
-                    timeout=self.TIMEOUT_TEST
+                    f"{self.FRONTEND_URL}{endpoint}", timeout=self.TIMEOUT_TEST
                 )
 
             assert response.status_code in [200, 401, 422, 500]
@@ -264,7 +259,7 @@ if __name__ == "__main__":
     print(f"   CORS: {'✅' if cors_ok else '❌'}")
     print(f"   Login via proxy: {'✅' if login_ok else '❌'}")
 
-    if not connectivity['proxy']:
+    if not connectivity["proxy"]:
         print("\n🎯 PROBLEMA IDENTIFICADO:")
         print("   O proxy do Vite não está funcionando corretamente.")
         print("   Verificar vite.config.ts - target deve ser localhost:8000")

@@ -1,0 +1,386 @@
+from typing import List, Optional, Dict, Any
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.ext.asyncio import AsyncSession
+from structlog import get_logger
+from pydantic import BaseModel
+
+from app.infrastructure.database import get_db
+from app.infrastructure.services.menu_service import MenuService, MenuItem, get_menu_service
+from app.infrastructure.services.security_service import SecurityService, get_security_service
+from app.infrastructure.auth import get_current_user
+from app.presentation.schemas.user_schemas import UserCompleteResponse
+from app.presentation.decorators.permission_required import require_permission
+
+router = APIRouter()
+logger = get_logger()
+
+
+async def get_current_user_schema(
+    user = Depends(get_current_user),
+    db = Depends(get_db)
+):
+    """Get current user with complete data"""
+    from app.infrastructure.orm.views import UserCompleteView
+    from sqlalchemy import select
+
+    query = select(UserCompleteView).where(UserCompleteView.user_id == user.id)
+    result = await db.execute(query)
+    user_complete = result.scalars().first()
+
+    if not user_complete:
+        raise HTTPException(status_code=404, detail="User data not found")
+
+    return UserCompleteResponse.model_validate(user_complete)
+
+    query = select(UserCompleteView).where(UserCompleteView.user_id == user.id)
+    result = await db.execute(query)
+    user_complete = result.scalars().first()
+
+    if not user_complete:
+        raise HTTPException(status_code=404, detail="User data not found")
+
+    return UserCompleteResponse.from_attributes(user_complete)
+
+
+class MenuItemResponse(BaseModel):
+    """Response model for menu items"""
+    id: int
+    name: str
+    slug: str
+    path: str
+    url: Optional[str]
+    route_name: Optional[str]
+    route_params: Optional[Dict[str, Any]]
+    level: int
+    sort_order: int
+    parent_id: Optional[int]
+    icon: Optional[str]
+    badge_text: Optional[str]
+    badge_color: Optional[str]
+    css_class: Optional[str]
+    description: Optional[str]
+    help_text: Optional[str]
+    permission_name: Optional[str]
+    is_visible: bool
+    visible_in_menu: bool
+    children: List['MenuItemResponse'] = []
+
+
+class BreadcrumbItem(BaseModel):
+    """Breadcrumb item response"""
+    name: str
+    url: Optional[str]
+    route_name: Optional[str]
+    route_params: Optional[Dict[str, Any]]
+    is_active: bool
+
+
+class ShortcutRequest(BaseModel):
+    """Request to add shortcut"""
+    menu_id: int
+    sort_order: Optional[int] = None
+
+
+@router.get("/user/{user_id}", response_model=None)
+async def get_user_menus(
+    user_id: int,
+    context_type: Optional[str] = Query(None, description="Tipo de contexto"),
+    context_id: Optional[int] = Query(None, description="ID do contexto"),
+    menu_type: str = Query("main", description="Tipo de menu"),
+    db = Depends(get_db),
+    menu_service = Depends(get_menu_service),
+    current_user = Depends(get_current_user_schema)
+):
+    """
+    Busca menus dinâmicos para um usuário específico baseado em contexto
+    Endpoint compatível com frontend: /api/v1/menus/user/{id}
+    """
+    try:
+        # Verificar se usuário tem permissão para ver menus de outro usuário
+        if current_user.user_id != user_id and not current_user.user_is_system_admin:
+            raise HTTPException(
+                status_code=403,
+                detail="Não autorizado a visualizar menus de outro usuário"
+            )
+
+        # Determinar company_id e establishment_id baseado no contexto
+        company_id = None
+        establishment_id = None
+
+        if context_type == "company" and context_id:
+            company_id = context_id
+        elif context_type == "establishment" and context_id:
+            establishment_id = context_id
+
+        menu_items = await menu_service.get_user_menu_tree(
+            user_id=user_id,
+            menu_type=menu_type,
+            company_id=company_id,
+            establishment_id=establishment_id
+        )
+
+        return [_convert_menu_item_to_response(item) for item in menu_items]
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        await logger.aerror("user_menus_api_failed", user_id=user_id, error=str(e))
+        raise HTTPException(status_code=500, detail="Erro interno do servidor")
+
+
+@router.get("/tree", response_model=List[MenuItemResponse])
+async def get_menu_tree(
+    menu_type: str = Query("main", description="Tipo de menu"),
+    company_id: Optional[int] = Query(None, description="ID da empresa"),
+    establishment_id: Optional[int] = Query(None, description="ID do estabelecimento"),
+    db = Depends(get_db),
+    menu_service = Depends(get_menu_service),
+    current_user = Depends(get_current_user_schema)
+):
+    """
+    Busca árvore de menus para o usuário atual baseada em permissões
+    """
+    try:
+        menu_items = await menu_service.get_user_menu_tree(
+            user_id=current_user.user_id,
+            menu_type=menu_type,
+            company_id=company_id,
+            establishment_id=establishment_id
+        )
+
+        return [_convert_menu_item_to_response(item) for item in menu_items]
+
+    except Exception as e:
+        await logger.aerror("menu_tree_api_failed", error=str(e))
+        raise HTTPException(status_code=500, detail="Erro interno do servidor")
+
+
+@router.get("/contextual", response_model=None)
+async def get_contextual_menu(
+    context_type: str = Query(..., description="Tipo de contexto"),
+    context_data: Optional[str] = Query(None, description="Dados do contexto (JSON)"),
+    db = Depends(get_db),
+    menu_service = Depends(get_menu_service),
+    current_user = Depends(get_current_user_schema)
+):
+    """
+    Busca menu contextual baseado na tela/módulo atual
+    """
+    try:
+        import json
+        parsed_context_data = None
+        if context_data:
+            try:
+                parsed_context_data = json.loads(context_data)
+            except json.JSONDecodeError:
+                raise HTTPException(status_code=400, detail="Dados de contexto inválidos")
+
+        menu_items = await menu_service.get_contextual_menu(
+            user_id=current_user.user_id,
+            context_type=context_type,
+            context_data=parsed_context_data
+        )
+
+        return [_convert_menu_item_to_response(item) for item in menu_items]
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        await logger.aerror("contextual_menu_api_failed", error=str(e))
+        raise HTTPException(status_code=500, detail="Erro interno do servidor")
+
+
+@router.get("/breadcrumb", response_model=None)
+async def get_breadcrumb(
+    current_route: str = Query(..., description="Rota atual"),
+    route_params: Optional[str] = Query(None, description="Parâmetros da rota (JSON)"),
+    db = Depends(get_db),
+    menu_service = Depends(get_menu_service),
+    current_user = Depends(get_current_user_schema)
+):
+    """
+    Gera breadcrumb baseado na rota atual
+    """
+    try:
+        import json
+        parsed_route_params = None
+        if route_params:
+            try:
+                parsed_route_params = json.loads(route_params)
+            except json.JSONDecodeError:
+                raise HTTPException(status_code=400, detail="Parâmetros de rota inválidos")
+
+        breadcrumb_items = await menu_service.get_breadcrumb_path(
+            user_id=current_user.user_id,
+            current_route=current_route,
+            route_params=parsed_route_params
+        )
+
+        return [BreadcrumbItem(**item) for item in breadcrumb_items]
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        await logger.aerror("breadcrumb_api_failed", error=str(e))
+        raise HTTPException(status_code=500, detail="Erro interno do servidor")
+
+
+@router.get("/shortcuts", response_model=None)
+async def get_user_shortcuts(
+    limit: int = Query(10, ge=1, le=20, description="Limite de shortcuts"),
+    db = Depends(get_db),
+    menu_service = Depends(get_menu_service),
+    current_user = Depends(get_current_user_schema)
+):
+    """
+    Busca shortcuts/favoritos do usuário
+    """
+    try:
+        shortcuts = await menu_service.get_user_shortcuts(
+            user_id=current_user.user_id,
+            limit=limit
+        )
+
+        return [_convert_menu_item_to_response(item) for item in shortcuts]
+
+    except Exception as e:
+        await logger.aerror("shortcuts_api_failed", error=str(e))
+        raise HTTPException(status_code=500, detail="Erro interno do servidor")
+
+
+@router.post("/shortcuts", response_model=None)
+async def add_user_shortcut(
+    shortcut_request: ShortcutRequest,
+    db = Depends(get_db),
+    menu_service = Depends(get_menu_service),
+    current_user = Depends(get_current_user_schema)
+):
+    """
+    Adiciona shortcut para o usuário
+    """
+    try:
+        success = await menu_service.add_user_shortcut(
+            user_id=current_user.user_id,
+            menu_id=shortcut_request.menu_id,
+            sort_order=shortcut_request.sort_order
+        )
+
+        if not success:
+            raise HTTPException(status_code=400, detail="Não foi possível adicionar o shortcut")
+
+        return {"message": "Shortcut adicionado com sucesso"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        await logger.aerror("add_shortcut_api_failed", error=str(e))
+        raise HTTPException(status_code=500, detail="Erro interno do servidor")
+
+
+@router.delete("/shortcuts/{menu_id}", response_model=None)
+async def remove_user_shortcut(
+    menu_id: int,
+    db = Depends(get_db),
+    current_user = Depends(get_current_user_schema)
+):
+    """
+    Remove shortcut do usuário
+    """
+    try:
+        from sqlalchemy import text
+
+        query = text("""
+            UPDATE master.user_shortcuts
+            SET is_active = false
+            WHERE user_id = :user_id AND menu_id = :menu_id
+        """)
+
+        result = await db.execute(query, {
+            "user_id": current_user.user_id,
+            "menu_id": menu_id
+        })
+
+        await db.commit()
+
+        # Check if any rows were affected
+        affected_rows = getattr(result, 'rowcount', 0)
+        if affected_rows == 0:
+            raise HTTPException(status_code=404, detail="Shortcut não encontrado")
+
+        await logger.ainfo(
+            "shortcut_removed",
+            user_id=current_user.user_id,
+            menu_id=menu_id
+        )
+
+        return {"message": "Shortcut removido com sucesso"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        await logger.aerror("remove_shortcut_api_failed", error=str(e))
+        raise HTTPException(status_code=500, detail="Erro interno do servidor")
+
+
+@router.get("/user-permissions", response_model=None)
+async def get_user_menu_permissions(
+    db = Depends(get_db),
+    security_service= Depends(get_security_service),
+    current_user = Depends(get_current_user_schema)
+):
+    """
+    Busca permissões de menu do usuário atual
+    """
+    try:
+        permissions = await security_service.get_user_permissions(
+            user_id=current_user.user_id
+        )
+
+        # Filtrar apenas permissões relacionadas a menus
+        menu_permissions = [p for p in permissions if any([
+            p.startswith("menu."),
+            p.startswith("dashboard."),
+            p.startswith("reports."),
+            p.startswith("admin."),
+            p.startswith("users."),
+            p.startswith("professionals."),
+            p.startswith("clients."),
+            p.startswith("establishments.")
+        ])]
+
+        return {
+            "user_id": current_user.user_id,
+            "is_system_admin": current_user.user_is_system_admin,
+            "menu_permissions": menu_permissions,
+            "all_permissions_count": len(permissions)
+        }
+
+    except Exception as e:
+        await logger.aerror("menu_permissions_api_failed", error=str(e))
+        raise HTTPException(status_code=500, detail="Erro interno do servidor")
+
+
+def _convert_menu_item_to_response(item: MenuItem) -> MenuItemResponse:
+    """Convert MenuItem to response model"""
+    return MenuItemResponse(
+        id=item.id,
+        name=item.name,
+        slug=item.slug,
+        path=item.path,
+        url=item.url,
+        route_name=item.route_name,
+        route_params=item.route_params,
+        level=item.level,
+        sort_order=item.sort_order,
+        parent_id=item.parent_id,
+        icon=item.icon,
+        badge_text=item.badge_text,
+        badge_color=item.badge_color,
+        css_class=item.css_class,
+        description=item.description,
+        help_text=item.help_text,
+        permission_name=item.permission_name,
+        is_visible=item.is_visible,
+        visible_in_menu=item.visible_in_menu,
+        children=[_convert_menu_item_to_response(child) for child in item.children]
+    )

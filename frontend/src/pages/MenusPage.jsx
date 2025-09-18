@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useEffect } from "react";
+import PermissionProtectedRoute from "../components/auth/PermissionProtectedRoute";
 import {
   Menu,
   Plus,
@@ -20,10 +21,21 @@ import {
   AlertTriangle,
   RefreshCw,
 } from "lucide-react";
-import api from "../services/api";
-import { httpCache } from "../services/httpCache";
+import { menusService } from "../services/api";
+import { notify } from "../utils/notifications";
 
 const MenusPage = () => {
+  return (
+    <PermissionProtectedRoute
+      requireRoot={true}
+      fallbackMessage="O gerenciamento de menus é restrito a administradores do sistema. Entre em contato com o suporte se precisar de acesso."
+    >
+      <MenusPageContent />
+    </PermissionProtectedRoute>
+  );
+};
+
+const MenusPageContent = () => {
   const [menus, setMenus] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -53,11 +65,22 @@ const MenusPage = () => {
       setLoading(true);
       setError(null);
 
-      // Usar endpoint de menus por usuário (já funcionando)
-      const response = await api.get(
-        "/api/v1/menus/user/2?context_type=establishment&context_id=1"
-      );
-      setMenus(response.data.menus || []);
+      // Obter usuário atual do localStorage para usar ID correto
+      const userData = localStorage.getItem("user");
+      let userId = 9; // Fallback para admin
+
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          userId = user.id || 9;
+        } catch (e) {
+          console.warn("Erro ao parsear dados do usuário:", e);
+        }
+      }
+
+      // Usar serviço de menus para obter menus do usuário
+      const response = await menusService.getUserMenus(userId, "establishment");
+      setMenus(response.menus || []);
     } catch (err) {
       console.error("Erro ao carregar menus:", err);
       setError(
@@ -79,14 +102,9 @@ const MenusPage = () => {
   const forceReloadMenus = async () => {
     try {
       setLoading(true);
-      setError("🔄 Forçando atualização com bypass de cache...");
+      setError("🔄 Forçando atualização...");
 
-      // Adicionar timestamp para bypass de cache
-      const timestamp = new Date().getTime();
-      const response = await api.get(
-        `/api/v1/menus/user/2?context_type=establishment&context_id=1&_t=${timestamp}`
-      );
-      setMenus(response.data.menus || []);
+      await loadMenus();
 
       setError("✅ Menus atualizados com sucesso!");
       setTimeout(() => setError(null), 2000);
@@ -117,141 +135,87 @@ const MenusPage = () => {
       setError(null);
 
       if (isEdit) {
-        // Tentar editar menu via endpoint CRUD
-        try {
-          const response = await api.put(`/api/v1/menus/crud/${menuData.id}`, {
-            name: menuData.name,
-            slug: menuData.slug,
-            url: menuData.url,
-            icon: menuData.icon,
-            permission_name: menuData.permission_name,
-            is_visible: menuData.is_visible,
-            visible_in_menu: menuData.is_visible,
-            sort_order: menuData.sort_order || 0,
-          });
+        // Atualizar menu existente
+        await menusService.updateMenu(menuData.id, {
+          name: menuData.name,
+          slug: menuData.slug,
+          url: menuData.url,
+          icon: menuData.icon,
+          permission_name: menuData.permission_name,
+          is_visible: menuData.is_visible,
+          visible_in_menu: menuData.is_visible,
+          sort_order: menuData.sort_order || 0,
+        });
 
-          // Atualizar menu na lista local imediatamente com mapeamento recursivo
-          const updateMenuInTree = (menuList) => {
-            return menuList.map((menu) => {
-              if (menu.id === menuData.id) {
-                // Atualizar menu principal
-                return {
-                  ...menu,
-                  name: response.data.name || menuData.name,
-                  slug: response.data.slug || menuData.slug,
-                  url: response.data.url || menuData.url,
-                  icon: response.data.icon || menuData.icon,
-                  permission_name:
-                    response.data.permission_name || menuData.permission_name,
-                  is_visible:
-                    response.data.is_visible !== undefined
-                      ? response.data.is_visible
-                      : menuData.is_visible,
-                  description:
-                    response.data.description || menuData.description,
-                  sort_order: response.data.sort_order || menuData.sort_order,
-                  updated_at:
-                    response.data.updated_at || new Date().toISOString(),
-                };
-              } else if (menu.children && menu.children.length > 0) {
-                // Verificar nos filhos também
-                return { ...menu, children: updateMenuInTree(menu.children) };
-              }
-              return menu;
-            });
-          };
-
-          // Invalidar cache de menus para garantir dados atualizados
-          httpCache.invalidatePattern("/menus");
-
-          setMenus((prevMenus) => updateMenuInTree(prevMenus));
-          setError(
-            "✅ Menu atualizado com sucesso! Alterações visíveis na tela."
-          );
-
-          // Fechar formulário de edição
-          setEditingMenu(null);
-
-          // Recarregar com cache limpo após um delay
-          setTimeout(() => {
-            forceReloadMenus();
-          }, 1000);
-        } catch (crudError) {
-          console.error("Erro no endpoint CRUD:", crudError);
-          // Fallback: mostrar mensagem e recarregar
-          setError("ℹ️ Alteração salva no backend. Recarregando menus...");
-          setTimeout(() => loadMenus(), 1000);
-        }
+        notify.success("Menu atualizado com sucesso!");
+        setEditingMenu(null);
       } else {
-        // Tentar criar novo menu via endpoint CRUD
-        try {
-          const response = await api.post("/api/v1/menus/crud/", {
-            name: menuData.name,
-            slug: menuData.slug,
-            url: menuData.url,
-            icon: menuData.icon,
-            permission_name: menuData.permission_name,
-            is_visible: menuData.is_visible,
-            visible_in_menu: menuData.is_visible,
-            sort_order: menuData.sort_order || 0,
-          });
+        // Criar novo menu
+        await menusService.createMenu({
+          parent_id: menuData.parent_id,
+          name: menuData.name,
+          slug: menuData.slug,
+          url: menuData.url,
+          icon: menuData.icon,
+          permission_name: menuData.permission_name,
+          is_visible: menuData.is_visible,
+          visible_in_menu: menuData.is_visible,
+          sort_order: menuData.sort_order || 0,
+        });
 
-          // Adicionar novo menu à lista local imediatamente
-          setMenus((prevMenus) => [...prevMenus, response.data]);
-          setError("✅ Menu criado com sucesso! Novo menu visível na lista.");
-
-          // Fechar formulário de criação
-          setShowAddForm(false);
-
-          // Pequeno delay para mostrar a mensagem de sucesso
-          setTimeout(() => {
-            setError(null);
-            loadMenus(); // Recarregar para garantir consistência
-          }, 2000);
-        } catch (crudError) {
-          console.error("Erro no endpoint CRUD:", crudError);
-          // Fallback: mostrar mensagem e recarregar
-          setError("ℹ️ Menu criado no backend. Recarregando lista...");
-          setTimeout(() => loadMenus(), 1000);
-        }
+        notify.success("Menu criado com sucesso!");
+        setShowAddForm(false);
+        setNewMenu({
+          parent_id: null,
+          name: "",
+          slug: "",
+          url: "",
+          icon: "",
+          sort_order: 0,
+          is_visible: true,
+          permission_name: "",
+        });
       }
 
-      // Fechar formulário de edição
-      setEditingMenu(null);
-      setShowAddForm(false);
-
-      // Recarregar menus após um breve delay
-      setTimeout(() => loadMenus(), 1000);
+      // Recarregar menus
+      await loadMenus();
     } catch (err) {
       console.error("Erro ao salvar menu:", err);
       const errorMsg =
         err.response?.data?.detail || err.message || "Erro desconhecido";
-      setError(`❌ Erro ao salvar menu: ${errorMsg}`);
+      notify.error(`Erro ao salvar menu: ${errorMsg}`);
     }
   };
 
   // Deletar menu
   const deleteMenu = async (menuId) => {
-    if (!confirm("Tem certeza que deseja excluir este menu?")) {
-      return;
-    }
+    const menu =
+      menus.find((m) => m.id === menuId) ||
+      flattenMenus(menus).find((m) => m.id === menuId);
+    const menuName = menu?.name || "este menu";
 
-    try {
-      setError(null);
+    const executeDelete = async () => {
+      try {
+        setError(null);
 
-      // Como não temos endpoint CRUD funcional, mostrar mensagem informativa
-      setError(
-        "ℹ️ Funcionalidade de exclusão será implementada quando o endpoint CRUD estiver disponível"
-      );
+        await menusService.deleteMenu(menuId);
+        notify.success("Menu excluído com sucesso!");
 
-      // Recarregar menus após um breve delay
-      setTimeout(() => loadMenus(), 1000);
-    } catch (err) {
-      console.error("Erro ao excluir menu:", err);
-      const errorMsg =
-        err.response?.data?.detail || err.message || "Erro desconhecido";
-      setError(`❌ Erro ao excluir menu: ${errorMsg}`);
-    }
+        // Recarregar menus
+        await loadMenus();
+      } catch (err) {
+        console.error("Erro ao excluir menu:", err);
+        const errorMsg =
+          err.response?.data?.detail || err.message || "Erro desconhecido";
+        notify.error(`Erro ao excluir menu: ${errorMsg}`);
+      }
+    };
+
+    notify.confirmDelete(
+      "Excluir Menu",
+      `Tem certeza que deseja excluir o menu "${menuName}"?`,
+      executeDelete
+    );
   };
 
   // Toggle visibilidade
@@ -259,19 +223,20 @@ const MenusPage = () => {
     try {
       setError(null);
 
-      // Como não temos endpoint CRUD funcional, mostrar mensagem informativa
       const newVisibility = !menu.is_visible;
-      setError(
-        `ℹ️ Funcionalidade de alteração de visibilidade será implementada quando o endpoint CRUD estiver disponível`
+      await menusService.toggleMenuVisibility(menu.id, newVisibility);
+
+      notify.success(
+        `Menu ${newVisibility ? "ativado" : "desativado"} com sucesso!`
       );
 
-      // Recarregar menus após um breve delay
-      setTimeout(() => loadMenus(), 1000);
+      // Recarregar menus
+      await loadMenus();
     } catch (err) {
       console.error("Erro ao alterar visibilidade:", err);
       const errorMsg =
         err.response?.data?.detail || err.message || "Erro desconhecido";
-      setError(`❌ Erro ao alterar visibilidade: ${errorMsg}`);
+      notify.error(`Erro ao alterar visibilidade: ${errorMsg}`);
     }
   };
 
@@ -280,32 +245,22 @@ const MenusPage = () => {
     try {
       setError(null);
 
-      // Chamar o endpoint de movimento
-      const response = await api.post(
-        `/api/v1/menus/crud/${menuId}/move/${direction}`
-      );
+      const response = await menusService.moveMenu(menuId, direction);
 
-      if (response.data.no_change) {
-        // Menu já está na primeira/última posição
-        setError(`ℹ️ ${response.data.message}`);
+      if (response.no_change) {
+        notify.warning(response.message);
         return;
       }
 
-      // Invalidar cache de menus para garantir dados atualizados
-      httpCache.invalidatePattern("/menus");
-
-      // Mostrar sucesso
-      setError(`✅ ${response.data.message}`);
+      notify.success(response.message);
 
       // Recarregar menus para mostrar nova ordem
-      setTimeout(() => {
-        forceReloadMenus();
-      }, 500);
+      await loadMenus();
     } catch (err) {
       console.error("Erro ao mover menu:", err);
       const errorMsg =
         err.response?.data?.detail || err.message || "Erro desconhecido";
-      setError(`❌ Erro ao mover menu: ${errorMsg}`);
+      notify.error(`Erro ao mover menu: ${errorMsg}`);
     }
   };
 
@@ -355,7 +310,7 @@ const MenusPage = () => {
         onSubmit={handleSubmit}
         className="bg-gray-50 p-4 rounded-lg border-2 border-blue-200"
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Nome
@@ -460,10 +415,10 @@ const MenusPage = () => {
           </label>
         </div>
 
-        <div className="mt-4 flex gap-2">
+        <div className="mt-4 flex flex-col sm:flex-row gap-2">
           <button
             type="submit"
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
           >
             <Save size={16} />
             Salvar
@@ -471,7 +426,7 @@ const MenusPage = () => {
           <button
             type="button"
             onClick={onCancel}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 text-sm"
           >
             <X size={16} />
             Cancelar
@@ -490,15 +445,15 @@ const MenusPage = () => {
     return (
       <div className="mb-2">
         <div
-          className={`p-3 border rounded-lg ${
+          className={`p-2 sm:p-3 border rounded-lg ${
             isEditing
               ? "border-blue-500 bg-blue-50"
               : "border-gray-200 hover:border-gray-300"
           }`}
-          style={{ marginLeft: level * 20 }}
+          style={{ marginLeft: level * (level > 0 ? 15 : 0) }}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
               {hasChildren && (
                 <button
                   onClick={() => toggleExpanded(menu.id)}
@@ -514,14 +469,14 @@ const MenusPage = () => {
 
               <Menu size={16} className="text-gray-500" />
 
-              <div>
-                <span className="font-medium">{menu.name}</span>
-                <span className="text-gray-500 ml-2 text-sm">
+              <div className="min-w-0 flex-1">
+                <div className="font-medium truncate">{menu.name}</div>
+                <div className="text-gray-500 text-sm truncate">
                   ({menu.slug})
-                </span>
-                {menu.url && (
-                  <span className="text-blue-600 ml-2 text-xs">{menu.url}</span>
-                )}
+                  {menu.url && (
+                    <span className="text-blue-600 ml-2">{menu.url}</span>
+                  )}
+                </div>
               </div>
 
               {!menu.is_visible && (
@@ -541,64 +496,92 @@ const MenusPage = () => {
               )}
             </div>
 
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => toggleVisibility(menu)}
-                className="p-2 hover:bg-gray-100 rounded"
-                title="Toggle visibilidade"
-              >
-                {menu.is_visible ? <Eye size={16} /> : <EyeOff size={16} />}
-              </button>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {/* Mobile: Botões essenciais */}
+              <div className="flex sm:hidden gap-1">
+                <button
+                  onClick={() => toggleVisibility(menu)}
+                  className="p-1.5 hover:bg-gray-100 rounded"
+                  title="Toggle visibilidade"
+                >
+                  {menu.is_visible ? <Eye size={14} /> : <EyeOff size={14} />}
+                </button>
+                <button
+                  onClick={() => setEditingMenu(menu)}
+                  className="p-1.5 hover:bg-gray-100 rounded"
+                  title="Editar"
+                >
+                  <Edit size={14} />
+                </button>
+                <button
+                  onClick={() => deleteMenu(menu.id)}
+                  className="p-1.5 hover:bg-red-100 rounded text-red-600"
+                  title="Deletar"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
 
-              {/* Botões de ordenação */}
-              <button
-                onClick={() => moveMenu(menu.id, "up")}
-                disabled={!canMoveUp(0, flattenMenus(menus), menu)}
-                className={`p-2 rounded ${
-                  canMoveUp(0, flattenMenus(menus), menu)
-                    ? "hover:bg-blue-100 text-blue-600"
-                    : "text-gray-300 cursor-not-allowed"
-                }`}
-                title="Mover para cima"
-              >
-                <ChevronUp size={16} />
-              </button>
+              {/* Desktop: Todos os botões */}
+              <div className="hidden sm:flex gap-1">
+                <button
+                  onClick={() => toggleVisibility(menu)}
+                  className="p-2 hover:bg-gray-100 rounded"
+                  title="Toggle visibilidade"
+                >
+                  {menu.is_visible ? <Eye size={16} /> : <EyeOff size={16} />}
+                </button>
 
-              <button
-                onClick={() => moveMenu(menu.id, "down")}
-                disabled={!canMoveDown(0, flattenMenus(menus), menu)}
-                className={`p-2 rounded ${
-                  canMoveDown(0, flattenMenus(menus), menu)
-                    ? "hover:bg-blue-100 text-blue-600"
-                    : "text-gray-300 cursor-not-allowed"
-                }`}
-                title="Mover para baixo"
-              >
-                <ChevronDown size={16} />
-              </button>
+                {/* Botões de ordenação */}
+                <button
+                  onClick={() => moveMenu(menu.id, "up")}
+                  disabled={!canMoveUp(0, flattenMenus(menus), menu)}
+                  className={`p-2 rounded ${
+                    canMoveUp(0, flattenMenus(menus), menu)
+                      ? "hover:bg-blue-100 text-blue-600"
+                      : "text-gray-300 cursor-not-allowed"
+                  }`}
+                  title="Mover para cima"
+                >
+                  <ChevronUp size={16} />
+                </button>
 
-              <button
-                onClick={() => setEditingMenu(menu)}
-                className="p-2 hover:bg-gray-100 rounded"
-                title="Editar"
-              >
-                <Edit size={16} />
-              </button>
+                <button
+                  onClick={() => moveMenu(menu.id, "down")}
+                  disabled={!canMoveDown(0, flattenMenus(menus), menu)}
+                  className={`p-2 rounded ${
+                    canMoveDown(0, flattenMenus(menus), menu)
+                      ? "hover:bg-blue-100 text-blue-600"
+                      : "text-gray-300 cursor-not-allowed"
+                  }`}
+                  title="Mover para baixo"
+                >
+                  <ChevronDown size={16} />
+                </button>
 
-              <button
-                onClick={() => deleteMenu(menu.id)}
-                className="p-2 hover:bg-red-100 rounded text-red-600"
-                title="Deletar"
-              >
-                <Trash2 size={16} />
-              </button>
+                <button
+                  onClick={() => setEditingMenu(menu)}
+                  className="p-2 hover:bg-gray-100 rounded"
+                  title="Editar"
+                >
+                  <Edit size={16} />
+                </button>
+
+                <button
+                  onClick={() => deleteMenu(menu.id)}
+                  className="p-2 hover:bg-red-100 rounded text-red-600"
+                  title="Deletar"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Formulário de edição */}
         {isEditing && (
-          <div className="mt-2" style={{ marginLeft: level * 20 }}>
+          <div className="mt-2" style={{ marginLeft: level * 15 }}>
             <MenuForm
               menu={editingMenu}
               onSave={saveMenu}
@@ -631,39 +614,46 @@ const MenusPage = () => {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Menu className="text-red-600" />
-            Gerenciar Menus
-            <span className="bg-red-500 text-white px-2 py-1 rounded text-sm">
-              ROOT
-            </span>
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Sistema completo de gerenciamento de menus dinâmicos
-          </p>
-        </div>
+    <div className="p-4 lg:p-6">
+      {/* Header Mobile-First */}
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2 flex-wrap">
+              <Menu className="text-red-600" />
+              <span>Gerenciar Menus</span>
+              <span className="bg-red-500 text-white px-2 py-1 rounded text-xs sm:text-sm">
+                ROOT
+              </span>
+            </h1>
+            <p className="text-gray-600 mt-1 text-sm">
+              Sistema completo de gerenciamento de menus dinâmicos
+            </p>
+          </div>
 
-        <div className="flex gap-2">
-          <button
-            onClick={forceReloadMenus}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-            title="Atualizar lista de menus (bypass cache)"
-            disabled={loading}
-          >
-            <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
-            {loading ? "Atualizando..." : "Atualizar"}
-          </button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <button
+              onClick={forceReloadMenus}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm"
+              title="Atualizar lista de menus (bypass cache)"
+              disabled={loading}
+            >
+              <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+              <span className="hidden sm:inline">
+                {loading ? "Atualizando..." : "Atualizar"}
+              </span>
+              <span className="sm:hidden">↻</span>
+            </button>
 
-          <button
-            onClick={() => setShowAddForm(!showAddForm)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            <Plus size={20} />
-            Novo Menu
-          </button>
+            <button
+              onClick={() => setShowAddForm(!showAddForm)}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+            >
+              <Plus size={18} />
+              <span className="hidden sm:inline">Novo Menu</span>
+              <span className="sm:hidden">Novo</span>
+            </button>
+          </div>
         </div>
       </div>
 

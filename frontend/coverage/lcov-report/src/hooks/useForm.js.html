@@ -589,13 +589,13 @@ export const useForm = <span class="cstat-no" title="statement not covered" ><sp
   // Atualizar valor de um campo
   const setValue = <span class="cstat-no" title="statement not covered" >useCallback(<span class="fstat-no" title="function not covered" >(n</span>ame, value) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    setFormData(<span class="fstat-no" title="function not covered" >pr</span>ev =&gt; (<span class="cstat-no" title="statement not covered" >{ ...prev, [name]: value })</span>);</span>
-    
+
     // Validar no change se habilitado
 <span class="cstat-no" title="statement not covered" >    if (validateOnChange) {</span>
       const error = <span class="cstat-no" title="statement not covered" >validateField(name, value);</span>
 <span class="cstat-no" title="statement not covered" >      setErrors(<span class="fstat-no" title="function not covered" >pr</span>ev =&gt; (<span class="cstat-no" title="statement not covered" >{ ...prev, [name]: error })</span>);</span>
     }
-    
+
     // Limpar erro do submit
 <span class="cstat-no" title="statement not covered" >    if (submitError) {</span>
 <span class="cstat-no" title="statement not covered" >      setSubmitError(null);</span>
@@ -605,7 +605,7 @@ export const useForm = <span class="cstat-no" title="statement not covered" ><sp
   // Atualizar múltiplos valores
   const setValues = <span class="cstat-no" title="statement not covered" >useCallback(<span class="fstat-no" title="function not covered" >(n</span>ewValues) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    setFormData(<span class="fstat-no" title="function not covered" >pr</span>ev =&gt; (<span class="cstat-no" title="statement not covered" >{ ...prev, ...newValues })</span>);</span>
-    
+
 <span class="cstat-no" title="statement not covered" >    if (validateOnChange &amp;&amp; validate) {</span>
       const newErrors = <span class="cstat-no" title="statement not covered" >{ ...errors };</span>
 <span class="cstat-no" title="statement not covered" >      Object.keys(newValues).forEach(<span class="fstat-no" title="function not covered" >na</span>me =&gt; {</span>
@@ -621,7 +621,7 @@ export const useForm = <span class="cstat-no" title="statement not covered" ><sp
   // Marcar campo como tocado
   const setFieldTouched = <span class="cstat-no" title="statement not covered" >useCallback(<span class="fstat-no" title="function not covered" >(n</span>ame, isTouched = <span class="branch-0 cbranch-no" title="branch not covered" >true)</span> =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    setTouched(<span class="fstat-no" title="function not covered" >pr</span>ev =&gt; (<span class="cstat-no" title="statement not covered" >{ ...prev, [name]: isTouched })</span>);</span>
-    
+
     // Validar no blur se habilitado
 <span class="cstat-no" title="statement not covered" >    if (validateOnBlur &amp;&amp; isTouched) {</span>
       const error = <span class="cstat-no" title="statement not covered" >validateField(name, formData[name]);</span>
@@ -717,12 +717,12 @@ export const useForm = <span class="cstat-no" title="statement not covered" ><sp
     touched,
     isSubmitting,
     submitError,
-    
+
     // Estado computado
     isValid,
     isDirty,
     hasErrors,
-    
+
     // Métodos
     setValue,
     setValues,
@@ -732,7 +732,7 @@ export const useForm = <span class="cstat-no" title="statement not covered" ><sp
     handleSubmit,
     reset,
     getFieldProps,
-    
+
     // Utilitários
     getFieldError: <span class="fstat-no" title="function not covered" >(n</span>ame) =&gt; <span class="cstat-no" title="statement not covered" >touched[name] ? errors[name] : null,</span>
     isFieldTouched: <span class="fstat-no" title="function not covered" >(n</span>ame) =&gt; <span class="cstat-no" title="statement not covered" >!!touched[name],</span>

@@ -401,15 +401,15 @@
 import { useEffect, useCallback } from 'react';
 &nbsp;
 const useKeyboardNavigation = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
-  
+
   // Focus no primeiro elemento focalizável de um container
   const focusFirstElement = <span class="cstat-no" title="statement not covered" >useCallback(<span class="fstat-no" title="function not covered" >(c</span>ontainerRef) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    if (!containerRef.current) <span class="cstat-no" title="statement not covered" >return;</span></span>
-    
+
     const focusableElements = <span class="cstat-no" title="statement not covered" >containerRef.current.querySelectorAll(</span>
       'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
     );
-    
+
 <span class="cstat-no" title="statement not covered" >    if (focusableElements.length &gt; 0) {</span>
 <span class="cstat-no" title="statement not covered" >      focusableElements[0].focus();</span>
     }
@@ -418,11 +418,11 @@ const useKeyboardNavigation = <span class="cstat-no" title="statement not covere
   // Focus no último elemento focalizável de um container
   const focusLastElement = <span class="cstat-no" title="statement not covered" >useCallback(<span class="fstat-no" title="function not covered" >(c</span>ontainerRef) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    if (!containerRef.current) <span class="cstat-no" title="statement not covered" >return;</span></span>
-    
+
     const focusableElements = <span class="cstat-no" title="statement not covered" >containerRef.current.querySelectorAll(</span>
       'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
     );
-    
+
 <span class="cstat-no" title="statement not covered" >    if (focusableElements.length &gt; 0) {</span>
 <span class="cstat-no" title="statement not covered" >      focusableElements[focusableElements.length - 1].focus();</span>
     }

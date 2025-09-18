@@ -541,8 +541,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React, { useState, useRef, useEffect } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
-import { 
-  Sun, Moon, Menu, Bell, User, Settings, LogOut, Mail, 
+import {
+  Sun, Moon, Menu, Bell, User, Settings, LogOut, Mail,
   Search, ChevronDown, X
 } from 'lucide-react';
 &nbsp;
@@ -551,7 +551,7 @@ const Header = <span class="cstat-no" title="statement not covered" ><span class
   const [notificationOpen, setNotificationOpen] = <span class="cstat-no" title="statement not covered" >useState(false);</span>
   const [userMenuOpen, setUserMenuOpen] = <span class="cstat-no" title="statement not covered" >useState(false);</span>
   const [messagesOpen, setMessagesOpen] = <span class="cstat-no" title="statement not covered" >useState(false);</span>
-  
+
   const notificationRef = <span class="cstat-no" title="statement not covered" >useRef(null);</span>
   const userMenuRef = <span class="cstat-no" title="statement not covered" >useRef(null);</span>
   const messagesRef = <span class="cstat-no" title="statement not covered" >useRef(null);</span>
@@ -655,7 +655,7 @@ const Header = <span class="cstat-no" title="statement not covered" ><span class
 &nbsp;
             {/* Notifications */}
             &lt;div className="relative" ref={notificationRef}&gt;
-              &lt;button 
+              &lt;button
                 onClick={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >setNotificationOpen(!notificationOpen)}</span>
                 className="p-2 rounded-lg text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 relative"
               &gt;
@@ -693,7 +693,7 @@ const Header = <span class="cstat-no" title="statement not covered" ><span class
 &nbsp;
             {/* Messages */}
             &lt;div className="relative" ref={messagesRef}&gt;
-              &lt;button 
+              &lt;button
                 onClick={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >setMessagesOpen(!messagesOpen)}</span>
                 className="p-2 rounded-lg text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 relative"
               &gt;
@@ -733,7 +733,7 @@ const Header = <span class="cstat-no" title="statement not covered" ><span class
 &nbsp;
             {/* User Menu */}
             &lt;div className="relative" ref={userMenuRef}&gt;
-              &lt;button 
+              &lt;button
                 onClick={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >setUserMenuOpen(!userMenuOpen)}</span>
                 className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               &gt;

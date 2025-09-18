@@ -205,3 +205,74 @@ export const minLength = (value, min) => {
 export const maxLength = (value, max) => {
   return !value || value.toString().length <= max;
 };
+
+/**
+ * Validação de CPF ou CNPJ (automaticamente detecta o tipo)
+ */
+export const validateTaxId = (taxId) => {
+  const numbers = removeNonNumeric(taxId);
+
+  if (numbers.length === 11) {
+    return validateCPF(numbers);
+  } else if (numbers.length === 14) {
+    return validateCNPJ(numbers);
+  }
+
+  return false;
+};
+
+/**
+ * Detecta automaticamente se é CPF ou CNPJ e retorna o tipo de pessoa
+ * @param {string} taxId - CPF ou CNPJ
+ * @returns {object} {personType: 'PF'|'PJ'|null, isValid: boolean, documentType: 'CPF'|'CNPJ'|null}
+ */
+export const detectPersonTypeFromTaxId = (taxId) => {
+  const numbers = removeNonNumeric(taxId);
+
+  if (numbers.length === 11) {
+    return {
+      personType: "PF",
+      documentType: "CPF",
+      isValid: validateCPF(numbers),
+      formattedValue: formatCPF(numbers),
+    };
+  } else if (numbers.length === 14) {
+    return {
+      personType: "PJ",
+      documentType: "CNPJ",
+      isValid: validateCNPJ(numbers),
+      formattedValue: formatCNPJ(numbers),
+    };
+  }
+
+  // Documento incompleto ou inválido
+  return {
+    personType: null,
+    documentType: null,
+    isValid: false,
+    formattedValue: taxId,
+  };
+};
+
+/**
+ * Formatação de CPF (000.000.000-00)
+ */
+export const formatCPF = (cpf) => {
+  const numbers = removeNonNumeric(cpf);
+  if (numbers.length !== 11) return cpf;
+
+  return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+};
+
+/**
+ * Formatação de CNPJ (00.000.000/0000-00)
+ */
+export const formatCNPJ = (cnpj) => {
+  const numbers = removeNonNumeric(cnpj);
+  if (numbers.length !== 14) return cnpj;
+
+  return numbers.replace(
+    /(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
+    "$1.$2.$3/$4-$5"
+  );
+};

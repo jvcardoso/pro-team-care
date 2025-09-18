@@ -138,12 +138,12 @@ interface PageErrorBoundaryProps {
 }
 &nbsp;
 const PageErrorBoundary: React.FC&lt;PageErrorBoundaryProps&gt; = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >({ </span></span>
-  children, 
-  pageName 
+  children,
+  pageName
 }) =&gt; {
   const handleError = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>rror: Error) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    console.error(`[PAGE] Error in ${pageName || 'unknown page'}:`, error);</span>
-    
+
     // TODO: Send to error tracking service with page context
     // analytics.track('page_error', {
     //   pageName,
@@ -154,8 +154,8 @@ const PageErrorBoundary: React.FC&lt;PageErrorBoundaryProps&gt; = <span class="c
   };
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  return (</span>
-    &lt;ErrorBoundary 
-      level="page" 
+    &lt;ErrorBoundary
+      level="page"
       onError={handleError}
     &gt;
       {children}

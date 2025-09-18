@@ -19,6 +19,7 @@ class HttpCache {
     cnpj: 60 * 60 * 1000, // 60 minutos - dados do CNPJ
     health: 2 * 60 * 1000, // 2 minutos - health check
     menus: 5 * 60 * 1000, // 5 minutos - dados de menus (podem ser editados)
+    users: 2 * 60 * 1000, // 2 minutos - dados de usuários (podem mudar frequentemente)
     auth: 24 * 60 * 60 * 1000, // 24 horas - dados de auth
     static: 24 * 60 * 60 * 1000, // 24 horas - dados estáticos
   } as const;
@@ -42,6 +43,7 @@ class HttpCache {
     if (url.includes("/health")) return this.DEFAULT_TTLS.health;
     if (url.includes("/menus") || url.includes("/menu"))
       return this.DEFAULT_TTLS.menus;
+    if (url.includes("/users")) return this.DEFAULT_TTLS.users;
     if (url.includes("/auth")) return this.DEFAULT_TTLS.auth;
     return this.DEFAULT_TTLS.static;
   }
@@ -169,12 +171,34 @@ setInterval(() => {
   httpCache.cleanup();
 }, 5 * 60 * 1000);
 
+// Limpar cache de dados dinâmicos na inicialização
+httpCache.invalidatePattern("/users");
+httpCache.invalidatePattern("/establishments");
+httpCache.invalidatePattern("/clients");
+
 // 🔄 Interceptor para cache automático em requests GET
 export const createCacheInterceptor = (axiosInstance: any) => {
+  // Lista de endpoints que NÃO devem ter cache (dados dinâmicos críticos)
+  const NO_CACHE_PATTERNS = [
+    "/users/count", // Contadores de usuários
+    "/users/", // Lista de usuários
+    "/users?", // Lista de usuários com parâmetros
+    "/establishments/count", // Contadores de estabelecimentos
+    "/establishments/", // Lista de estabelecimentos
+    "/clients/count", // Contadores de clientes
+    "/clients/", // Lista de clientes
+    "/auth/", // Dados de autenticação
+  ];
+
+  // Função para verificar se URL deve ter cache
+  const shouldCache = (url: string): boolean => {
+    return !NO_CACHE_PATTERNS.some((pattern) => url.includes(pattern));
+  };
+
   // Request interceptor - verificar cache antes do request
   axiosInstance.interceptors.request.use((config: any) => {
-    // Só aplicar cache para requests GET que não são de auth
-    if (config.method === "get" && !config.url.includes("/auth/")) {
+    // Só aplicar cache para requests GET de dados estáticos
+    if (config.method === "get" && shouldCache(config.url)) {
       const cached = httpCache.get(config.url, config.params);
       if (cached) {
         // Retornar dados do cache como response
@@ -192,8 +216,12 @@ export const createCacheInterceptor = (axiosInstance: any) => {
   // Response interceptor - armazenar responses GET no cache
   axiosInstance.interceptors.response.use(
     (response: any) => {
-      // Cache apenas responses GET bem-sucedidos
-      if (response.config.method === "get" && response.status === 200) {
+      // Cache apenas responses GET bem-sucedidos de dados estáticos
+      if (
+        response.config.method === "get" &&
+        response.status === 200 &&
+        shouldCache(response.config.url)
+      ) {
         httpCache.set(
           response.config.url,
           response.data,

@@ -24,6 +24,15 @@ export type {
   CompanyFormData,
   PaginatedResponse,
   HealthStatus,
+  ApiResponse,
+  ApiError,
+  // Client types
+  ClientDetailed,
+  ClientCreate,
+  ClientUpdate,
+  ClientListResponse,
+  ClientValidationResponse,
+  PersonForClient,
 } from "./api";
 
 // Re-exports de enums (valores) - SINCRONIZADOS
@@ -53,7 +62,10 @@ export type {
   ValidationResult,
   CompanyFormData,
   CompanyFormProps,
+  ClientFormData,
+  ClientFormProps,
   ButtonProps,
   TableProps,
   UseFormReturn,
+  RequestOptions,
 } from "./components";

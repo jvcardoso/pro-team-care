@@ -42,19 +42,9 @@ class SecureSessionService {
         return { profiles: [], total_profiles: 0, user_is_root: false };
       }
 
-      // Tratamento para endpoint não encontrado - RETORNAR MOCK PARA ROOT
+      // Endpoint não implementado - falhar
       if (error.response?.status === 404) {
-        console.warn(
-          "Endpoint de perfis não disponível - usando mock para ROOT"
-        );
-        this.availableProfiles = [];
-        return {
-          profiles: [],
-          total_profiles: 0,
-          user_is_root: true, // ASSUMIR ROOT para mostrar o componente
-          current_user_email: "admin@proteamcare.com",
-          current_user_id: 5,
-        };
+        throw new Error("Endpoint de perfis não implementado no backend");
       }
 
       console.error("Erro ao obter perfis disponíveis:", error);
@@ -124,14 +114,14 @@ class SecureSessionService {
   async getCurrentContext() {
     try {
       const response = await api.get(`${this.baseUrl}/current-context`);
-      
+
       // Verificar se a sessão é válida na resposta
       if (response.data && response.data.session_valid === false) {
         console.info("Sessão segura não ativa - funcionando em modo padrão");
         this.currentContext = null;
         return null;
       }
-      
+
       this.currentContext = response.data;
       return response.data;
     } catch (error) {
@@ -142,20 +132,9 @@ class SecureSessionService {
         return null;
       }
 
-      // Se der erro 404, endpoint não disponível - RETORNAR MOCK PARA ROOT
+      // Endpoint não implementado - falhar
       if (error.response?.status === 404) {
-        console.warn(
-          "Endpoint de contexto não disponível - usando mock para ROOT"
-        );
-        this.currentContext = {
-          is_root: true,
-          is_impersonating: false,
-          user_id: 5,
-          user_email: "admin@proteamcare.com",
-          effective_user_id: 5,
-          effective_user_email: "admin@proteamcare.com",
-        };
-        return this.currentContext;
+        throw new Error("Endpoint de contexto não implementado no backend");
       }
 
       console.error("Erro ao obter contexto atual:", error);

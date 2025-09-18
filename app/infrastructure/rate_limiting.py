@@ -1,43 +1,16 @@
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
-from slowapi import Limiter
-from fastapi import Request, HTTPException
+from fastapi import Request
 from fastapi.responses import JSONResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
-from config.settings import settings
+from slowapi.util import get_remote_address
 
-
-def get_rate_limit_storage_uri() -> str:
-    """Get storage URI for rate limiting - Redis in production, memory in test/dev"""
-    import os
-    
-    # Force memory storage in test environments
-    if os.getenv("PYTEST_CURRENT_TEST") or os.getenv("ENV_FILE") == ".env.test":
-        return "memory://"
-    
-    try:
-        # Try Redis for production
-        import redis
-        # Test Redis connection
-        if settings.redis_password:
-            test_url = f"redis://:{settings.redis_password}@{settings.redis_host}:{settings.redis_port}/{settings.redis_db}"
-        else:
-            test_url = f"redis://{settings.redis_host}:{settings.redis_port}/{settings.redis_db}"
-        
-        # Quick connection test
-        r = redis.from_url(test_url)
-        r.ping()  # This will raise exception if Redis not available
-        return test_url
-    except Exception:
-        # Fallback to memory storage if Redis not available
-        return "memory://"
-
-
-# Initialize rate limiter with intelligent storage selection
+# ⚠️ RATE LIMITER SIMPLIFICADO - NÃO COMPLICAR!
+# LEIA: SECURITY_SIMPLE.md antes de alterar
+# ❌ NÃO ADICIONE: Redis, storage inteligente, configurações complexas
 limiter = Limiter(
     key_func=get_remote_address,
-    storage_uri=get_rate_limit_storage_uri(),
+    storage_uri="memory://",  # ⚠️ NÃO MUDAR - sempre memória, sem dependencies
 )
 
 
@@ -47,8 +20,8 @@ def _rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
         status_code=429,
         content={
             "detail": "Rate limit exceeded. Too many requests.",
-            "retry_after": exc.retry_after
-        }
+            "retry_after": exc.retry_after,
+        },
     )
 
 

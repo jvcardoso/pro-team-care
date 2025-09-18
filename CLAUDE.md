@@ -80,10 +80,13 @@ O projeto segue arquitetura hexagonal (Clean Architecture) com separação clara
 - Schema: `master`
 - Conexão assíncrona via SQLAlchemy + asyncpg
 
-### Authentication
+### Authentication & Authorization
 - JWT-based authentication implementado
-- Mock authentication atual (admin@example.com / password)
+- Credenciais válidas: admin@proteamcare.com / admin123
 - Token expiry: 30 minutos (configurável)
+- **Sistema de Permissões Granulares**: Substituição completa do sistema de níveis por permissões específicas
+- **43 endpoints protegidos** com decoradores `@require_permission_or_level`
+- **Cache Redis** para performance de autorização
 
 ### Key Components
 - **FastAPI app**: `app/main.py` - Configuração principal, middlewares, rotas
@@ -122,7 +125,7 @@ O projeto segue arquitetura hexagonal (Clean Architecture) com separação clara
 ### Database Structure
 - Utiliza banco PostgreSQL remoto existente (192.168.11.62:5432)
 - Database: `pro_team_care_11`
-- Username: `postgres` 
+- Username: `postgres`
 - Password: `Jvc@1702`
 - Schema `master` com 46 tabelas já estruturadas
 - Tabela `users` mapeada corretamente
@@ -154,3 +157,7 @@ DB_SCHEMA=master
 - ✅ Security headers completos
 - ✅ Input validation rigorosa
 - ✅ Error handling padronizado
+- ✅ **Sistema de Permissões Granulares** (elimina hardcoded levels)
+- ✅ **215 permissões** definidas em **19 roles**
+- ✅ **Contextos de autorização**: system, company, establishment
+- ✅ **Cache Redis** para performance de permissões

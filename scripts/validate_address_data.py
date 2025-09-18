@@ -1,12 +1,14 @@
 import asyncio
+
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
 # Importe os modelos e a sessão do seu projeto
 from app.infrastructure.database import async_session
-from app.infrastructure.orm.models import Company, People, Address
+from app.infrastructure.orm.models import Address, Company, People
 
 COMPANY_ID_TO_AUDIT = 42
+
 
 async def audit_address_data():
     """
@@ -29,7 +31,9 @@ async def audit_address_data():
             print(f"ERRO: Empresa com ID {COMPANY_ID_TO_AUDIT} não encontrada.")
             return
 
-        print(f"\nEmpresa encontrada: {company.people.trade_name or company.people.name} (CNPJ: {company.people.tax_id})")
+        print(
+            f"\nEmpresa encontrada: {company.people.trade_name or company.people.name} (CNPJ: {company.people.tax_id})"
+        )
 
         if not company.people.addresses:
             print("AVISO: A empresa não possui endereços cadastrados.")
@@ -47,7 +51,9 @@ async def audit_address_data():
             print("-" * 20)
             print("  VERIFICAÇÃO DE ENRIQUECIMENTO:")
             if addr.latitude and addr.longitude:
-                print(f"  ✅ Geolocalização: Latitude={addr.latitude}, Longitude={addr.longitude}")
+                print(
+                    f"  ✅ Geolocalização: Latitude={addr.latitude}, Longitude={addr.longitude}"
+                )
             else:
                 print("  ❌ Geolocalização: DADOS AUSENTES")
 
@@ -78,6 +84,7 @@ async def audit_address_data():
                 print("  ❌ Endereço não validado")
 
     print("\n--- Auditoria Concluída ---")
+
 
 if __name__ == "__main__":
     asyncio.run(audit_address_data())

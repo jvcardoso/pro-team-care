@@ -8,10 +8,14 @@ import {
   Company,
   CompanyDetailed,
   CompanyCreate,
+  ClientDetailed,
+  ClientCreate,
   Phone,
   Email,
   Address,
   PersonStatus,
+  ClientStatus,
+  PersonForClient,
 } from "./api";
 
 // ===============================
@@ -117,6 +121,96 @@ export interface CompanyFormProps {
   onCancel?: () => void;
   isLoading?: boolean;
   mode?: "create" | "edit";
+}
+
+// ===============================
+// CLIENT FORM TYPES
+// ===============================
+
+export interface ClientFormData {
+  establishment_id: number;
+  client_code?: string;
+  status: ClientStatus;
+  person?: {
+    name: string;
+    trade_name?: string;
+    tax_id: string;
+    secondary_tax_id?: string;
+    person_type: "PF" | "PJ";
+    birth_date?: string;
+    gender?: "male" | "female" | "non_binary" | "not_informed";
+    marital_status?:
+      | "single"
+      | "married"
+      | "divorced"
+      | "widowed"
+      | "stable_union"
+      | "not_informed";
+    occupation?: string;
+    incorporation_date?: string;
+    tax_regime?: string;
+    legal_nature?: string;
+    municipal_registration?: string;
+    website?: string;
+    description?: string;
+    lgpd_consent_version?: string;
+  };
+  existing_person_id?: number;
+  phones: Array<{
+    country_code: string;
+    area_code?: string;
+    number: string;
+    extension?: string;
+    type: string;
+    is_principal: boolean;
+    is_whatsapp: boolean;
+    description?: string;
+  }>;
+  emails: Array<{
+    email_address: string;
+    type: string;
+    is_principal: boolean;
+    is_verified: boolean;
+    description?: string;
+  }>;
+  addresses: Array<{
+    street: string;
+    number?: string;
+    complement?: string;
+    neighborhood: string;
+    city: string;
+    state: string;
+    zip_code: string;
+    country: string;
+    type: string;
+    is_principal: boolean;
+    latitude?: number;
+    longitude?: number;
+    ibge_city_code?: string;
+    gia_code?: string;
+    siafi_code?: string;
+    area_code?: string;
+    description?: string;
+  }>;
+}
+
+export interface ClientFormProps {
+  initialData?: ClientDetailed;
+  onSubmit: (data: ClientCreate) => Promise<void>;
+  onCancel?: () => void;
+  isLoading?: boolean;
+  mode?: "create" | "edit";
+  availableEstablishments?: Array<{
+    id: number;
+    name: string;
+    establishment_code: string;
+  }>;
+  existingPersons?: Array<{
+    id: number;
+    name: string;
+    tax_id: string;
+    person_type: "PF" | "PJ";
+  }>;
 }
 
 // ===============================

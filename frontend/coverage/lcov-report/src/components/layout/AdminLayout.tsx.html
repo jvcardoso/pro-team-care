@@ -529,7 +529,7 @@ const AdminLayout: React.FC = <span class="cstat-no" title="statement not covere
     const handleResize = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span>: void =&gt; {</span>
       const mobile = <span class="cstat-no" title="statement not covered" >window.innerWidth &lt; 1024;</span> // lg breakpoint
 <span class="cstat-no" title="statement not covered" >      setIsMobile(mobile);</span>
-      
+
 <span class="cstat-no" title="statement not covered" >      if (mobile) {</span>
 <span class="cstat-no" title="statement not covered" >        setSidebarCollapsed(true);</span>
 <span class="cstat-no" title="statement not covered" >        setSidebarOpen(false); </span>// Close sidebar when switching to mobile
@@ -583,21 +583,21 @@ const AdminLayout: React.FC = <span class="cstat-no" title="statement not covere
   const generateBreadcrumb = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span>: string =&gt; {</span>
     const pathnames = <span class="cstat-no" title="statement not covered" >location.pathname.split('/').filter(<span class="fstat-no" title="function not covered" >x </span>=&gt; <span class="cstat-no" title="statement not covered" >x)</span>;</span>
     const breadcrumbs = <span class="cstat-no" title="statement not covered" >['Home'];</span>
-    
+
 <span class="cstat-no" title="statement not covered" >    pathnames.forEach(<span class="fstat-no" title="function not covered" >(p</span>athname) =&gt; {</span>
       let label = <span class="cstat-no" title="statement not covered" >pathname.charAt(0).toUpperCase() + pathname.slice(1);</span>
-      
+
       const customLabels: Record&lt;string, string&gt; = <span class="cstat-no" title="statement not covered" >{</span>
         'admin': 'Admin',
         'dashboard': 'Dashboard',
         'demo': 'Layout Demo',
         'notifications': 'Demo de Notificações',
       };
-      
+
 <span class="cstat-no" title="statement not covered" >      if (customLabels[pathname]) {</span>
 <span class="cstat-no" title="statement not covered" >        label = customLabels[pathname];</span>
       }
-      
+
 <span class="cstat-no" title="statement not covered" >      breadcrumbs.push(label);</span>
     });
 &nbsp;
@@ -624,13 +624,13 @@ const AdminLayout: React.FC = <span class="cstat-no" title="statement not covere
 <span class="cstat-no" title="statement not covered" >  return (</span>
     &lt;div className="h-screen flex overflow-hidden bg-gray-100 dark:bg-gray-900"&gt;
       {/* Skip Link */}
-      &lt;a 
-        href="#main-content" 
+      &lt;a
+        href="#main-content"
         className="skip-link sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[9999] focus:bg-primary focus:text-white focus:px-4 focus:py-2 focus:rounded-md focus:no-underline"
       &gt;
         Pular para conteúdo principal
       &lt;/a&gt;
-      
+
       {/* Desktop Sidebar */}
       {!isMobile &amp;&amp; (
         &lt;aside
@@ -655,7 +655,7 @@ const AdminLayout: React.FC = <span class="cstat-no" title="statement not covere
               aria-hidden="true"
             /&gt;
           )}
-          
+
           {/* Mobile Sidebar */}
           &lt;aside
             className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out lg:hidden ${
@@ -682,7 +682,7 @@ const AdminLayout: React.FC = <span class="cstat-no" title="statement not covere
         /&gt;
 &nbsp;
         {/* Main Content Area */}
-        &lt;main 
+        &lt;main
           id="main-content"
           className="flex-1 relative overflow-y-auto focus:outline-none"
           onClick={closeMobileSidebar}

@@ -16,15 +16,15 @@ const ChangePasswordModal = ({ isOpen, onClose, user }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validações usando o mesmo padrão do projeto
     if (!formData.newPassword || !formData.confirmPassword) {
       notify.warning("Todos os campos são obrigatórios para alterar a senha");
@@ -32,7 +32,9 @@ const ChangePasswordModal = ({ isOpen, onClose, user }) => {
     }
 
     if (formData.newPassword.length < 6) {
-      notify.warning("A senha deve ter pelo menos 6 caracteres para garantir a segurança");
+      notify.warning(
+        "A senha deve ter pelo menos 6 caracteres para garantir a segurança"
+      );
       return;
     }
 
@@ -43,15 +45,20 @@ const ChangePasswordModal = ({ isOpen, onClose, user }) => {
 
     setLoading(true);
     try {
-      await usersService.changePassword(user.id, {
-        new_password: formData.newPassword
+      await usersService.changePassword(user.user_id, {
+        new_password: formData.newPassword,
       });
-      
-      notify.success(`Senha alterada com sucesso para ${user?.person_name || user?.name || user?.email_address}!`);
+
+      notify.success(
+        `Senha alterada com sucesso para ${
+          user?.person_name || user?.user_email
+        }!`
+      );
       onClose();
       setFormData({ newPassword: "", confirmPassword: "" });
     } catch (error) {
-      const errorMessage = error.response?.data?.detail || error.message || "Erro desconhecido";
+      const errorMessage =
+        error.response?.data?.detail || error.message || "Erro desconhecido";
       notify.error(`Falha ao alterar senha: ${errorMessage}`);
     } finally {
       setLoading(false);
@@ -92,10 +99,10 @@ const ChangePasswordModal = ({ isOpen, onClose, user }) => {
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
             <div className="text-sm text-gray-700 dark:text-gray-300">
               <p className="font-medium text-gray-900 dark:text-white mb-1">
-                {user?.person_name || user?.name || user?.email_address}
+                {user?.person_name || user?.user_email}
               </p>
               <p className="text-gray-600 dark:text-gray-400 font-mono text-xs">
-                {user?.email_address}
+                {user?.user_email}
               </p>
             </div>
           </div>
@@ -117,7 +124,11 @@ const ChangePasswordModal = ({ isOpen, onClose, user }) => {
               className="absolute right-3 top-8 text-gray-400 hover:text-gray-600"
               onClick={() => setShowPassword(!showPassword)}
             >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {showPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
             </button>
           </div>
 
@@ -138,7 +149,11 @@ const ChangePasswordModal = ({ isOpen, onClose, user }) => {
               className="absolute right-3 top-8 text-gray-400 hover:text-gray-600"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
             >
-              {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {showConfirmPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
             </button>
           </div>
 

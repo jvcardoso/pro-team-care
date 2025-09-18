@@ -618,7 +618,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
- * Validators - Funções tipadas para validação de dados brasileiros  
+ * Validators - Funções tipadas para validação de dados brasileiros
  * Migrado para TypeScript com type safety
  */
 &nbsp;
@@ -640,11 +640,11 @@ export const removeNonNumeric = <span class="cstat-no" title="statement not cove
  */
 export const applyMask = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(v</span>alue: string, mask: string): string =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  if (!value || !mask) <span class="cstat-no" title="statement not covered" >return value;</span></span>
-  
+
   const numbers = <span class="cstat-no" title="statement not covered" >removeNonNumeric(value);</span>
   let formatted = <span class="cstat-no" title="statement not covered" >'';</span>
   let numberIndex = <span class="cstat-no" title="statement not covered" >0;</span>
-  
+
 <span class="cstat-no" title="statement not covered" >  for (let i = <span class="cstat-no" title="statement not covered" >0;</span> i &lt; mask.length &amp;&amp; numberIndex &lt; numbers.length; i++) {</span>
 <span class="cstat-no" title="statement not covered" >    if (mask[i] === '#') {</span>
 <span class="cstat-no" title="statement not covered" >      formatted += numbers[numberIndex];</span>
@@ -653,7 +653,7 @@ export const applyMask = <span class="cstat-no" title="statement not covered" ><
 <span class="cstat-no" title="statement not covered" >      formatted += mask[i];</span>
     }
   }
-  
+
 <span class="cstat-no" title="statement not covered" >  return formatted;</span>
 };
 &nbsp;
@@ -666,10 +666,10 @@ export const applyMask = <span class="cstat-no" title="statement not covered" ><
  */
 export const validateCPF = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(c</span>pf: string): boolean =&gt; {</span>
   const numbers = <span class="cstat-no" title="statement not covered" >removeNonNumeric(cpf);</span>
-  
+
 <span class="cstat-no" title="statement not covered" >  if (numbers.length !== 11) <span class="cstat-no" title="statement not covered" >return false;</span></span>
 <span class="cstat-no" title="statement not covered" >  if (/^(\d)\1{10}$/.test(numbers)) <span class="cstat-no" title="statement not covered" >return false; </span></span>// Todos iguais
-  
+
   // Primeiro dígito
   let sum = <span class="cstat-no" title="statement not covered" >0;</span>
 <span class="cstat-no" title="statement not covered" >  for (let i = <span class="cstat-no" title="statement not covered" >0;</span> i &lt; 9; i++) {</span>
@@ -678,7 +678,7 @@ export const validateCPF = <span class="cstat-no" title="statement not covered" 
   let remainder = <span class="cstat-no" title="statement not covered" >(sum * 10) % 11;</span>
 <span class="cstat-no" title="statement not covered" >  if (remainder === 10 || remainder === 11) <span class="cstat-no" title="statement not covered" >remainder = 0;</span></span>
 <span class="cstat-no" title="statement not covered" >  if (remainder !== parseInt(numbers.charAt(9))) <span class="cstat-no" title="statement not covered" >return false;</span></span>
-  
+
   // Segundo dígito
 <span class="cstat-no" title="statement not covered" >  sum = 0;</span>
 <span class="cstat-no" title="statement not covered" >  for (let i = <span class="cstat-no" title="statement not covered" >0;</span> i &lt; 10; i++) {</span>
@@ -687,7 +687,7 @@ export const validateCPF = <span class="cstat-no" title="statement not covered" 
 <span class="cstat-no" title="statement not covered" >  remainder = (sum * 10) % 11;</span>
 <span class="cstat-no" title="statement not covered" >  if (remainder === 10 || remainder === 11) <span class="cstat-no" title="statement not covered" >remainder = 0;</span></span>
 <span class="cstat-no" title="statement not covered" >  if (remainder !== parseInt(numbers.charAt(10))) <span class="cstat-no" title="statement not covered" >return false;</span></span>
-  
+
 <span class="cstat-no" title="statement not covered" >  return true;</span>
 };
 &nbsp;
@@ -696,10 +696,10 @@ export const validateCPF = <span class="cstat-no" title="statement not covered" 
  */
 export const validateCNPJ = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(c</span>npj: string): boolean =&gt; {</span>
   const numbers = <span class="cstat-no" title="statement not covered" >removeNonNumeric(cnpj);</span>
-  
+
 <span class="cstat-no" title="statement not covered" >  if (numbers.length !== 14) <span class="cstat-no" title="statement not covered" >return false;</span></span>
 <span class="cstat-no" title="statement not covered" >  if (/^(\d)\1{13}$/.test(numbers)) <span class="cstat-no" title="statement not covered" >return false; </span></span>// Todos iguais
-  
+
   // Primeiro dígito
   let sum = <span class="cstat-no" title="statement not covered" >0;</span>
   const weights1 = <span class="cstat-no" title="statement not covered" >[5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];</span>
@@ -709,7 +709,7 @@ export const validateCNPJ = <span class="cstat-no" title="statement not covered"
   let remainder = <span class="cstat-no" title="statement not covered" >sum % 11;</span>
   const digit1 = <span class="cstat-no" title="statement not covered" >remainder &lt; 2 ? 0 : 11 - remainder;</span>
 <span class="cstat-no" title="statement not covered" >  if (digit1 !== parseInt(numbers.charAt(12))) <span class="cstat-no" title="statement not covered" >return false;</span></span>
-  
+
   // Segundo dígito
 <span class="cstat-no" title="statement not covered" >  sum = 0;</span>
   const weights2 = <span class="cstat-no" title="statement not covered" >[6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];</span>
@@ -719,7 +719,7 @@ export const validateCNPJ = <span class="cstat-no" title="statement not covered"
 <span class="cstat-no" title="statement not covered" >  remainder = sum % 11;</span>
   const digit2 = <span class="cstat-no" title="statement not covered" >remainder &lt; 2 ? 0 : 11 - remainder;</span>
 <span class="cstat-no" title="statement not covered" >  if (digit2 !== parseInt(numbers.charAt(13))) <span class="cstat-no" title="statement not covered" >return false;</span></span>
-  
+
 <span class="cstat-no" title="statement not covered" >  return true;</span>
 };
 &nbsp;
@@ -736,7 +736,7 @@ export const validateCEP = <span class="cstat-no" title="statement not covered" 
  */
 export const validatePhone = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(p</span>hone: string): boolean =&gt; {</span>
   const numbers = <span class="cstat-no" title="statement not covered" >removeNonNumeric(phone);</span>
-  
+
   // Celular: 11 dígitos (2 DDD + 9 dígitos começando com 9)
   // Fixo: 10 dígitos (2 DDD + 8 dígitos)
 <span class="cstat-no" title="statement not covered" >  if (numbers.length === 11) {</span>
@@ -744,13 +744,13 @@ export const validatePhone = <span class="cstat-no" title="statement not covered
     const number = <span class="cstat-no" title="statement not covered" >numbers.substring(2);</span>
 <span class="cstat-no" title="statement not covered" >    return VALID_DDDS.includes(parseInt(ddd)) &amp;&amp; number.charAt(0) === '9';</span>
   }
-  
+
 <span class="cstat-no" title="statement not covered" >  if (numbers.length === 10) {</span>
     const ddd = <span class="cstat-no" title="statement not covered" >numbers.substring(0, 2);</span>
     const number = <span class="cstat-no" title="statement not covered" >numbers.substring(2);</span>
 <span class="cstat-no" title="statement not covered" >    return VALID_DDDS.includes(parseInt(ddd)) &amp;&amp; ['2', '3', '4', '5'].includes(number.charAt(0));</span>
   }
-  
+
 <span class="cstat-no" title="statement not covered" >  return false;</span>
 };
 &nbsp;
@@ -888,13 +888,13 @@ export const formatCEP = <span class="cstat-no" title="statement not covered" ><
  */
 export const formatPhone = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(p</span>hone: string): string =&gt; {</span>
   const numbers = <span class="cstat-no" title="statement not covered" >removeNonNumeric(phone);</span>
-  
+
 <span class="cstat-no" title="statement not covered" >  if (numbers.length === 11) {</span>
 <span class="cstat-no" title="statement not covered" >    return applyMask(phone, '(##) #####-####');</span>
   } else <span class="cstat-no" title="statement not covered" >if (numbers.length === 10) {</span>
 <span class="cstat-no" title="statement not covered" >    return applyMask(phone, '(##) ####-####');</span>
   }
-  
+
 <span class="cstat-no" title="statement not covered" >  return phone;</span>
 };</pre></td></tr></table></pre>
 

@@ -675,7 +675,7 @@ export enum PersonType {
 &nbsp;
 export enum PersonStatus {
   ACTIVE = "active",
-  INACTIVE = "inactive", 
+  INACTIVE = "inactive",
   PENDING = "pending",
   SUSPENDED = "suspended",
   BLOCKED = "blocked"
@@ -803,7 +803,7 @@ export interface AddressBase {
   country: string;
   type: AddressType;
   is_principal: boolean;
-  
+
   // Geocoding fields
   latitude?: number;
   longitude?: number;
@@ -813,14 +813,14 @@ export interface AddressBase {
   formatted_address?: string;
   coordinates_added_at?: string;
   coordinates_source?: string;
-  
+
   // Enrichment metadata
   enriched_at?: string;
   enrichment_source?: string;
   validation_source?: string;
   last_validated_at?: string;
   is_validated: boolean;
-  
+
   // Códigos oficiais brasileiros (ViaCEP)
   ibge_city_code?: number;
   ibge_state_code?: number;

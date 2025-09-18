@@ -325,23 +325,23 @@ export const usePhone = <span class="cstat-no" title="statement not covered" ><s
   const [formattedValue, setFormattedValue] = <span class="cstat-no" title="statement not covered" >useState(<span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    return initialValue ? formatPhone(initialValue) : '';</span>
   });
-  
+
   const [isValid, setIsValid] = <span class="cstat-no" title="statement not covered" >useState(true);</span>
   const [validationMessage, setValidationMessage] = <span class="cstat-no" title="statement not covered" >useState('');</span>
   const [isDirty, setIsDirty] = <span class="cstat-no" title="statement not covered" >useState(false);</span>
 &nbsp;
   const validateInput = <span class="cstat-no" title="statement not covered" >useCallback(<span class="fstat-no" title="function not covered" >(i</span>nputValue) =&gt; {</span>
     const cleanValue = <span class="cstat-no" title="statement not covered" >removeNonNumeric(inputValue);</span>
-    
+
 <span class="cstat-no" title="statement not covered" >    if (!cleanValue &amp;&amp; required) {</span>
 <span class="cstat-no" title="statement not covered" >      setIsValid(false);</span>
 <span class="cstat-no" title="statement not covered" >      setValidationMessage('Telefone é obrigatório');</span>
 <span class="cstat-no" title="statement not covered" >      return false;</span>
     }
-    
+
 <span class="cstat-no" title="statement not covered" >    if (cleanValue &amp;&amp; !validatePhone(cleanValue)) {</span>
 <span class="cstat-no" title="statement not covered" >      setIsValid(false);</span>
-      
+
 <span class="cstat-no" title="statement not covered" >      if (cleanValue.length &lt; 10) {</span>
 <span class="cstat-no" title="statement not covered" >        setValidationMessage('Telefone deve ter pelo menos 10 dígitos');</span>
       } else <span class="cstat-no" title="statement not covered" >if (cleanValue.length &gt; 11) {</span>
@@ -356,7 +356,7 @@ export const usePhone = <span class="cstat-no" title="statement not covered" ><s
       }
 <span class="cstat-no" title="statement not covered" >      return false;</span>
     }
-    
+
 <span class="cstat-no" title="statement not covered" >    setIsValid(true);</span>
 <span class="cstat-no" title="statement not covered" >    setValidationMessage('');</span>
 <span class="cstat-no" title="statement not covered" >    return true;</span>
@@ -366,12 +366,12 @@ export const usePhone = <span class="cstat-no" title="statement not covered" ><s
     const numbersOnly = <span class="cstat-no" title="statement not covered" >removeNonNumeric(value);</span>
     const limitedNumbers = <span class="cstat-no" title="statement not covered" >numbersOnly.slice(0, 11);</span>
     const formatted = <span class="cstat-no" title="statement not covered" >formatPhone(limitedNumbers);</span>
-    
+
 <span class="cstat-no" title="statement not covered" >    setFormattedValue(formatted);</span>
 <span class="cstat-no" title="statement not covered" >    setIsDirty(true);</span>
-    
+
     const isCurrentlyValid = <span class="cstat-no" title="statement not covered" >validateInput(limitedNumbers);</span>
-    
+
     // Callback externo
 <span class="cstat-no" title="statement not covered" >    onChange?.({</span>
       value: limitedNumbers,
@@ -418,14 +418,14 @@ export const usePhone = <span class="cstat-no" title="statement not covered" ><s
     validationMessage,
     isDirty,
     phoneType: getPhoneType(formattedValue),
-    
+
     // Métodos
     handleChange,
     handleBlur,
     setValue,
     clear,
     validate: <span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >validateInput(removeNonNumeric(formattedValue)),</span>
-    
+
     // Estado computado
     isEmpty: !formattedValue || formattedValue.trim() === '',
     isComplete: removeNonNumeric(formattedValue).length &gt;= 10,

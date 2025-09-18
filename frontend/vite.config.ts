@@ -41,10 +41,19 @@ export default defineConfig({
           });
           proxy.on("proxyRes", (proxyRes, req, res) => {
             // Garantir que os headers CORS sejam passados corretamente
-            res.setHeader("Access-Control-Allow-Origin", "http://192.168.11.83:3000");
+            res.setHeader(
+              "Access-Control-Allow-Origin",
+              "http://192.168.11.83:3000"
+            );
             res.setHeader("Access-Control-Allow-Credentials", "true");
-            res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-            res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+            res.setHeader(
+              "Access-Control-Allow-Methods",
+              "GET, POST, PUT, DELETE, OPTIONS"
+            );
+            res.setHeader(
+              "Access-Control-Allow-Headers",
+              "Content-Type, Authorization, X-Requested-With"
+            );
           });
         },
       },

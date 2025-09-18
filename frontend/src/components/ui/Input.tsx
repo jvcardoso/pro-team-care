@@ -1,7 +1,8 @@
-import React, { forwardRef, ReactNode } from "react";
+import React, { forwardRef, ReactNode, useId } from "react";
 import { Star } from "lucide-react";
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface InputProps
+  extends React.InputHTMLAttributes<HTMLInputElement | HTMLTextAreaElement> {
   label?: string;
   error?: string;
   helper?: string;
@@ -13,9 +14,11 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   className?: string;
   containerClassName?: string;
   type?: string;
+  multiline?: boolean;
+  rows?: number;
 }
 
-const Input = forwardRef<HTMLInputElement, InputProps>(
+const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
   (
     {
       label,
@@ -29,6 +32,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       className = "",
       containerClassName = "",
       type = "text",
+      multiline = false,
+      rows = 3,
       ...props
     },
     ref
@@ -71,9 +76,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       .filter(Boolean)
       .join(" ");
 
-    // Generate IDs for accessibility
-    const inputId =
-      props.id || `input-${Math.random().toString(36).substr(2, 9)}`;
+    // Generate stable IDs for accessibility
+    const reactId = useId();
+    const inputId = props.id || `input-${reactId}`;
     const errorId = error ? `${inputId}-error` : undefined;
     const helperId = helper ? `${inputId}-helper` : undefined;
     const labelId = label ? `${inputId}-label` : undefined;
@@ -108,21 +113,39 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             </div>
           )}
 
-          <input
-            ref={ref}
-            id={inputId}
-            type={type}
-            className={inputClasses}
-            required={required}
-            aria-required={required}
-            aria-invalid={!!error}
-            aria-describedby={
-              [errorId, helperId].filter(Boolean).join(" ") || undefined
-            }
-            aria-labelledby={labelId}
-            {...props}
-            value={props.value ?? ""}
-          />
+          {multiline ? (
+            <textarea
+              ref={ref as React.Ref<HTMLTextAreaElement>}
+              id={inputId}
+              className={inputClasses}
+              required={required}
+              aria-required={required}
+              aria-invalid={!!error}
+              aria-describedby={
+                [errorId, helperId].filter(Boolean).join(" ") || undefined
+              }
+              aria-labelledby={labelId}
+              rows={rows}
+              {...(props as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
+              value={props.value ?? ""}
+            />
+          ) : (
+            <input
+              ref={ref as React.Ref<HTMLInputElement>}
+              id={inputId}
+              type={type}
+              className={inputClasses}
+              required={required}
+              aria-required={required}
+              aria-invalid={!!error}
+              aria-describedby={
+                [errorId, helperId].filter(Boolean).join(" ") || undefined
+              }
+              aria-labelledby={labelId}
+              {...(props as React.InputHTMLAttributes<HTMLInputElement>)}
+              value={props.value ?? ""}
+            />
+          )}
 
           {rightIcon && (
             <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">

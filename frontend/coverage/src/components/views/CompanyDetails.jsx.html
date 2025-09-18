@@ -1115,16 +1115,16 @@ const CompanyDetails = <span class="cstat-no" title="statement not covered" ><sp
 <span class="cstat-no" title="statement not covered" >    try {</span>
 <span class="cstat-no" title="statement not covered" >      setLoading(true);</span>
       const data = <span class="cstat-no" title="statement not covered" >await companiesService.getCompany(companyId);</span>
-      
+
       // Debug: Verificar estrutura dos dados (manter apenas para identificar problemas)
 <span class="cstat-no" title="statement not covered" >      if (process.env.NODE_ENV === 'development') {</span>
 <span class="cstat-no" title="statement not covered" >        console.log('CompanyDetails - Metadados:', {</span>
           company_metadata: !!data.company?.metadata,
-          people_metadata: !!data.people?.metadata,  
+          people_metadata: !!data.people?.metadata,
           direct_metadata: !!data.metadata
         });
       }
-      
+
 <span class="cstat-no" title="statement not covered" >      setCompany(data);</span>
     } catch (err) {
 <span class="cstat-no" title="statement not covered" >      setError('Erro ao carregar empresa');</span>
@@ -1217,7 +1217,7 @@ const CompanyDetails = <span class="cstat-no" title="statement not covered" ><sp
             Voltar
           &lt;/Button&gt;
         &lt;/div&gt;
-        
+
         {/* Company Info and Actions */}
         &lt;div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4"&gt;
           &lt;div className="min-w-0"&gt;
@@ -1356,7 +1356,7 @@ const CompanyDetails = <span class="cstat-no" title="statement not covered" ><sp
                             &lt;/span&gt;
                           )}
                         &lt;/div&gt;
-                        
+
                         {/* Padrão visual unificado para todos os dispositivos */}
                         {phone.is_whatsapp &amp;&amp; (
                           &lt;div className="mt-3"&gt;
@@ -1397,7 +1397,7 @@ const CompanyDetails = <span class="cstat-no" title="statement not covered" ><sp
                             &lt;/span&gt;
                           )}
                         &lt;/div&gt;
-                        
+
                         {/* Padrão visual unificado para todos os dispositivos */}
                         &lt;div className="mt-3"&gt;
                           &lt;button
@@ -1449,7 +1449,7 @@ const CompanyDetails = <span class="cstat-no" title="statement not covered" ><sp
                           CEP: {formatZipCode(address.zip_code)}
                           {address.country &amp;&amp; address.country !== 'Brasil' &amp;&amp; ` - ${address.country}`}
                         &lt;/p&gt;
-                        
+
                         {/* Padrão visual unificado para todos os dispositivos */}
                         &lt;div className="mt-3"&gt;
                           &lt;div className="grid grid-cols-2 gap-2"&gt;
@@ -1478,9 +1478,9 @@ const CompanyDetails = <span class="cstat-no" title="statement not covered" ><sp
           )}
 &nbsp;
           &lt;ReceitaFederalInfo metadata={
-            company.company?.metadata || 
-            company.people?.metadata || 
-            company.metadata || 
+            company.company?.metadata ||
+            company.people?.metadata ||
+            company.metadata ||
             {}
           } /&gt;
         &lt;/div&gt;

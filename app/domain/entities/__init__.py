@@ -3,26 +3,26 @@ Domain Entities - Clean Architecture
 Entidades puras de domínio sem dependências de frameworks
 """
 
-from .user import User
 from .company import (
-    PersonType,
-    PersonStatus,
-    PhoneType,
-    LineType,
-    EmailType,
-    AddressType,
     AccessDifficulty,
-    PhoneEntity,
-    EmailEntity,
     AddressEntity,
+    AddressType,
+    CompanyEntity,
+    EmailEntity,
+    EmailType,
+    LineType,
     PeopleEntity,
-    CompanyEntity
+    PersonStatus,
+    PersonType,
+    PhoneEntity,
+    PhoneType,
 )
+from .user import User
 
 __all__ = [
     "User",
     "PersonType",
-    "PersonStatus", 
+    "PersonStatus",
     "PhoneType",
     "LineType",
     "EmailType",
@@ -32,5 +32,5 @@ __all__ = [
     "EmailEntity",
     "AddressEntity",
     "PeopleEntity",
-    "CompanyEntity"
+    "CompanyEntity",
 ]

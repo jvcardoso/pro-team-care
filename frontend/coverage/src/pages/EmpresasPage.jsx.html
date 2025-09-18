@@ -1045,7 +1045,7 @@ const EmpresasPageContent = <span class="cstat-no" title="statement not covered"
 <span class="cstat-no" title="statement not covered" >    try {</span>
 <span class="cstat-no" title="statement not covered" >      setLoading(true);</span>
 <span class="cstat-no" title="statement not covered" >      setError(null); </span>// Clear previous errors
-      
+
       const params = <span class="cstat-no" title="statement not covered" >{</span>
         skip: (currentPage - 1) * itemsPerPage,
         limit: itemsPerPage,
@@ -1056,7 +1056,7 @@ const EmpresasPageContent = <span class="cstat-no" title="statement not covered"
 <span class="cstat-no" title="statement not covered" >      console.log('Loading companies with params:', params);</span>
       const data = <span class="cstat-no" title="statement not covered" >await companiesService.getCompanies(params);</span>
 <span class="cstat-no" title="statement not covered" >      console.log('Companies loaded:', data?.length || 0);</span>
-      
+
 <span class="cstat-no" title="statement not covered" >      setCompanies(Array.isArray(data) ? data : []);</span>
     } catch (err) {
 <span class="cstat-no" title="statement not covered" >      console.error('Error loading companies:', err);</span>
@@ -1177,7 +1177,7 @@ const EmpresasPageContent = <span class="cstat-no" title="statement not covered"
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  if (currentView === 'details') {</span>
 <span class="cstat-no" title="statement not covered" >    return (</span>
-      &lt;CompanyDetails 
+      &lt;CompanyDetails
         companyId={selectedCompanyId}
         onEdit={handleEdit}
         onBack={handleBack}
@@ -1235,7 +1235,7 @@ const EmpresasPageContent = <span class="cstat-no" title="statement not covered"
               leftIcon={&lt;Search className="h-4 w-4" /&gt;}
               className="flex-1 min-w-0"
             /&gt;
-            
+
             &lt;select
               value={filterStatus}
               onChange={<span class="fstat-no" title="function not covered" >(e</span>) =&gt; <span class="cstat-no" title="statement not covered" >setFilterStatus(e.target.value)}</span>
@@ -1371,28 +1371,28 @@ const EmpresasPageContent = <span class="cstat-no" title="statement not covered"
                     &lt;/td&gt;
                     &lt;td className="py-3 px-4"&gt;
                       &lt;div className="flex gap-1"&gt;
-                        &lt;Button 
-                          size="sm" 
-                          variant="secondary" 
-                          outline 
+                        &lt;Button
+                          size="sm"
+                          variant="secondary"
+                          outline
                           icon={&lt;Eye className="h-3 w-3" /&gt;}
                           onClick={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >handleView(company.id)}</span>
                         &gt;
                           Ver
                         &lt;/Button&gt;
-                        &lt;Button 
-                          size="sm" 
-                          variant="primary" 
-                          outline 
+                        &lt;Button
+                          size="sm"
+                          variant="primary"
+                          outline
                           icon={&lt;Edit className="h-3 w-3" /&gt;}
                           onClick={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >handleEdit(company.id)}</span>
                         &gt;
                           Editar
                         &lt;/Button&gt;
-                        &lt;Button 
-                          size="sm" 
-                          variant="danger" 
-                          outline 
+                        &lt;Button
+                          size="sm"
+                          variant="danger"
+                          outline
                           icon={&lt;Trash2 className="h-3 w-3" /&gt;}
                           onClick={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >handleDelete(company.id)}</span>
                         &gt;

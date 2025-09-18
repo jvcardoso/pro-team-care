@@ -48,6 +48,41 @@ export enum CompanyStatus {
   CANCELLED = "cancelled",
 }
 
+// 👤 Client Status - Sincronizado com ClientStatus enum
+export enum ClientStatus {
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+  ON_HOLD = "on_hold",
+  ARCHIVED = "archived",
+}
+
+// ⚥ Gender - Sincronizado com Gender enum
+export enum Gender {
+  MALE = "male",
+  FEMALE = "female",
+  NON_BINARY = "non_binary",
+  NOT_INFORMED = "not_informed",
+}
+
+// 💑 Marital Status - Sincronizado com MaritalStatus enum
+export enum MaritalStatus {
+  SINGLE = "single",
+  MARRIED = "married",
+  DIVORCED = "divorced",
+  WIDOWED = "widowed",
+  STABLE_UNION = "stable_union",
+  NOT_INFORMED = "not_informed",
+}
+
+// 📊 Person Status - Sincronizado com PersonStatus enum
+export enum PersonStatus {
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+  PENDING = "pending",
+  SUSPENDED = "suspended",
+  BLOCKED = "blocked",
+}
+
 // 💼 Tax Regime - Sincronizado com TaxRegime enum
 export enum TaxRegime {
   SIMPLES_NACIONAL = "simples_nacional",
@@ -158,4 +193,35 @@ export const TaxRegimeLabels: Record<TaxRegime, string> = {
   [TaxRegime.LUCRO_PRESUMIDO]: "Lucro Presumido",
   [TaxRegime.LUCRO_REAL]: "Lucro Real",
   [TaxRegime.MEI]: "Microempreendedor Individual",
+};
+
+export const ClientStatusLabels: Record<ClientStatus, string> = {
+  [ClientStatus.ACTIVE]: "Ativo",
+  [ClientStatus.INACTIVE]: "Inativo",
+  [ClientStatus.ON_HOLD]: "Em Espera",
+  [ClientStatus.ARCHIVED]: "Arquivado",
+};
+
+export const GenderLabels: Record<Gender, string> = {
+  [Gender.MALE]: "Masculino",
+  [Gender.FEMALE]: "Feminino",
+  [Gender.NON_BINARY]: "Não Binário",
+  [Gender.NOT_INFORMED]: "Não Informado",
+};
+
+export const MaritalStatusLabels: Record<MaritalStatus, string> = {
+  [MaritalStatus.SINGLE]: "Solteiro(a)",
+  [MaritalStatus.MARRIED]: "Casado(a)",
+  [MaritalStatus.DIVORCED]: "Divorciado(a)",
+  [MaritalStatus.WIDOWED]: "Viúvo(a)",
+  [MaritalStatus.STABLE_UNION]: "União Estável",
+  [MaritalStatus.NOT_INFORMED]: "Não Informado",
+};
+
+export const PersonStatusLabels: Record<PersonStatus, string> = {
+  [PersonStatus.ACTIVE]: "Ativo",
+  [PersonStatus.INACTIVE]: "Inativo",
+  [PersonStatus.PENDING]: "Pendente",
+  [PersonStatus.SUSPENDED]: "Suspenso",
+  [PersonStatus.BLOCKED]: "Bloqueado",
 };

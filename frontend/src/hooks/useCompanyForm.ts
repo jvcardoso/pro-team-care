@@ -2,8 +2,9 @@ import { useState, useCallback, useEffect } from "react";
 import { companiesService } from "../services/api";
 import { consultarCNPJ } from "../services/cnpjService";
 import addressEnrichmentService from "../services/addressEnrichmentService";
-import toast from "react-hot-toast";
+import userActivationService from "../services/userActivationService";
 import { validateEmail } from "../utils/validators";
+import { notify } from "../utils/notifications";
 import {
   Phone,
   Email,
@@ -29,6 +30,7 @@ interface FormData {
     metadata: Record<string, any>;
     display_order: number;
   };
+  managerEmail?: string;
   phones: Array<
     Partial<Phone> & {
       country_code: string;
@@ -59,9 +61,14 @@ interface FormData {
 interface UseCompanyFormProps {
   companyId?: number;
   onSave?: () => void;
+  onRedirectToDetails?: (companyId: number) => void;
 }
 
-export const useCompanyForm = ({ companyId, onSave }: UseCompanyFormProps) => {
+export const useCompanyForm = ({
+  companyId,
+  onSave,
+  onRedirectToDetails,
+}: UseCompanyFormProps) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>({
@@ -204,10 +211,13 @@ export const useCompanyForm = ({ companyId, onSave }: UseCompanyFormProps) => {
     }
   }, [companyId, loadCompany]);
 
-  const updatePeople = (field: keyof People, value: any): void => {
+  const updatePeople = (updates: Partial<FormData>): void => {
     setFormData((prev) => ({
       ...prev,
-      people: { ...prev.people, [field]: value },
+      ...updates,
+      people: updates.people
+        ? { ...prev.people, ...updates.people }
+        : prev.people,
     }));
   };
 
@@ -275,12 +285,8 @@ export const useCompanyForm = ({ companyId, onSave }: UseCompanyFormProps) => {
 
       if (existingCompany) {
         // CNPJ já existe - mostrar mensagem de erro
-        toast.error(
-          "Este CNPJ já está cadastrado no sistema. Você pode editar a empresa existente.",
-          {
-            duration: 6000,
-            icon: "⚠️",
-          }
+        notify.error(
+          "Este CNPJ já está cadastrado no sistema. Você pode editar a empresa existente."
         );
         return;
       }
@@ -294,12 +300,8 @@ export const useCompanyForm = ({ companyId, onSave }: UseCompanyFormProps) => {
       } else {
         // Outro erro - mostrar mensagem genérica e prosseguir
         console.error("Erro ao verificar CNPJ:", error);
-        toast.error(
-          "Erro ao verificar CNPJ. Prosseguindo com preenchimento automático.",
-          {
-            duration: 4000,
-            icon: "⚠️",
-          }
+        notify.error(
+          "Erro ao verificar CNPJ. Prosseguindo com preenchimento automático."
         );
         await fillData(companyData);
       }
@@ -410,11 +412,8 @@ export const useCompanyForm = ({ companyId, onSave }: UseCompanyFormProps) => {
     // Atualizar formulário com dados básicos primeiro
     setFormData(basicFormData);
 
-    // Mostrar toast inicial
-    toast.success("Dados básicos carregados da Receita Federal!", {
-      duration: 3000,
-      icon: "📋",
-    });
+    // Mostrar notify inicial
+    notify.success("Dados básicos carregados da Receita Federal!");
 
     // Enriquecer endereços automaticamente
     if (basicFormData.addresses && basicFormData.addresses.length > 0) {
@@ -445,39 +444,23 @@ export const useCompanyForm = ({ companyId, onSave }: UseCompanyFormProps) => {
         );
 
         if (hasEnrichedData) {
-          toast.success(
-            "Endereços enriquecidos com coordenadas GPS e dados oficiais!",
-            {
-              duration: 4000,
-              icon: "🗺️",
-            }
+          notify.success(
+            "Endereços enriquecidos com coordenadas GPS e dados oficiais!"
           );
         } else if (hasViaCepData) {
-          toast.success(
-            "Endereços enriquecidos com dados oficiais do ViaCEP!",
-            {
-              duration: 4000,
-              icon: "🏠",
-            }
+          notify.success(
+            "Endereços enriquecidos com dados oficiais do ViaCEP!"
           );
         } else {
           console.warn("Endereços não foram enriquecidos completamente");
-          toast(
-            "Dados básicos carregados, mas houve problemas no enriquecimento.",
-            {
-              duration: 3000,
-              icon: "⚠️",
-            }
+          notify.info(
+            "Dados básicos carregados, mas houve problemas no enriquecimento."
           );
         }
       } catch (error) {
         console.error("Erro ao enriquecer endereços:", error);
-        toast(
-          "Dados básicos carregados, mas houve erro no enriquecimento de endereços.",
-          {
-            duration: 4000,
-            icon: "⚠️",
-          }
+        notify.warning(
+          "Dados básicos carregados, mas houve erro no enriquecimento de endereços."
         );
       }
     } else {
@@ -668,21 +651,63 @@ export const useCompanyForm = ({ companyId, onSave }: UseCompanyFormProps) => {
       }
 
       if (!cleanedData.people.status) {
-        cleanedData.people.status = PersonStatus.ACTIVE;
+        cleanedData.people.status = CompanyStatus.ACTIVE;
       }
 
       // Salvar dados
+      let savedCompanyId = companyId;
       if (isEditing) {
         await companiesService.updateCompany(companyId!, cleanedData);
-        toast.success("Empresa atualizada com sucesso!");
+        notify.success("Empresa atualizada com sucesso!");
       } else {
-        await companiesService.createCompany(cleanedData);
-        toast.success("Empresa criada com sucesso!");
+        const response = await companiesService.createCompany(cleanedData);
+        savedCompanyId = response.id || response.company?.id;
+        notify.success("Empresa criada com sucesso!");
+
+        // Se um email de gestor foi fornecido, enviar convite
+        if (dataToSave.managerEmail && dataToSave.managerEmail.trim()) {
+          try {
+            console.log(
+              "📧 Enviando convite para gestor:",
+              dataToSave.managerEmail
+            );
+            await userActivationService.inviteCompanyManager(
+              dataToSave.managerEmail.trim(),
+              savedCompanyId
+            );
+            notify.success(
+              `Convite enviado para ${dataToSave.managerEmail}. O gestor receberá um email para ativar a conta.`
+            );
+          } catch (inviteError: any) {
+            // Não falhar o processo de criação da empresa se o convite falhar
+            console.error("Erro ao enviar convite:", inviteError);
+            const inviteErrorMessage =
+              inviteError.response?.data?.detail ||
+              "Erro ao enviar convite para o gestor";
+            notify.warning(
+              `Empresa criada com sucesso, mas houve erro ao enviar convite: ${inviteErrorMessage}`
+            );
+          }
+        }
       }
 
-      // Chamar callback de sucesso
-      if (onSave) {
-        onSave();
+      // Se for criação e houver callback de redirecionamento, redirecionar para detalhes
+      if (!isEditing && onRedirectToDetails && savedCompanyId) {
+        console.log(
+          "🔄 Redirecionando para detalhes da empresa:",
+          savedCompanyId
+        );
+        onRedirectToDetails(savedCompanyId);
+      } else {
+        // Chamar callback de sucesso apenas se não houver redirecionamento
+        if (onSave) {
+          onSave();
+        }
+        console.log("❌ Não redirecionando:", {
+          isEditing,
+          hasCallback: !!onRedirectToDetails,
+          savedCompanyId,
+        });
       }
     } catch (err: any) {
       console.error("Erro completo:", err);
@@ -720,7 +745,7 @@ export const useCompanyForm = ({ companyId, onSave }: UseCompanyFormProps) => {
       }
 
       setError(errorMessage);
-      toast.error(errorMessage);
+      notify.error(errorMessage);
     } finally {
       setLoading(false);
     }

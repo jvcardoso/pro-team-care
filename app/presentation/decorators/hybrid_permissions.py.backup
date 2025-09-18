@@ -1,0 +1,329 @@
+"""
+Simplified Hybrid Permissions for Testing
+Only checks if user is system admin
+"""
+
+from functools import wraps
+from typing import Any, Optional, List, Union
+import structlog
+from fastapi import Depends, HTTPException
+
+from app.infrastructure.auth import get_current_user
+from app.infrastructure.database import get_db
+from app.infrastructure.orm.models import User
+
+logger = structlog.get_logger()
+
+
+class HybridPermissionChecker:
+    """
+    Hybrid checker: system admin bypass + basic role validation
+    """
+
+    async def check_access(
+        self,
+        user_id: int,
+        permission: Optional[str] = None,
+        min_level: Optional[int] = None,
+        context_type: str = "establishment",
+        context_id: Optional[int] = None,
+        is_system_admin: bool = False
+    ) -> bool:
+        """
+        Check access: system admin bypass or basic role validation
+        """
+        # 🔓 SYSTEM ADMIN BYPASS: Usuários com is_system_admin = true têm acesso irrestrito
+        if is_system_admin:
+            await logger.ainfo(
+                "✅ System admin bypass - acesso concedido",
+                user_id=user_id,
+                permission=permission,
+                min_level=min_level
+            )
+            return True
+
+        # 🔍 Para usuários normais: validação APENAS por permissão específica
+        if permission is not None:
+            has_permission = await self._check_permission_access(user_id, permission, context_type, context_id)
+            if has_permission:
+                await logger.ainfo(
+                    "✅ Acesso concedido via permissão específica",
+                    user_id=user_id,
+                    permission=permission,
+                    context_type=context_type
+                )
+                return True
+
+        await logger.awarning(
+            "❌ Acesso negado - permissão insuficiente",
+            user_id=user_id,
+            required_permission=permission,
+            context_type=context_type
+        )
+        return False
+
+    async def _check_basic_level_access(
+        self,
+        user_id: int,
+        min_level: int,
+        context_type: str,
+        context_id: Optional[int] = None
+    ) -> bool:
+        """Validação básica de nível (simplificada para evitar queries complexas)"""
+        try:
+            from sqlalchemy import text
+
+            # Usar contexto adequado para obter a session
+            from app.infrastructure.database import async_session
+            async with async_session() as db:
+                # Query simplificada que evita JOINs problemáticos
+                if context_id is None:
+                    query = text("""
+                        SELECT COALESCE(MAX(r.level), 0) as max_level
+                        FROM master.user_roles ur
+                        JOIN master.roles r ON ur.role_id = r.id
+                        WHERE ur.user_id = :user_id
+                          AND ur.context_type = :context_type
+                          AND ur.status = 'active'
+                          AND ur.deleted_at IS NULL
+                          AND r.is_active = true
+                    """)
+                    params = {"user_id": user_id, "context_type": context_type}
+                else:
+                    query = text("""
+                        SELECT COALESCE(MAX(r.level), 0) as max_level
+                        FROM master.user_roles ur
+                        JOIN master.roles r ON ur.role_id = r.id
+                        WHERE ur.user_id = :user_id
+                          AND ur.context_type = :context_type
+                          AND ur.context_id = :context_id
+                          AND ur.status = 'active'
+                          AND ur.deleted_at IS NULL
+                          AND r.is_active = true
+                    """)
+                    params = {
+                        "user_id": user_id,
+                        "context_type": context_type,
+                        "context_id": context_id
+                    }
+
+                result = await db.execute(query, params)
+                max_level = result.scalar() or 0
+                return max_level >= min_level
+
+        except Exception as e:
+            logger.error(f"❌ Erro na validação básica de nível: {e}")
+            return False
+
+    async def _check_permission_access(
+        self,
+        user_id: int,
+        permission: str,
+        context_type: str,
+        context_id: Optional[int] = None
+    ) -> bool:
+        """Verificação de permissão específica através de roles"""
+        try:
+            from sqlalchemy import text
+            from app.infrastructure.database import async_session
+
+            async with async_session() as db:
+                # Query para verificar se o usuário tem a permissão específica
+                if context_id is None:
+                    query = text("""
+                        SELECT COUNT(*) > 0 as has_permission
+                        FROM master.user_roles ur
+                        JOIN master.roles r ON ur.role_id = r.id
+                        JOIN master.role_permissions rp ON r.id = rp.role_id
+                        JOIN master.permissions p ON rp.permission_id = p.id
+                        WHERE ur.user_id = :user_id
+                          AND ur.context_type = :context_type
+                          AND ur.status = 'active'
+                          AND ur.deleted_at IS NULL
+                          AND r.is_active = true
+                          AND p.is_active = true
+                          AND p.name = :permission
+                    """)
+                    params = {
+                        "user_id": user_id,
+                        "context_type": context_type,
+                        "permission": permission
+                    }
+                else:
+                    query = text("""
+                        SELECT COUNT(*) > 0 as has_permission
+                        FROM master.user_roles ur
+                        JOIN master.roles r ON ur.role_id = r.id
+                        JOIN master.role_permissions rp ON r.id = rp.role_id
+                        JOIN master.permissions p ON rp.permission_id = p.id
+                        WHERE ur.user_id = :user_id
+                          AND ur.context_type = :context_type
+                          AND ur.context_id = :context_id
+                          AND ur.status = 'active'
+                          AND ur.deleted_at IS NULL
+                          AND r.is_active = true
+                          AND p.is_active = true
+                          AND p.name = :permission
+                    """)
+                    params = {
+                        "user_id": user_id,
+                        "context_type": context_type,
+                        "context_id": context_id,
+                        "permission": permission
+                    }
+
+                result = await db.execute(query, params)
+                has_permission = result.scalar() or False
+                return has_permission
+
+        except Exception as e:
+            logger.error(f"❌ Erro na validação de permissão: {e}")
+            return False
+
+
+# Instância global do verificador
+hybrid_checker = HybridPermissionChecker()
+
+
+def require_permission_or_level(
+    permission: Optional[str] = None,
+    min_level: Optional[int] = None,
+    context_type: str = "establishment"
+):
+    """
+    Permission-based decorator: system admin bypass + permission validation
+    Compatible with OpenAPI schema generation
+
+    Note: min_level is deprecated, only permission is used
+    """
+
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(
+            *args,
+            current_user: User = Depends(get_current_user),
+            **kwargs,
+        ):
+            # 🔓 SYSTEM ADMIN BYPASS: Usuários com is_system_admin = true têm acesso irrestrito
+            if current_user.is_system_admin:
+                await logger.ainfo(
+                    "✅ System admin bypass - acesso concedido",
+                    user_id=current_user.id,
+                    permission=permission,
+                    min_level=min_level,
+                    endpoint=func.__name__,
+                )
+                return await func(*args, current_user=current_user, **kwargs)
+
+            # 🔍 Para usuários normais: validação por nível
+            context_id = kwargs.get('context_id') or getattr(current_user, f'current_{context_type}_id', None)
+
+            # Para contexto "system", sempre usar context_id=1 se não especificado
+            if context_type == "system" and context_id is None:
+                context_id = 1
+
+            has_access = await hybrid_checker.check_access(
+                current_user.id,
+                permission,
+                min_level,
+                context_type,
+                context_id,
+                current_user.is_system_admin or False
+            )
+
+            if not has_access:
+                error_detail = {
+                    "error": "access_denied",
+                    "context_type": context_type,
+                }
+
+                if permission:
+                    error_detail["required_permission"] = permission
+                if min_level:
+                    error_detail["required_level"] = str(min_level)
+
+                if permission and min_level:
+                    error_detail["message"] = f"Required permission '{permission}' OR level {min_level}+"
+                elif permission:
+                    error_detail["message"] = f"Required permission: {permission}"
+                else:
+                    error_detail["message"] = f"Required level: {min_level}+"
+
+                await logger.awarning(
+                    "🚫 Access denied",
+                    user_id=current_user.id,
+                    endpoint=func.__name__,
+                    **error_detail
+                )
+
+                raise HTTPException(
+                    status_code=403,
+                    detail=error_detail
+                )
+
+            return await func(*args, current_user=current_user, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def require_permission(permission: str, context_type: str = "establishment"):
+    """Decorator that requires specific permission"""
+    return require_permission_or_level(permission=permission, context_type=context_type)
+
+
+def require_any_permission(permissions: List[str], context_type: str = "establishment"):
+    """Decorator that requires any of the specified permissions (first one used)"""
+    # Para simplicidade, usa a primeira permissão da lista
+    permission = permissions[0] if permissions else None
+    return require_permission_or_level(permission=permission, context_type=context_type)
+
+
+def require_all_permissions(permissions: List[str], context_type: str = "establishment"):
+    """Decorator that requires all specified permissions (first one used for now)"""
+    # Para simplicidade, usa a primeira permissão da lista
+    permission = permissions[0] if permissions else None
+    return require_permission_or_level(permission=permission, context_type=context_type)
+
+
+# Funções utilitárias para verificação manual
+async def check_user_permission(
+    user_id: int,
+    permission: str,
+    context_type: str = "establishment",
+    context_id: Optional[int] = None
+) -> bool:
+    """Check if user has specific permission"""
+    return await hybrid_checker.check_access(
+        user_id=user_id,
+        permission=permission,
+        context_type=context_type,
+        context_id=context_id,
+        is_system_admin=False  # Will be checked internally
+    )
+
+
+async def check_user_access_hybrid(
+    user_id: int,
+    permission: Optional[str] = None,
+    min_level: Optional[int] = None,
+    context_type: str = "establishment",
+    context_id: Optional[int] = None,
+    is_system_admin: bool = False
+) -> bool:
+    """Check access using hybrid approach (permission OR level)"""
+    return await hybrid_checker.check_access(
+        user_id=user_id,
+        permission=permission,
+        min_level=min_level,
+        context_type=context_type,
+        context_id=context_id,
+        is_system_admin=is_system_admin
+    )
+
+
+# Decorator para endpoints administrativos
+def admin_required(permission: str = "admin"):
+    """Decorator that requires admin permission"""
+    return require_permission_or_level(permission=permission, context_type="system")

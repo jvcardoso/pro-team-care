@@ -6,8 +6,9 @@ Este teste valida se as correções aplicadas no UserMobileCard.jsx
 resolveram os problemas de inconsistência entre desktop e mobile.
 """
 
+from typing import Any, Dict
+
 import pytest
-from typing import Dict, Any
 
 
 class TestUserMobileFixValidation:
@@ -23,22 +24,22 @@ class TestUserMobileFixValidation:
                 "email": "active@example.com",
                 "person_name": "João Ativo",
                 "is_active": True,
-                "status": "active"  # Campo incorreto que pode existir
+                "status": "active",  # Campo incorreto que pode existir
             },
             {
                 "id": 2,
                 "email": "inactive@example.com",
                 "person_name": "Maria Inativa",
                 "is_active": False,
-                "status": "inactive"
+                "status": "inactive",
             },
             {
                 "id": 3,
                 "email": "no_status@example.com",
                 "person_name": "Pedro Sem Status",
-                "is_active": True
+                "is_active": True,
                 # Sem campo status
-            }
+            },
         ]
 
         print("🔍 Testando consistência no acesso ao status...")
@@ -74,36 +75,36 @@ class TestUserMobileFixValidation:
                 "email": "user1@example.com",
                 "person_name": "João Silva",
                 "name": "João Silva",
-                "person": {"name": "João Silva"}
+                "person": {"name": "João Silva"},
             },
             {
                 "id": 2,
                 "email": "user2@example.com",
                 "person_name": "Maria Santos",
                 "name": None,
-                "person": {"name": "Maria Santos"}
+                "person": {"name": "Maria Santos"},
             },
             {
                 "id": 3,
                 "email": "user3@example.com",
                 "person_name": None,
                 "name": "Pedro Oliveira",
-                "person": {"name": "Pedro Oliveira"}
+                "person": {"name": "Pedro Oliveira"},
             },
             {
                 "id": 4,
                 "email": "user4@example.com",
                 "person_name": None,
                 "name": None,
-                "person": {"name": "Ana Costa"}
+                "person": {"name": "Ana Costa"},
             },
             {
                 "id": 5,
                 "email": "user5@example.com",
                 "person_name": None,
                 "name": None,
-                "person": None
-            }
+                "person": None,
+            },
         ]
 
         print("🔍 Testando consistência no acesso ao nome...")
@@ -111,10 +112,19 @@ class TestUserMobileFixValidation:
         for user in test_users:
             # Simular acesso antigo (incorreto)
             person_data = user.get("person") or {}
-            old_name = person_data.get("name") or user.get("email") or "Usuário não identificado"
+            old_name = (
+                person_data.get("name")
+                or user.get("email")
+                or "Usuário não identificado"
+            )
 
             # Simular acesso novo (correto)
-            new_name = user.get("person_name") or user.get("name") or user.get("email") or "Usuário não identificado"
+            new_name = (
+                user.get("person_name")
+                or user.get("name")
+                or user.get("email")
+                or "Usuário não identificado"
+            )
 
             print(f"   Usuário ID: {user['id']}")
             print(f"   Nome antigo: '{old_name}'")
@@ -123,7 +133,9 @@ class TestUserMobileFixValidation:
 
             if old_name != new_name:
                 print(f"   ⚠️  DIFERENÇA DETECTADA!")
-                print(f"      - person.name: {user.get('person', {}).get('name', 'NÃO EXISTE')}")
+                print(
+                    f"      - person.name: {user.get('person', {}).get('name', 'NÃO EXISTE')}"
+                )
                 print(f"      - person_name: {user.get('person_name', 'NÃO EXISTE')}")
                 print(f"      - name: {user.get('name', 'NÃO EXISTE')}")
                 print(f"      - email: {user.get('email', 'NÃO EXISTE')}")
@@ -143,32 +155,34 @@ class TestUserMobileFixValidation:
             "is_system_admin": False,
             "created_at": "2024-01-15T10:30:00Z",
             "last_login_at": "2024-01-20T14:45:00Z",
-            "roles": [
-                {"id": 1, "name": "Administrador"},
-                {"id": 2, "name": "Usuário"}
-            ],
+            "roles": [{"id": 1, "name": "Administrador"}, {"id": 2, "name": "Usuário"}],
             "person": {
                 "name": "João Silva",
                 "document_type": "cpf",
-                "document_number": "12345678901"
-            }
+                "document_number": "12345678901",
+            },
         }
 
         print("🔍 Teste abrangente de mapeamento de dados...")
 
         # Mapeamento desktop (após correções)
         desktop_mapping = {
-            "nome": user_data.get("person_name") or user_data.get("name") or user_data.get("email"),
+            "nome": user_data.get("person_name")
+            or user_data.get("name")
+            or user_data.get("email"),
             "email": user_data.get("email"),
             "status": "active" if user_data.get("is_active") else "inactive",
             "funcoes": [role["name"] for role in user_data.get("roles", [])],
             "criado_em": user_data.get("created_at"),
-            "ultimo_login": user_data.get("last_login_at")
+            "ultimo_login": user_data.get("last_login_at"),
         }
 
         # Mapeamento mobile (após correções)
         mobile_mapping = {
-            "nome": user_data.get("person_name") or user_data.get("name") or user_data.get("email") or "Usuário não identificado",
+            "nome": user_data.get("person_name")
+            or user_data.get("name")
+            or user_data.get("email")
+            or "Usuário não identificado",
             "email": user_data.get("email"),
             "status": "active" if user_data.get("is_active") else "inactive",
             "id": user_data.get("id"),
@@ -176,7 +190,7 @@ class TestUserMobileFixValidation:
             "documento": user_data.get("person", {}).get("document_number"),
             "tipo_documento": user_data.get("person", {}).get("document_type"),
             "funcoes": [role["name"] for role in user_data.get("roles", [])],
-            "ultimo_login": user_data.get("last_login_at")
+            "ultimo_login": user_data.get("last_login_at"),
         }
 
         print("📊 Mapeamento Desktop (após correções):")
@@ -193,7 +207,7 @@ class TestUserMobileFixValidation:
             "email": desktop_mapping["email"] == mobile_mapping["email"],
             "status": desktop_mapping["status"] == mobile_mapping["status"],
             "funcoes": desktop_mapping["funcoes"] == mobile_mapping["funcoes"],
-            "criado_em": desktop_mapping["criado_em"] == mobile_mapping["criado_em"]
+            "criado_em": desktop_mapping["criado_em"] == mobile_mapping["criado_em"],
         }
 
         print("\n✅ Verificação de Consistência:")
@@ -207,7 +221,9 @@ class TestUserMobileFixValidation:
                 print(f"      Mobile: {mobile_mapping[field]}")
 
         if all_consistent:
-            print("\n🎉 SUCESSO! Todos os campos estão consistentes entre desktop e mobile!")
+            print(
+                "\n🎉 SUCESSO! Todos os campos estão consistentes entre desktop e mobile!"
+            )
         else:
             print("\n⚠️  Ainda há inconsistências que precisam ser corrigidas.")
 
@@ -223,8 +239,8 @@ class TestUserMobileFixValidation:
                     "id": 1,
                     "email": "test@example.com",
                     "name": "João Silva",
-                    "is_active": True
-                }
+                    "is_active": True,
+                },
             },
             {
                 "name": "Usuário sem name",
@@ -232,24 +248,17 @@ class TestUserMobileFixValidation:
                     "id": 2,
                     "email": "test@example.com",
                     "person_name": "João Silva",
-                    "is_active": True
-                }
+                    "is_active": True,
+                },
             },
             {
                 "name": "Usuário apenas com email",
-                "data": {
-                    "id": 3,
-                    "email": "test@example.com",
-                    "is_active": True
-                }
+                "data": {"id": 3, "email": "test@example.com", "is_active": True},
             },
             {
                 "name": "Usuário sem dados de identificação",
-                "data": {
-                    "id": 4,
-                    "is_active": True
-                }
-            }
+                "data": {"id": 4, "is_active": True},
+            },
         ]
 
         print("🔍 Testando casos extremos...")
@@ -258,7 +267,12 @@ class TestUserMobileFixValidation:
             user = case["data"]
 
             # Testar acesso ao nome (correção aplicada)
-            nome = user.get("person_name") or user.get("name") or user.get("email") or "Usuário não identificado"
+            nome = (
+                user.get("person_name")
+                or user.get("name")
+                or user.get("email")
+                or "Usuário não identificado"
+            )
 
             # Testar acesso ao status (correção aplicada)
             status = "active" if user.get("is_active") else "inactive"

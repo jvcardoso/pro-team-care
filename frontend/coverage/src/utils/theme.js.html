@@ -714,7 +714,7 @@ export const getColor = <span class="cstat-no" title="statement not covered" ><s
 <span class="cstat-no" title="statement not covered" >  if (shade) {</span>
 <span class="cstat-no" title="statement not covered" >    return `var(--${color}-${shade})`;</span>
   }
-  
+
   // Return main color variable
   const colorMap = <span class="cstat-no" title="statement not covered" >{</span>
     primary: 'var(--primary-color)',
@@ -726,7 +726,7 @@ export const getColor = <span class="cstat-no" title="statement not covered" ><s
     light: 'var(--light-color)',
     dark: 'var(--dark-color)',
   };
-  
+
 <span class="cstat-no" title="statement not covered" >  return colorMap[color] || `var(--${color}-color)`;</span>
 };
 &nbsp;
@@ -805,11 +805,11 @@ export const generateResponsiveClasses = <span class="cstat-no" title="statement
   const classes = <span class="cstat-no" title="statement not covered" >{</span>
     [property]: value
   };
-  
+
 <span class="cstat-no" title="statement not covered" >  breakpoints.forEach(<span class="fstat-no" title="function not covered" >bp</span> =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    classes[`${bp}:${property}`] = value;</span>
   });
-  
+
 <span class="cstat-no" title="statement not covered" >  return classes;</span>
 };
 &nbsp;
@@ -822,12 +822,12 @@ export const generateResponsiveClasses = <span class="cstat-no" title="statement
  */
 export const createUtilityClasses = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(p</span>refix, values, property) =&gt; {</span>
   const classes = <span class="cstat-no" title="statement not covered" >{};</span>
-  
+
 <span class="cstat-no" title="statement not covered" >  Object.entries(values).forEach(<span class="fstat-no" title="function not covered" >([</span>key, value]) =&gt; {</span>
     const className = <span class="cstat-no" title="statement not covered" >key === 'default' ? prefix : `${prefix}-${key}`;</span>
 <span class="cstat-no" title="statement not covered" >    classes[className] = { [property]: value };</span>
   });
-  
+
 <span class="cstat-no" title="statement not covered" >  return classes;</span>
 };
 &nbsp;
@@ -846,12 +846,12 @@ export const getThemeVariable = <span class="cstat-no" title="statement not cove
  */
 export const isDarkTheme = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  if (typeof window === 'undefined') <span class="cstat-no" title="statement not covered" >return false;</span></span>
-  
+
   const theme = <span class="cstat-no" title="statement not covered" >localStorage.getItem('pro-team-care-theme');</span>
 <span class="cstat-no" title="statement not covered" >  if (theme) {</span>
 <span class="cstat-no" title="statement not covered" >    return theme === 'dark';</span>
   }
-  
+
 <span class="cstat-no" title="statement not covered" >  return window.matchMedia('(prefers-color-scheme: dark)').matches;</span>
 };
 &nbsp;
@@ -861,12 +861,12 @@ export const isDarkTheme = <span class="cstat-no" title="statement not covered" 
  */
 export const getCurrentTheme = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  if (typeof window === 'undefined') <span class="cstat-no" title="statement not covered" >return 'light';</span></span>
-  
+
   const theme = <span class="cstat-no" title="statement not covered" >localStorage.getItem('pro-team-care-theme');</span>
 <span class="cstat-no" title="statement not covered" >  if (theme) {</span>
 <span class="cstat-no" title="statement not covered" >    return theme;</span>
   }
-  
+
 <span class="cstat-no" title="statement not covered" >  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';</span>
 };
 &nbsp;
@@ -876,13 +876,13 @@ export const getCurrentTheme = <span class="cstat-no" title="statement not cover
  */
 export const setTheme = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(t</span>heme) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  if (typeof window === 'undefined') <span class="cstat-no" title="statement not covered" >return;</span></span>
-  
+
 <span class="cstat-no" title="statement not covered" >  document.documentElement.setAttribute('data-theme', theme);</span>
 <span class="cstat-no" title="statement not covered" >  localStorage.setItem('pro-team-care-theme', theme);</span>
-  
+
   // Dispatch custom event for theme change
 <span class="cstat-no" title="statement not covered" >  window.dispatchEvent(new CustomEvent('themeChange', { </span>
-    detail: { theme } 
+    detail: { theme }
   }));
 };
 &nbsp;
@@ -904,13 +904,13 @@ export const toggleTheme = <span class="cstat-no" title="statement not covered" 
  */
 export const onThemeChange = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(c</span>allback) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  if (typeof window === 'undefined') <span class="cstat-no" title="statement not covered" >return <span class="fstat-no" title="function not covered" >()</span> =&gt; {};</span></span>
-  
+
   const handleThemeChange = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>vent) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    callback(event.detail.theme);</span>
   };
-  
+
 <span class="cstat-no" title="statement not covered" >  window.addEventListener('themeChange', handleThemeChange);</span>
-  
+
   // Also listen to system theme changes
   const mediaQuery = <span class="cstat-no" title="statement not covered" >window.matchMedia('(prefers-color-scheme: dark)');</span>
   const handleSystemThemeChange = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>) =&gt; {</span>
@@ -919,9 +919,9 @@ export const onThemeChange = <span class="cstat-no" title="statement not covered
 <span class="cstat-no" title="statement not covered" >      callback(e.matches ? 'dark' : 'light');</span>
     }
   };
-  
+
 <span class="cstat-no" title="statement not covered" >  mediaQuery.addEventListener('change', handleSystemThemeChange);</span>
-  
+
 <span class="cstat-no" title="statement not covered" >  return <span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    window.removeEventListener('themeChange', handleThemeChange);</span>
 <span class="cstat-no" title="statement not covered" >    mediaQuery.removeEventListener('change', handleSystemThemeChange);</span>

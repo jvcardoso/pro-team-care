@@ -4,7 +4,7 @@
 
 -- 1. VIEW PÚBLICA (DADOS NÃO-SENSÍVEIS)
 CREATE OR REPLACE VIEW master.vw_users_public AS
-SELECT 
+SELECT
     -- USER DATA (BASIC)
     u.id AS user_id,
     u.email_address AS user_email,
@@ -17,10 +17,10 @@ SELECT
     p.name AS person_name,
     p.person_type AS person_type,
     p.is_active AS person_is_active,
-    
+
     -- COMPANY DATA (BASIC)
     c.id AS company_id,
-    
+
     -- ESTABLISHMENT DATA (BASIC)
     e.code AS establishment_code,
     e.type AS establishment_type,
@@ -39,8 +39,8 @@ FROM master.users u
     LEFT JOIN master.user_roles ur ON u.id = ur.user_id AND ur.deleted_at IS NULL
     LEFT JOIN master.roles r ON ur.role_id = r.id
 
-WHERE 
-    u.deleted_at IS NULL 
+WHERE
+    u.deleted_at IS NULL
     AND p.deleted_at IS NULL
     AND u.is_active = true
 
@@ -48,17 +48,17 @@ ORDER BY u.id;
 
 -- 2. VIEW ADMIN (DADOS MASCARADOS)
 CREATE OR REPLACE VIEW master.vw_users_admin AS
-SELECT 
+SELECT
     -- USER DATA (ADMIN - MASKED)
     u.id AS user_id,
     u.email_address AS user_email,
     u.is_active AS user_is_active,
     u.is_system_admin AS user_is_system_admin,
-    
+
     -- MASKED SENSITIVE FIELDS
     CASE WHEN u.two_factor_secret IS NOT NULL THEN 'CONFIGURED' ELSE 'NOT_CONFIGURED' END AS user_2fa_status,
     CASE WHEN u.two_factor_recovery_codes IS NOT NULL THEN 'AVAILABLE' ELSE 'NOT_AVAILABLE' END AS user_2fa_recovery_status,
-    
+
     u.last_login_at AS user_last_login_at,
     u.created_at AS user_created_at,
 
@@ -68,14 +68,14 @@ SELECT
     p.tax_id AS person_tax_id,
     p.birth_date AS person_birth_date,
     p.is_active AS person_is_active,
-    
+
     -- LGPD STATUS (MASKED)
     CASE WHEN p.lgpd_consent_version IS NOT NULL THEN 'PROVIDED' ELSE 'NOT_PROVIDED' END AS person_lgpd_status,
     p.lgpd_consent_given_at AS person_lgpd_consent_date,
-    
+
     -- COMPANY DATA
     c.id AS company_id,
-    
+
     -- ESTABLISHMENT DATA
     e.id AS establishment_id,
     e.code AS establishment_code,
@@ -97,8 +97,8 @@ FROM master.users u
     LEFT JOIN master.user_roles ur ON u.id = ur.user_id AND ur.deleted_at IS NULL
     LEFT JOIN master.roles r ON ur.role_id = r.id
 
-WHERE 
-    u.deleted_at IS NULL 
+WHERE
+    u.deleted_at IS NULL
     AND p.deleted_at IS NULL
 
 ORDER BY u.id;
@@ -124,10 +124,10 @@ BEGIN
         'get_user_data_secure',
         'SELECT'
     );
-    
+
     -- Retornar dados filtrados
     RETURN QUERY
-    SELECT 
+    SELECT
         vup.user_id,
         vup.user_email,
         vup.person_name,

@@ -10,7 +10,7 @@ interface CompanyBasicDataSectionProps {
   };
   loading: boolean;
   isEditing: boolean;
-  onUpdatePeople: (field: keyof People, value: any) => void;
+  onUpdatePeople: (updates: any) => void;
   onCompanyFound: (companyData: any) => Promise<void>;
 }
 
@@ -24,9 +24,9 @@ const CompanyBasicDataSection: React.FC<CompanyBasicDataSectionProps> =
             <InputCNPJ
               label="CNPJ"
               value={formData.people.tax_id}
-              onChange={(data: any) => {
-                const value = data?.target?.value || data?.rawValue || data;
-                onUpdatePeople("tax_id", value);
+              onChange={(event: any) => {
+                const value = event?.rawValue || event?.target?.value || event;
+                onUpdatePeople({ people: { tax_id: value } });
               }}
               onCompanyFound={onCompanyFound}
               placeholder="00.000.000/0000-00"
@@ -42,14 +42,18 @@ const CompanyBasicDataSection: React.FC<CompanyBasicDataSectionProps> =
               <Input
                 label="Razão Social"
                 value={formData.people.name}
-                onChange={(e) => onUpdatePeople("name", e.target.value)}
+                onChange={(e) =>
+                  onUpdatePeople({ people: { name: e.target.value } })
+                }
                 placeholder="Nome completo da empresa"
                 required
               />
               <Input
                 label="Nome Fantasia"
                 value={formData.people.trade_name || ""}
-                onChange={(e) => onUpdatePeople("trade_name", e.target.value)}
+                onChange={(e) =>
+                  onUpdatePeople({ people: { trade_name: e.target.value } })
+                }
                 placeholder="Nome comercial"
               />
             </div>
@@ -60,7 +64,9 @@ const CompanyBasicDataSection: React.FC<CompanyBasicDataSectionProps> =
                 label="Inscrição Estadual"
                 value={formData.people.secondary_tax_id || ""}
                 onChange={(e) =>
-                  onUpdatePeople("secondary_tax_id", e.target.value)
+                  onUpdatePeople({
+                    people: { secondary_tax_id: e.target.value },
+                  })
                 }
                 placeholder="123.456.789"
               />
@@ -68,14 +74,18 @@ const CompanyBasicDataSection: React.FC<CompanyBasicDataSectionProps> =
                 label="Inscrição Municipal"
                 value={formData.people.municipal_registration || ""}
                 onChange={(e) =>
-                  onUpdatePeople("municipal_registration", e.target.value)
+                  onUpdatePeople({
+                    people: { municipal_registration: e.target.value },
+                  })
                 }
                 placeholder="12345678"
               />
               <Input
                 label="Website"
                 value={formData.people.website || ""}
-                onChange={(e) => onUpdatePeople("website", e.target.value)}
+                onChange={(e) =>
+                  onUpdatePeople({ people: { website: e.target.value } })
+                }
                 placeholder="https://www.empresa.com.br"
                 type="url"
               />
@@ -86,7 +96,9 @@ const CompanyBasicDataSection: React.FC<CompanyBasicDataSectionProps> =
               <Input
                 label="Natureza Jurídica"
                 value={formData.people.legal_nature || ""}
-                onChange={(e) => onUpdatePeople("legal_nature", e.target.value)}
+                onChange={(e) =>
+                  onUpdatePeople({ people: { legal_nature: e.target.value } })
+                }
                 placeholder="Sociedade Limitada"
               />
               <div>
@@ -95,7 +107,9 @@ const CompanyBasicDataSection: React.FC<CompanyBasicDataSectionProps> =
                 </label>
                 <select
                   value={formData.people.tax_regime || "simples_nacional"}
-                  onChange={(e) => onUpdatePeople("tax_regime", e.target.value)}
+                  onChange={(e) =>
+                    onUpdatePeople({ people: { tax_regime: e.target.value } })
+                  }
                   className="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
                 >
                   <option value="simples_nacional">Simples Nacional</option>
@@ -110,7 +124,9 @@ const CompanyBasicDataSection: React.FC<CompanyBasicDataSectionProps> =
                 </label>
                 <select
                   value={formData.people.status}
-                  onChange={(e) => onUpdatePeople("status", e.target.value)}
+                  onChange={(e) =>
+                    onUpdatePeople({ people: { status: e.target.value } })
+                  }
                   className="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
                 >
                   <option value="active">Ativo</option>
@@ -126,7 +142,9 @@ const CompanyBasicDataSection: React.FC<CompanyBasicDataSectionProps> =
                 label="Data de Abertura"
                 value={formData.people.incorporation_date || ""}
                 onChange={(e) =>
-                  onUpdatePeople("incorporation_date", e.target.value)
+                  onUpdatePeople({
+                    people: { incorporation_date: e.target.value },
+                  })
                 }
                 type="date"
               />
@@ -139,7 +157,9 @@ const CompanyBasicDataSection: React.FC<CompanyBasicDataSectionProps> =
               </label>
               <textarea
                 value={formData.people.description || ""}
-                onChange={(e) => onUpdatePeople("description", e.target.value)}
+                onChange={(e) =>
+                  onUpdatePeople({ people: { description: e.target.value } })
+                }
                 placeholder="Breve descrição das atividades da empresa..."
                 rows={3}
                 className="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none resize-none"

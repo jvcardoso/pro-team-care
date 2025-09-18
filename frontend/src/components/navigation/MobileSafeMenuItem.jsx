@@ -45,25 +45,25 @@ export const MobileSafeMenuItem = ({
   const isTouchDevice = useIsTouchDevice();
 
   const hasChildren = menu.children && menu.children.length > 0;
-  
+
   /**
    * Lógica de seleção universal para qualquer URL navegada
    * Funciona para qualquer página que o usuário acesse diretamente
    */
   const isActive = React.useMemo(() => {
     if (!menu.url || menu.url === "#") return false;
-    
+
     const currentPath = location.pathname;
-    
+
     // 1. CORRESPONDÊNCIA EXATA - Prioridade máxima
     const isExactMatch = currentPath === menu.url;
-    
+
     // 2. CASOS ESPECIAIS - Dashboard
     if (menu.url === "/admin/dashboard") {
       // Dashboard ativo quando estamos em /admin ou /admin/dashboard
       return currentPath === "/admin" || currentPath === "/admin/dashboard";
     }
-    
+
     // 3. RESOLVER CONFLITOS DE URLs DUPLICADAS
     if (menu.url === "/admin" && currentPath === "/admin") {
       // Se estamos na raiz /admin, isso é o Dashboard
@@ -71,35 +71,38 @@ export const MobileSafeMenuItem = ({
       const conflictingMenus = ["relatorios-homecare", "perfis", "auditoria"];
       return !conflictingMenus.includes(menu.slug);
     }
-    
+
     // 4. CORRESPONDÊNCIA EXATA NORMAL
     if (isExactMatch) {
       // Se tem filhos, só ativar se não houver filhos mais específicos ativos
       if (hasChildren) {
-        const hasActiveChild = menu.children.some(child => 
-          child.url && currentPath === child.url
+        const hasActiveChild = menu.children.some(
+          (child) => child.url && currentPath === child.url
         );
         return !hasActiveChild;
       }
       return true;
     }
-    
+
     // 5. CORRESPONDÊNCIA POR INÍCIO DE PATH (Para navegação hierárquica)
     // Ex: Se estamos em /admin/usuarios/123, ativar menu /admin/usuarios
     if (menu.url !== "/admin" && currentPath.startsWith(menu.url + "/")) {
       // Verificar se não há um menu filho mais específico
       if (hasChildren) {
-        const hasMoreSpecificChild = menu.children.some(child => 
-          child.url && (currentPath === child.url || currentPath.startsWith(child.url + "/"))
+        const hasMoreSpecificChild = menu.children.some(
+          (child) =>
+            child.url &&
+            (currentPath === child.url ||
+              currentPath.startsWith(child.url + "/"))
         );
         return !hasMoreSpecificChild;
       }
       return true;
     }
-    
+
     return false;
   }, [menu.url, menu.slug, location.pathname, hasChildren, menu.children]);
-  
+
   const indentClass = level > 0 ? `ml-${Math.min(level * 4, 12)}` : "";
 
   /**

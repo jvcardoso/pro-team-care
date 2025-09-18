@@ -3,10 +3,11 @@ Teste para carregamento de menus laterais - Pro Team Care
 Gera relatório de testes automatizados para o sistema de menus dinâmicos
 """
 
-import pytest
-import requests
 import json
 from datetime import datetime
+
+import pytest
+import requests
 
 
 class MenuLoadingTester:
@@ -24,7 +25,7 @@ class MenuLoadingTester:
             "status": status,
             "timestamp": datetime.now().isoformat(),
             "details": details,
-            "error": str(error) if error else None
+            "error": str(error) if error else None,
         }
         self.test_results.append(result)
         print(f"{'✅' if status == 'PASS' else '❌'} {test_name}: {status}")
@@ -38,11 +39,13 @@ class MenuLoadingTester:
                 self.log_test_result(
                     "Backend Health Check",
                     "PASS",
-                    f"Status: {data.get('status')}, Service: {data.get('service')}"
+                    f"Status: {data.get('status')}, Service: {data.get('service')}",
                 )
                 return True
             else:
-                self.log_test_result("Backend Health Check", "FAIL", f"Status: {response.status_code}")
+                self.log_test_result(
+                    "Backend Health Check", "FAIL", f"Status: {response.status_code}"
+                )
                 return False
         except Exception as e:
             self.log_test_result("Backend Health Check", "ERROR", error=e)
@@ -54,15 +57,17 @@ class MenuLoadingTester:
             response = self.session.get(f"{self.base_url}/api/v1/debug/menus-public")
             if response.status_code == 200:
                 data = response.json()
-                menu_count = len(data.get('tree', []))
+                menu_count = len(data.get("tree", []))
                 self.log_test_result(
                     "Debug Menus Endpoint",
                     "PASS",
-                    f"Menus retornados: {menu_count}, Status: {data.get('status')}"
+                    f"Menus retornados: {menu_count}, Status: {data.get('status')}",
                 )
                 return True
             else:
-                self.log_test_result("Debug Menus Endpoint", "FAIL", f"Status: {response.status_code}")
+                self.log_test_result(
+                    "Debug Menus Endpoint", "FAIL", f"Status: {response.status_code}"
+                )
                 return False
         except Exception as e:
             self.log_test_result("Debug Menus Endpoint", "ERROR", error=e)
@@ -76,18 +81,20 @@ class MenuLoadingTester:
                 self.log_test_result(
                     "Main Menus Endpoint (Unauthenticated)",
                     "PASS",
-                    "Corretamente rejeitou acesso não autorizado"
+                    "Corretamente rejeitou acesso não autorizado",
                 )
                 return True
             else:
                 self.log_test_result(
                     "Main Menus Endpoint (Unauthenticated)",
                     "FAIL",
-                    f"Status inesperado: {response.status_code}"
+                    f"Status inesperado: {response.status_code}",
                 )
                 return False
         except Exception as e:
-            self.log_test_result("Main Menus Endpoint (Unauthenticated)", "ERROR", error=e)
+            self.log_test_result(
+                "Main Menus Endpoint (Unauthenticated)", "ERROR", error=e
+            )
             return False
 
     def test_frontend_menu_hook_simulation(self):
@@ -100,7 +107,7 @@ class MenuLoadingTester:
                 self.log_test_result(
                     "Frontend Hook - Token Check",
                     "FAIL",
-                    "Token de acesso não encontrado (cenário do erro reportado)"
+                    "Token de acesso não encontrado (cenário do erro reportado)",
                 )
                 return False
 
@@ -123,10 +130,10 @@ class MenuLoadingTester:
             response = self.session.get(f"{self.base_url}/api/v1/debug/menus-public")
             if response.status_code == 200:
                 data = response.json()
-                tree = data.get('tree', [])
+                tree = data.get("tree", [])
 
                 # Validar estrutura básica
-                required_fields = ['id', 'name', 'url', 'children']
+                required_fields = ["id", "name", "url", "children"]
                 valid_structure = True
 
                 for menu in tree:
@@ -141,14 +148,20 @@ class MenuLoadingTester:
                     self.log_test_result(
                         "Menu Structure Validation",
                         "PASS",
-                        f"Estrutura válida para {len(tree)} menus"
+                        f"Estrutura válida para {len(tree)} menus",
                     )
                     return True
                 else:
-                    self.log_test_result("Menu Structure Validation", "FAIL", "Campos obrigatórios faltando")
+                    self.log_test_result(
+                        "Menu Structure Validation",
+                        "FAIL",
+                        "Campos obrigatórios faltando",
+                    )
                     return False
             else:
-                self.log_test_result("Menu Structure Validation", "SKIP", "Endpoint não disponível")
+                self.log_test_result(
+                    "Menu Structure Validation", "SKIP", "Endpoint não disponível"
+                )
                 return False
         except Exception as e:
             self.log_test_result("Menu Structure Validation", "ERROR", error=e)
@@ -160,10 +173,10 @@ class MenuLoadingTester:
             "test_suite": "Menu Loading Tests",
             "timestamp": datetime.now().isoformat(),
             "total_tests": len(self.test_results),
-            "passed": len([r for r in self.test_results if r['status'] == 'PASS']),
-            "failed": len([r for r in self.test_results if r['status'] == 'FAIL']),
-            "errors": len([r for r in self.test_results if r['status'] == 'ERROR']),
-            "results": self.test_results
+            "passed": len([r for r in self.test_results if r["status"] == "PASS"]),
+            "failed": len([r for r in self.test_results if r["status"] == "FAIL"]),
+            "errors": len([r for r in self.test_results if r["status"] == "ERROR"]),
+            "results": self.test_results,
         }
 
         return report
@@ -183,7 +196,7 @@ class MenuLoadingTester:
         report = self.generate_report()
 
         # Salvar relatório
-        with open('menu_loading_test_report.json', 'w', encoding='utf-8') as f:
+        with open("menu_loading_test_report.json", "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 
         print(f"📊 Relatório salvo em: menu_loading_test_report.json")
@@ -196,7 +209,11 @@ class MenuLoadingTester:
 
 def main():
     """Função principal para executar os testes"""
-    tester = MenuLoadingTester()
+    import sys
+
+    base_url = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8001"
+    print(f"🔗 Usando URL: {base_url}")
+    tester = MenuLoadingTester(base_url)
     return tester.run_all_tests()
 
 

@@ -407,10 +407,10 @@ export const removeNonNumeric = (value) =&gt; {
  */
 export const validateCPF = (cpf) =&gt; {
   const numbers = removeNonNumeric(cpf);
-  
+
   if (numbers.length !== 11) return false;
   if (/^(\d)\1{10}$/.test(numbers)) return false; // Todos iguais
-  
+
   // Primeiro dígito verificador
   let sum = 0;
   for (let i = 0; i &lt; 9; i++) {
@@ -418,9 +418,9 @@ export const validateCPF = (cpf) =&gt; {
   }
   let remainder = 11 - (sum % 11);
   let firstDigit = remainder &gt;= 10 ? 0 : remainder;
-  
+
   <span class="missing-if-branch" title="if path not taken" >I</span>if (parseInt(numbers[9]) !== firstDigit) <span class="cstat-no" title="statement not covered" >return false;</span>
-  
+
   // Segundo dígito verificador
   sum = 0;
   for (let i = 0; i &lt; 10; i++) {
@@ -428,7 +428,7 @@ export const validateCPF = (cpf) =&gt; {
   }
   remainder = 11 - (sum % 11);
   let secondDigit = remainder &gt;= 10 ? <span class="branch-0 cbranch-no" title="branch not covered" >0 </span>: remainder;
-  
+
   return parseInt(numbers[10]) === secondDigit;
 };
 &nbsp;
@@ -437,10 +437,10 @@ export const validateCPF = (cpf) =&gt; {
  */
 export const validateCNPJ = (cnpj) =&gt; {
   const numbers = removeNonNumeric(cnpj);
-  
+
   if (numbers.length !== 14) return false;
   if (/^(\d)\1{13}$/.test(numbers)) return false; // Todos iguais
-  
+
   // Primeiro dígito verificador
   const weights1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
   let sum = 0;
@@ -449,9 +449,9 @@ export const validateCNPJ = (cnpj) =&gt; {
   }
   let remainder = sum % 11;
   let firstDigit = remainder &lt; 2 ? <span class="branch-0 cbranch-no" title="branch not covered" >0 </span>: 11 - remainder;
-  
+
   <span class="missing-if-branch" title="if path not taken" >I</span>if (parseInt(numbers[12]) !== firstDigit) <span class="cstat-no" title="statement not covered" >return false;</span>
-  
+
   // Segundo dígito verificador
   const weights2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
   sum = 0;
@@ -460,7 +460,7 @@ export const validateCNPJ = (cnpj) =&gt; {
   }
   remainder = sum % 11;
   let secondDigit = remainder &lt; 2 ? 0 : 11 - remainder;
-  
+
   return parseInt(numbers[13]) === secondDigit;
 };
 &nbsp;
@@ -485,21 +485,21 @@ export const validateEmail = (email) =&gt; {
  */
 export const validatePhone = (phone) =&gt; {
   const numbers = removeNonNumeric(phone);
-  
+
   // Celular: 11 dígitos (com 9)
-  // Fixo: 10 dígitos  
+  // Fixo: 10 dígitos
   if (numbers.length !== 10 &amp;&amp; numbers.length !== 11) return false;
-  
+
   // Validar DDD (11 a 99)
   const ddd = parseInt(numbers.substring(0, 2));
   if (ddd &lt; 11 || ddd &gt; 99) return false;
-  
+
   // Validar formato celular (9 na frente)
   if (numbers.length === 11) {
     const thirdDigit = parseInt(numbers[2]);
     if (thirdDigit !== 9) return false;
   }
-  
+
   return true;
 };
 &nbsp;

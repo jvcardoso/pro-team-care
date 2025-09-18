@@ -80,8 +80,10 @@ npm run format
 - **Clean Architecture**: Domain → Application → Infrastructure → Presentation layers
 - **Async/Await**: All database operations use async/await
 - **Dependency Injection**: Repository pattern for data access
-- **Security**: JWT authentication, rate limiting, CORS validation
+- **Security**: Basic JWT authentication, minimal rate limiting (login only), open CORS for development
 - **Testing**: pytest-asyncio for async tests, TestClient for API tests
+
+**Note**: Architecture simplified for better performance and development freedom. Removed complex security headers (CSP, HSTS, Permissions Policy), dynamic rate limiting, restrictive CORS validation, and heavy middlewares. Maintains essential security while reducing complexity by ~60%.
 
 ### File Structure
 ```

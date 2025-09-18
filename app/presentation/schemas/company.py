@@ -1,7 +1,8 @@
-from pydantic import BaseModel, Field, ConfigDict, EmailStr
-from typing import Optional, List, Dict
-from datetime import datetime, date, time
+from datetime import date, datetime, time
 from enum import Enum
+from typing import Dict, List, Optional
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class PersonType(str, Enum):
@@ -177,7 +178,7 @@ class AddressBase(BaseModel):
     validation_source: Optional[str] = None
     last_validated_at: Optional[datetime] = None
     is_validated: bool = False
-    
+
     # Códigos oficiais brasileiros (ViaCEP)
     ibge_city_code: Optional[int] = None
     ibge_state_code: Optional[int] = None

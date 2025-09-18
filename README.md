@@ -10,7 +10,7 @@
 
 Sistema completo para gerenciamento de empresas de Home Care, desenvolvido com **arquitetura enterprise** baseada em Clean Architecture. Oferece controle total sobre pacientes, profissionais, agendamentos e operações de cuidados domiciliares com foco em conformidade regulatória e segurança de dados.
 
-**🎯 Status Atual: PRODUÇÃO READY** - Sistema completamente funcional com frontend moderno e backend enterprise, auditado e otimizado para máxima qualidade e performance. Pontuação geral: 8.1/10 (Excelente).
+**🎯 Status Atual: DESENVOLVIMENTO OTIMIZADO** - Sistema simplificado e funcional com arquitetura limpa, performance melhorada e desenvolvimento mais ágil. Pontuação geral: 7.8/10 (Muito Bom). Arquitetura reduzida ~60% em complexidade para melhor manutenibilidade.
 
 ## 🎯 **Visão Geral**
 
@@ -29,15 +29,15 @@ O **Pro Team Care** é uma solução enterprise completa para empresas de **Home
 - ✅ **Presentation Layer** - APIs REST e schemas Pydantic v2
 
 ### **🔐 Segurança & Compliance**
-- ✅ **JWT Authentication** com bcrypt e refresh tokens seguros
-- ✅ **CORS + CSP + Security Headers** enterprise-grade
-- ✅ **Rate Limiting** inteligente com Redis (5 tentativas/min)
+- ✅ **JWT Authentication** básico com bcrypt
+- ✅ **CORS** aberto para desenvolvimento (restritivo em produção)
+- ✅ **Rate Limiting** mínimo (apenas no login)
 - ✅ **LGPD Compliance** com auditoria automática e logs estruturados
 - ✅ **Input Validation** rigorosa com Pydantic v2
 - ✅ **SQL Injection Protection** via SQLAlchemy ORM
 - ✅ **XSS Protection** com sanitização automática
 - ✅ **CSRF Protection** com SameSite cookies
-- ✅ **Content Security Policy** (CSP) duplo para frontend/backend
+- ✅ **Security Headers** essenciais (X-Content-Type-Options, X-Frame-Options)
 
 ### **📊 Observabilidade & Performance**
 - ✅ **Logs Estruturados** (JSON) com context enrichment automático
@@ -145,12 +145,12 @@ uvicorn app.main:app --reload
 - **Connection pooling** PostgreSQL (20 conexões + pre-ping)
 - **Async/await** completo em todas as operações
 
-#### **🔒 Segurança Enterprise**
-- **JWT Authentication** com bcrypt e refresh tokens
-- **Rate limiting** inteligente (5 tentativas/min)
+#### **🔒 Segurança Simplificada**
+- **JWT Authentication** básico com bcrypt
+- **Rate limiting** mínimo (apenas no login)
 - **Input validation** rigorosa com Pydantic v2
 - **SQL injection protection** via SQLAlchemy ORM
-- **CORS + CSP** configurados corretamente
+- **CORS** aberto para desenvolvimento
 
 #### **🧪 Qualidade de Código**
 - **92 testes implementados** (+95% melhoria)
@@ -536,6 +536,41 @@ pre-commit run --all-files
 - **Driver:** AsyncPG (alta performance)
 - **Pool:** 20 conexões + pre-ping
 
+### **📧 Servidor de Email (Desenvolvimento):**
+- **Host:** 192.168.11.64:25 (smtp4dev em container LXC)
+- **Configuração:** SMTP sem autenticação
+- **Interface Web:** http://192.168.11.64 (porta 80)
+- **Uso:** Teste de emails de ativação de usuários
+
+#### **Configuração do smtp4dev:**
+```bash
+# Container LXC Proxmox (192.168.11.64)
+# Usuário: root | Senha: Jvc@1702
+
+# Verificar status do serviço
+systemctl status smtp4dev
+
+# Logs do serviço
+journalctl -u smtp4dev -f
+
+# Reiniciar se necessário
+systemctl restart smtp4dev
+```
+
+### **🎯 Sistema de Ativação de Usuários:**
+O sistema implementa convites automáticos para gestores de empresas:
+
+1. **Criação de Empresa** → Campo opcional "Email do Gestor"
+2. **Usuário criado** com status 'pending' + token de ativação
+3. **Email enviado** automaticamente para o gestor
+4. **Gestor ativa conta** via link no email + define senha
+5. **Conta ativada** → Status 'active' + acesso ao sistema
+
+#### **Endpoints de Ativação:**
+- `POST /api/v1/user-activation/invite-company-manager`
+- `POST /api/v1/user-activation/activate`
+- `GET /api/v1/user-activation/validate-token/{token}`
+
 ### **Características Avançadas:**
 - ✅ **47+ tabelas** já estruturadas
 - ✅ **Índices otimizados** para performance
@@ -903,14 +938,14 @@ Este projeto é propriedade da **Pro Team Care** - Sistema de Gestão para Home 
 - ✅ **Repository Pattern** com abstração completa de persistência
 - ✅ **Dependency Injection** para máxima testabilidade e manutenibilidade
 
-### **🔒 Segurança Enterprise-Grade**
-- ✅ **JWT Authentication** com bcrypt e refresh tokens seguros
-- ✅ **Rate Limiting** inteligente (5 tentativas/min por IP)
+### **🔒 Segurança Simplificada**
+- ✅ **JWT Authentication** básico com bcrypt
+- ✅ **Rate Limiting** mínimo (apenas no login)
 - ✅ **Input Validation** rigorosa com Pydantic v2
 - ✅ **SQL Injection Protection** via SQLAlchemy ORM
 - ✅ **XSS Protection** com sanitização automática
 - ✅ **CSRF Protection** com SameSite cookies
-- ✅ **Content Security Policy** (CSP) duplo para frontend/backend
+- ✅ **Security Headers** essenciais (X-Content-Type-Options, X-Frame-Options)
 
 ### **⚡ Performance e Escalabilidade**
 - ✅ **Async/Await** completo em todas as operações de banco

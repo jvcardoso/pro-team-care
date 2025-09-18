@@ -3,15 +3,15 @@ Application Interfaces - Contratos e Abstrações
 Define contratos que a Application Layer espera da Infrastructure
 """
 
+from .external import CNPJServiceInterface, GeoCodingServiceInterface
 from .repositories import CompanyRepositoryInterface, UserRepositoryInterface
 from .services import AddressEnrichmentServiceInterface, EmailServiceInterface
-from .external import CNPJServiceInterface, GeoCodingServiceInterface
 
 __all__ = [
     "CompanyRepositoryInterface",
-    "UserRepositoryInterface", 
+    "UserRepositoryInterface",
     "AddressEnrichmentServiceInterface",
     "EmailServiceInterface",
     "CNPJServiceInterface",
-    "GeoCodingServiceInterface"
+    "GeoCodingServiceInterface",
 ]

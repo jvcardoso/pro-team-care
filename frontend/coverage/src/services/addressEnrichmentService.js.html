@@ -837,7 +837,7 @@ class AddressEnrichmentService {
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    try {</span>
       const viaCepData = <span class="cstat-no" title="statement not covered" >await this.consultarViaCEP(cleanCEP);</span>
-      
+
 <span class="cstat-no" title="statement not covered" >      if (!viaCepData) {</span>
 <span class="cstat-no" title="statement not covered" >        console.warn('ViaCEP nao retornou dados para CEP:', cleanCEP);</span>
 <span class="cstat-no" title="statement not covered" >        return addressData;</span>
@@ -892,7 +892,7 @@ class AddressEnrichmentService {
         // 🔍 FORENSIC DEBUG - Códigos ViaCEP
         viacep_codes: {
           ibge: viaCepData.ibge,
-          gia: viaCepData.gia, 
+          gia: viaCepData.gia,
           siafi: viaCepData.siafi,
           ddd: viaCepData.ddd
         },
@@ -903,7 +903,7 @@ class AddressEnrichmentService {
           area_code: enrichedAddress.area_code
         }
       });
-      
+
 <span class="cstat-no" title="statement not covered" >      return enrichedAddress;</span>
 &nbsp;
     } catch (error) {

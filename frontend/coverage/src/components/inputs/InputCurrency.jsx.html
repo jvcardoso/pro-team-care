@@ -651,7 +651,7 @@ const InputCurrency = <span class="cstat-no" title="statement not covered" ><spa
         // Converter número para centavos e formatar
         const formatted = <span class="cstat-no" title="statement not covered" >formatCurrency((numValue * 100).toString());</span>
 <span class="cstat-no" title="statement not covered" >        setFormattedValue(formatted);</span>
-        
+
 <span class="cstat-no" title="statement not covered" >        if (showValidation &amp;&amp; value) {</span>
 <span class="cstat-no" title="statement not covered" >          validateInput(numValue);</span>
         }
@@ -667,25 +667,25 @@ const InputCurrency = <span class="cstat-no" title="statement not covered" ><spa
 <span class="cstat-no" title="statement not covered" >      setValidationMessage('Valor é obrigatório');</span>
 <span class="cstat-no" title="statement not covered" >      return false;</span>
     }
-    
+
 <span class="cstat-no" title="statement not covered" >    if (!allowNegative &amp;&amp; numValue &lt; 0) {</span>
 <span class="cstat-no" title="statement not covered" >      setIsValid(false);</span>
 <span class="cstat-no" title="statement not covered" >      setValidationMessage('Valor não pode ser negativo');</span>
 <span class="cstat-no" title="statement not covered" >      return false;</span>
     }
-    
+
 <span class="cstat-no" title="statement not covered" >    if (minValue !== null &amp;&amp; numValue &lt; minValue) {</span>
 <span class="cstat-no" title="statement not covered" >      setIsValid(false);</span>
 <span class="cstat-no" title="statement not covered" >      setValidationMessage(`Valor mínimo: ${formatCurrency((minValue * 100).toString())}`);</span>
 <span class="cstat-no" title="statement not covered" >      return false;</span>
     }
-    
+
 <span class="cstat-no" title="statement not covered" >    if (maxValue !== null &amp;&amp; numValue &gt; maxValue) {</span>
 <span class="cstat-no" title="statement not covered" >      setIsValid(false);</span>
 <span class="cstat-no" title="statement not covered" >      setValidationMessage(`Valor máximo: ${formatCurrency((maxValue * 100).toString())}`);</span>
 <span class="cstat-no" title="statement not covered" >      return false;</span>
     }
-    
+
 <span class="cstat-no" title="statement not covered" >    setIsValid(true);</span>
 <span class="cstat-no" title="statement not covered" >    setValidationMessage('');</span>
 <span class="cstat-no" title="statement not covered" >    return true;</span>
@@ -693,16 +693,16 @@ const InputCurrency = <span class="cstat-no" title="statement not covered" ><spa
 &nbsp;
   const handleChange = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>) =&gt; {</span>
     const inputValue = <span class="cstat-no" title="statement not covered" >e.target.value;</span>
-    
+
     // Permitir apenas números, vírgula e ponto
     const cleanedInput = <span class="cstat-no" title="statement not covered" >inputValue.replace(/[^0-9,]/g, '');</span>
-    
+
     // Converter para centavos para processamento
     const numbersOnly = <span class="cstat-no" title="statement not covered" >cleanedInput.replace(/\D/g, '');</span>
 <span class="cstat-no" title="statement not covered" >    if (numbersOnly === '') {</span>
 <span class="cstat-no" title="statement not covered" >      setFormattedValue('');</span>
 <span class="cstat-no" title="statement not covered" >      setIsDirty(true);</span>
-      
+
 <span class="cstat-no" title="statement not covered" >      if (onChange) {</span>
 <span class="cstat-no" title="statement not covered" >        onChange({</span>
           target: {
@@ -716,20 +716,20 @@ const InputCurrency = <span class="cstat-no" title="statement not covered" ><spa
       }
 <span class="cstat-no" title="statement not covered" >      return;</span>
     }
-    
+
     // Formatar valor
     const formatted = <span class="cstat-no" title="statement not covered" >formatCurrency(numbersOnly);</span>
 <span class="cstat-no" title="statement not covered" >    setFormattedValue(formatted);</span>
 <span class="cstat-no" title="statement not covered" >    setIsDirty(true);</span>
-    
+
     // Converter para número decimal
     const numericValue = <span class="cstat-no" title="statement not covered" >parseCurrency(formatted);</span>
-    
+
     // Validação
 <span class="cstat-no" title="statement not covered" >    if (showValidation) {</span>
 <span class="cstat-no" title="statement not covered" >      validateInput(numericValue);</span>
     }
-    
+
     // Callback para o componente pai
 <span class="cstat-no" title="statement not covered" >    if (onChange) {</span>
 <span class="cstat-no" title="statement not covered" >      onChange({</span>
@@ -754,13 +754,13 @@ const InputCurrency = <span class="cstat-no" title="statement not covered" ><spa
   const handleBlur = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    setIsFocused(false);</span>
 <span class="cstat-no" title="statement not covered" >    setIsDirty(true);</span>
-    
+
     // Validação final no blur
 <span class="cstat-no" title="statement not covered" >    if (showValidation) {</span>
       const numericValue = <span class="cstat-no" title="statement not covered" >parseCurrency(formattedValue);</span>
 <span class="cstat-no" title="statement not covered" >      validateInput(numericValue);</span>
     }
-    
+
 <span class="cstat-no" title="statement not covered" >    if (props.onBlur) {</span>
 <span class="cstat-no" title="statement not covered" >      props.onBlur(e);</span>
     }
@@ -772,16 +772,16 @@ const InputCurrency = <span class="cstat-no" title="statement not covered" ><spa
       'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
       'Home', 'End', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'
     ];
-    
+
 <span class="cstat-no" title="statement not covered" >    if (controlKeys.includes(e.key)) {</span>
 <span class="cstat-no" title="statement not covered" >      return;</span>
     }
-    
+
     // Permitir Ctrl+A, Ctrl+C, Ctrl+V, etc.
 <span class="cstat-no" title="statement not covered" >    if (e.ctrlKey || e.metaKey) {</span>
 <span class="cstat-no" title="statement not covered" >      return;</span>
     }
-    
+
     // Permitir apenas números
 <span class="cstat-no" title="statement not covered" >    if (!/[0-9]/.test(e.key)) {</span>
 <span class="cstat-no" title="statement not covered" >      e.preventDefault();</span>
@@ -790,12 +790,12 @@ const InputCurrency = <span class="cstat-no" title="statement not covered" ><spa
 &nbsp;
   const getInputClasses = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
     const baseClasses = <span class="cstat-no" title="statement not covered" >"w-full px-3 py-2 border rounded-md bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none transition-colors text-right";</span>
-    
+
     // Ajustar padding se houver ícone
     const paddingClasses = <span class="cstat-no" title="statement not covered" >showIcon ? "pl-10" : "px-3";</span>
-    
+
     let borderColor = <span class="cstat-no" title="statement not covered" >"border-border";</span>
-    
+
 <span class="cstat-no" title="statement not covered" >    if (error || (!isValid &amp;&amp; showValidation &amp;&amp; isDirty)) {</span>
 <span class="cstat-no" title="statement not covered" >      borderColor = "border-red-500 focus:ring-red-500";</span>
     } else <span class="cstat-no" title="statement not covered" >if (isValid &amp;&amp; formattedValue &amp;&amp; showValidation &amp;&amp; isDirty) {</span>
@@ -803,9 +803,9 @@ const InputCurrency = <span class="cstat-no" title="statement not covered" ><spa
     } else <span class="cstat-no" title="statement not covered" >if (isFocused) {</span>
 <span class="cstat-no" title="statement not covered" >      borderColor = "border-ring";</span>
     }
-    
+
     const disabledClasses = <span class="cstat-no" title="statement not covered" >disabled ? "opacity-50 cursor-not-allowed" : "";</span>
-    
+
 <span class="cstat-no" title="statement not covered" >    return `${baseClasses} ${paddingClasses} ${borderColor} ${disabledClasses} ${className}`;</span>
   };
 &nbsp;
@@ -818,7 +818,7 @@ const InputCurrency = <span class="cstat-no" title="statement not covered" ><spa
         {label}
         {required &amp;&amp; &lt;Star className="h-3 w-3 text-red-500 ml-1 fill-current" /&gt;}
       &lt;/label&gt;
-      
+
       &lt;div className="relative"&gt;
         {/* Ícone de moeda */}
         {showIcon &amp;&amp; (
@@ -826,7 +826,7 @@ const InputCurrency = <span class="cstat-no" title="statement not covered" ><spa
             &lt;DollarSign className="h-4 w-4 text-muted-foreground" /&gt;
           &lt;/div&gt;
         )}
-        
+
         &lt;input
           type="text"
           value={formattedValue}
@@ -841,7 +841,7 @@ const InputCurrency = <span class="cstat-no" title="statement not covered" ><spa
           inputMode="numeric"
           {...props}
         /&gt;
-        
+
         {/* Indicador de validação visual */}
         {showValidation &amp;&amp; formattedValue &amp;&amp; isDirty &amp;&amp; (
           &lt;div className="absolute inset-y-0 right-0 flex items-center pr-3"&gt;
@@ -857,28 +857,28 @@ const InputCurrency = <span class="cstat-no" title="statement not covered" ><spa
           &lt;/div&gt;
         )}
       &lt;/div&gt;
-      
+
       {/* Mensagens de erro */}
       {displayError &amp;&amp; (
         &lt;p className="text-sm text-red-600"&gt;{displayError}&lt;/p&gt;
       )}
-      
+
       {/* Mensagem de ajuda */}
       {!displayError &amp;&amp; formattedValue &amp;&amp; showValidation &amp;&amp; isValid &amp;&amp; isDirty &amp;&amp; (
         &lt;p className="text-xs text-muted-foreground"&gt;
-          Valor válido • {numericValue.toLocaleString('pt-BR', { 
-            style: 'currency', 
-            currency: 'BRL' 
+          Valor válido • {numericValue.toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
           })}
         &lt;/p&gt;
       )}
-      
+
       {!displayError &amp;&amp; !formattedValue &amp;&amp; isFocused &amp;&amp; (
         &lt;p className="text-xs text-muted-foreground"&gt;
           Digite apenas números • Ex: 12345 = R$ 123,45
         &lt;/p&gt;
       )}
-      
+
       {/* Dicas de range */}
       {!displayError &amp;&amp; !formattedValue &amp;&amp; !isFocused &amp;&amp; (minValue !== null || maxValue !== null) &amp;&amp; (
         &lt;p className="text-xs text-muted-foreground"&gt;

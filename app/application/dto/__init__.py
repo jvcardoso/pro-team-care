@@ -4,23 +4,19 @@ Objetos para transferência de dados entre camadas da aplicação
 """
 
 from .company_dto import (
-    CreateCompanyCommand,
-    UpdateCompanyCommand,
     CompanyQueryParams,
-    EnrichAddressCommand
+    CreateCompanyCommand,
+    EnrichAddressCommand,
+    UpdateCompanyCommand,
 )
-from .user_dto import (
-    CreateUserCommand,
-    UpdateUserCommand,
-    AuthenticateUserCommand
-)
+from .user_dto import AuthenticateUserCommand, CreateUserCommand, UpdateUserCommand
 
 __all__ = [
     "CreateCompanyCommand",
-    "UpdateCompanyCommand", 
+    "UpdateCompanyCommand",
     "CompanyQueryParams",
     "EnrichAddressCommand",
     "CreateUserCommand",
     "UpdateUserCommand",
-    "AuthenticateUserCommand"
+    "AuthenticateUserCommand",
 ]

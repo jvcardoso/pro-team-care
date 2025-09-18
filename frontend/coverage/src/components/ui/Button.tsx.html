@@ -360,7 +360,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes&lt;HTMLButtonElement&gt
   iconPosition?: 'left' | 'right';
 }
 &nbsp;
-const Button: React.FC&lt;ButtonProps&gt; = ({ 
+const Button: React.FC&lt;ButtonProps&gt; = ({
   children,
   variant = 'primary',
   size = 'md',
@@ -373,7 +373,7 @@ const Button: React.FC&lt;ButtonProps&gt; = ({
   type = 'button',
   icon,
   iconPosition = 'left',
-  ...props 
+  ...props
 }) =&gt; {
   const baseClasses = [
     'inline-flex items-center justify-center gap-2 font-medium rounded-md transition-colors',
@@ -390,7 +390,7 @@ const Button: React.FC&lt;ButtonProps&gt; = ({
 &nbsp;
   // Variant classes
   const variantClasses = {
-    primary: outline 
+    primary: outline
       ? 'border border-primary-500 text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-950'
       : 'bg-primary-500 text-white hover:bg-primary-600',
     secondary: outline
@@ -426,18 +426,18 @@ const Button: React.FC&lt;ButtonProps&gt; = ({
     <span class="missing-if-branch" title="if path not taken" >I</span>if (loading) {
 <span class="cstat-no" title="statement not covered" >      return (</span>
         &lt;svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"&gt;
-          &lt;circle 
-            className="opacity-25" 
-            cx="12" 
-            cy="12" 
-            r="10" 
-            stroke="currentColor" 
+          &lt;circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
             strokeWidth="4"
             fill="none"
           /&gt;
-          &lt;path 
-            className="opacity-75" 
-            fill="currentColor" 
+          &lt;path
+            className="opacity-75"
+            fill="currentColor"
             d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
           /&gt;
         &lt;/svg&gt;
@@ -460,8 +460,8 @@ const Button: React.FC&lt;ButtonProps&gt; = ({
       {...props}
     &gt;
       {loading &amp;&amp; (
-        &lt;span 
-          id={`${props.id || 'button'}-loading`} 
+        &lt;span
+          id={`${props.id || 'button'}-loading`}
           className="sr-only"
           aria-live="polite"
         &gt;

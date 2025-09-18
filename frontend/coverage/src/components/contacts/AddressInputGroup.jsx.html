@@ -803,7 +803,7 @@ const AddressInputGroup = <span class="cstat-no" title="statement not covered" >
 &nbsp;
   const handleAddAddress = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    if (addresses.length &gt;= maxAddresses) <span class="cstat-no" title="statement not covered" >return;</span></span>
-    
+
     const newAddress = <span class="cstat-no" title="statement not covered" >{</span>
       street: '',
       number: '',
@@ -816,7 +816,7 @@ const AddressInputGroup = <span class="cstat-no" title="statement not covered" >
       type: 'commercial',
       is_principal: addresses.length === 0 // Primeiro é principal
     };
-    
+
 <span class="cstat-no" title="statement not covered" >    onAdd?.(newAddress);</span>
   };
 &nbsp;
@@ -890,7 +890,7 @@ const AddressInputGroup = <span class="cstat-no" title="statement not covered" >
 <span class="cstat-no" title="statement not covered" >    if (address.city) <span class="cstat-no" title="statement not covered" >parts.push(address.city);</span></span>
 <span class="cstat-no" title="statement not covered" >    if (address.state) <span class="cstat-no" title="statement not covered" >parts.push(address.state);</span></span>
 <span class="cstat-no" title="statement not covered" >    if (address.zip_code) <span class="cstat-no" title="statement not covered" >parts.push(address.zip_code);</span></span>
-    
+
 <span class="cstat-no" title="statement not covered" >    return parts.join(', ');</span>
   };
 &nbsp;
@@ -921,7 +921,7 @@ const AddressInputGroup = <span class="cstat-no" title="statement not covered" >
               &lt;Plus className="h-5 w-5" /&gt;
             &lt;/Button&gt;
           &lt;/div&gt;
-          
+
           {/* Desktop: Ícone + Texto */}
           &lt;div className="hidden sm:block"&gt;
             &lt;Button
@@ -1017,7 +1017,7 @@ const AddressInputGroup = <span class="cstat-no" title="statement not covered" >
                   disabled={disabled}
                 /&gt;
               &lt;/div&gt;
-              
+
               {/* Logradouro e Número - segunda linha */}
               &lt;div className="grid grid-cols-1 md:grid-cols-3 gap-4"&gt;
                 &lt;Input
@@ -1027,7 +1027,7 @@ const AddressInputGroup = <span class="cstat-no" title="statement not covered" >
                   placeholder="Rua, Avenida, etc."
                   disabled={disabled}
                 /&gt;
-                
+
                 &lt;Input
                   label="Número"
                   value={address.number}
@@ -1035,7 +1035,7 @@ const AddressInputGroup = <span class="cstat-no" title="statement not covered" >
                   placeholder="123"
                   disabled={disabled}
                 /&gt;
-                
+
                 &lt;Input
                   label="Complemento"
                   value={address.details || ''}
@@ -1054,7 +1054,7 @@ const AddressInputGroup = <span class="cstat-no" title="statement not covered" >
                   placeholder="Centro, Bela Vista, etc."
                   disabled={disabled}
                 /&gt;
-                
+
                 &lt;Input
                   label="Cidade"
                   value={address.city}
@@ -1062,7 +1062,7 @@ const AddressInputGroup = <span class="cstat-no" title="statement not covered" >
                   placeholder="São Paulo"
                   disabled={disabled}
                 /&gt;
-                
+
                 &lt;Input
                   label="Estado"
                   value={address.state}

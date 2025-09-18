@@ -12,10 +12,11 @@ Problema identificado:
 - Resultado: Timeout de 10s no login
 """
 
+import time
+from typing import Any, Dict
+
 import pytest
 import requests
-import time
-from typing import Dict, Any
 
 
 class TestFrontendBackendConnectivity:
@@ -27,7 +28,9 @@ class TestFrontendBackendConnectivity:
 
     def test_backend_health_direct(self):
         """Testa se o backend responde diretamente"""
-        response = requests.get(f"{self.BACKEND_URL}/api/v1/health", timeout=self.TIMEOUT)
+        response = requests.get(
+            f"{self.BACKEND_URL}/api/v1/health", timeout=self.TIMEOUT
+        )
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "healthy"
@@ -35,7 +38,9 @@ class TestFrontendBackendConnectivity:
 
     def test_frontend_proxy_health(self):
         """Testa se o proxy do frontend funciona para health check"""
-        response = requests.get(f"{self.FRONTEND_URL}/api/v1/health", timeout=self.TIMEOUT)
+        response = requests.get(
+            f"{self.FRONTEND_URL}/api/v1/health", timeout=self.TIMEOUT
+        )
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "healthy"
@@ -51,7 +56,7 @@ class TestFrontendBackendConnectivity:
                 f"{self.FRONTEND_URL}/api/v1/auth/login",
                 data=payload,
                 headers={"Content-Type": "application/x-www-form-urlencoded"},
-                timeout=10  # Mesmo timeout do frontend
+                timeout=10,  # Mesmo timeout do frontend
             )
             elapsed = time.time() - start_time
             print(f"Request completed in {elapsed:.2f}s")
@@ -80,7 +85,7 @@ class TestFrontendBackendConnectivity:
             f"{self.BACKEND_URL}/api/v1/auth/login",
             data=payload,
             headers={"Content-Type": "application/x-www-form-urlencoded"},
-            timeout=self.TIMEOUT
+            timeout=self.TIMEOUT,
         )
 
         # Pode retornar erro de autenticação, mas não deve dar timeout
@@ -94,7 +99,9 @@ class TestFrontendBackendConnectivity:
         remote_target = "http://192.168.11.62:8000"
 
         try:
-            response = requests.get(f"{remote_target}/api/v1/health", timeout=self.TIMEOUT)
+            response = requests.get(
+                f"{remote_target}/api/v1/health", timeout=self.TIMEOUT
+            )
             assert response.status_code == 200
             print("✅ Proxy target remoto está acessível")
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
@@ -104,11 +111,14 @@ class TestFrontendBackendConnectivity:
                 "Corrigir vite.config.ts para apontar para o backend local."
             )
 
-    @pytest.mark.parametrize("endpoint", [
-        "/api/v1/health",
-        "/api/v1/auth/login",
-        "/api/v1/companies/",
-    ])
+    @pytest.mark.parametrize(
+        "endpoint",
+        [
+            "/api/v1/health",
+            "/api/v1/auth/login",
+            "/api/v1/companies/",
+        ],
+    )
     def test_frontend_proxy_endpoints(self, endpoint: str):
         """Testa múltiplos endpoints via proxy do frontend"""
         try:
@@ -118,17 +128,21 @@ class TestFrontendBackendConnectivity:
                     f"{self.FRONTEND_URL}{endpoint}",
                     data={"username": "test", "password": "test"},
                     headers={"Content-Type": "application/x-www-form-urlencoded"},
-                    timeout=self.TIMEOUT
+                    timeout=self.TIMEOUT,
                 )
             else:
-                response = requests.get(f"{self.FRONTEND_URL}{endpoint}", timeout=self.TIMEOUT)
+                response = requests.get(
+                    f"{self.FRONTEND_URL}{endpoint}", timeout=self.TIMEOUT
+                )
 
             assert response.status_code in [200, 401, 422, 500]
 
         except requests.exceptions.Timeout:
             pytest.fail(f"Timeout no endpoint {endpoint} via proxy do frontend")
         except requests.exceptions.ConnectionError:
-            pytest.fail(f"Connection error no endpoint {endpoint} via proxy do frontend")
+            pytest.fail(
+                f"Connection error no endpoint {endpoint} via proxy do frontend"
+            )
 
 
 if __name__ == "__main__":
@@ -167,4 +181,6 @@ if __name__ == "__main__":
     print("- Problema: Proxy não consegue alcançar o backend local")
     print()
     print("🔧 Solução sugerida:")
-    print("Alterar vite.config.ts para apontar para localhost:8000 ou 192.168.11.83:8000")
+    print(
+        "Alterar vite.config.ts para apontar para localhost:8000 ou 192.168.11.83:8000"
+    )

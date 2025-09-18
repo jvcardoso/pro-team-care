@@ -4,7 +4,13 @@
  */
 
 import React from "react";
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
 import { jest } from "@jest/globals";
 import userEvent from "@testing-library/user-event";
 
@@ -26,7 +32,9 @@ jest.mock("../../utils/notifications.jsx", () => ({
 // Mock do status utils
 jest.mock("../../utils/statusUtils", () => ({
   getStatusBadge: jest.fn((status) => `badge-${status}`),
-  getStatusLabel: jest.fn((status) => status === "active" ? "Ativo" : "Inativo"),
+  getStatusLabel: jest.fn((status) =>
+    status === "active" ? "Ativo" : "Inativo"
+  ),
 }));
 
 import { notify } from "../../utils/notifications.jsx";
@@ -86,13 +94,15 @@ describe("Establishments Integration Tests", () => {
         if (options?.method === "POST") {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({ id: 2, message: "Estabelecimento criado" }),
+            json: () =>
+              Promise.resolve({ id: 2, message: "Estabelecimento criado" }),
           });
         }
         if (options?.method === "PUT") {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({ id: 1, message: "Estabelecimento atualizado" }),
+            json: () =>
+              Promise.resolve({ id: 1, message: "Estabelecimento atualizado" }),
           });
         }
         if (options?.method === "PATCH") {
@@ -104,7 +114,8 @@ describe("Establishments Integration Tests", () => {
         if (options?.method === "DELETE") {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({ message: "Estabelecimento excluído" }),
+            json: () =>
+              Promise.resolve({ message: "Estabelecimento excluído" }),
           });
         }
       }
@@ -145,7 +156,9 @@ describe("Establishments Integration Tests", () => {
       await user.click(createButton);
 
       expect(screen.getByText("Novo Estabelecimento")).toBeInTheDocument();
-      expect(screen.getByText("Formulário de estabelecimento em desenvolvimento...")).toBeInTheDocument();
+      expect(
+        screen.getByText("Formulário de estabelecimento em desenvolvimento...")
+      ).toBeInTheDocument();
 
       // 3. Testar edição (simular abertura do modal)
       const editButtons = screen.getAllByText("Editar");
@@ -177,7 +190,9 @@ describe("Establishments Integration Tests", () => {
         })
       );
 
-      expect(notify.success).toHaveBeenCalledWith("Estabelecimento inativado com sucesso!");
+      expect(notify.success).toHaveBeenCalledWith(
+        "Estabelecimento inativado com sucesso!"
+      );
 
       // 5. Testar exclusão
       const deleteButtons = screen.getAllByText("Excluir");
@@ -200,7 +215,9 @@ describe("Establishments Integration Tests", () => {
         expect.objectContaining({ method: "DELETE" })
       );
 
-      expect(notify.success).toHaveBeenCalledWith("Estabelecimento excluído com sucesso!");
+      expect(notify.success).toHaveBeenCalledWith(
+        "Estabelecimento excluído com sucesso!"
+      );
     });
   });
 
@@ -214,7 +231,9 @@ describe("Establishments Integration Tests", () => {
       });
 
       // Aplicar filtro de busca
-      const searchInput = screen.getByPlaceholderText("Buscar estabelecimentos...");
+      const searchInput = screen.getByPlaceholderText(
+        "Buscar estabelecimentos..."
+      );
       await user.type(searchInput, "Clínica");
 
       // Verificar se a API foi chamada com o filtro
@@ -248,20 +267,23 @@ describe("Establishments Integration Tests", () => {
       global.fetch.mockImplementationOnce(() =>
         Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({
-            establishments: mockEstablishmentsResponse.establishments,
-            total: 25,
-            page: 1,
-            size: 10,
-            pages: 3,
-          }),
+          json: () =>
+            Promise.resolve({
+              establishments: mockEstablishmentsResponse.establishments,
+              total: 25,
+              page: 1,
+              size: 10,
+              pages: 3,
+            }),
         })
       );
 
       render(<EstablishmentsPage />);
 
       await waitFor(() => {
-        expect(screen.getByText("Mostrando 1 a 10 de 25 estabelecimentos")).toBeInTheDocument();
+        expect(
+          screen.getByText("Mostrando 1 a 10 de 25 estabelecimentos")
+        ).toBeInTheDocument();
       });
 
       // Clicar em próxima página
@@ -290,7 +312,9 @@ describe("Establishments Integration Tests", () => {
       render(<EstablishmentsPage />);
 
       await waitFor(() => {
-        expect(screen.getByText("Erro ao carregar estabelecimentos: Erro de rede")).toBeInTheDocument();
+        expect(
+          screen.getByText("Erro ao carregar estabelecimentos: Erro de rede")
+        ).toBeInTheDocument();
       });
 
       // Verificar botão de tentar novamente
@@ -310,7 +334,11 @@ describe("Establishments Integration Tests", () => {
       render(<EstablishmentsPage />);
 
       await waitFor(() => {
-        expect(screen.getByText("Erro ao carregar estabelecimentos: Erro interno do servidor")).toBeInTheDocument();
+        expect(
+          screen.getByText(
+            "Erro ao carregar estabelecimentos: Erro interno do servidor"
+          )
+        ).toBeInTheDocument();
       });
     });
 
@@ -327,7 +355,9 @@ describe("Establishments Integration Tests", () => {
       render(<EstablishmentsPage />);
 
       await waitFor(() => {
-        expect(screen.getByText("Erro ao carregar estabelecimentos: Não autorizado")).toBeInTheDocument();
+        expect(
+          screen.getByText("Erro ao carregar estabelecimentos: Não autorizado")
+        ).toBeInTheDocument();
       });
     });
   });
@@ -335,7 +365,7 @@ describe("Establishments Integration Tests", () => {
   describe("Responsividade", () => {
     test("deve mostrar layout mobile em telas pequenas", async () => {
       // Simular viewport mobile
-      Object.defineProperty(window, 'innerWidth', {
+      Object.defineProperty(window, "innerWidth", {
         writable: true,
         configurable: true,
         value: 600,
@@ -355,7 +385,7 @@ describe("Establishments Integration Tests", () => {
 
     test("deve mostrar layout desktop em telas grandes", async () => {
       // Simular viewport desktop
-      Object.defineProperty(window, 'innerWidth', {
+      Object.defineProperty(window, "innerWidth", {
         writable: true,
         configurable: true,
         value: 1200,
@@ -364,7 +394,9 @@ describe("Establishments Integration Tests", () => {
       render(<EstablishmentsPage />);
 
       await waitFor(() => {
-        expect(screen.getByText("Lista de Estabelecimentos")).toBeInTheDocument();
+        expect(
+          screen.getByText("Lista de Estabelecimentos")
+        ).toBeInTheDocument();
         expect(screen.getByText("Estabelecimento")).toBeInTheDocument();
         expect(screen.getByText("Empresa")).toBeInTheDocument();
       });
@@ -395,7 +427,7 @@ describe("Establishments Integration Tests", () => {
       });
 
       // Verificar se fez apenas uma chamada para estabelecimentos
-      const establishmentsCalls = global.fetch.mock.calls.filter(call =>
+      const establishmentsCalls = global.fetch.mock.calls.filter((call) =>
         call[0].includes("/api/v1/establishments/")
       );
 
@@ -408,9 +440,14 @@ describe("Establishments Integration Tests", () => {
       render(<EstablishmentsPage />);
 
       await waitFor(() => {
-        const searchInput = screen.getByPlaceholderText("Buscar estabelecimentos...");
+        const searchInput = screen.getByPlaceholderText(
+          "Buscar estabelecimentos..."
+        );
         expect(searchInput).toBeInTheDocument();
-        expect(searchInput).toHaveAttribute("placeholder", "Buscar estabelecimentos...");
+        expect(searchInput).toHaveAttribute(
+          "placeholder",
+          "Buscar estabelecimentos..."
+        );
       });
     });
 
@@ -419,14 +456,18 @@ describe("Establishments Integration Tests", () => {
       render(<EstablishmentsPage />);
 
       await waitFor(() => {
-        const searchInput = screen.getByPlaceholderText("Buscar estabelecimentos...");
+        const searchInput = screen.getByPlaceholderText(
+          "Buscar estabelecimentos..."
+        );
         searchInput.focus();
         expect(document.activeElement).toBe(searchInput);
       });
 
       // Testar navegação com Tab
       await user.tab();
-      expect(document.activeElement).not.toBe(screen.getByPlaceholderText("Buscar estabelecimentos..."));
+      expect(document.activeElement).not.toBe(
+        screen.getByPlaceholderText("Buscar estabelecimentos...")
+      );
     });
   });
 
@@ -435,20 +476,23 @@ describe("Establishments Integration Tests", () => {
       global.fetch.mockImplementationOnce(() =>
         Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({
-            establishments: [],
-            total: 0,
-            page: 1,
-            size: 10,
-            pages: 1,
-          }),
+          json: () =>
+            Promise.resolve({
+              establishments: [],
+              total: 0,
+              page: 1,
+              size: 10,
+              pages: 1,
+            }),
         })
       );
 
       render(<EstablishmentsPage />);
 
       await waitFor(() => {
-        expect(screen.getByText("Nenhum estabelecimento encontrado")).toBeInTheDocument();
+        expect(
+          screen.getByText("Nenhum estabelecimento encontrado")
+        ).toBeInTheDocument();
       });
     });
 
@@ -492,7 +536,8 @@ describe("Establishments Integration Tests", () => {
               name: "Clínica Oftalmológica Especializada em Cirurgia Refrativa e Catarata Avançada do Centro Médico",
               tax_id: "11222333000144",
             },
-            company_name: "Empresa com Nome Muito Longo Limitada Sociedade Anônima",
+            company_name:
+              "Empresa com Nome Muito Longo Limitada Sociedade Anônima",
           },
         ],
         total: 1,
@@ -511,7 +556,11 @@ describe("Establishments Integration Tests", () => {
       render(<EstablishmentsPage />);
 
       await waitFor(() => {
-        expect(screen.getByText("Clínica Oftalmológica Especializada em Cirurgia Refrativa e Catarata Avançada do Centro Médico")).toBeInTheDocument();
+        expect(
+          screen.getByText(
+            "Clínica Oftalmológica Especializada em Cirurgia Refrativa e Catarata Avançada do Centro Médico"
+          )
+        ).toBeInTheDocument();
       });
     });
   });

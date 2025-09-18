@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { MoreVertical } from "lucide-react";
 
-const ActionDropdown = ({ children, className = "" }) => {
+const ActionDropdown = ({ children, options, className = "" }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -21,31 +21,72 @@ const ActionDropdown = ({ children, className = "" }) => {
   }, [isOpen]);
 
   return (
-    <div className={`relative ${className}`} ref={dropdownRef}>
+    <div
+      className={`relative inline-block ${className}`}
+      ref={dropdownRef}
+      style={{ zIndex: 1 }}
+    >
       {/* Trigger Button */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        onClick={() => {
+          console.log("ActionDropdown clicked, current isOpen:", isOpen);
+          setIsOpen(!isOpen);
+        }}
+        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border border-transparent hover:border-gray-300 dark:hover:border-gray-600"
         aria-label="Ações"
+        type="button"
       >
-        <MoreVertical className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+        <MoreVertical className="h-4 w-4 text-gray-600 dark:text-gray-300" />
       </button>
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
+        <div
+          className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-[9999] min-w-max"
+          style={{ zIndex: 9999 }}
+        >
           <div className="py-1">
-            {React.Children.map(children, (child, index) =>
-              React.cloneElement(child, {
-                key: index,
-                onClick: (...args) => {
-                  setIsOpen(false);
-                  if (child.props.onClick) {
-                    child.props.onClick(...args);
-                  }
-                }
-              })
-            )}
+            {options
+              ? // Render from options prop
+                options.map((option, index) => (
+                  <button
+                    key={index}
+                    onClick={(...args) => {
+                      setIsOpen(false);
+                      if (option.onClick) {
+                        option.onClick(...args);
+                      }
+                    }}
+                    disabled={option.disabled}
+                    className={`
+                    w-full px-4 py-2 text-left text-sm flex items-center space-x-2
+                    transition-colors duration-150
+                    ${
+                      option.disabled
+                        ? "opacity-50 cursor-not-allowed text-gray-400"
+                        : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                    }
+                    ${option.className || ""}
+                  `}
+                  >
+                    {option.icon && (
+                      <span className="flex-shrink-0">{option.icon}</span>
+                    )}
+                    <span>{option.label}</span>
+                  </button>
+                ))
+              : // Render from children
+                React.Children.map(children, (child, index) =>
+                  React.cloneElement(child, {
+                    key: index,
+                    onClick: (...args) => {
+                      setIsOpen(false);
+                      if (child.props.onClick) {
+                        child.props.onClick(...args);
+                      }
+                    },
+                  })
+                )}
           </div>
         </div>
       )}
@@ -53,13 +94,13 @@ const ActionDropdown = ({ children, className = "" }) => {
   );
 };
 
-const ActionItem = ({ 
-  icon, 
-  children, 
-  onClick, 
-  variant = "default", 
+const ActionItem = ({
+  icon,
+  children,
+  onClick,
+  variant = "default",
   disabled = false,
-  className = ""
+  className = "",
 }) => {
   const getVariantClasses = () => {
     switch (variant) {

@@ -506,7 +506,7 @@ const InputPhone = <span class="cstat-no" title="statement not covered" ><span c
 <span class="cstat-no" title="statement not covered" >    if (value !== undefined) {</span>
       const formatted = <span class="cstat-no" title="statement not covered" >formatPhone(value);</span>
 <span class="cstat-no" title="statement not covered" >      setFormattedValue(formatted);</span>
-      
+
       // Só validar se tiver valor ou se for required
 <span class="cstat-no" title="statement not covered" >      if (showValidation &amp;&amp; (value || required)) {</span>
 <span class="cstat-no" title="statement not covered" >        validateInput(value);</span>
@@ -516,16 +516,16 @@ const InputPhone = <span class="cstat-no" title="statement not covered" ><span c
 &nbsp;
   const validateInput = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(i</span>nputValue) =&gt; {</span>
     const cleanValue = <span class="cstat-no" title="statement not covered" >removeNonNumeric(inputValue);</span>
-    
+
 <span class="cstat-no" title="statement not covered" >    if (!cleanValue &amp;&amp; required) {</span>
 <span class="cstat-no" title="statement not covered" >      setIsValid(false);</span>
 <span class="cstat-no" title="statement not covered" >      setValidationMessage('Telefone é obrigatório');</span>
 <span class="cstat-no" title="statement not covered" >      return false;</span>
     }
-    
+
 <span class="cstat-no" title="statement not covered" >    if (cleanValue &amp;&amp; !validatePhone(cleanValue)) {</span>
 <span class="cstat-no" title="statement not covered" >      setIsValid(false);</span>
-      
+
 <span class="cstat-no" title="statement not covered" >      if (cleanValue.length &lt; 10) {</span>
 <span class="cstat-no" title="statement not covered" >        setValidationMessage('Telefone deve ter pelo menos 10 dígitos');</span>
       } else <span class="cstat-no" title="statement not covered" >if (cleanValue.length &gt; 11) {</span>
@@ -540,7 +540,7 @@ const InputPhone = <span class="cstat-no" title="statement not covered" ><span c
       }
 <span class="cstat-no" title="statement not covered" >      return false;</span>
     }
-    
+
 <span class="cstat-no" title="statement not covered" >    setIsValid(true);</span>
 <span class="cstat-no" title="statement not covered" >    setValidationMessage('');</span>
 <span class="cstat-no" title="statement not covered" >    return true;</span>
@@ -549,18 +549,18 @@ const InputPhone = <span class="cstat-no" title="statement not covered" ><span c
   const handleChange = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>) =&gt; {</span>
     const inputValue = <span class="cstat-no" title="statement not covered" >e.target.value;</span>
     const numbersOnly = <span class="cstat-no" title="statement not covered" >removeNonNumeric(inputValue);</span>
-    
+
     // Limitar a 11 dígitos (DDD + 9 dígitos do celular)
     const limitedNumbers = <span class="cstat-no" title="statement not covered" >numbersOnly.slice(0, 11);</span>
     const formatted = <span class="cstat-no" title="statement not covered" >formatPhone(limitedNumbers);</span>
-    
+
 <span class="cstat-no" title="statement not covered" >    setFormattedValue(formatted);</span>
-    
+
     // Validar se necessário
 <span class="cstat-no" title="statement not covered" >    if (showValidation) {</span>
 <span class="cstat-no" title="statement not covered" >      validateInput(limitedNumbers);</span>
     }
-    
+
     // Callback para o componente pai
 <span class="cstat-no" title="statement not covered" >    if (onChange) {</span>
 <span class="cstat-no" title="statement not covered" >      onChange({</span>
@@ -584,12 +584,12 @@ const InputPhone = <span class="cstat-no" title="statement not covered" ><span c
 &nbsp;
   const handleBlur = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    setIsFocused(false);</span>
-    
+
     // Validação final no blur
 <span class="cstat-no" title="statement not covered" >    if (showValidation) {</span>
 <span class="cstat-no" title="statement not covered" >      validateInput(removeNonNumeric(formattedValue));</span>
     }
-    
+
 <span class="cstat-no" title="statement not covered" >    if (props.onBlur) {</span>
 <span class="cstat-no" title="statement not covered" >      props.onBlur(e);</span>
     }
@@ -597,9 +597,9 @@ const InputPhone = <span class="cstat-no" title="statement not covered" ><span c
 &nbsp;
   const getInputClasses = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
     const baseClasses = <span class="cstat-no" title="statement not covered" >"w-full px-3 py-2 border rounded-md bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none transition-colors";</span>
-    
+
     let borderColor = <span class="cstat-no" title="statement not covered" >"border-border";</span>
-    
+
 <span class="cstat-no" title="statement not covered" >    if (error || (!isValid &amp;&amp; showValidation)) {</span>
 <span class="cstat-no" title="statement not covered" >      borderColor = "border-red-500 focus:ring-red-500";</span>
     } else <span class="cstat-no" title="statement not covered" >if (isValid &amp;&amp; formattedValue &amp;&amp; showValidation) {</span>
@@ -607,9 +607,9 @@ const InputPhone = <span class="cstat-no" title="statement not covered" ><span c
     } else <span class="cstat-no" title="statement not covered" >if (isFocused) {</span>
 <span class="cstat-no" title="statement not covered" >      borderColor = "border-ring";</span>
     }
-    
+
     const disabledClasses = <span class="cstat-no" title="statement not covered" >disabled ? "opacity-50 cursor-not-allowed" : "";</span>
-    
+
 <span class="cstat-no" title="statement not covered" >    return `${baseClasses} ${borderColor} ${disabledClasses} ${className}`;</span>
   };
 &nbsp;
@@ -639,7 +639,7 @@ const InputPhone = <span class="cstat-no" title="statement not covered" ><span c
           &lt;/span&gt;
         )}
       &lt;/div&gt;
-      
+
       &lt;div className="relative"&gt;
         &lt;input
           type="tel"
@@ -654,7 +654,7 @@ const InputPhone = <span class="cstat-no" title="statement not covered" ><span c
           inputMode="tel"
           {...props}
         /&gt;
-        
+
         {/* Indicador de validação visual */}
         {showValidation &amp;&amp; formattedValue &amp;&amp; (
           &lt;div className="absolute inset-y-0 right-0 flex items-center pr-3"&gt;
@@ -670,12 +670,12 @@ const InputPhone = <span class="cstat-no" title="statement not covered" ><span c
           &lt;/div&gt;
         )}
       &lt;/div&gt;
-      
+
       {/* Mensagens de erro/ajuda */}
       {displayError &amp;&amp; (
         &lt;p className="text-sm text-red-600"&gt;{displayError}&lt;/p&gt;
       )}
-      
+
       {!displayError &amp;&amp; formattedValue &amp;&amp; showValidation &amp;&amp; (
         &lt;p className="text-xs text-muted-foreground"&gt;
           {phoneType &amp;&amp; `${phoneType} • `}

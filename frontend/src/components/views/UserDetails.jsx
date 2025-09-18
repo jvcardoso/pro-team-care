@@ -3,6 +3,7 @@ import { usersService } from "../../services/api";
 import Card from "../ui/Card";
 import Button from "../ui/Button";
 import { getStatusBadge, getStatusLabel } from "../../utils/statusUtils";
+import { formatTaxId } from "../../utils/formatters";
 import { notify } from "../../utils/notifications.jsx";
 import {
   ArrowLeft,
@@ -126,10 +127,10 @@ const UserDetails = ({ userId, onEdit, onBack, onDelete }) => {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-foreground">
-              {user.person?.name || user.email}
+              {user.person_name || user.user_email}
             </h1>
             <p className="text-muted-foreground">
-              {user.person?.name && user.email}
+              {user.person_name && user.user_email}
             </p>
           </div>
         </div>
@@ -161,23 +162,27 @@ const UserDetails = ({ userId, onEdit, onBack, onDelete }) => {
             </div>
             <div>
               <h2 className="text-lg font-semibold text-foreground">
-                {user.person?.name || "Usuário"}
+                {user.person_name || "Usuário"}
               </h2>
               <p className="text-muted-foreground flex items-center gap-2">
                 <Mail className="h-4 w-4" />
-                {user.email}
+                {user.user_email}
               </p>
             </div>
           </div>
           <div className="flex flex-col items-end gap-2">
-            <span className={getStatusBadge(user.status)}>
-              {getStatusLabel(user.status)}
+            <span
+              className={getStatusBadge(
+                user.user_is_active ? "active" : "inactive"
+              )}
+            >
+              {getStatusLabel(user.user_is_active ? "active" : "inactive")}
             </span>
-            {user.created_at && (
+            {user.user_created_at && (
               <span className="text-sm text-muted-foreground flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
                 Criado em{" "}
-                {new Date(user.created_at).toLocaleDateString("pt-BR")}
+                {new Date(user.user_created_at).toLocaleDateString("pt-BR")}
               </span>
             )}
           </div>
@@ -215,7 +220,7 @@ const UserDetails = ({ userId, onEdit, onBack, onDelete }) => {
                   Nome Completo
                 </label>
                 <p className="text-foreground">
-                  {user.person?.name || "Não informado"}
+                  {user.person_name || "Não informado"}
                 </p>
               </div>
 
@@ -224,38 +229,76 @@ const UserDetails = ({ userId, onEdit, onBack, onDelete }) => {
                   Email
                 </label>
                 <p className="text-foreground font-mono text-sm">
-                  {user.email}
+                  {user.user_email}
                 </p>
               </div>
 
-              {user.person?.document_number && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-muted-foreground mb-1">
-                      Tipo de Documento
-                    </label>
-                    <p className="text-foreground uppercase">
-                      {user.person.document_type}
-                    </p>
-                  </div>
+              <div>
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
+                  CPF
+                </label>
+                <p className="text-foreground font-mono text-sm">
+                  {user.person_tax_id
+                    ? formatTaxId(user.person_tax_id)
+                    : "Não informado"}
+                </p>
+              </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-muted-foreground mb-1">
-                      Número do Documento
-                    </label>
-                    <p className="text-foreground font-mono">
-                      {user.person.document_number}
-                    </p>
-                  </div>
-                </>
+              {user.person_birth_date && (
+                <div>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">
+                    Data de Nascimento
+                  </label>
+                  <p className="text-foreground">
+                    {new Date(user.person_birth_date).toLocaleDateString(
+                      "pt-BR"
+                    )}
+                  </p>
+                </div>
+              )}
+
+              {user.person_gender && (
+                <div>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">
+                    Gênero
+                  </label>
+                  <p className="text-foreground">
+                    {user.person_gender === "M"
+                      ? "Masculino"
+                      : user.person_gender === "F"
+                      ? "Feminino"
+                      : "Outro"}
+                  </p>
+                </div>
               )}
 
               <div>
                 <label className="block text-sm font-medium text-muted-foreground mb-1">
-                  Status
+                  Status do Usuário
                 </label>
-                <span className={getStatusBadge(user.status)}>
-                  {getStatusLabel(user.status)}
+                <span
+                  className={getStatusBadge(
+                    user.user_is_active ? "active" : "inactive"
+                  )}
+                >
+                  {getStatusLabel(user.user_is_active ? "active" : "inactive")}
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
+                  Tipo de Usuário
+                </label>
+                <span
+                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    user.user_is_system_admin
+                      ? "bg-red-100 text-red-800"
+                      : "bg-blue-100 text-blue-800"
+                  }`}
+                >
+                  {user.user_is_system_admin
+                    ? "Administrador do Sistema"
+                    : "Usuário"}
                 </span>
               </div>
             </div>
@@ -271,7 +314,7 @@ const UserDetails = ({ userId, onEdit, onBack, onDelete }) => {
                 <label className="block text-sm font-medium text-muted-foreground mb-1">
                   ID do Usuário
                 </label>
-                <p className="text-foreground font-mono">{user.id}</p>
+                <p className="text-foreground font-mono">{user.user_id}</p>
               </div>
 
               {user.person_id && (
@@ -288,30 +331,30 @@ const UserDetails = ({ userId, onEdit, onBack, onDelete }) => {
                   Data de Criação
                 </label>
                 <p className="text-foreground">
-                  {user.created_at
-                    ? new Date(user.created_at).toLocaleString("pt-BR")
+                  {user.user_created_at
+                    ? new Date(user.user_created_at).toLocaleString("pt-BR")
                     : "Não informado"}
                 </p>
               </div>
 
-              {user.updated_at && (
+              {user.user_updated_at && (
                 <div>
                   <label className="block text-sm font-medium text-muted-foreground mb-1">
                     Última Atualização
                   </label>
                   <p className="text-foreground">
-                    {new Date(user.updated_at).toLocaleString("pt-BR")}
+                    {new Date(user.user_updated_at).toLocaleString("pt-BR")}
                   </p>
                 </div>
               )}
 
-              {user.last_login_at && (
+              {user.user_last_login_at && (
                 <div>
                   <label className="block text-sm font-medium text-muted-foreground mb-1">
                     Último Login
                   </label>
                   <p className="text-foreground">
-                    {new Date(user.last_login_at).toLocaleString("pt-BR")}
+                    {new Date(user.user_last_login_at).toLocaleString("pt-BR")}
                   </p>
                 </div>
               )}

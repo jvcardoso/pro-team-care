@@ -25,10 +25,12 @@ jest.mock("../../services/addressEnrichmentService", () => ({
   },
 }));
 
-jest.mock("react-hot-toast", () => ({
-  default: {
+jest.mock("../../utils/notifications", () => ({
+  notify: {
     success: jest.fn(),
     error: jest.fn(),
+    info: jest.fn(),
+    warning: jest.fn(),
   },
 }));
 
@@ -36,7 +38,7 @@ jest.mock("react-hot-toast", () => ({
 import { useCompanyForm } from "../../hooks/useCompanyForm";
 import { companiesService } from "../../services/api";
 import { consultarCNPJ } from "../../services/cnpjService";
-import toast from "react-hot-toast";
+import { notify } from "../../utils/notifications";
 
 describe("useCompanyForm", () => {
   beforeEach(() => {

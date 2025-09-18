@@ -6,6 +6,7 @@ Aplicando a técnica dos 5 Porquês para identificar a causa raiz do problema
 e determinar a melhor solução.
 """
 
+
 class FiveWhysAnalysis:
     """Análise sistemática usando a técnica dos 5 Porquês"""
 
@@ -62,29 +63,29 @@ class FiveWhysAnalysis:
                 "problema": "Target do proxy incorreto",
                 "solucao": "Alterar vite.config.ts para apontar para localhost:8000",
                 "impacto": "Alto - Resolve o problema imediatamente",
-                "complexidade": "Baixa"
+                "complexidade": "Baixa",
             },
             {
                 "tipo": "Prevenção",
                 "problema": "Falta de verificação automática",
                 "solucao": "Adicionar health check do proxy no script de inicialização",
                 "impacto": "Médio - Previne problemas similares",
-                "complexidade": "Média"
+                "complexidade": "Média",
             },
             {
                 "tipo": "Monitoramento",
                 "problema": "Configuração não validada",
                 "solucao": "Criar testes automatizados para validar conectividade proxy-backend",
                 "impacto": "Alto - Detecta problemas precocemente",
-                "complexidade": "Baixa"
+                "complexidade": "Baixa",
             },
             {
                 "tipo": "Documentação",
                 "problema": "Configuração não documentada",
                 "solucao": "Documentar configuração correta do proxy no README e AGENTS.md",
                 "impacto": "Baixo - Ajuda futuros desenvolvedores",
-                "complexidade": "Baixa"
-            }
+                "complexidade": "Baixa",
+            },
         ]
 
         for i, sol in enumerate(solutions, 1):
@@ -107,7 +108,7 @@ class FiveWhysAnalysis:
             ("🚨 CRÍTICO", "Corrigir vite.config.ts imediatamente", "5 min"),
             ("🔧 IMPORTANTE", "Adicionar health check no start.sh", "15 min"),
             ("📊 MONITORAMENTO", "Criar testes de conectividade", "30 min"),
-            ("📚 DOCUMENTAÇÃO", "Atualizar documentação", "10 min")
+            ("📚 DOCUMENTAÇÃO", "Atualizar documentação", "10 min"),
         ]
 
         for priority, action, time in actions:
@@ -125,7 +126,7 @@ class FiveWhysAnalysis:
             "3. Testar endpoint: curl http://localhost:3000/api/v1/health",
             "4. Verificar se retorna status healthy",
             "5. Testar login no frontend",
-            "6. Confirmar que não há mais timeout"
+            "6. Confirmar que não há mais timeout",
         ]
 
         for step in validation_steps:

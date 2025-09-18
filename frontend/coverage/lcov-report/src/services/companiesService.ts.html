@@ -557,11 +557,11 @@
  */
 &nbsp;
 import { get, post, put, del } from './api';
-import { 
-  Company, 
-  CompanyDetailed, 
-  CompanyCreate, 
-  CompanyUpdate, 
+import {
+  Company,
+  CompanyDetailed,
+  CompanyCreate,
+  CompanyUpdate,
   CompanyList,
   PaginatedResponse,
   PersonType,
@@ -588,12 +588,12 @@ class CompaniesService {
     status?: string;
   }): Promise&lt;PaginatedResponse&lt;CompanyList&gt;&gt; {
     const queryParams = <span class="cstat-no" title="statement not covered" >new URLSearchParams();</span>
-    
+
 <span class="cstat-no" title="statement not covered" >    if (params?.page) <span class="cstat-no" title="statement not covered" >queryParams.append('page', params.page.toString());</span></span>
 <span class="cstat-no" title="statement not covered" >    if (params?.per_page) <span class="cstat-no" title="statement not covered" >queryParams.append('per_page', params.per_page.toString());</span></span>
 <span class="cstat-no" title="statement not covered" >    if (params?.search) <span class="cstat-no" title="statement not covered" >queryParams.append('search', params.search);</span></span>
 <span class="cstat-no" title="statement not covered" >    if (params?.status) <span class="cstat-no" title="statement not covered" >queryParams.append('status', params.status);</span></span>
-    
+
     const url = <span class="cstat-no" title="statement not covered" >`${this.basePath}/?${queryParams.toString()}`;</span>
 <span class="cstat-no" title="statement not covered" >    return get&lt;PaginatedResponse&lt;CompanyList&gt;&gt;(url);</span>
   }
@@ -646,11 +646,11 @@ class CompaniesService {
     person_type?: 'PF' | 'PJ';
   }): Promise&lt;CompanyList[]&gt; {
     const queryParams = <span class="cstat-no" title="statement not covered" >new URLSearchParams();</span>
-    
+
 <span class="cstat-no" title="statement not covered" >    Object.entries(filters).forEach(<span class="fstat-no" title="function not covered" >([</span>key, value]) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >      if (value) <span class="cstat-no" title="statement not covered" >queryParams.append(key, value);</span></span>
     });
-    
+
     const url = <span class="cstat-no" title="statement not covered" >`${this.basePath}/search?${queryParams.toString()}`;</span>
 <span class="cstat-no" title="statement not covered" >    return get&lt;CompanyList[]&gt;(url);</span>
   }

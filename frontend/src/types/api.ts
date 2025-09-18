@@ -13,6 +13,10 @@ import {
   TaxRegime,
   CountryCode,
   BrazilianState,
+  ClientStatus,
+  Gender,
+  MaritalStatus,
+  PersonStatus,
 } from "./enums";
 
 // 📱 Phone Interface - Sincronizado com Phone model
@@ -111,6 +115,12 @@ export interface UserInfo {
 }
 
 // 📊 API Response Interfaces
+export interface ApiResponse<T = any> {
+  data: T;
+  status: number;
+  message?: string;
+}
+
 export interface PaginatedResponse<T> {
   items: T[];
   total: number;
@@ -143,6 +153,96 @@ export interface CompanyFormData {
   phones: Phone[];
   emails: Email[];
   addresses: Address[];
+}
+
+// 👤 Client Interfaces - Sincronizado com Client models
+
+// Person para Client - dados completos da pessoa física/jurídica
+export interface PersonForClient {
+  id?: number;
+  name: string;
+  trade_name?: string;
+  tax_id: string;
+  secondary_tax_id?: string;
+  person_type: PersonType;
+  birth_date?: string;
+  gender?: Gender;
+  marital_status?: MaritalStatus;
+  occupation?: string;
+  incorporation_date?: string;
+  tax_regime?: string;
+  legal_nature?: string;
+  municipal_registration?: string;
+  website?: string;
+  status: PersonStatus;
+  description?: string;
+  lgpd_consent_version?: string;
+  metadata?: Record<string, any>;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Client detalhado com todos os relacionamentos
+export interface ClientDetailed {
+  id: number;
+  person_id: number;
+  establishment_id: number;
+  client_code?: string;
+  status: ClientStatus;
+  created_at: string;
+  updated_at?: string;
+
+  // Dados básicos da pessoa
+  name: string;
+  tax_id: string;
+  person_type: PersonType;
+
+  // Dados completos da pessoa
+  person: PersonForClient;
+
+  // Dados do estabelecimento
+  establishment_name: string;
+  establishment_code: string;
+  establishment_type: string;
+  company_id: number;
+  company_name: string;
+
+  // Contatos (relacionamentos polimórficos)
+  phones: Phone[];
+  emails: Email[];
+  addresses: Address[];
+}
+
+// Client para criação
+export interface ClientCreate {
+  establishment_id: number;
+  client_code?: string;
+  status?: ClientStatus;
+  person?: PersonForClient;
+  existing_person_id?: number;
+}
+
+// Client para atualização
+export interface ClientUpdate {
+  client_code?: string;
+  status?: ClientStatus;
+  person?: Partial<PersonForClient>;
+}
+
+// Resposta da listagem de clientes
+export interface ClientListResponse {
+  clients: ClientDetailed[];
+  total: number;
+  page: number;
+  size: number;
+  pages: number;
+}
+
+// Validação de criação de cliente
+export interface ClientValidationResponse {
+  is_valid: boolean;
+  error_message?: string;
+  warnings: string[];
 }
 
 // 🏥 Health Check Interface

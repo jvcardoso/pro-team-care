@@ -771,7 +771,7 @@ const ConsultasPage = <span class="cstat-no" title="statement not covered" ><spa
   const getStatusCounts = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
     const today = <span class="cstat-no" title="statement not covered" >new Date().toISOString().split('T')[0];</span>
     const todayConsultas = <span class="cstat-no" title="statement not covered" >consultas.filter(<span class="fstat-no" title="function not covered" >c </span>=&gt; <span class="cstat-no" title="statement not covered" >c.data === today)</span>;</span>
-    
+
 <span class="cstat-no" title="statement not covered" >    return {</span>
       total: todayConsultas.length,
       agendadas: todayConsultas.filter(<span class="fstat-no" title="function not covered" >c </span>=&gt; <span class="cstat-no" title="statement not covered" >c.status === 'agendada')</span>.length,
@@ -805,7 +805,7 @@ const ConsultasPage = <span class="cstat-no" title="statement not covered" ><spa
               onChange={<span class="fstat-no" title="function not covered" >(e</span>) =&gt; <span class="cstat-no" title="statement not covered" >setSelectedDate(e.target.value)}</span>
               leftIcon={&lt;Calendar className="h-4 w-4" /&gt;}
             /&gt;
-            
+
             &lt;select
               value={filterStatus}
               onChange={<span class="fstat-no" title="function not covered" >(e</span>) =&gt; <span class="cstat-no" title="statement not covered" >setFilterStatus(e.target.value)}</span>
@@ -894,7 +894,7 @@ const ConsultasPage = <span class="cstat-no" title="statement not covered" ><spa
               .map(<span class="fstat-no" title="function not covered" >(c</span>onsulta) =&gt; {
                 const statusInfo = <span class="cstat-no" title="statement not covered" >getStatusInfo(consulta.status);</span>
                 const StatusIcon = <span class="cstat-no" title="statement not covered" >statusInfo.icon;</span>
-                
+
 <span class="cstat-no" title="statement not covered" >                return (</span>
                   &lt;div key={consulta.id} className="p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors"&gt;
                     &lt;div className="flex items-start justify-between"&gt;
@@ -908,7 +908,7 @@ const ConsultasPage = <span class="cstat-no" title="statement not covered" ><spa
                             {statusInfo.label}
                           &lt;/span&gt;
                         &lt;/div&gt;
-                        
+
                         &lt;div className="grid grid-cols-1 md:grid-cols-2 gap-4"&gt;
                           &lt;div&gt;
                             &lt;p className="text-sm text-muted-foreground"&gt;Paciente&lt;/p&gt;
@@ -920,12 +920,12 @@ const ConsultasPage = <span class="cstat-no" title="statement not covered" ><spa
                             &lt;p className="text-sm text-primary-600 dark:text-primary-400"&gt;{consulta.especialidade}&lt;/p&gt;
                           &lt;/div&gt;
                         &lt;/div&gt;
-                        
+
                         &lt;div&gt;
                           &lt;p className="text-sm text-muted-foreground"&gt;Endereço&lt;/p&gt;
                           &lt;p className="text-foreground"&gt;{consulta.endereco}&lt;/p&gt;
                         &lt;/div&gt;
-                        
+
                         {consulta.observacoes &amp;&amp; (
                           &lt;div&gt;
                             &lt;p className="text-sm text-muted-foreground"&gt;Observações&lt;/p&gt;
@@ -933,7 +933,7 @@ const ConsultasPage = <span class="cstat-no" title="statement not covered" ><spa
                           &lt;/div&gt;
                         )}
                       &lt;/div&gt;
-                      
+
                       &lt;div className="flex flex-col gap-2 ml-4"&gt;
                         &lt;Button size="sm" variant="primary" outline&gt;
                           Ver Detalhes

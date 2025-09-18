@@ -3,9 +3,12 @@ Validation Service - Integração com Functions PostgreSQL de Validação
 """
 
 from typing import Optional, Tuple
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
+
 import structlog
+from fastapi import Depends
+from sqlalchemy import text
+
+from app.infrastructure.database import get_db
 
 logger = structlog.get_logger()
 
@@ -15,8 +18,8 @@ class ValidationService:
     Serviço de validação que integra com functions PostgreSQL
     Implementa validações de documentos, telefones, coordenadas, etc.
     """
-    
-    def __init__(self, session: AsyncSession):
+
+    def __init__(self, session):
         self.session = session
 
     async def validate_cpf(self, cpf: str) -> bool:
@@ -26,15 +29,15 @@ class ValidationService:
         """
         if not cpf:
             return False
-            
+
         try:
             query = text("SELECT master.fn_validate_cpf(:cpf)")
             result = await self.session.execute(query, {"cpf": cpf})
             is_valid = result.scalar() or False
-            
+
             logger.debug("cpf_validation", cpf=cpf[:3] + "***", is_valid=is_valid)
             return is_valid
-            
+
         except Exception as e:
             logger.error("cpf_validation_failed", cpf=cpf[:3] + "***", error=str(e))
             return False
@@ -46,15 +49,15 @@ class ValidationService:
         """
         if not cnpj:
             return False
-            
+
         try:
             query = text("SELECT master.fn_validate_cnpj(:cnpj)")
             result = await self.session.execute(query, {"cnpj": cnpj})
             is_valid = result.scalar() or False
-            
+
             logger.debug("cnpj_validation", cnpj=cnpj[:2] + "***", is_valid=is_valid)
             return is_valid
-            
+
         except Exception as e:
             logger.error("cnpj_validation_failed", cnpj=cnpj[:2] + "***", error=str(e))
             return False
@@ -67,31 +70,29 @@ class ValidationService:
         """
         if not phone:
             return False, None
-            
+
         try:
             query = text("SELECT master.fn_validate_phone_format(:phone)")
             result = await self.session.execute(query, {"phone": phone})
             formatted = result.scalar()
-            
+
             is_valid = formatted is not None and formatted != phone
-            
+
             logger.debug(
-                "phone_validation", 
-                original=phone[-4:], 
+                "phone_validation",
+                original=phone[-4:],
                 formatted=formatted[-4:] if formatted else None,
-                is_valid=is_valid
+                is_valid=is_valid,
             )
-            
+
             return is_valid, formatted
-            
+
         except Exception as e:
             logger.error("phone_validation_failed", phone=phone[-4:], error=str(e))
             return False, None
 
     async def format_whatsapp_number(
-        self, 
-        phone: str, 
-        country_code: str = "55"
+        self, phone: str, country_code: str = "55"
     ) -> Optional[str]:
         """
         Formata número WhatsApp
@@ -99,65 +100,60 @@ class ValidationService:
         """
         if not phone:
             return None
-            
+
         try:
-            query = text("""
+            query = text(
+                """
                 SELECT master.fn_format_whatsapp_number(:phone, :country_code)
-            """)
-            result = await self.session.execute(query, {
-                "phone": phone, 
-                "country_code": country_code
-            })
-            
-            formatted = result.scalar()
-            
-            logger.debug(
-                "whatsapp_format", 
-                original=phone[-4:],
-                formatted=formatted[-4:] if formatted else None
+            """
             )
-            
+            result = await self.session.execute(
+                query, {"phone": phone, "country_code": country_code}
+            )
+
+            formatted = result.scalar()
+
+            logger.debug(
+                "whatsapp_format",
+                original=phone[-4:],
+                formatted=formatted[-4:] if formatted else None,
+            )
+
             return formatted
-            
+
         except Exception as e:
             logger.error("whatsapp_format_failed", phone=phone[-4:], error=str(e))
             return phone  # Return original on error
 
-    async def validate_coordinates(
-        self, 
-        latitude: float, 
-        longitude: float
-    ) -> bool:
+    async def validate_coordinates(self, latitude: float, longitude: float) -> bool:
         """
         Valida coordenadas geográficas (Brasil)
         Function: fn_validate_coordinates
         """
         try:
-            query = text("""
+            query = text(
+                """
                 SELECT master.fn_validate_coordinates(:lat, :lng)
-            """)
-            result = await self.session.execute(query, {
-                "lat": latitude,
-                "lng": longitude
-            })
-            
-            is_valid = result.scalar() or False
-            
-            logger.debug(
-                "coordinates_validation",
-                lat=latitude,
-                lng=longitude,
-                is_valid=is_valid
+            """
             )
-            
+            result = await self.session.execute(
+                query, {"lat": latitude, "lng": longitude}
+            )
+
+            is_valid = result.scalar() or False
+
+            logger.debug(
+                "coordinates_validation", lat=latitude, lng=longitude, is_valid=is_valid
+            )
+
             return is_valid
-            
+
         except Exception as e:
             logger.error(
                 "coordinates_validation_failed",
                 lat=latitude,
-                lng=longitude, 
-                error=str(e)
+                lng=longitude,
+                error=str(e),
             )
             return False
 
@@ -168,44 +164,41 @@ class ValidationService:
         neighborhood: str,
         city: str,
         state: str,
-        zip_code: str
+        zip_code: str,
     ) -> int:
         """
         Calcula score de qualidade do endereço
         Function: fn_calculate_address_quality_score
         """
         try:
-            query = text("""
+            query = text(
+                """
                 SELECT master.fn_calculate_address_quality_score(
                     :street, :number, :neighborhood, :city, :state, :zip_code
                 )
-            """)
-            result = await self.session.execute(query, {
-                "street": street,
-                "number": number,
-                "neighborhood": neighborhood,
-                "city": city,
-                "state": state,
-                "zip_code": zip_code
-            })
-            
-            score = result.scalar() or 0
-            
-            logger.debug(
-                "address_quality_score",
-                city=city,
-                state=state,
-                score=score
+            """
             )
-            
+            result = await self.session.execute(
+                query,
+                {
+                    "street": street,
+                    "number": number,
+                    "neighborhood": neighborhood,
+                    "city": city,
+                    "state": state,
+                    "zip_code": zip_code,
+                },
+            )
+
+            score = result.scalar() or 0
+
+            logger.debug("address_quality_score", city=city, state=state, score=score)
+
             return score
-            
+
         except Exception as e:
             logger.error(
-                "address_quality_score_failed",
-                city=city,
-                state=state,
-                error=str(e)
+                "address_quality_score_failed", city=city, state=state, error=str(e)
             )
             return 0
 
@@ -213,19 +206,16 @@ class ValidationService:
         """
         Valida documento fiscal baseado no tipo de pessoa
         """
-        if person_type == 'PF':
+        if person_type == "PF":
             return await self.validate_cpf(tax_id)
-        elif person_type == 'PJ':
+        elif person_type == "PJ":
             return await self.validate_cnpj(tax_id)
         else:
             logger.warning("invalid_person_type", person_type=person_type)
             return False
 
     async def format_and_validate_phone(
-        self, 
-        phone: str, 
-        is_whatsapp: bool = False,
-        country_code: str = "55"
+        self, phone: str, is_whatsapp: bool = False, country_code: str = "55"
     ) -> Tuple[bool, Optional[str]]:
         """
         Valida e formata telefone, com tratamento especial para WhatsApp
@@ -238,6 +228,6 @@ class ValidationService:
 
 
 # Função de conveniência para dependency injection
-async def get_validation_service(session: AsyncSession) -> ValidationService:
+async def get_validation_service(db=Depends(get_db)) -> ValidationService:
     """Factory function for ValidationService"""
-    return ValidationService(session)
+    return ValidationService(db)

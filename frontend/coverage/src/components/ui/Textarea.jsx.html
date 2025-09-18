@@ -223,24 +223,24 @@ const Textarea = <span class="cstat-no" title="statement not covered" >forwardRe
   containerClassName = <span class="branch-0 cbranch-no" title="branch not covered" >'',</span>
   rows = <span class="branch-0 cbranch-no" title="branch not covered" >4,</span>
   resize = <span class="branch-0 cbranch-no" title="branch not covered" >true,</span>
-  ...props 
+  ...props
 }, ref) =&gt; {
   const textareaClasses = <span class="cstat-no" title="statement not covered" >[</span>
     'w-full px-3 py-2 border rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2',
     'bg-input text-foreground placeholder-muted-foreground',
     'border-border focus:border-ring focus:ring-ring',
-    
+
     // Size variants
     size === 'sm' &amp;&amp; 'text-sm',
     size === 'md' &amp;&amp; 'text-sm',
     size === 'lg' &amp;&amp; 'text-base',
-    
+
     // Variant styles
     variant === 'default' &amp;&amp; 'border-border',
     variant === 'success' &amp;&amp; 'border-green-500 focus:border-green-500 focus:ring-green-500',
     variant === 'warning' &amp;&amp; 'border-yellow-500 focus:border-yellow-500 focus:ring-yellow-500',
     variant === 'error' &amp;&amp; 'border-red-500 focus:border-red-500 focus:ring-red-500',
-    
+
     error &amp;&amp; 'border-red-500 focus:border-red-500 focus:ring-red-500',
     !resize &amp;&amp; 'resize-none',
     className
@@ -259,20 +259,20 @@ const Textarea = <span class="cstat-no" title="statement not covered" >forwardRe
           {required &amp;&amp; &lt;Star className="h-3 w-3 text-red-500 ml-1 fill-current" /&gt;}
         &lt;/label&gt;
       )}
-      
+
       &lt;textarea
         ref={ref}
         rows={rows}
         className={textareaClasses}
         {...props}
       /&gt;
-      
+
       {error &amp;&amp; (
         &lt;p className="mt-1 text-sm text-red-500"&gt;
           {error}
         &lt;/p&gt;
       )}
-      
+
       {helper &amp;&amp; !error &amp;&amp; (
         &lt;p className="mt-1 text-sm text-muted-foreground"&gt;
           {helper}

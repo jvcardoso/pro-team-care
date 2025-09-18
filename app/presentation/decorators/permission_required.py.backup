@@ -1,0 +1,335 @@
+"""
+Permission Required Decorators - Integração com SecurityService
+"""
+
+from functools import wraps
+from typing import Any, Optional
+
+import structlog
+from fastapi import Depends, HTTPException
+
+from app.infrastructure.auth import get_current_user
+from app.infrastructure.database import get_db
+from app.infrastructure.orm.models import User
+from app.infrastructure.services.security_service import (
+    SecurityService,
+    get_security_service,
+)
+
+logger = structlog.get_logger()
+
+
+def require_permission(
+    permission: str,
+    context_type: str = "establishment",
+    get_context_id = None,
+):
+    """
+    Decorator que verifica se usuário possui permissão específica
+
+    Args:
+        permission: Nome da permissão (ex: "users.view", "companies.create")
+        context_type: Tipo de contexto ("system", "company", "establishment")
+        get_context_id: Função para extrair context_id dos argumentos
+
+    Usage:
+        @require_permission("users.view")
+        async def get_users(): pass
+
+        @require_permission("establishments.manage", get_context_id=lambda kwargs: kwargs.get("establishment_id"))
+        async def update_establishment(establishment_id: int): pass
+    """
+
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(
+            *args,
+            current_user: User = Depends(get_current_user),
+            security_service: SecurityService = Depends(get_security_service),
+            **kwargs,
+        ):
+            # Determinar context_id se função fornecida
+            context_id = None
+            if get_context_id:
+                context_id = get_context_id(kwargs)
+
+            # Verificar permissão
+            has_permission = await security_service.check_user_permission(
+                user_id=current_user.id,
+                permission=permission,
+                context_type=context_type,
+                context_id=context_id,
+            )
+
+            if not has_permission:
+                await logger.awarning(
+                    "permission_denied",
+                    user_id=current_user.id,
+                    permission=permission,
+                    context_type=context_type,
+                    context_id=context_id,
+                    endpoint=func.__name__,
+                )
+
+                raise HTTPException(
+                    status_code=403,
+                    detail={
+                        "error": "insufficient_permissions",
+                        "message": f"Missing permission: {permission}",
+                        "required_permission": permission,
+                        "context_type": context_type,
+                        "context_id": context_id,
+                    },
+                )
+
+            # Log acesso autorizado
+            await logger.ainfo(
+                "permission_granted",
+                user_id=current_user.id,
+                permission=permission,
+                context_type=context_type,
+                context_id=context_id,
+                endpoint=func.__name__,
+            )
+
+            return await func(*args, current_user=current_user, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def require_system_admin():
+    """
+    Decorator que requer privilégios de administrador do sistema
+
+    Usage:
+        @require_system_admin()
+        async def manage_system(): pass
+    """
+
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(
+            *args, current_user: User = Depends(get_current_user), **kwargs
+        ):
+            if not current_user.is_system_admin:
+                await logger.awarning(
+                    "system_admin_required",
+                    user_id=current_user.id,
+                    endpoint=func.__name__,
+                )
+
+                raise HTTPException(
+                    status_code=403,
+                    detail={
+                        "error": "system_admin_required",
+                        "message": "System administrator privileges required",
+                    },
+                )
+
+            await logger.ainfo(
+                "system_admin_access", user_id=current_user.id, endpoint=func.__name__
+            )
+
+            return await func(*args, current_user=current_user, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def require_data_access(get_target_user_id):
+    """
+    Decorator que verifica acesso hierárquico a dados de usuário
+
+    Args:
+        get_target_user_id: Função para extrair ID do usuário alvo dos argumentos
+
+    Usage:
+        @require_data_access(lambda kwargs: kwargs["user_id"])
+        async def get_user_details(user_id: int): pass
+    """
+
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(
+            *args,
+            current_user: User = Depends(get_current_user),
+            security_service: SecurityService = Depends(get_security_service),
+            **kwargs,
+        ):
+            target_user_id = get_target_user_id(kwargs)
+
+            # Verificar se pode acessar dados do usuário
+            can_access = await security_service.can_access_user_data(
+                requesting_user_id=current_user.id, target_user_id=target_user_id
+            )
+
+            if not can_access:
+                await logger.awarning(
+                    "user_data_access_denied",
+                    requesting_user_id=current_user.id,
+                    target_user_id=target_user_id,
+                    endpoint=func.__name__,
+                )
+
+                raise HTTPException(
+                    status_code=403,
+                    detail={
+                        "error": "access_denied",
+                        "message": "Cannot access user data due to hierarchy restrictions",
+                        "target_user_id": target_user_id,
+                    },
+                )
+
+            # Log acesso a dados (auditoria LGPD)
+            await security_service.log_user_data_access(
+                accessed_by_user_id=current_user.id,
+                accessed_user_id=target_user_id,
+                view_name=func.__name__,
+                access_type="read",
+            )
+
+            return await func(*args, current_user=current_user, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def require_active_user():
+    """
+    Decorator que verifica se usuário está ativo
+
+    Usage:
+        @require_active_user()
+        async def user_action(): pass
+    """
+
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(
+            *args, current_user: User = Depends(get_current_user), **kwargs
+        ):
+            if not current_user.is_active:
+                await logger.awarning(
+                    "inactive_user_access_attempt",
+                    user_id=current_user.id,
+                    endpoint=func.__name__,
+                )
+
+                raise HTTPException(
+                    status_code=403,
+                    detail={
+                        "error": "account_inactive",
+                        "message": "User account is inactive",
+                    },
+                )
+
+            return await func(*args, current_user=current_user, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+
+# Decorators combinados para uso comum
+def require_user_management():
+    """Decorator combinado para gestão de usuários"""
+    return require_permission("users.manage")
+
+
+def require_establishment_admin():
+    """Decorator combinado para admin de estabelecimento"""
+    return require_permission("establishments.admin", context_type="establishment")
+
+
+def require_company_admin():
+    """Decorator combinado para admin de empresa"""
+    return require_permission("companies.admin", context_type="company")
+
+
+def require_role_level(min_level: int, context_type: str = "establishment"):
+    """
+    Decorator que verifica nível mínimo de role do usuário
+
+    Args:
+        min_level: Nível mínimo necessário (ex: 80 para admin empresa, 60 para admin estabelecimento)
+        context_type: Tipo de contexto ("system", "company", "establishment")
+
+    Usage:
+        @require_role_level(80, "company")  # Admin de empresa
+        async def manage_company(): pass
+
+        @require_role_level(60, "establishment")  # Admin de estabelecimento
+        async def manage_establishment(): pass
+    """
+
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(
+            *args,
+            current_user: User = Depends(get_current_user),
+            **kwargs,
+        ):
+            from sqlalchemy import text
+            from app.infrastructure.database import async_session
+
+            # Obter sessão de banco de dados
+            async with async_session() as db:
+                # Verificar nível de role diretamente na tabela user_roles
+                query = text("""
+                    SELECT MAX(r.level) as max_level
+                    FROM master.user_roles ur
+                    JOIN master.roles r ON ur.role_id = r.id
+                    WHERE ur.user_id = :user_id
+                      AND ur.context_type = :context_type
+                      AND ur.status = 'active'
+                      AND ur.deleted_at IS NULL
+                      AND r.is_active = true
+                """)
+
+                result = await db.execute(query, {
+                    "user_id": current_user.id,
+                    "context_type": context_type
+                })
+
+                max_level = result.scalar() or 0
+
+            if max_level < min_level:
+                await logger.awarning(
+                    "insufficient_role_level",
+                    user_id=current_user.id,
+                    max_level=max_level,
+                    required_level=min_level,
+                    context_type=context_type,
+                    endpoint=func.__name__,
+                )
+
+                raise HTTPException(
+                    status_code=403,
+                    detail={
+                        "error": "insufficient_role_level",
+                        "message": f"Required role level: {min_level}, current: {max_level}",
+                        "required_level": min_level,
+                        "current_level": max_level,
+                        "context_type": context_type,
+                    },
+                )
+
+            await logger.ainfo(
+                "role_level_access_granted",
+                user_id=current_user.id,
+                required_level=min_level,
+                current_level=max_level,
+                context_type=context_type,
+                endpoint=func.__name__,
+            )
+
+            return await func(*args, current_user=current_user, **kwargs)
+
+        return wrapper
+
+    return decorator

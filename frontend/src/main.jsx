@@ -5,6 +5,10 @@ import { QueryClient, QueryClientProvider } from "react-query";
 import { Toaster } from "react-hot-toast";
 import App from "./App";
 import "./styles/index.css";
+import { setupErrorInterceptor } from "./utils/errorInterceptor";
+
+// Setup global error interceptor
+setupErrorInterceptor();
 
 // Create a client for React Query
 const queryClient = new QueryClient({

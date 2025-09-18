@@ -436,7 +436,7 @@ export const useCEP = <span class="cstat-no" title="statement not covered" ><spa
   const [formattedValue, setFormattedValue] = <span class="cstat-no" title="statement not covered" >useState(<span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    return initialValue ? formatCEP(initialValue) : '';</span>
   });
-  
+
   const [isValid, setIsValid] = <span class="cstat-no" title="statement not covered" >useState(true);</span>
   const [validationMessage, setValidationMessage] = <span class="cstat-no" title="statement not covered" >useState('');</span>
   const [isLoading, setIsLoading] = <span class="cstat-no" title="statement not covered" >useState(false);</span>
@@ -445,16 +445,16 @@ export const useCEP = <span class="cstat-no" title="statement not covered" ><spa
 &nbsp;
   const validateInput = <span class="cstat-no" title="statement not covered" >useCallback(<span class="fstat-no" title="function not covered" >(i</span>nputValue) =&gt; {</span>
     const cleanValue = <span class="cstat-no" title="statement not covered" >removeNonNumeric(inputValue);</span>
-    
+
 <span class="cstat-no" title="statement not covered" >    if (!cleanValue &amp;&amp; required) {</span>
 <span class="cstat-no" title="statement not covered" >      setIsValid(false);</span>
 <span class="cstat-no" title="statement not covered" >      setValidationMessage('CEP é obrigatório');</span>
 <span class="cstat-no" title="statement not covered" >      return false;</span>
     }
-    
+
 <span class="cstat-no" title="statement not covered" >    if (cleanValue &amp;&amp; !validateCEP(cleanValue)) {</span>
 <span class="cstat-no" title="statement not covered" >      setIsValid(false);</span>
-      
+
 <span class="cstat-no" title="statement not covered" >      if (cleanValue.length &lt; 8) {</span>
 <span class="cstat-no" title="statement not covered" >        setValidationMessage('CEP deve ter 8 dígitos');</span>
       } else {
@@ -462,7 +462,7 @@ export const useCEP = <span class="cstat-no" title="statement not covered" ><spa
       }
 <span class="cstat-no" title="statement not covered" >      return false;</span>
     }
-    
+
 <span class="cstat-no" title="statement not covered" >    setIsValid(true);</span>
 <span class="cstat-no" title="statement not covered" >    setValidationMessage('');</span>
 <span class="cstat-no" title="statement not covered" >    return true;</span>
@@ -470,13 +470,13 @@ export const useCEP = <span class="cstat-no" title="statement not covered" ><spa
 &nbsp;
   const consultCEP = <span class="cstat-no" title="statement not covered" >useCallback(<span class="fstat-no" title="function not covered" >as</span>ync (cep) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    if (!cep || cep.length !== 8) <span class="cstat-no" title="statement not covered" >return null;</span></span>
-    
+
 <span class="cstat-no" title="statement not covered" >    setIsLoading(true);</span>
-    
+
 <span class="cstat-no" title="statement not covered" >    try {</span>
       const response = <span class="cstat-no" title="statement not covered" >await fetch(`https://viacep.com.br/ws/${cep}/json/`);</span>
       const data = <span class="cstat-no" title="statement not covered" >await response.json();</span>
-      
+
 <span class="cstat-no" title="statement not covered" >      if (data.erro) {</span>
 <span class="cstat-no" title="statement not covered" >        setValidationMessage('CEP não encontrado');</span>
 <span class="cstat-no" title="statement not covered" >        setIsValid(false);</span>
@@ -491,14 +491,14 @@ export const useCEP = <span class="cstat-no" title="statement not covered" ><spa
           cep: cep,
           complement: data.complemento || ''
         };
-        
+
 <span class="cstat-no" title="statement not covered" >        setAddressData(addressInfo);</span>
 <span class="cstat-no" title="statement not covered" >        setValidationMessage('');</span>
 <span class="cstat-no" title="statement not covered" >        setIsValid(true);</span>
-        
+
         // Callback para notificar endereço encontrado
 <span class="cstat-no" title="statement not covered" >        onAddressFound?.(addressInfo);</span>
-        
+
 <span class="cstat-no" title="statement not covered" >        return addressInfo;</span>
       }
     } catch (error) {
@@ -516,22 +516,22 @@ export const useCEP = <span class="cstat-no" title="statement not covered" ><spa
     const numbersOnly = <span class="cstat-no" title="statement not covered" >removeNonNumeric(value);</span>
     const limitedNumbers = <span class="cstat-no" title="statement not covered" >numbersOnly.slice(0, 8);</span>
     const formatted = <span class="cstat-no" title="statement not covered" >formatCEP(limitedNumbers);</span>
-    
+
 <span class="cstat-no" title="statement not covered" >    setFormattedValue(formatted);</span>
 <span class="cstat-no" title="statement not covered" >    setIsDirty(true);</span>
-    
+
     // Limpar dados de endereço se CEP for alterado
 <span class="cstat-no" title="statement not covered" >    if (addressData) {</span>
 <span class="cstat-no" title="statement not covered" >      setAddressData(null);</span>
     }
-    
+
     const isCurrentlyValid = <span class="cstat-no" title="statement not covered" >validateInput(limitedNumbers);</span>
-    
+
     // Auto-consulta se habilitado e CEP válido
 <span class="cstat-no" title="statement not covered" >    if (autoConsult &amp;&amp; isCurrentlyValid &amp;&amp; limitedNumbers.length === 8) {</span>
 <span class="cstat-no" title="statement not covered" >      consultCEP(limitedNumbers);</span>
     }
-    
+
     // Callback externo
 <span class="cstat-no" title="statement not covered" >    onChange?.({</span>
       value: limitedNumbers,
@@ -580,7 +580,7 @@ export const useCEP = <span class="cstat-no" title="statement not covered" ><spa
     isLoading,
     isDirty,
     addressData,
-    
+
     // Métodos
     handleChange,
     handleBlur,
@@ -588,7 +588,7 @@ export const useCEP = <span class="cstat-no" title="statement not covered" ><spa
     setValue,
     clear,
     validate: <span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >validateInput(removeNonNumeric(formattedValue)),</span>
-    
+
     // Estado computado
     isEmpty: !formattedValue || formattedValue.trim() === '',
     isComplete: removeNonNumeric(formattedValue).length === 8,

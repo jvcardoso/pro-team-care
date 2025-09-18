@@ -4,16 +4,15 @@ Endpoints FastAPI compatíveis com estrutura real do banco de dados
 """
 
 from typing import List, Optional
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from pydantic import BaseModel
 from sqlalchemy import text
 from structlog import get_logger
-from pydantic import BaseModel
-from datetime import datetime
 
-from app.infrastructure.database import get_db
-from app.infrastructure.auth import get_current_user
 from app.domain.entities.user import User
+from app.infrastructure.auth import get_current_user
+from app.infrastructure.database import get_db
 
 router = APIRouter(prefix="/menus/crud", tags=["Menus CRUD"])
 logger = get_logger()
@@ -109,35 +108,174 @@ class MenuOperationResultSchema(BaseModel):
 
 @router.post(
     "/",
-    response_model=dict,
-    status_code=status.HTTP_501_NOT_IMPLEMENTED,
-    summary="Criar Menu (Temporariamente Desabilitado)",
-    description="Funcionalidade CREATE temporariamente desabilitada devido à estrutura do banco"
+    response_model=MenuDetailedSchema,
+    status_code=status.HTTP_201_CREATED,
+    summary="Criar Menu",
+    description="Cria um novo menu no sistema",
 )
 async def create_menu(
     menu_data: MenuCreateSchema,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db=Depends(get_db),
 ):
-    """Funcionalidade CREATE temporariamente desabilitada"""
-    
-    return {
-        "error": "CREATE temporariamente desabilitado",
-        "message": "A funcionalidade de criação de menus está temporariamente desabilitada devido à estrutura do banco de dados. Use a interface para visualização e edição apenas.",
-        "available_operations": [
-            "GET /menus/crud/ - Listar menus",
-            "GET /menus/crud/{id} - Buscar menu específico", 
-            "PUT /menus/crud/{id} - Atualizar menu existente",
-            "DELETE /menus/crud/{id} - Excluir menu"
-        ]
-    }
+    """Criar novo menu"""
+
+    try:
+        # Verificar se parent_id existe se fornecido
+        if menu_data.parent_id:
+            parent_check = text(
+                "SELECT id FROM master.menus WHERE id = :parent_id AND deleted_at IS NULL"
+            )
+            result = await db.execute(parent_check, {"parent_id": menu_data.parent_id})
+            if not result.fetchone():
+                raise HTTPException(status_code=404, detail="Menu pai não encontrado")
+
+        # Verificar slug único no nível
+        slug_check = text(
+            """
+            SELECT id FROM master.menus
+            WHERE slug = :slug AND parent_id IS NOT DISTINCT FROM :parent_id
+            AND deleted_at IS NULL
+        """
+        )
+        result = await db.execute(
+            slug_check, {"slug": menu_data.slug, "parent_id": menu_data.parent_id}
+        )
+        if result.fetchone():
+            raise HTTPException(status_code=400, detail="Slug já existe neste nível")
+
+        # Calcular nível
+        if menu_data.parent_id:
+            level_query = text("SELECT level FROM master.menus WHERE id = :parent_id")
+            result = await db.execute(level_query, {"parent_id": menu_data.parent_id})
+            parent_level = result.fetchone()
+            level = parent_level.level + 1 if parent_level else 1
+        else:
+            level = 0
+
+        # Calcular próximo sort_order
+        sort_query = text(
+            """
+            SELECT COALESCE(MAX(sort_order), 0) + 1 as next_sort
+            FROM master.menus
+            WHERE parent_id IS NOT DISTINCT FROM :parent_id AND deleted_at IS NULL
+        """
+        )
+        result = await db.execute(sort_query, {"parent_id": menu_data.parent_id})
+        next_sort = result.fetchone()
+        sort_order = next_sort.next_sort if next_sort else 1
+
+        # Inserir novo menu
+        insert_query = text(
+            """
+            INSERT INTO master.menus (
+                parent_id, name, slug, url, route_name, route_params,
+                icon, permission_name, description, level, sort_order,
+                is_visible, visible_in_menu, created_by_user_id, updated_by_user_id
+            )
+            VALUES (
+                :parent_id, :name, :slug, :url, :route_name, :route_params,
+                :icon, :permission_name, :description, :level, :sort_order,
+                :is_visible, :visible_in_menu, :created_by, :updated_by
+            )
+            RETURNING id
+        """
+        )
+
+        values = {
+            "parent_id": menu_data.parent_id,
+            "name": menu_data.name,
+            "slug": menu_data.slug,
+            "url": menu_data.url,
+            "route_name": menu_data.route_name,
+            "route_params": menu_data.route_params,
+            "icon": menu_data.icon,
+            "permission_name": menu_data.permission_name,
+            "description": menu_data.description,
+            "level": level,
+            "sort_order": sort_order,
+            "is_visible": menu_data.is_visible,
+            "visible_in_menu": menu_data.visible_in_menu,
+            "created_by": current_user.id,
+            "updated_by": current_user.id,
+        }
+
+        result = await db.execute(insert_query, values)
+        new_menu_id = result.fetchone()
+
+        if not new_menu_id:
+            raise HTTPException(status_code=500, detail="Erro ao criar menu")
+
+        await db.commit()
+
+        # Buscar menu criado para retorno
+        select_query = text(
+            """
+            SELECT
+                m.id, m.parent_id, m.name, m.slug, m.url, m.route_name, m.route_params,
+                m.icon, m.permission_name, m.description, m.level, m.sort_order,
+                m.is_visible, m.visible_in_menu, m.created_at, m.updated_at,
+                m.created_by_user_id as created_by, m.updated_by_user_id as updated_by,
+                CASE WHEN COUNT(c.id) > 0 THEN true ELSE false END as has_children,
+                COUNT(c.id) as children_count
+            FROM master.menus m
+            LEFT JOIN master.menus c ON c.parent_id = m.id AND c.deleted_at IS NULL
+            WHERE m.id = :menu_id AND m.deleted_at IS NULL
+            GROUP BY m.id
+        """
+        )
+
+        result = await db.execute(select_query, {"menu_id": new_menu_id.id})
+        created_menu = result.fetchone()
+
+        if not created_menu:
+            raise HTTPException(status_code=500, detail="Erro ao buscar menu criado")
+
+        logger.info(
+            "Menu criado via API", menu_id=new_menu_id.id, created_by=current_user.id
+        )
+
+        return MenuDetailedSchema(
+            id=created_menu.id,
+            parent_id=created_menu.parent_id,
+            name=created_menu.name,
+            slug=created_menu.slug,
+            url=created_menu.url,
+            route_name=created_menu.route_name,
+            route_params=created_menu.route_params,
+            level=created_menu.level,
+            sort_order=created_menu.sort_order,
+            is_visible=created_menu.is_visible,
+            visible_in_menu=created_menu.visible_in_menu,
+            permission_name=created_menu.permission_name,
+            icon=created_menu.icon,
+            description=created_menu.description,
+            has_children=created_menu.has_children,
+            children_count=created_menu.children_count,
+            created_at=(
+                created_menu.created_at.isoformat() if created_menu.created_at else None
+            ),
+            updated_at=(
+                created_menu.updated_at.isoformat() if created_menu.updated_at else None
+            ),
+            created_by=current_user.id,
+            updated_by=current_user.id,
+        )
+
+    except HTTPException:
+        await db.rollback()
+        raise
+    except Exception as e:
+        await db.rollback()
+        logger.error("Erro ao criar menu", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
 
 
 @router.get(
     "/",
     response_model=MenuListResponse,
     summary="Listar Menus",
-    description="Lista menus com paginação compatível com a estrutura do banco"
+    description="Lista menus com paginação compatível com a estrutura do banco",
 )
 async def get_menus(
     skip: int = Query(0, ge=0),
@@ -145,7 +283,7 @@ async def get_menus(
     parent_id: Optional[int] = Query(None),
     search: Optional[str] = Query(None),
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db=Depends(get_db),
 ):
     """Listar menus com paginação"""
 
@@ -155,7 +293,7 @@ async def get_menus(
             SELECT
                 m.id, m.parent_id, m.name, m.slug, m.level, m.sort_order,
                 m.is_visible, m.visible_in_menu, m.permission_name, m.icon,
-                m.created_at, m.updated_at,
+                m.created_at, m.updated_at, m.created_by_user_id as created_by, m.updated_by_user_id as updated_by,
                 CASE WHEN COUNT(c.id) > 0 THEN true ELSE false END as has_children,
                 COUNT(c.id) as children_count
             FROM master.menus m
@@ -215,8 +353,8 @@ async def get_menus(
                 icon=menu.icon,
                 created_at=menu.created_at.isoformat() if menu.created_at else None,
                 updated_at=menu.updated_at.isoformat() if menu.updated_at else None,
-                created_by=None,  # TODO: implementar quando campo existir
-                updated_by=None
+                created_by=menu.created_by,
+                updated_by=menu.updated_by,
             )
             menu_schemas.append(schema)
 
@@ -225,7 +363,12 @@ async def get_menus(
         has_next = skip + limit < total
         has_prev = skip > 0
 
-        logger.info("Menus listados via API", count=len(menus), total=total, user_id=current_user.id)
+        logger.info(
+            "Menus listados via API",
+            count=len(menus),
+            total=total,
+            user_id=current_user.id,
+        )
 
         return MenuListResponse(
             data=menu_schemas,
@@ -233,7 +376,7 @@ async def get_menus(
             page=page,
             per_page=limit,
             has_next=has_next,
-            has_prev=has_prev
+            has_prev=has_prev,
         )
 
     except Exception as e:
@@ -245,28 +388,29 @@ async def get_menus(
     "/{menu_id}",
     response_model=MenuDetailedSchema,
     summary="Buscar Menu por ID",
-    description="Retorna dados completos de um menu específico"
+    description="Retorna dados completos de um menu específico",
 )
 async def get_menu(
-    menu_id: int,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    menu_id: int, current_user: User = Depends(get_current_user), db=Depends(get_db)
 ):
     """Buscar menu por ID"""
 
     try:
-        query = text("""
+        query = text(
+            """
             SELECT
                 m.id, m.parent_id, m.name, m.slug, m.url, m.route_name, m.route_params,
                 m.icon, m.permission_name, m.description, m.level, m.sort_order,
                 m.is_visible, m.visible_in_menu, m.created_at, m.updated_at,
+                m.created_by_user_id as created_by, m.updated_by_user_id as updated_by,
                 CASE WHEN COUNT(c.id) > 0 THEN true ELSE false END as has_children,
                 COUNT(c.id) as children_count
             FROM master.menus m
             LEFT JOIN master.menus c ON c.parent_id = m.id AND c.deleted_at IS NULL
             WHERE m.id = :menu_id AND m.deleted_at IS NULL
             GROUP BY m.id
-        """)
+        """
+        )
 
         result = await db.execute(query, {"menu_id": menu_id})
         menu = result.fetchone()
@@ -293,8 +437,8 @@ async def get_menu(
             children_count=menu.children_count,
             created_at=menu.created_at.isoformat() if menu.created_at else None,
             updated_at=menu.updated_at.isoformat() if menu.updated_at else None,
-            created_by=None,  # TODO: implementar quando campo existir
-            updated_by=None
+            created_by=menu.created_by,
+            updated_by=menu.updated_by,
         )
 
     except HTTPException:
@@ -308,19 +452,21 @@ async def get_menu(
     "/{menu_id}",
     response_model=MenuDetailedSchema,
     summary="Atualizar Menu",
-    description="Atualiza dados de um menu existente"
+    description="Atualiza dados de um menu existente",
 )
 async def update_menu(
     menu_id: int,
     menu_data: MenuUpdateSchema,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db=Depends(get_db),
 ):
     """Atualizar menu com validações"""
 
     try:
         # Verificar se menu existe
-        check_query = text("SELECT id, name FROM master.menus WHERE id = :menu_id AND deleted_at IS NULL")
+        check_query = text(
+            "SELECT id, name FROM master.menus WHERE id = :menu_id AND deleted_at IS NULL"
+        )
         result = await db.execute(check_query, {"menu_id": menu_id})
         existing_menu = result.fetchone()
 
@@ -329,20 +475,27 @@ async def update_menu(
 
         # Verificar slug único se foi fornecido
         if menu_data.slug:
-            check_slug_query = text("""
+            check_slug_query = text(
+                """
                 SELECT id FROM master.menus
                 WHERE slug = :slug AND parent_id IS NOT DISTINCT FROM :parent_id
                 AND id != :menu_id AND deleted_at IS NULL
-            """)
+            """
+            )
 
-            result = await db.execute(check_slug_query, {
-                "slug": menu_data.slug,
-                "parent_id": menu_data.parent_id,
-                "menu_id": menu_id
-            })
+            result = await db.execute(
+                check_slug_query,
+                {
+                    "slug": menu_data.slug,
+                    "parent_id": menu_data.parent_id,
+                    "menu_id": menu_id,
+                },
+            )
 
             if result.fetchone():
-                raise HTTPException(status_code=400, detail="Slug já existe neste nível")
+                raise HTTPException(
+                    status_code=400, detail="Slug já existe neste nível"
+                )
 
         # Construir query de update dinamicamente
         update_fields = []
@@ -395,37 +548,50 @@ async def update_menu(
         if not update_fields:
             raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
 
+        # Adicionar campo updated_by
+        update_fields.append("updated_by_user_id = :updated_by")
+        update_values["updated_by"] = current_user.id
+
         # Executar update
-        update_query = text(f"""
+        update_query = text(
+            f"""
             UPDATE master.menus
             SET {', '.join(update_fields)}, updated_at = NOW()
             WHERE id = :menu_id AND deleted_at IS NULL
-        """)
+        """
+        )
 
         await db.execute(update_query, update_values)
         await db.commit()
 
         # Buscar menu atualizado
-        select_query = text("""
+        select_query = text(
+            """
             SELECT
                 m.id, m.parent_id, m.name, m.slug, m.url, m.route_name, m.route_params,
                 m.icon, m.permission_name, m.description, m.level, m.sort_order,
                 m.is_visible, m.visible_in_menu, m.created_at, m.updated_at,
+                m.created_by_user_id as created_by, m.updated_by_user_id as updated_by,
                 CASE WHEN COUNT(c.id) > 0 THEN true ELSE false END as has_children,
                 COUNT(c.id) as children_count
             FROM master.menus m
             LEFT JOIN master.menus c ON c.parent_id = m.id AND c.deleted_at IS NULL
             WHERE m.id = :menu_id AND m.deleted_at IS NULL
             GROUP BY m.id
-        """)
+        """
+        )
 
         result = await db.execute(select_query, {"menu_id": menu_id})
         updated_menu = result.fetchone()
 
         if not updated_menu:
-            raise HTTPException(status_code=500, detail="Erro ao buscar menu atualizado")
+            raise HTTPException(
+                status_code=500, detail="Erro ao buscar menu atualizado"
+            )
 
-        logger.info("Menu atualizado via API", menu_id=menu_id, updated_by=current_user.id)
+        logger.info(
+            "Menu atualizado via API", menu_id=menu_id, updated_by=current_user.id
+        )
 
         return MenuDetailedSchema(
             id=updated_menu.id,
@@ -444,10 +610,14 @@ async def update_menu(
             description=updated_menu.description,
             has_children=updated_menu.has_children,
             children_count=updated_menu.children_count,
-            created_at=updated_menu.created_at.isoformat() if updated_menu.created_at else None,
-            updated_at=updated_menu.updated_at.isoformat() if updated_menu.updated_at else None,
+            created_at=(
+                updated_menu.created_at.isoformat() if updated_menu.created_at else None
+            ),
+            updated_at=(
+                updated_menu.updated_at.isoformat() if updated_menu.updated_at else None
+            ),
             created_by=None,
-            updated_by=current_user.id
+            updated_by=current_user.id,
         )
 
     except HTTPException:
@@ -463,18 +633,18 @@ async def update_menu(
     "/{menu_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Excluir Menu",
-    description="Exclui um menu do sistema (soft delete)"
+    description="Exclui um menu do sistema (soft delete)",
 )
 async def delete_menu(
-    menu_id: int,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    menu_id: int, current_user: User = Depends(get_current_user), db=Depends(get_db)
 ):
     """Excluir menu (soft delete)"""
 
     try:
         # Verificar se menu existe
-        check_query = text("SELECT id, name FROM master.menus WHERE id = :menu_id AND deleted_at IS NULL")
+        check_query = text(
+            "SELECT id, name FROM master.menus WHERE id = :menu_id AND deleted_at IS NULL"
+        )
         result = await db.execute(check_query, {"menu_id": menu_id})
         existing_menu = result.fetchone()
 
@@ -482,20 +652,31 @@ async def delete_menu(
             raise HTTPException(status_code=404, detail="Menu não encontrado")
 
         # Verificar se tem filhos ativos
-        children_query = text("SELECT COUNT(*) as count FROM master.menus WHERE parent_id = :menu_id AND deleted_at IS NULL")
+        children_query = text(
+            "SELECT COUNT(*) as count FROM master.menus WHERE parent_id = :menu_id AND deleted_at IS NULL"
+        )
         result = await db.execute(children_query, {"menu_id": menu_id})
         children_row = result.fetchone()
-        children_count = children_row.count if children_row and hasattr(children_row, 'count') else 0
+        children_count = (
+            children_row.count if children_row and hasattr(children_row, "count") else 0
+        )
 
         if children_count > 0:
-            raise HTTPException(status_code=400, detail="Menu possui submenus ativos. Remova os submenus primeiro.")
+            raise HTTPException(
+                status_code=400,
+                detail="Menu possui submenus ativos. Remova os submenus primeiro.",
+            )
 
         # Soft delete
-        delete_query = text("UPDATE master.menus SET deleted_at = NOW() WHERE id = :menu_id")
+        delete_query = text(
+            "UPDATE master.menus SET deleted_at = NOW() WHERE id = :menu_id"
+        )
         await db.execute(delete_query, {"menu_id": menu_id})
         await db.commit()
 
-        logger.info("Menu excluído via API", menu_id=menu_id, deleted_by=current_user.id)
+        logger.info(
+            "Menu excluído via API", menu_id=menu_id, deleted_by=current_user.id
+        )
 
     except HTTPException:
         await db.rollback()
@@ -510,65 +691,74 @@ async def delete_menu(
     "/{menu_id}/move/{direction}",
     response_model=dict,
     summary="Mover Menu",
-    description="Move um menu para cima ou para baixo na ordenação"
+    description="Move um menu para cima ou para baixo na ordenação",
 )
 async def move_menu(
     menu_id: int,
     direction: str,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db=Depends(get_db),
 ):
     """Mover menu para cima ou para baixo na ordenação"""
-    
+
     if direction not in ["up", "down"]:
         raise HTTPException(status_code=400, detail="Direção deve ser 'up' ou 'down'")
-    
+
     try:
         # Buscar informações do menu atual
-        menu_query = text("""
-            SELECT id, parent_id, sort_order, level, name 
-            FROM master.menus 
+        menu_query = text(
+            """
+            SELECT id, parent_id, sort_order, level, name
+            FROM master.menus
             WHERE id = :menu_id AND deleted_at IS NULL
-        """)
+        """
+        )
         result = await db.execute(menu_query, {"menu_id": menu_id})
         current_menu = result.fetchone()
-        
+
         if not current_menu:
             raise HTTPException(status_code=404, detail="Menu não encontrado")
-        
+
         # Buscar menu para trocar posição (mesmo parent_id e level)
         if direction == "up":
             # Buscar menu com sort_order menor (anterior)
-            target_query = text("""
-                SELECT id, sort_order 
-                FROM master.menus 
-                WHERE parent_id IS NOT DISTINCT FROM :parent_id 
-                AND level = :level 
-                AND sort_order < :current_sort_order 
+            target_query = text(
+                """
+                SELECT id, sort_order
+                FROM master.menus
+                WHERE parent_id IS NOT DISTINCT FROM :parent_id
+                AND level = :level
+                AND sort_order < :current_sort_order
                 AND deleted_at IS NULL
                 ORDER BY sort_order DESC
                 LIMIT 1
-            """)
+            """
+            )
         else:  # down
             # Buscar menu com sort_order maior (posterior)
-            target_query = text("""
-                SELECT id, sort_order 
-                FROM master.menus 
-                WHERE parent_id IS NOT DISTINCT FROM :parent_id 
-                AND level = :level 
-                AND sort_order > :current_sort_order 
+            target_query = text(
+                """
+                SELECT id, sort_order
+                FROM master.menus
+                WHERE parent_id IS NOT DISTINCT FROM :parent_id
+                AND level = :level
+                AND sort_order > :current_sort_order
                 AND deleted_at IS NULL
                 ORDER BY sort_order ASC
                 LIMIT 1
-            """)
-        
-        result = await db.execute(target_query, {
-            "parent_id": current_menu.parent_id,
-            "level": current_menu.level,
-            "current_sort_order": current_menu.sort_order
-        })
+            """
+            )
+
+        result = await db.execute(
+            target_query,
+            {
+                "parent_id": current_menu.parent_id,
+                "level": current_menu.level,
+                "current_sort_order": current_menu.sort_order,
+            },
+        )
         target_menu = result.fetchone()
-        
+
         if not target_menu:
             # Não há menu para trocar (já é o primeiro/último)
             return {
@@ -576,47 +766,52 @@ async def move_menu(
                 "message": f"Menu já está na {'primeira' if direction == 'up' else 'última'} posição",
                 "menu_id": menu_id,
                 "direction": direction,
-                "no_change": True
+                "no_change": True,
             }
-        
+
         # Trocar as posições (swap)
         current_sort = current_menu.sort_order
         target_sort = target_menu.sort_order
-        
+
         # Atualizar posições em transação
-        update_current_query = text("""
-            UPDATE master.menus 
+        update_current_query = text(
+            """
+            UPDATE master.menus
             SET sort_order = :new_sort_order, updated_at = NOW()
             WHERE id = :menu_id
-        """)
-        
-        update_target_query = text("""
-            UPDATE master.menus 
+        """
+        )
+
+        update_target_query = text(
+            """
+            UPDATE master.menus
             SET sort_order = :new_sort_order, updated_at = NOW()
             WHERE id = :target_id
-        """)
-        
+        """
+        )
+
         # Executar as atualizações
-        await db.execute(update_current_query, {
-            "menu_id": menu_id,
-            "new_sort_order": target_sort
-        })
-        
-        await db.execute(update_target_query, {
-            "target_id": target_menu.id,
-            "new_sort_order": current_sort
-        })
-        
+        await db.execute(
+            update_current_query, {"menu_id": menu_id, "new_sort_order": target_sort}
+        )
+
+        await db.execute(
+            update_target_query,
+            {"target_id": target_menu.id, "new_sort_order": current_sort},
+        )
+
         await db.commit()
-        
-        logger.info("Menu reordenado", 
-                   menu_id=menu_id, 
-                   direction=direction,
-                   from_position=current_sort,
-                   to_position=target_sort,
-                   swapped_with=target_menu.id,
-                   user_id=current_user.id)
-        
+
+        logger.info(
+            "Menu reordenado",
+            menu_id=menu_id,
+            direction=direction,
+            from_position=current_sort,
+            to_position=target_sort,
+            swapped_with=target_menu.id,
+            user_id=current_user.id,
+        )
+
         return {
             "success": True,
             "message": f"Menu '{current_menu.name}' movido para {'cima' if direction == 'up' else 'baixo'}",
@@ -625,13 +820,15 @@ async def move_menu(
             "previous_sort_order": current_sort,
             "new_sort_order": target_sort,
             "swapped_with_menu_id": target_menu.id,
-            "no_change": False
+            "no_change": False,
         }
-        
+
     except HTTPException:
         await db.rollback()
         raise
     except Exception as e:
         await db.rollback()
-        logger.error("Erro ao mover menu", error=str(e), menu_id=menu_id, direction=direction)
+        logger.error(
+            "Erro ao mover menu", error=str(e), menu_id=menu_id, direction=direction
+        )
         raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")

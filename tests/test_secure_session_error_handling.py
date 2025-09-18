@@ -6,10 +6,11 @@ Este teste valida se as melhorias implementadas no tratamento de erros
 do serviço de sessão segura estão funcionando corretamente.
 """
 
+from typing import Any, Dict
+from unittest.mock import Mock, patch
+
 import pytest
 import requests
-from unittest.mock import Mock, patch
-from typing import Dict, Any
 
 
 class TestSecureSessionErrorHandling:
@@ -27,7 +28,7 @@ class TestSecureSessionErrorHandling:
         mock_error.response = mock_response
 
         # Importar o serviço (simulado)
-        with patch('frontend.src.services.secureSessionService.api') as mock_api:
+        with patch("frontend.src.services.secureSessionService.api") as mock_api:
             mock_api.get.side_effect = mock_error
 
             # Simular o método getCurrentContext
@@ -83,11 +84,7 @@ class TestSecureSessionErrorHandling:
         try:
             if mock_error.response.status == 401:
                 availableProfiles = []
-                result = {
-                    "profiles": [],
-                    "total_profiles": 0,
-                    "user_is_root": False
-                }
+                result = {"profiles": [], "total_profiles": 0, "user_is_root": False}
                 print("✅ 401 tratado corretamente - retornou dados padrão")
                 assert result["profiles"] == []
                 assert result["total_profiles"] == 0
@@ -112,11 +109,7 @@ class TestSecureSessionErrorHandling:
         try:
             if mock_error.response.status == 404:
                 availableProfiles = []
-                result = {
-                    "profiles": [],
-                    "total_profiles": 0,
-                    "user_is_root": False
-                }
+                result = {"profiles": [], "total_profiles": 0, "user_is_root": False}
                 print("✅ 404 tratado corretamente - retornou dados padrão")
                 assert result["profiles"] == []
                 assert result["total_profiles"] == 0
@@ -157,20 +150,20 @@ class TestSecureSessionErrorHandling:
                 "name": "Sem autenticação",
                 "error_status": 401,
                 "expected_behavior": "Sistema funciona sem sessão segura",
-                "fallback_data": {"profiles": [], "total_profiles": 0}
+                "fallback_data": {"profiles": [], "total_profiles": 0},
             },
             {
                 "name": "Endpoint não encontrado",
                 "error_status": 404,
                 "expected_behavior": "Funcionalidades desabilitadas graciosamente",
-                "fallback_data": {"profiles": [], "total_profiles": 0}
+                "fallback_data": {"profiles": [], "total_profiles": 0},
             },
             {
                 "name": "Erro de rede",
                 "error_status": None,
                 "expected_behavior": "Sistema continua com funcionalidades básicas",
-                "fallback_data": {"profiles": [], "total_profiles": 0}
-            }
+                "fallback_data": {"profiles": [], "total_profiles": 0},
+            },
         ]
 
         print("🔍 Testando cenários de degradação graciosa:")
@@ -181,7 +174,10 @@ class TestSecureSessionErrorHandling:
 
             # Simular tratamento do erro
             try:
-                if scenario["error_status"] in [401, 404] or scenario["error_status"] is None:
+                if (
+                    scenario["error_status"] in [401, 404]
+                    or scenario["error_status"] is None
+                ):
                     result = scenario["fallback_data"]
                     print("   ✅ Cenário tratado corretamente")
                     assert result["profiles"] == []
@@ -200,14 +196,14 @@ class TestSecureSessionErrorHandling:
                 "status": 401,
                 "old_message": "Erro ao obter perfis disponíveis",
                 "new_message": "Usuário não autenticado para perfis - usando perfil padrão",
-                "improvement": "Mensagem mais específica e informativa"
+                "improvement": "Mensagem mais específica e informativa",
             },
             {
                 "status": 404,
                 "old_message": "Erro ao obter contexto atual",
                 "new_message": "Endpoint de contexto não disponível - sistema funcionando sem contexto seguro",
-                "improvement": "Explica o impacto e o comportamento do sistema"
-            }
+                "improvement": "Explica o impacto e o comportamento do sistema",
+            },
         ]
 
         print("🔍 Testando melhoria nas mensagens de erro:")
@@ -220,7 +216,10 @@ class TestSecureSessionErrorHandling:
 
             # Verificar se a nova mensagem é mais informativa
             assert len(scenario["new_message"]) > len(scenario["old_message"])
-            assert "sistema" in scenario["new_message"].lower() or "usando" in scenario["new_message"].lower()
+            assert (
+                "sistema" in scenario["new_message"].lower()
+                or "usando" in scenario["new_message"].lower()
+            )
 
     def test_console_logging_improvement(self):
         """Testa se os logs do console foram melhorados"""
@@ -233,19 +232,19 @@ class TestSecureSessionErrorHandling:
                     "🔐 Inicializando serviço de sessão segura...",
                     "✅ Serviço de sessão segura inicializado com sucesso",
                     "⚠️ Erro na inicialização do serviço de sessão segura",
-                    "🔄 Continuando sem funcionalidades de sessão segura"
+                    "🔄 Continuando sem funcionalidades de sessão segura",
                 ],
-                "improvement": "Logs mais informativos com emojis e contexto"
+                "improvement": "Logs mais informativos com emojis e contexto",
             },
             {
                 "method": "getCurrentContext",
                 "old_logs": ["Erro ao obter contexto atual"],
                 "new_logs": [
                     "Sessão segura não ativa - funcionando em modo padrão",
-                    "Endpoint de contexto não disponível - sistema funcionando sem contexto seguro"
+                    "Endpoint de contexto não disponível - sistema funcionando sem contexto seguro",
                 ],
-                "improvement": "Mensagens específicas para diferentes tipos de erro"
-            }
+                "improvement": "Mensagens específicas para diferentes tipos de erro",
+            },
         ]
 
         print("🔍 Testando melhoria nos logs do console:")
@@ -264,7 +263,9 @@ class TestSecureSessionErrorHandling:
 
             # Verificar se os novos logs são mais descritivos
             assert len(scenario["new_logs"]) >= len(scenario["old_logs"])
-            assert any("🔐" in log or "✅" in log or "⚠️" in log for log in scenario["new_logs"])
+            assert any(
+                "🔐" in log or "✅" in log or "⚠️" in log for log in scenario["new_logs"]
+            )
 
     def generate_improvement_report(self):
         """Gera relatório das melhorias implementadas"""

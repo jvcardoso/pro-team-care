@@ -1,30 +1,56 @@
 import React, { useState, useEffect } from "react";
 import { Building2, Store, Shield, ChevronDown, Check } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
 import secureSessionService from "../../services/secureSessionService";
 import { notify } from "../../utils/notifications.jsx";
 
 const ContextSwitcher = () => {
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [contexts, setContexts] = useState([]);
   const [currentContext, setCurrentContext] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    loadContexts();
+    // Só carregar contextos se usuário estiver autenticado
+    if (!authLoading && isAuthenticated && user?.id) {
+      // Adicionar delay para evitar conflito com outros componentes
+      const timer = setTimeout(() => {
+        loadContexts();
+      }, 600);
 
-    // Listen for context changes
-    const handleContextChange = (newContext) => {
-      setCurrentContext(newContext);
-    };
+      return () => clearTimeout(timer);
+    }
+  }, [authLoading, isAuthenticated, user?.id]);
 
-    secureSessionService.addListener(handleContextChange);
+  useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      // Listen for context changes
+      const handleContextChange = (newContext) => {
+        setCurrentContext(newContext);
+      };
 
-    return () => {
-      secureSessionService.removeListener(handleContextChange);
-    };
-  }, []);
+      secureSessionService.addListener(handleContextChange);
+
+      return () => {
+        secureSessionService.removeListener(handleContextChange);
+      };
+    }
+  }, [isAuthenticated, user?.id]);
 
   const loadContexts = async () => {
+    // Verificar se ainda está autenticado antes de carregar
+    if (!isAuthenticated || !user?.id) {
+      console.log("⏳ ContextSwitcher: Aguardando autenticação...");
+      return;
+    }
+
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      console.log("⚠️ ContextSwitcher: Token não encontrado");
+      return;
+    }
+
     try {
       const [profilesData, contextData] = await Promise.all([
         secureSessionService.getAvailableProfiles(),
@@ -114,7 +140,7 @@ const ContextSwitcher = () => {
         disabled={loading}
         className={`
           flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors min-w-48 justify-between
-          bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 
+          bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700
           hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100
           ${loading ? "opacity-50 cursor-not-allowed" : ""}
         `}

@@ -194,3 +194,20 @@ export const normalizeForSearch = (str) => {
     .toLowerCase()
     .trim();
 };
+
+/**
+ * Formatar CPF/CNPJ automaticamente (detecta o tipo)
+ */
+export const formatTaxId = (value) => {
+  if (!value) return "";
+
+  const numbers = removeNonNumeric(value);
+
+  if (numbers.length <= 11) {
+    // Formato CPF
+    return formatCPF(value);
+  } else {
+    // Formato CNPJ
+    return formatCNPJ(value);
+  }
+};

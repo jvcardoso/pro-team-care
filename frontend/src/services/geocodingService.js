@@ -12,29 +12,14 @@ class GeocodingService {
    * Geocoding usando backend como proxy para Nominatim
    */
   async nominatimGeocode(address) {
-    // Sempre usar backend diretamente (não proxy do Vite)
-    const baseUrl = import.meta.env.DEV
-      ? ""
-      : import.meta.env.VITE_API_URL || "http://192.168.11.83:8000";
+    // Importar api dinamicamente para evitar dependências circulares
+    const { api } = await import("./api");
 
-    const response = await fetch(`${baseUrl}/api/v1/geocoding/geocode`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        address: address,
-      }),
+    const response = await api.post("/api/v1/geocoding/geocode", {
+      address: address,
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.detail || `Geocoding API error: ${response.status}`
-      );
-    }
-
-    const result = await response.json();
+    const result = response.data;
 
     return {
       latitude: result.latitude,

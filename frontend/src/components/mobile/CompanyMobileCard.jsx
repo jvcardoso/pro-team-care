@@ -1,5 +1,6 @@
 import React from "react";
 import Button from "../ui/Button";
+import ActionDropdown from "../ui/ActionDropdown";
 import {
   Building,
   Calendar,
@@ -78,37 +79,30 @@ const CompanyMobileCard = React.memo(
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            variant="secondary"
-            outline
-            icon={<Eye className="h-3 w-3" />}
-            onClick={() => onView(company.id)}
-            className="flex-1 sm:flex-none"
-          >
-            Ver
-          </Button>
-          <Button
-            size="sm"
-            variant="primary"
-            outline
-            icon={<Edit className="h-3 w-3" />}
-            onClick={() => onEdit(company.id)}
-            className="flex-1 sm:flex-none"
-          >
-            Editar
-          </Button>
-          <Button
-            size="sm"
-            variant="danger"
-            outline
-            icon={<Trash2 className="h-3 w-3" />}
-            onClick={() => onDelete(company.id)}
-            className="flex-1 sm:flex-none"
-          >
-            Excluir
-          </Button>
+        <div className="flex justify-end pt-3 border-t border-gray-200 dark:border-gray-700">
+          <ActionDropdown>
+            <ActionDropdown.Item
+              icon={<Eye className="h-4 w-4" />}
+              onClick={() => onView(company.id)}
+            >
+              Ver Detalhes
+            </ActionDropdown.Item>
+
+            <ActionDropdown.Item
+              icon={<Edit className="h-4 w-4" />}
+              onClick={() => onEdit(company.id)}
+            >
+              Editar
+            </ActionDropdown.Item>
+
+            <ActionDropdown.Item
+              icon={<Trash2 className="h-4 w-4" />}
+              onClick={() => onDelete(company.id)}
+              variant="danger"
+            >
+              Excluir
+            </ActionDropdown.Item>
+          </ActionDropdown>
         </div>
       </div>
     );

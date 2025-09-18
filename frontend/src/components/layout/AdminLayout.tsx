@@ -5,6 +5,9 @@ import Sidebar from "./Sidebar";
 import DynamicSidebar from "../navigation/DynamicSidebar";
 import Footer from "./Footer";
 import ImpersonationBanner from "../security/ImpersonationBanner";
+import Breadcrumb from "../ui/Breadcrumb";
+import { useBreadcrumbs } from "../../hooks/useBreadcrumbs";
+import { authService } from "../../services/api";
 
 const AdminLayout: React.FC = React.memo(() => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
@@ -15,6 +18,7 @@ const AdminLayout: React.FC = React.memo(() => {
   const [useDynamicMenus, setUseDynamicMenus] = useState<boolean>(true);
   const location = useLocation();
   const navigate = useNavigate();
+  const breadcrumbs = useBreadcrumbs();
 
   // 🔒 Verificar autenticação com validação JWT real
   useEffect(() => {
@@ -29,22 +33,37 @@ const AdminLayout: React.FC = React.memo(() => {
         }
 
         // Se tem token, tentar validar com backend
-        const { authService } = await import("../../services/api");
-        const validation = await authService.validateToken();
+        let validation = await authService.validateToken();
 
         if (!validation.valid) {
-          console.info("Token inválido:", validation.reason);
+          if (validation.reason === "expired") {
+            // Tentar refresh do token
+            console.info("Token expirado, tentando refresh...");
+            const refreshResult = await authService.refreshToken();
 
-          // Limpar dados de autenticação
-          localStorage.removeItem("access_token");
-          localStorage.removeItem("user");
+            if (refreshResult.success) {
+              console.info("Token renovado com sucesso");
+              // Revalidar com o novo token
+              validation = await authService.validateToken();
+            } else {
+              console.info("Falha no refresh do token:", refreshResult.reason);
+            }
+          }
 
-          // Salvar URL atual para redirecionar após login
-          const currentPath = location.pathname + location.search;
-          sessionStorage.setItem("redirectAfterLogin", currentPath);
+          if (!validation.valid) {
+            console.info("Token inválido:", validation.reason);
 
-          navigate("/login");
-          return;
+            // Limpar dados de autenticação
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("user");
+
+            // Salvar URL atual para redirecionar após login
+            const currentPath = location.pathname + location.search;
+            sessionStorage.setItem("redirectAfterLogin", currentPath);
+
+            navigate("/login");
+            return;
+          }
         }
 
         // Token válido - usuário autenticado
@@ -167,34 +186,7 @@ const AdminLayout: React.FC = React.memo(() => {
     return breadcrumbs.join(" / ");
   };
 
-  // Toggle para desenvolvimento: alternar entre menus dinâmicos e estáticos
-  const toggleMenuType = (): void => {
-    setUseDynamicMenus((prev) => {
-      const newValue = !prev;
-      console.log(
-        `🔄 Alternando menus: ${newValue ? "Dinâmicos" : "Estáticos"}`
-      );
-
-      // Salvar preferência localmente
-      localStorage.setItem("useDynamicMenus", newValue.toString());
-
-      return newValue;
-    });
-  };
-
-  // Toggle para desenvolvimento: alternar entre usuário normal e ROOT
-  const toggleUserType = (): void => {
-    const isRoot = localStorage.getItem("testAsRoot") === "true";
-    const newValue = !isRoot;
-
-    localStorage.setItem("testAsRoot", newValue.toString());
-    console.log(
-      `🔄 Alternando usuário: ${newValue ? "ROOT (ID: 2)" : "Normal (ID: 1)"}`
-    );
-
-    // Recarregar página para aplicar mudança
-    window.location.reload();
-  };
+  // Remover funcionalidades de debug
 
   // Carregar preferência salva
   useEffect(() => {
@@ -295,42 +287,7 @@ const AdminLayout: React.FC = React.memo(() => {
           sidebarOpen={sidebarOpen}
         />
 
-        {/* Impersonation Banner */}
-        <ImpersonationBanner />
-
-        {/* Development Controls - Only in development */}
-        {import.meta.env.DEV && (
-          <div className="bg-yellow-100 border-b border-yellow-200 px-4 py-2">
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center space-x-4">
-                <span className="text-yellow-800">
-                  🔧 Menus:{" "}
-                  {useDynamicMenus ? "Dinâmicos (API)" : "Estáticos (Mock)"}
-                </span>
-                <span className="text-yellow-800">
-                  👤 Usuário:{" "}
-                  {localStorage.getItem("testAsRoot") === "true"
-                    ? "ROOT (ID: 2)"
-                    : "Normal (ID: 1)"}
-                </span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={toggleMenuType}
-                  className="text-yellow-700 hover:text-yellow-900 underline text-xs"
-                >
-                  Alternar Menus
-                </button>
-                <button
-                  onClick={toggleUserType}
-                  className="text-yellow-700 hover:text-yellow-900 underline text-xs"
-                >
-                  Alternar Usuário
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Banner removido - simplificação */}
 
         {/* Main Content Area */}
         <main
@@ -343,6 +300,12 @@ const AdminLayout: React.FC = React.memo(() => {
         >
           <div className="py-6">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+              {/* Breadcrumb Navigation */}
+              {breadcrumbs.length > 1 && (
+                <div className="mb-6">
+                  <Breadcrumb items={breadcrumbs} />
+                </div>
+              )}
               <Outlet />
             </div>
           </div>

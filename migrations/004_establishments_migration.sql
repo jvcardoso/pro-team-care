@@ -5,32 +5,32 @@
 -- =====================================================
 
 -- 1. Adicionar campos faltantes
-ALTER TABLE master.establishments 
+ALTER TABLE master.establishments
     ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0,
     ADD COLUMN IF NOT EXISTS metadata JSONB NULL;
 
 -- 2. Popular display_order para registros existentes
-UPDATE master.establishments 
+UPDATE master.establishments
 SET display_order = ROW_NUMBER() OVER (PARTITION BY company_id ORDER BY id)
 WHERE deleted_at IS NULL;
 
 -- 3. Criar índices necessários
-CREATE INDEX IF NOT EXISTS idx_establishments_display_order 
-ON master.establishments (company_id, display_order) 
+CREATE INDEX IF NOT EXISTS idx_establishments_display_order
+ON master.establishments (company_id, display_order)
 WHERE deleted_at IS NULL;
 
-CREATE INDEX IF NOT EXISTS idx_establishments_metadata_gin 
-ON master.establishments USING GIN (metadata) 
+CREATE INDEX IF NOT EXISTS idx_establishments_metadata_gin
+ON master.establishments USING GIN (metadata)
 WHERE deleted_at IS NULL AND metadata IS NOT NULL;
 
 -- 4. Constraint única display_order por company
-CREATE UNIQUE INDEX IF NOT EXISTS idx_establishments_company_display_unique 
-ON master.establishments (company_id, display_order) 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_establishments_company_display_unique
+ON master.establishments (company_id, display_order)
 WHERE deleted_at IS NULL;
 
 -- 5. Constraint business rule: apenas 1 principal por company
-CREATE UNIQUE INDEX IF NOT EXISTS idx_establishments_company_principal_unique 
-ON master.establishments (company_id) 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_establishments_company_principal_unique
+ON master.establishments (company_id)
 WHERE deleted_at IS NULL AND is_principal = true;
 
 -- 6. Função de Validação Company->Establishment
@@ -51,40 +51,40 @@ DECLARE
 BEGIN
     -- Verificar se company existe e está ativa
     SELECT EXISTS(
-        SELECT 1 FROM master.companies 
+        SELECT 1 FROM master.companies
         WHERE id = company_id_param AND deleted_at IS NULL
     ) INTO company_exists;
-    
+
     -- Verificar code único na company
     SELECT EXISTS(
-        SELECT 1 FROM master.establishments 
-        WHERE company_id = company_id_param 
-          AND code = code_param 
+        SELECT 1 FROM master.establishments
+        WHERE company_id = company_id_param
+          AND code = code_param
           AND deleted_at IS NULL
     ) INTO code_exists;
-    
+
     -- Verificar se já existe principal
     IF is_principal_param THEN
         SELECT EXISTS(
-            SELECT 1 FROM master.establishments 
-            WHERE company_id = company_id_param 
-              AND is_principal = true 
+            SELECT 1 FROM master.establishments
+            WHERE company_id = company_id_param
+              AND is_principal = true
               AND deleted_at IS NULL
         ) INTO principal_exists;
     ELSE
         principal_exists := false;
     END IF;
-    
+
     -- Calcular próximo display_order
     SELECT COALESCE(MAX(display_order), 0) + 1 INTO next_order
-    FROM master.establishments 
+    FROM master.establishments
     WHERE company_id = company_id_param AND deleted_at IS NULL;
-    
+
     -- Retornar validação
     RETURN QUERY
-    SELECT 
+    SELECT
         company_exists AND NOT code_exists AND NOT principal_exists,
-        CASE 
+        CASE
             WHEN NOT company_exists THEN 'Company não encontrada ou inativa'
             WHEN code_exists THEN 'Code já existe nesta company'
             WHEN principal_exists THEN 'Já existe establishment principal nesta company'
@@ -105,21 +105,21 @@ BEGIN
     -- Atualizar display_order de cada establishment
     FOR order_item IN SELECT * FROM jsonb_array_elements(establishment_orders)
     LOOP
-        UPDATE master.establishments 
+        UPDATE master.establishments
         SET display_order = (order_item->>'order')::INTEGER,
             updated_at = CURRENT_TIMESTAMP
-        WHERE id = (order_item->>'id')::BIGINT 
+        WHERE id = (order_item->>'id')::BIGINT
           AND company_id = company_id_param
           AND deleted_at IS NULL;
     END LOOP;
-    
+
     RETURN true;
 END;
 $$ LANGUAGE plpgsql;
 
 -- 8. View Pública
 CREATE OR REPLACE VIEW master.vw_establishments_public AS
-SELECT 
+SELECT
     e.id AS establishment_id,
     e.code AS establishment_code,
     e.type AS establishment_type,
@@ -135,25 +135,25 @@ SELECT
     CASE WHEN e.operating_hours IS NOT NULL THEN 'HAS_HOURS' ELSE 'DEFAULT_HOURS' END AS hours_status,
     e.created_at
 FROM master.establishments e
-WHERE e.deleted_at IS NULL 
+WHERE e.deleted_at IS NULL
   AND e.is_active = true
 ORDER BY e.company_id, e.display_order;
 
 -- 9. View Admin Completa
 CREATE OR REPLACE VIEW master.vw_establishments_admin AS
-SELECT 
+SELECT
     e.*,
     c.person_id AS company_person_id,
     p.name AS company_name,
     p.tax_id AS company_tax_id,
     -- Contadores de relacionamentos
-    (SELECT COUNT(*) FROM master.user_establishments ue 
+    (SELECT COUNT(*) FROM master.user_establishments ue
      WHERE ue.establishment_id = e.id AND ue.deleted_at IS NULL) AS user_count,
-    (SELECT COUNT(*) FROM master.professionals pr 
+    (SELECT COUNT(*) FROM master.professionals pr
      WHERE pr.establishment_id = e.id AND pr.deleted_at IS NULL) AS professional_count,
-    (SELECT COUNT(*) FROM master.clients cl 
+    (SELECT COUNT(*) FROM master.clients cl
      WHERE cl.establishment_id = e.id AND cl.deleted_at IS NULL) AS client_count,
-    (SELECT COUNT(*) FROM master.establishment_settings es 
+    (SELECT COUNT(*) FROM master.establishment_settings es
      WHERE es.establishment_id = e.id AND es.deleted_at IS NULL) AS setting_count
 FROM master.establishments e
 JOIN master.companies c ON e.company_id = c.id
@@ -164,7 +164,7 @@ ORDER BY c.id, e.display_order;
 
 -- 10. View Hierárquica Company->Establishment
 CREATE OR REPLACE VIEW master.vw_company_establishments AS
-SELECT 
+SELECT
     c.id AS company_id,
     c.person_id AS company_person_id,
     c.display_order AS company_order,

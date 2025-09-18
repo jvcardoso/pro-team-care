@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useAuth } from "../../contexts/AuthContext";
 import { authService } from "../../services/api";
-import ProfileSwitcher from "../security/ProfileSwitcher";
 import {
   Sun,
   Moon,
@@ -24,6 +24,7 @@ const Header = ({
   sidebarOpen,
 }) => {
   const { theme, toggleTheme, isDark } = useTheme();
+  const { user, logout, loading } = useAuth();
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [messagesOpen, setMessagesOpen] = useState(false);
@@ -105,7 +106,36 @@ const Header = ({
   const unreadMessages = messages.length;
 
   const handleLogout = () => {
-    authService.logout();
+    logout();
+  };
+
+  // Helper para gerar iniciais do nome
+  const getInitials = (fullName) => {
+    if (!fullName) return "U";
+    const names = fullName.split(" ");
+    if (names.length >= 2) {
+      return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+    }
+    return fullName.substring(0, 2).toUpperCase();
+  };
+
+  // Dados do usuário com fallback
+  const userDisplayName = user?.full_name || "Usuário";
+  const userEmail = user?.email_address || "email@exemplo.com";
+  const userInitials = getInitials(userDisplayName);
+
+  // Dados da empresa e estabelecimentos
+  const companyName = user?.company_name;
+  const establishmentName = user?.establishment_name;
+  const establishments = user?.establishments || [];
+  const contextType = user?.context_type;
+
+  // Determinar o perfil atual
+  const getCurrentProfile = () => {
+    if (user?.is_system_admin) return "Administrador do Sistema";
+    if (contextType === "company") return "Gestor de Empresa";
+    if (contextType === "establishment") return "Gestor de Estabelecimento";
+    return "Usuário";
   };
 
   return (
@@ -174,9 +204,6 @@ const Header = ({
                 />
               </div>
             </div>
-
-            {/* Profile Switcher - ROOT controls */}
-            <ProfileSwitcher />
 
             {/* Theme Toggle */}
             <button
@@ -293,34 +320,82 @@ const Header = ({
 
             {/* User Menu */}
             <div className="relative" ref={userMenuRef}>
-              <button
-                onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-medium">AD</span>
+              {loading ? (
+                <div className="flex items-center space-x-2 p-2">
+                  <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full animate-pulse"></div>
+                  <div className="hidden md:block text-left">
+                    <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded animate-pulse mb-1 w-24"></div>
+                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-16"></div>
+                  </div>
+                  <div className="w-4 h-4 bg-gray-300 dark:bg-gray-600 rounded animate-pulse"></div>
                 </div>
-                <div className="hidden md:block text-left">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                    Admin User
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Administrador
-                  </p>
-                </div>
-                <ChevronDown className="h-4 w-4 text-gray-400" />
-              </button>
+              ) : (
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <span className="text-white text-sm font-medium">
+                      {companyName ? getInitials(companyName) : "PC"}
+                    </span>
+                  </div>
+                  <div className="hidden md:block text-left">
+                    <div className="flex items-center space-x-2">
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                        {userEmail}
+                      </p>
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {getCurrentProfile()}
+                    </p>
+                  </div>
+                  <ChevronDown className="h-4 w-4 text-gray-400" />
+                </button>
+              )}
 
               {/* User Dropdown */}
               {userMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 animate-fade-in z-50">
-                  <div className="p-3 border-b border-gray-200 dark:border-gray-700">
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      Admin User
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      admin@procare.com
-                    </p>
+                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 animate-fade-in z-50">
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                    <div className="space-y-2 text-sm">
+                      {/* Empresa */}
+                      {companyName && (
+                        <div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                            Empresa:
+                          </p>
+                          <p className="text-gray-900 dark:text-gray-100 font-medium">
+                            {companyName}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Estabelecimentos */}
+                      {establishments.length > 0 && (
+                        <div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                            Unidades:
+                          </p>
+                          {establishments.map((establishment) => (
+                            <p
+                              key={establishment.id}
+                              className="text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer py-1"
+                            >
+                              {establishment.name}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Fallback quando não há dados */}
+                      {!companyName && establishments.length === 0 && (
+                        <div className="text-center py-2">
+                          <p className="text-xs text-gray-400 italic">
+                            Nenhuma empresa ou estabelecimento vinculado
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="py-1">
                     <a

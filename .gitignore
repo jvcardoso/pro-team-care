@@ -87,3 +87,9 @@ private_key.pem
 
 # Documentation build
 docs/_build/
+
+# ⚠️ SEGURANÇA - NÃO COMMITTAR VERSÕES COMPLEXAS
+security_enterprise.py
+security_production_complex.py
+middleware_heavy.py
+*_complex_security.py

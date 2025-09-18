@@ -2,11 +2,13 @@
 Debug Menus API - Endpoint público temporário para debugging mobile
 """
 
-from fastapi import APIRouter
 import time
+
+from fastapi import APIRouter
 
 # Router independente SEM AUTENTICAÇÃO
 debug_router = APIRouter(prefix="/debug", tags=["Debug"])
+
 
 @debug_router.get("/menus-public")
 async def get_debug_menus_public_simple():
@@ -14,7 +16,7 @@ async def get_debug_menus_public_simple():
     Endpoint público temporário para debug do menu mobile
     SEM AUTENTICAÇÃO - SEM DEPENDÊNCIAS
     """
-    
+
     return {
         "debug": True,
         "message": "Endpoint debug funcionando",
@@ -29,19 +31,19 @@ async def get_debug_menus_public_simple():
                 "sort_order": 1,
                 "is_visible": True,
                 "visible_in_menu": True,
-                "children": []
+                "children": [],
             },
             {
                 "id": 2,
                 "name": "Empresas (Debug)",
                 "slug": "empresas-debug",
-                "url": "/admin/empresas", 
+                "url": "/admin/empresas",
                 "icon": "Building",
                 "level": 0,
                 "sort_order": 2,
                 "is_visible": True,
                 "visible_in_menu": True,
-                "children": []
+                "children": [],
             },
             {
                 "id": 3,
@@ -64,7 +66,7 @@ async def get_debug_menus_public_simple():
                         "sort_order": 1,
                         "is_visible": True,
                         "visible_in_menu": True,
-                        "children": []
+                        "children": [],
                     },
                     {
                         "id": 32,
@@ -76,14 +78,14 @@ async def get_debug_menus_public_simple():
                         "sort_order": 2,
                         "is_visible": True,
                         "visible_in_menu": True,
-                        "children": []
-                    }
-                ]
-            }
+                        "children": [],
+                    },
+                ],
+            },
         ],
         "total_menus": 3,
         "cache_hit": False,
         "endpoint": "debug-menus-public-simple",
         "timestamp": time.time(),
-        "status": "working"
+        "status": "working",
     }

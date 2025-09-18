@@ -43,7 +43,7 @@ def timing_decorator(func):
 
 class MenuRepository:
     """Repository simplificado para menus dinâmicos - versão de teste"""
-    
+
     def __init__(self, db: AsyncSession):
         self.db = db
 
@@ -58,21 +58,21 @@ class MenuRepository:
         """
         Retorna menus simplificados baseados no template atual
         """
-        
+
         logger.info("Buscando menus simplificados",
                    user_id=user_id,
                    context_type=context_type,
                    context_id=context_id,
                    include_dev_menus=include_dev_menus)
-        
+
         # Verificar se o usuário existe
         user_info = await self.get_user_info(user_id)
         if not user_info:
             return []
-        
+
         # Definir menus baseados no template atual
         is_root = user_info.get('is_system_admin', False)
-        
+
         # Menus básicos para todos os usuários
         basic_menus = [
             {
@@ -166,7 +166,7 @@ class MenuRepository:
                 "permission_name": "charts.view"
             }
         ]
-        
+
         # Menus adicionais para ROOT
         root_menus = [
             {
@@ -212,7 +212,7 @@ class MenuRepository:
                 "permission_name": "settings.view"
             }
         ]
-        
+
         # Menus de desenvolvimento (apenas ROOT)
         dev_menus = [
             {
@@ -246,31 +246,31 @@ class MenuRepository:
                 "permission_name": "debug.view"
             }
         ]
-        
+
         # Compilar lista de menus baseado nas permissões
         menus = basic_menus.copy()
-        
+
         if is_root:
             menus.extend(root_menus)
-            
+
             if include_dev_menus:
                 menus.extend(dev_menus)
-        
+
         logger.info("Menus simplificados retornados",
                    user_id=user_id,
                    total_menus=len(menus),
                    is_root=is_root,
                    include_dev=include_dev_menus)
-        
+
         return menus
 
     async def get_user_info(self, user_id: int) -> Optional[Dict[str, Any]]:
         """
         Busca informações básicas do usuário para validação.
         """
-        
+
         query = text("""
-            SELECT 
+            SELECT
                 u.id,
                 u.email_address,
                 u.is_system_admin,
@@ -282,26 +282,26 @@ class MenuRepository:
             WHERE u.id = :user_id
             AND u.deleted_at IS NULL
         """)
-        
+
         try:
             result = await self.db.execute(query, {"user_id": user_id})
             row = result.fetchone()
-            
+
             if row:
                 return {
                     "id": row[0],
-                    "email": row[1], 
+                    "email": row[1],
                     "is_system_admin": row[2] or False,
                     "is_active": row[3] or False,
                     "name": row[4] or f"Usuário {user_id}",
                     "person_type": row[5] or "PF"
                 }
-            
+
             return None
-            
+
         except Exception as e:
-            logger.error("Erro ao buscar informações do usuário", 
-                        user_id=user_id, 
+            logger.error("Erro ao buscar informações do usuário",
+                        user_id=user_id,
                         error=str(e))
             return None
 
@@ -309,10 +309,10 @@ class MenuRepository:
         """
         Converte lista flat de menus em estrutura hierárquica
         """
-        
+
         # Criar dicionário para lookup rápido
         menu_dict = {menu["id"]: {**menu, "children": []} for menu in flat_menus}
-        
+
         # Construir árvore
         tree = []
         for menu in flat_menus:
@@ -321,26 +321,26 @@ class MenuRepository:
                 menu_dict[parent_id]["children"].append(menu_dict[menu["id"]])
             else:
                 tree.append(menu_dict[menu["id"]])
-        
+
         # Ordenar por sort_order
         def sort_menus(menus):
             menus.sort(key=lambda x: x.get("sort_order", 999))
             for menu in menus:
                 if menu["children"]:
                     sort_menus(menu["children"])
-        
+
         sort_menus(tree)
         return tree
 
     async def get_context_info(
-        self, 
-        context_type: str, 
+        self,
+        context_type: str,
         context_id: Optional[int] = None
     ) -> Dict[str, Any]:
         """
         Retorna informações do contexto atual
         """
-        
+
         return {
             "type": context_type,
             "id": context_id,
@@ -360,7 +360,7 @@ class MenuRepository:
         """
         Log de auditoria simplificado
         """
-        
+
         logger.info("Menu access logged",
                    user_id=user_id,
                    context_type=context_type,

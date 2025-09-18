@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { companiesService } from "../../services/api";
+import { useNavigate } from "react-router-dom";
+import { companiesService, establishmentsService } from "../../services/api";
 import Card from "../ui/Card";
 import Button from "../ui/Button";
 import CompanyBasicInfo from "../entities/CompanyBasicInfo";
@@ -29,19 +30,54 @@ import {
   Send,
   Navigation,
   ExternalLink,
+  Plus,
 } from "lucide-react";
 
-const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
+const CompanyDetails = ({
+  companyId,
+  onEdit,
+  onBack,
+  onDelete,
+  initialTab = "informacoes",
+}) => {
+  const navigate = useNavigate();
   const [company, setCompany] = useState(null);
+  const [establishments, setEstablishments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState("informacoes");
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Verificar se há parâmetro de aba na URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get("tab");
+    if (
+      tabParam &&
+      [
+        "informacoes",
+        "estabelecimentos",
+        "clientes",
+        "profissionais",
+        "pacientes",
+        "usuarios",
+        "lgpd",
+      ].includes(tabParam)
+    ) {
+      setActiveTab(tabParam);
+    }
+  }, [initialTab]);
 
   useEffect(() => {
     if (companyId) {
       loadCompany();
     }
   }, [companyId]);
+
+  useEffect(() => {
+    if (activeTab === "estabelecimentos" && companyId) {
+      loadEstablishments();
+    }
+  }, [activeTab, companyId]);
 
   const loadCompany = async () => {
     try {
@@ -59,6 +95,21 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadEstablishments = async () => {
+    try {
+      const response = await establishmentsService.getEstablishmentsByCompany(
+        companyId
+      );
+      const establishmentsData = response?.establishments || response || [];
+      setEstablishments(
+        Array.isArray(establishmentsData) ? establishmentsData : []
+      );
+    } catch (err) {
+      console.error("Erro ao carregar estabelecimentos:", err);
+      setEstablishments([]);
     }
   };
 
@@ -144,7 +195,7 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 px-4 sm:px-0">
       {/* Header */}
       <div className="space-y-4">
         {/* Back Button */}
@@ -160,15 +211,15 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
         </div>
 
         {/* Company Info and Actions */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex flex-col gap-4">
           <div className="min-w-0">
-            <h1 className="text-2xl font-bold text-foreground break-words">
+            <h1 className="text-lg sm:text-2xl font-bold text-foreground break-words">
               {company.people.name}
             </h1>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-1">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-2">
               {company.people.trade_name &&
                 company.people.trade_name !== company.people.name && (
-                  <p className="text-muted-foreground break-words">
+                  <p className="text-sm sm:text-base text-muted-foreground break-words">
                     {company.people.trade_name}
                   </p>
                 )}
@@ -177,25 +228,23 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
               </span>
             </div>
           </div>
-          <div className="flex gap-3 shrink-0">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <Button
               variant="primary"
               onClick={() => onEdit?.(companyId)}
               icon={<Edit className="h-4 w-4" />}
-              className="flex-1 sm:flex-none"
+              className="w-full sm:w-auto"
             >
-              <span className="hidden sm:inline">Editar</span>
-              <span className="sm:hidden">Editar</span>
+              Editar
             </Button>
             <Button
               variant="danger"
               outline
               onClick={handleDelete}
               icon={<Trash2 className="h-4 w-4" />}
-              className="flex-1 sm:flex-none"
+              className="w-full sm:w-auto"
             >
-              <span className="hidden sm:inline">Excluir</span>
-              <span className="sm:hidden">Excluir</span>
+              Excluir
             </Button>
           </div>
         </div>
@@ -203,21 +252,22 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
 
       {/* Tabs */}
       <div className="border-b border-border">
-        <div className="overflow-x-auto">
-          <div className="flex space-x-4 sm:space-x-8 min-w-max">
+        <div className="overflow-x-auto scrollbar-hide">
+          <div className="flex space-x-1 sm:space-x-4 lg:space-x-8 min-w-max">
             <button
               onClick={() => setActiveTab("informacoes")}
-              className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${
+              className={`py-3 sm:py-4 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === "informacoes"
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
               }`}
             >
-              Informações
+              <span className="hidden sm:inline">Informações</span>
+              <span className="sm:hidden">Info</span>
             </button>
             <button
               onClick={() => setActiveTab("estabelecimentos")}
-              className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${
+              className={`py-3 sm:py-4 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === "estabelecimentos"
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
@@ -228,17 +278,18 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
             </button>
             <button
               onClick={() => setActiveTab("clientes")}
-              className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${
+              className={`py-3 sm:py-4 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === "clientes"
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
               }`}
             >
-              Clientes
+              <span className="hidden sm:inline">Clientes</span>
+              <span className="sm:hidden">Client.</span>
             </button>
             <button
               onClick={() => setActiveTab("profissionais")}
-              className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${
+              className={`py-3 sm:py-4 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === "profissionais"
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
@@ -249,27 +300,29 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
             </button>
             <button
               onClick={() => setActiveTab("pacientes")}
-              className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${
+              className={`py-3 sm:py-4 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === "pacientes"
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
               }`}
             >
-              Pacientes
+              <span className="hidden sm:inline">Pacientes</span>
+              <span className="sm:hidden">Pacient.</span>
             </button>
             <button
               onClick={() => setActiveTab("usuarios")}
-              className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${
+              className={`py-3 sm:py-4 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === "usuarios"
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
               }`}
             >
-              Usuários
+              <span className="hidden sm:inline">Usuários</span>
+              <span className="sm:hidden">Users</span>
             </button>
             <button
               onClick={() => setActiveTab("lgpd")}
-              className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${
+              className={`py-3 sm:py-4 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === "lgpd"
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
@@ -477,8 +530,8 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
                   <span className="text-muted-foreground">
                     Estabelecimentos
                   </span>
-                  <span className="font-medium text-muted-foreground">
-                    Em breve
+                  <span className="font-medium text-foreground">
+                    {establishments.length}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -567,14 +620,111 @@ const CompanyDetails = ({ companyId, onEdit, onBack, onDelete }) => {
       )}
 
       {activeTab === "estabelecimentos" && (
-        <div className="text-center py-12">
-          <Building className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">
-            Estabelecimentos
-          </h3>
-          <p className="text-muted-foreground">
-            Em breve: Gerencie os estabelecimentos desta empresa
-          </p>
+        <div className="space-y-6">
+          {/* Header com botão Novo Estabelecimento */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-medium text-foreground">
+                Estabelecimentos da Empresa
+              </h3>
+              <p className="text-muted-foreground">
+                Gerencie os estabelecimentos vinculados a esta empresa
+              </p>
+            </div>
+            <Button
+              onClick={() => {
+                navigate(
+                  `/admin/estabelecimentos?companyId=${companyId}&action=create`
+                );
+              }}
+              icon={<Plus className="h-4 w-4" />}
+              className="w-full sm:w-auto whitespace-nowrap"
+            >
+              <span className="hidden sm:inline">Novo Estabelecimento</span>
+              <span className="sm:hidden">+ Estabelecimento</span>
+            </Button>
+          </div>
+
+          {/* Lista de Estabelecimentos */}
+          {establishments.length === 0 ? (
+            <div className="text-center py-12">
+              <Building className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">
+                Nenhum estabelecimento encontrado
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                Esta empresa ainda não possui estabelecimentos cadastrados
+              </p>
+              <Button
+                onClick={() => {
+                  navigate(
+                    `/admin/estabelecimentos?companyId=${companyId}&action=create`
+                  );
+                }}
+                icon={<Plus className="h-4 w-4" />}
+              >
+                Criar Primeiro Estabelecimento
+              </Button>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {establishments.map((establishment) => (
+                <Card key={establishment.id} className="p-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3">
+                        <Building className="h-5 w-5 text-primary flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-medium text-foreground break-words">
+                            {establishment.person?.name || establishment.code}
+                          </h4>
+                          <p className="text-sm text-muted-foreground">
+                            Código: {establishment.code}
+                          </p>
+                          {establishment.person?.tax_id && (
+                            <p className="text-sm text-muted-foreground break-all">
+                              CNPJ: {establishment.person.tax_id}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-2">
+                      <div className="flex flex-wrap gap-2">
+                        <span
+                          className={`px-2 py-1 text-xs rounded whitespace-nowrap ${
+                            establishment.is_active
+                              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                              : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                          }`}
+                        >
+                          {establishment.is_active ? "Ativo" : "Inativo"}
+                        </span>
+                        {establishment.is_principal && (
+                          <span className="px-2 py-1 text-xs bg-primary/10 text-primary rounded whitespace-nowrap">
+                            Principal
+                          </span>
+                        )}
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        outline
+                        onClick={() => {
+                          navigate(
+                            `/admin/estabelecimentos/${establishment.id}?tab=informacoes`
+                          );
+                        }}
+                        className="w-full sm:w-auto whitespace-nowrap"
+                      >
+                        Ver Detalhes
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

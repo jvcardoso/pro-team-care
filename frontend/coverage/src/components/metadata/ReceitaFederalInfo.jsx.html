@@ -408,7 +408,7 @@
 import Card from '../ui/Card';
 &nbsp;
 const ReceitaFederalInfo = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >({ </span></span>
-  metadata, 
+  metadata,
   title = <span class="branch-0 cbranch-no" title="branch not covered" >"Informações da Receita Federal",</span>
   className = <span class="branch-0 cbranch-no" title="branch not covered" >"bg-blue-50 dark:bg-blue-900/20",</span>
   showCNAEs = <span class="branch-0 cbranch-no" title="branch not covered" >true,</span>
@@ -421,7 +421,7 @@ const ReceitaFederalInfo = <span class="cstat-no" title="statement not covered" 
 <span class="cstat-no" title="statement not covered" >  if (process.env.NODE_ENV === 'development' &amp;&amp; (!metadata || Object.keys(metadata).length === 0)) {</span>
 <span class="cstat-no" title="statement not covered" >    console.log('ReceitaFederalInfo: Nenhum metadata disponível');</span>
   }
-  
+
 <span class="cstat-no" title="statement not covered" >  if (!metadata || Object.keys(metadata).length === 0) {</span>
 <span class="cstat-no" title="statement not covered" >    return null;</span>
   }
@@ -437,8 +437,8 @@ const ReceitaFederalInfo = <span class="cstat-no" title="statement not covered" 
                 CNAE Principal
               &lt;/label&gt;
               &lt;p className="text-sm text-muted-foreground bg-white dark:bg-gray-800 p-2 rounded border"&gt;
-                {metadata.cnae_fiscal || metadata.cnae_principal} 
-                {(metadata.cnae_fiscal_descricao || metadata.cnae_principal_descricao) &amp;&amp; 
+                {metadata.cnae_fiscal || metadata.cnae_principal}
+                {(metadata.cnae_fiscal_descricao || metadata.cnae_principal_descricao) &amp;&amp;
                   ` - ${metadata.cnae_fiscal_descricao || metadata.cnae_principal_descricao}`
                 }
               &lt;/p&gt;
@@ -455,7 +455,7 @@ const ReceitaFederalInfo = <span class="cstat-no" title="statement not covered" 
             )}
           &lt;/div&gt;
         )}
-        
+
         {/* CNAEs Secundários */}
         {showCNAEs &amp;&amp; metadata.cnaes_secundarios &amp;&amp; metadata.cnaes_secundarios.length &gt; 0 &amp;&amp; (
           &lt;div&gt;

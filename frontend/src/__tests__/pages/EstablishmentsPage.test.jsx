@@ -4,7 +4,13 @@
  */
 
 import React from "react";
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
 import { jest } from "@jest/globals";
 import EstablishmentsPage from "../../pages/EstablishmentsPage";
 
@@ -34,7 +40,9 @@ jest.mock("../../utils/notifications.jsx", () => ({
 // Mock do status utils
 jest.mock("../../utils/statusUtils", () => ({
   getStatusBadge: jest.fn((status) => `badge-${status}`),
-  getStatusLabel: jest.fn((status) => status === "active" ? "Ativo" : "Inativo"),
+  getStatusLabel: jest.fn((status) =>
+    status === "active" ? "Ativo" : "Inativo"
+  ),
 }));
 
 import { establishmentsService, companiesService } from "../../services/api";
@@ -111,14 +119,20 @@ describe("EstablishmentsPage", () => {
 
       await waitFor(() => {
         expect(screen.getByText("Estabelecimentos")).toBeInTheDocument();
-        expect(screen.getByText("Gerencie os estabelecimentos cadastrados no sistema")).toBeInTheDocument();
+        expect(
+          screen.getByText(
+            "Gerencie os estabelecimentos cadastrados no sistema"
+          )
+        ).toBeInTheDocument();
       });
     });
 
     test("deve mostrar loading inicial", () => {
       render(<EstablishmentsPage />);
 
-      expect(screen.getByText("Carregando estabelecimentos...")).toBeInTheDocument();
+      expect(
+        screen.getByText("Carregando estabelecimentos...")
+      ).toBeInTheDocument();
     });
 
     test("deve carregar estabelecimentos na montagem", async () => {
@@ -179,7 +193,9 @@ describe("EstablishmentsPage", () => {
       render(<EstablishmentsPage />);
 
       await waitFor(() => {
-        const searchInput = screen.getByPlaceholderText("Buscar estabelecimentos...");
+        const searchInput = screen.getByPlaceholderText(
+          "Buscar estabelecimentos..."
+        );
         fireEvent.change(searchInput, { target: { value: "Clínica" } });
       });
 
@@ -261,7 +277,9 @@ describe("EstablishmentsPage", () => {
       });
 
       expect(screen.getByText("Novo Estabelecimento")).toBeInTheDocument();
-      expect(screen.getByText("Formulário de estabelecimento em desenvolvimento...")).toBeInTheDocument();
+      expect(
+        screen.getByText("Formulário de estabelecimento em desenvolvimento...")
+      ).toBeInTheDocument();
     });
 
     test("deve abrir modal de edição ao clicar em 'Editar'", async () => {
@@ -273,7 +291,9 @@ describe("EstablishmentsPage", () => {
       });
 
       expect(screen.getByText("Editar Estabelecimento")).toBeInTheDocument();
-      expect(screen.getByText("Formulário de estabelecimento em desenvolvimento...")).toBeInTheDocument();
+      expect(
+        screen.getByText("Formulário de estabelecimento em desenvolvimento...")
+      ).toBeInTheDocument();
     });
 
     test("deve abrir modal de detalhes ao clicar em 'Ver Detalhes'", async () => {
@@ -284,8 +304,12 @@ describe("EstablishmentsPage", () => {
         fireEvent.click(viewButtons[0]);
       });
 
-      expect(screen.getByText("Detalhes do Estabelecimento")).toBeInTheDocument();
-      expect(screen.getByText("Detalhes do estabelecimento em desenvolvimento...")).toBeInTheDocument();
+      expect(
+        screen.getByText("Detalhes do Estabelecimento")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("Detalhes do estabelecimento em desenvolvimento...")
+      ).toBeInTheDocument();
     });
 
     test("deve alternar status do estabelecimento", async () => {
@@ -316,8 +340,12 @@ describe("EstablishmentsPage", () => {
         await confirmCallback();
       });
 
-      expect(establishmentsService.toggleEstablishmentStatus).toHaveBeenCalledWith(1, false);
-      expect(notify.success).toHaveBeenCalledWith("Estabelecimento inativado com sucesso!");
+      expect(
+        establishmentsService.toggleEstablishmentStatus
+      ).toHaveBeenCalledWith(1, false);
+      expect(notify.success).toHaveBeenCalledWith(
+        "Estabelecimento inativado com sucesso!"
+      );
     });
 
     test("deve excluir estabelecimento", async () => {
@@ -346,7 +374,9 @@ describe("EstablishmentsPage", () => {
       });
 
       expect(establishmentsService.deleteEstablishment).toHaveBeenCalledWith(1);
-      expect(notify.success).toHaveBeenCalledWith("Estabelecimento excluído com sucesso!");
+      expect(notify.success).toHaveBeenCalledWith(
+        "Estabelecimento excluído com sucesso!"
+      );
     });
   });
 
@@ -365,7 +395,9 @@ describe("EstablishmentsPage", () => {
       await waitFor(() => {
         expect(screen.getByText("Anterior")).toBeInTheDocument();
         expect(screen.getByText("Próxima")).toBeInTheDocument();
-        expect(screen.getByText("Mostrando 1 a 10 de 25 estabelecimentos")).toBeInTheDocument();
+        expect(
+          screen.getByText("Mostrando 1 a 10 de 25 estabelecimentos")
+        ).toBeInTheDocument();
       });
     });
 
@@ -396,12 +428,16 @@ describe("EstablishmentsPage", () => {
   describe("Estados de Erro", () => {
     test("deve mostrar erro quando falha ao carregar estabelecimentos", async () => {
       const errorMessage = "Erro ao carregar estabelecimentos";
-      establishmentsService.getEstablishments.mockRejectedValue(new Error(errorMessage));
+      establishmentsService.getEstablishments.mockRejectedValue(
+        new Error(errorMessage)
+      );
 
       render(<EstablishmentsPage />);
 
       await waitFor(() => {
-        expect(screen.getByText(`Erro ao carregar estabelecimentos: ${errorMessage}`)).toBeInTheDocument();
+        expect(
+          screen.getByText(`Erro ao carregar estabelecimentos: ${errorMessage}`)
+        ).toBeInTheDocument();
         expect(screen.getByText("Tentar Novamente")).toBeInTheDocument();
       });
     });
@@ -425,14 +461,18 @@ describe("EstablishmentsPage", () => {
       });
 
       await waitFor(() => {
-        expect(establishmentsService.getEstablishments).toHaveBeenCalledTimes(2);
+        expect(establishmentsService.getEstablishments).toHaveBeenCalledTimes(
+          2
+        );
         expect(screen.getByText("Clínica Central")).toBeInTheDocument();
       });
     });
 
     test("deve mostrar erro ao falhar toggle de status", async () => {
       const errorMessage = "Erro ao alterar status";
-      establishmentsService.toggleEstablishmentStatus.mockRejectedValue(new Error(errorMessage));
+      establishmentsService.toggleEstablishmentStatus.mockRejectedValue(
+        new Error(errorMessage)
+      );
 
       render(<EstablishmentsPage />);
 
@@ -447,13 +487,15 @@ describe("EstablishmentsPage", () => {
         await confirmCallback();
       });
 
-      expect(notify.error).toHaveBeenCalledWith("Erro ao inativar estabelecimento");
+      expect(notify.error).toHaveBeenCalledWith(
+        "Erro ao inativar estabelecimento"
+      );
     });
 
     test("deve mostrar erro ao falhar exclusão", async () => {
       const errorMessage = "Erro interno do servidor";
       establishmentsService.deleteEstablishment.mockRejectedValue({
-        response: { data: { detail: errorMessage } }
+        response: { data: { detail: errorMessage } },
       });
 
       render(<EstablishmentsPage />);
@@ -469,14 +511,16 @@ describe("EstablishmentsPage", () => {
         await confirmCallback();
       });
 
-      expect(notify.error).toHaveBeenCalledWith(`Erro ao excluir estabelecimento: ${errorMessage}`);
+      expect(notify.error).toHaveBeenCalledWith(
+        `Erro ao excluir estabelecimento: ${errorMessage}`
+      );
     });
   });
 
   describe("Responsividade", () => {
     test("deve mostrar cards em dispositivos móveis", async () => {
       // Mock viewport pequeno
-      Object.defineProperty(window, 'innerWidth', {
+      Object.defineProperty(window, "innerWidth", {
         writable: true,
         configurable: true,
         value: 600,
@@ -493,7 +537,7 @@ describe("EstablishmentsPage", () => {
 
     test("deve mostrar tabela em desktop", async () => {
       // Mock viewport grande
-      Object.defineProperty(window, 'innerWidth', {
+      Object.defineProperty(window, "innerWidth", {
         writable: true,
         configurable: true,
         value: 1200,
@@ -503,7 +547,9 @@ describe("EstablishmentsPage", () => {
 
       await waitFor(() => {
         // Em desktop, deve mostrar tabela
-        expect(screen.getByText("Lista de Estabelecimentos")).toBeInTheDocument();
+        expect(
+          screen.getByText("Lista de Estabelecimentos")
+        ).toBeInTheDocument();
         expect(screen.getByText("Estabelecimento")).toBeInTheDocument();
         expect(screen.getByText("Empresa")).toBeInTheDocument();
         expect(screen.getByText("Tipo/Categoria")).toBeInTheDocument();
@@ -524,7 +570,9 @@ describe("EstablishmentsPage", () => {
       render(<EstablishmentsPage />);
 
       await waitFor(() => {
-        expect(screen.getByText("Nenhum estabelecimento encontrado")).toBeInTheDocument();
+        expect(
+          screen.getByText("Nenhum estabelecimento encontrado")
+        ).toBeInTheDocument();
       });
     });
 
@@ -540,12 +588,16 @@ describe("EstablishmentsPage", () => {
       render(<EstablishmentsPage />);
 
       await waitFor(() => {
-        const searchInput = screen.getByPlaceholderText("Buscar estabelecimentos...");
+        const searchInput = screen.getByPlaceholderText(
+          "Buscar estabelecimentos..."
+        );
         fireEvent.change(searchInput, { target: { value: "inexistente" } });
       });
 
       await waitFor(() => {
-        expect(screen.getByText("Nenhum estabelecimento encontrado")).toBeInTheDocument();
+        expect(
+          screen.getByText("Nenhum estabelecimento encontrado")
+        ).toBeInTheDocument();
       });
     });
   });

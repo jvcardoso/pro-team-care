@@ -560,14 +560,14 @@ const EmailInputGroup = <span class="cstat-no" title="statement not covered" ><s
 &nbsp;
   const handleAddEmail = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    if (emails.length &gt;= maxEmails) <span class="cstat-no" title="statement not covered" >return;</span></span>
-    
+
     const newEmail = <span class="cstat-no" title="statement not covered" >{</span>
       email_address: '',
       type: 'work',
       is_principal: emails.length === 0, // Primeiro é principal
       is_newsletter: false
     };
-    
+
 <span class="cstat-no" title="statement not covered" >    onAdd?.(newEmail);</span>
   };
 &nbsp;
@@ -624,7 +624,7 @@ const EmailInputGroup = <span class="cstat-no" title="statement not covered" ><s
               &lt;Plus className="h-5 w-5" /&gt;
             &lt;/Button&gt;
           &lt;/div&gt;
-          
+
           {/* Desktop: Ícone + Texto */}
           &lt;div className="hidden sm:block"&gt;
             &lt;Button

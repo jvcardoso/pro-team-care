@@ -2,27 +2,26 @@
 Gerenciador de Sessões Seguras com Troca de Perfil
 Integra com as tabelas user_sessions e context_switches
 """
-import uuid
-import secrets
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple, Any
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import text, select
-from structlog import get_logger
-from fastapi import HTTPException, status
 
-from app.domain.entities.user import User
+import secrets
+import uuid
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
+from fastapi import HTTPException, status
+from sqlalchemy import text
+from structlog import get_logger
 
 
 class SecureSessionManager:
     """
     Gerenciador de sessões seguras com capacidade de troca de perfil
     """
-    
-    def __init__(self, db: AsyncSession):
+
+    def __init__(self, db):
         self.db = db
         self.logger = get_logger()
-        
+
     async def create_secure_session(
         self,
         user_id: int,
@@ -31,7 +30,7 @@ class SecureSessionManager:
         device_fingerprint: Optional[str] = None,
         initial_role_id: Optional[int] = None,
         initial_context_type: Optional[str] = None,
-        initial_context_id: Optional[int] = None
+        initial_context_id: Optional[int] = None,
     ) -> Dict[str, Any]:
         """
         Criar sessão segura inicial
@@ -40,13 +39,14 @@ class SecureSessionManager:
             # Gerar tokens seguros
             session_token = str(uuid.uuid4())
             refresh_token = secrets.token_urlsafe(64)
-            
+
             # Definir expiração (2 horas para sessão, 7 dias para refresh)
             expires_at = datetime.utcnow() + timedelta(hours=2)
             refresh_expires_at = datetime.utcnow() + timedelta(days=7)
-            
+
             # Inserir sessão no banco
-            insert_query = text("""
+            insert_query = text(
+                """
                 INSERT INTO master.user_sessions (
                     user_id, session_token, refresh_token,
                     active_role_id, active_context_type, active_context_id,
@@ -58,27 +58,33 @@ class SecureSessionManager:
                     :ip_address, :user_agent, :device_fingerprint,
                     :expires_at, :refresh_expires_at
                 ) RETURNING id
-            """)
-            
-            result = await self.db.execute(insert_query, {
-                "user_id": user_id,
-                "session_token": session_token,
-                "refresh_token": refresh_token,
-                "active_role_id": initial_role_id,
-                "active_context_type": initial_context_type,
-                "active_context_id": initial_context_id,
-                "ip_address": ip_address,
-                "user_agent": user_agent,
-                "device_fingerprint": device_fingerprint,
-                "expires_at": expires_at,
-                "refresh_expires_at": refresh_expires_at
-            })
-            
+            """
+            )
+
+            result = await self.db.execute(
+                insert_query,
+                {
+                    "user_id": user_id,
+                    "session_token": session_token,
+                    "refresh_token": refresh_token,
+                    "active_role_id": initial_role_id,
+                    "active_context_type": initial_context_type,
+                    "active_context_id": initial_context_id,
+                    "ip_address": ip_address,
+                    "user_agent": user_agent,
+                    "device_fingerprint": device_fingerprint,
+                    "expires_at": expires_at,
+                    "refresh_expires_at": refresh_expires_at,
+                },
+            )
+
             session_id = result.scalar()
             await self.db.commit()
-            
-            self.logger.info("Secure session created", user_id=user_id, session_id=str(session_id))
-            
+
+            self.logger.info(
+                "Secure session created", user_id=user_id, session_id=str(session_id)
+            )
+
             return {
                 "session_id": str(session_id),
                 "session_token": session_token,
@@ -88,16 +94,18 @@ class SecureSessionManager:
                 "active_context": {
                     "role_id": initial_role_id,
                     "context_type": initial_context_type,
-                    "context_id": initial_context_id
-                }
+                    "context_id": initial_context_id,
+                },
             }
-            
+
         except Exception as e:
             await self.db.rollback()
-            self.logger.error("Error creating secure session", user_id=user_id, error=str(e))
+            self.logger.error(
+                "Error creating secure session", user_id=user_id, error=str(e)
+            )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Erro ao criar sessão segura"
+                detail="Erro ao criar sessão segura",
             )
 
     async def validate_session(self, session_token: str) -> Optional[Dict[str, Any]]:
@@ -105,8 +113,9 @@ class SecureSessionManager:
         Validar sessão e retornar contexto atual
         """
         try:
-            query = text("""
-                SELECT 
+            query = text(
+                """
+                SELECT
                     us.id as session_id,
                     us.user_id,
                     us.active_role_id,
@@ -126,25 +135,32 @@ class SecureSessionManager:
                 WHERE us.session_token = :session_token
                   AND us.is_active = true
                   AND us.expires_at > CURRENT_TIMESTAMP
-            """)
-            
+            """
+            )
+
             result = await self.db.execute(query, {"session_token": session_token})
             session_data = result.fetchone()
-            
+
             if not session_data:
                 return None
-            
+
             # Atualizar última atividade
             await self.db.execute(
-                text("UPDATE master.user_sessions SET last_activity_at = CURRENT_TIMESTAMP WHERE session_token = :token"),
-                {"token": session_token}
+                text(
+                    "UPDATE master.user_sessions SET last_activity_at = CURRENT_TIMESTAMP WHERE session_token = :token"
+                ),
+                {"token": session_token},
             )
             await self.db.commit()
-            
+
             return dict(session_data._mapping)
-            
+
         except Exception as e:
-            self.logger.error("Error validating session", session_token=session_token[:20], error=str(e))
+            self.logger.error(
+                "Error validating session",
+                session_token=session_token[:20],
+                error=str(e),
+            )
             return None
 
     async def get_available_profiles(self, user_id: int) -> List[Dict[str, Any]]:
@@ -153,18 +169,21 @@ class SecureSessionManager:
         """
         try:
             # Verificar se é ROOT
-            user_query = text("SELECT is_system_admin FROM master.users WHERE id = :user_id")
+            user_query = text(
+                "SELECT is_system_admin FROM master.users WHERE id = :user_id"
+            )
             user_result = await self.db.execute(user_query, {"user_id": user_id})
             user_data = user_result.fetchone()
-            
+
             if not user_data:
                 return []
-            
+
             is_root = user_data.is_system_admin
-            
+
             if is_root:
                 # ROOT pode assumir qualquer perfil
-                query = text("""
+                query = text(
+                    """
                     SELECT DISTINCT
                         ur.role_id,
                         r.name as role_name,
@@ -173,11 +192,11 @@ class SecureSessionManager:
                         ur.context_type,
                         ur.context_id,
                         ur.user_id,
-                        CASE 
+                        CASE
                             WHEN ur.context_type = 'system' THEN 'Sistema Global'
-                            WHEN ur.context_type = 'company' THEN 
+                            WHEN ur.context_type = 'company' THEN
                                 COALESCE((SELECT p.name FROM master.companies c JOIN master.people p ON c.person_id = p.id WHERE c.id = ur.context_id), 'Empresa Desconhecida')
-                            WHEN ur.context_type = 'establishment' THEN 
+                            WHEN ur.context_type = 'establishment' THEN
                                 COALESCE((SELECT p.name FROM master.establishments e JOIN master.people p ON e.person_id = p.id WHERE e.id = ur.context_id), 'Estabelecimento Desconhecido')
                             ELSE 'Contexto Desconhecido'
                         END as context_name,
@@ -191,21 +210,23 @@ class SecureSessionManager:
                       AND u.is_active = true
                     ORDER BY ur.user_id = :user_id DESC, r.level DESC
                     LIMIT 20
-                """)
+                """
+                )
             else:
                 # Usuários comuns veem apenas seus próprios perfis
-                query = text("""
-                    SELECT 
+                query = text(
+                    """
+                    SELECT
                         ur.role_id,
                         r.name as role_name,
                         r.display_name as role_display_name,
                         ur.context_type,
                         ur.context_id,
-                        CASE 
+                        CASE
                             WHEN ur.context_type = 'system' THEN 'Sistema Global'
-                            WHEN ur.context_type = 'company' THEN 
+                            WHEN ur.context_type = 'company' THEN
                                 COALESCE((SELECT p.name FROM master.companies c JOIN master.people p ON c.person_id = p.id WHERE c.id = ur.context_id), 'Empresa Desconhecida')
-                            WHEN ur.context_type = 'establishment' THEN 
+                            WHEN ur.context_type = 'establishment' THEN
                                 COALESCE((SELECT p.name FROM master.establishments e JOIN master.people p ON e.person_id = p.id WHERE e.id = ur.context_id), 'Estabelecimento Desconhecido')
                             ELSE 'Contexto Desconhecido'
                         END as context_name,
@@ -214,21 +235,24 @@ class SecureSessionManager:
                         '' as target_user_email
                     FROM master.user_roles ur
                     JOIN master.roles r ON ur.role_id = r.id
-                    WHERE ur.user_id = :user_id 
+                    WHERE ur.user_id = :user_id
                       AND ur.deleted_at IS NULL
                     ORDER BY r.level DESC
-                """)
-            
+                """
+                )
+
             result = await self.db.execute(query, {"user_id": user_id})
             profiles = []
-            
+
             for row in result.fetchall():
                 profiles.append(dict(row._mapping))
-            
+
             return profiles
-            
+
         except Exception as e:
-            self.logger.error("Error getting available profiles", user_id=user_id, error=str(e))
+            self.logger.error(
+                "Error getting available profiles", user_id=user_id, error=str(e)
+            )
             return []
 
     async def switch_context(
@@ -240,7 +264,7 @@ class SecureSessionManager:
         impersonated_user_id: Optional[int] = None,
         switch_reason: Optional[str] = None,
         ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None
+        user_agent: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Trocar contexto/perfil da sessão
@@ -251,18 +275,19 @@ class SecureSessionManager:
             if not current_session:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Sessão inválida ou expirada"
+                    detail="Sessão inválida ou expirada",
                 )
-            
+
             # Verificar se pode fazer a troca (ROOT pode tudo, outros apenas seus perfis)
-            if not current_session['is_system_admin'] and impersonated_user_id:
+            if not current_session["is_system_admin"] and impersonated_user_id:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Apenas administradores podem personificar usuários"
+                    detail="Apenas administradores podem personificar usuários",
                 )
-            
+
             # Registrar mudança de contexto
-            context_switch_query = text("""
+            context_switch_query = text(
+                """
                 INSERT INTO master.context_switches (
                     session_id, user_id,
                     previous_role_id, previous_context_type, previous_context_id, previous_impersonated_user_id,
@@ -274,28 +299,35 @@ class SecureSessionManager:
                     :new_role_id, :new_context_type, :new_context_id, :new_impersonated_user_id,
                     :switch_reason, :ip_address, :user_agent
                 )
-            """)
-            
-            await self.db.execute(context_switch_query, {
-                "session_id": current_session['session_id'],
-                "user_id": current_session['user_id'],
-                "prev_role_id": current_session['active_role_id'],
-                "prev_context_type": current_session['active_context_type'],
-                "prev_context_id": current_session['active_context_id'],
-                "prev_impersonated_user_id": current_session['impersonated_user_id'],
-                "new_role_id": new_role_id,
-                "new_context_type": new_context_type,
-                "new_context_id": new_context_id,
-                "new_impersonated_user_id": impersonated_user_id,
-                "switch_reason": switch_reason,
-                "ip_address": ip_address,
-                "user_agent": user_agent
-            })
-            
+            """
+            )
+
+            await self.db.execute(
+                context_switch_query,
+                {
+                    "session_id": current_session["session_id"],
+                    "user_id": current_session["user_id"],
+                    "prev_role_id": current_session["active_role_id"],
+                    "prev_context_type": current_session["active_context_type"],
+                    "prev_context_id": current_session["active_context_id"],
+                    "prev_impersonated_user_id": current_session[
+                        "impersonated_user_id"
+                    ],
+                    "new_role_id": new_role_id,
+                    "new_context_type": new_context_type,
+                    "new_context_id": new_context_id,
+                    "new_impersonated_user_id": impersonated_user_id,
+                    "switch_reason": switch_reason,
+                    "ip_address": ip_address,
+                    "user_agent": user_agent,
+                },
+            )
+
             # Atualizar sessão
-            update_session_query = text("""
-                UPDATE master.user_sessions 
-                SET 
+            update_session_query = text(
+                """
+                UPDATE master.user_sessions
+                SET
                     active_role_id = COALESCE(:new_role_id, active_role_id),
                     active_context_type = COALESCE(:new_context_type, active_context_type),
                     active_context_id = COALESCE(:new_context_id, active_context_id),
@@ -303,75 +335,96 @@ class SecureSessionManager:
                     last_activity_at = CURRENT_TIMESTAMP,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE session_token = :session_token
-            """)
-            
-            await self.db.execute(update_session_query, {
-                "new_role_id": new_role_id,
-                "new_context_type": new_context_type,
-                "new_context_id": new_context_id,
-                "impersonated_user_id": impersonated_user_id,
-                "session_token": session_token
-            })
-            
+            """
+            )
+
+            await self.db.execute(
+                update_session_query,
+                {
+                    "new_role_id": new_role_id,
+                    "new_context_type": new_context_type,
+                    "new_context_id": new_context_id,
+                    "impersonated_user_id": impersonated_user_id,
+                    "session_token": session_token,
+                },
+            )
+
             await self.db.commit()
-            
+
             # Retornar nova sessão
             updated_session = await self.validate_session(session_token)
-            
-            self.logger.info("Context switched", 
-                           session_id=current_session['session_id'],
-                           new_context_type=new_context_type,
-                           impersonated_user_id=impersonated_user_id,
-                           reason=switch_reason)
-            
+
+            self.logger.info(
+                "Context switched",
+                session_id=current_session["session_id"],
+                new_context_type=new_context_type,
+                impersonated_user_id=impersonated_user_id,
+                reason=switch_reason,
+            )
+
             return {
                 "success": True,
                 "message": "Contexto alterado com sucesso",
-                "session_data": updated_session
+                "session_data": updated_session,
             }
-            
+
         except HTTPException:
             raise
         except Exception as e:
             await self.db.rollback()
-            self.logger.error("Error switching context", session_token=session_token[:20], error=str(e))
+            self.logger.error(
+                "Error switching context",
+                session_token=session_token[:20],
+                error=str(e),
+            )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Erro ao trocar contexto"
+                detail="Erro ao trocar contexto",
             )
 
-    async def terminate_session(self, session_token: str, reason: str = "User logout") -> bool:
+    async def terminate_session(
+        self, session_token: str, reason: str = "User logout"
+    ) -> bool:
         """
         Terminar sessão
         """
         try:
-            query = text("""
-                UPDATE master.user_sessions 
-                SET 
+            query = text(
+                """
+                UPDATE master.user_sessions
+                SET
                     is_active = false,
                     terminated_at = CURRENT_TIMESTAMP,
                     termination_reason = :reason
                 WHERE session_token = :session_token
                   AND is_active = true
-            """)
-            
-            result = await self.db.execute(query, {
-                "session_token": session_token,
-                "reason": reason
-            })
-            
+            """
+            )
+
+            result = await self.db.execute(
+                query, {"session_token": session_token, "reason": reason}
+            )
+
             await self.db.commit()
-            
+
             affected_rows = result.rowcount
             if affected_rows > 0:
-                self.logger.info("Session terminated", session_token=session_token[:20], reason=reason)
+                self.logger.info(
+                    "Session terminated",
+                    session_token=session_token[:20],
+                    reason=reason,
+                )
                 return True
-            
+
             return False
-            
+
         except Exception as e:
             await self.db.rollback()
-            self.logger.error("Error terminating session", session_token=session_token[:20], error=str(e))
+            self.logger.error(
+                "Error terminating session",
+                session_token=session_token[:20],
+                error=str(e),
+            )
             return False
 
     async def cleanup_expired_sessions(self) -> int:
@@ -379,25 +432,27 @@ class SecureSessionManager:
         Limpar sessões expiradas
         """
         try:
-            query = text("""
-                UPDATE master.user_sessions 
-                SET 
+            query = text(
+                """
+                UPDATE master.user_sessions
+                SET
                     is_active = false,
                     terminated_at = CURRENT_TIMESTAMP,
                     termination_reason = 'Expired'
                 WHERE is_active = true
                   AND expires_at < CURRENT_TIMESTAMP
-            """)
-            
+            """
+            )
+
             result = await self.db.execute(query)
             await self.db.commit()
-            
+
             cleaned_sessions = result.rowcount
             if cleaned_sessions > 0:
                 self.logger.info("Expired sessions cleaned", count=cleaned_sessions)
-            
+
             return cleaned_sessions
-            
+
         except Exception as e:
             await self.db.rollback()
             self.logger.error("Error cleaning expired sessions", error=str(e))

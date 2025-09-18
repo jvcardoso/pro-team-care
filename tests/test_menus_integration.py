@@ -3,11 +3,12 @@ Testes de Integração para Sistema de Menus Dinâmicos
 Testa endpoints completos com banco de dados real
 """
 
+import json
+
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
-import json
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class TestMenusIntegration:
@@ -22,7 +23,7 @@ class TestMenusIntegration:
             "is_system_admin": False,
             "is_active": True,
             "name": "Test User",
-            "person_type": "person"
+            "person_type": "person",
         }
 
     @pytest.fixture
@@ -34,27 +35,35 @@ class TestMenusIntegration:
             "is_system_admin": True,
             "is_active": True,
             "name": "Root Admin",
-            "person_type": "person"
+            "person_type": "person",
         }
 
     async def setup_test_data(self, async_session: AsyncSession):
         """Setup de dados de teste no banco"""
         # Inserir dados de teste básicos
-        await async_session.execute(text("""
+        await async_session.execute(
+            text(
+                """
             INSERT INTO master.users (id, email_address, is_system_admin, is_active, person_id, created_at)
             VALUES
                 (1, 'test_user@example.com', false, true, 1, now()),
                 (2, 'root@example.com', true, true, 2, now())
             ON CONFLICT (id) DO NOTHING
-        """))
+        """
+            )
+        )
 
-        await async_session.execute(text("""
+        await async_session.execute(
+            text(
+                """
             INSERT INTO master.people (id, name, person_type, created_at)
             VALUES
                 (1, 'Test User', 'person', now()),
                 (2, 'Root Admin', 'person', now())
             ON CONFLICT (id) DO NOTHING
-        """))
+        """
+            )
+        )
 
         await async_session.commit()
 
@@ -100,13 +109,14 @@ class TestMenusIntegration:
         # Verifica se outros endpoints existem (mesmo que retornem erro de auth)
         response = client.get("/api/v1/menus/user/1")
         # Deve retornar erro de autenticação, não 404
-        assert response.status_code in [401, 403, 404]  # Qualquer um indica que endpoint existe
+        assert response.status_code in [
+            401,
+            403,
+            404,
+        ]  # Qualquer um indica que endpoint existe
 
     @pytest.mark.asyncio
-    async def test_menu_database_integration(
-        self,
-        async_session: AsyncSession
-    ):
+    async def test_menu_database_integration(self, async_session: AsyncSession):
         """Testa integração direta com banco de dados"""
         # Testar queries diretamente no banco
         from app.domain.repositories.menu_repository import MenuRepository
@@ -126,7 +136,14 @@ class TestMenusIntegration:
 
         # Testar conversão de árvore simples
         flat_menus = [
-            {"id": 1, "parent_id": None, "name": "Test", "level": 0, "sort_order": 1, "children": []}
+            {
+                "id": 1,
+                "parent_id": None,
+                "name": "Test",
+                "level": 0,
+                "sort_order": 1,
+                "children": [],
+            }
         ]
         tree = await repo.get_menu_tree(flat_menus)
         assert len(tree) == 1
@@ -141,12 +158,10 @@ class TestMenusIntegration:
         assert True  # Placeholder para testes de erro
 
     @pytest.mark.asyncio
-    async def test_menu_performance_baseline(
-        self,
-        async_session: AsyncSession
-    ):
+    async def test_menu_performance_baseline(self, async_session: AsyncSession):
         """Testa performance básica das queries"""
         import time
+
         from app.domain.repositories.menu_repository import MenuRepository
 
         repo = MenuRepository(async_session)
@@ -163,8 +178,14 @@ class TestMenusIntegration:
 
         # Medir tempo de conversão de árvore
         flat_menus = [
-            {"id": i, "parent_id": None if i <= 5 else i-5, "name": f"Menu {i}",
-             "level": 0 if i <= 5 else 1, "sort_order": i, "children": []}
+            {
+                "id": i,
+                "parent_id": None if i <= 5 else i - 5,
+                "name": f"Menu {i}",
+                "level": 0 if i <= 5 else 1,
+                "sort_order": i,
+                "children": [],
+            }
             for i in range(1, 11)  # 10 menus
         ]
 

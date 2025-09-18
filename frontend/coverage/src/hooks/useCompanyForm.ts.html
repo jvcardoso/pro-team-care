@@ -1401,14 +1401,14 @@ export const useCompanyForm = ({ companyId, onSave }: UseCompanyFormProps) =&gt;
 &nbsp;
   const loadCompany = useCallback(<span class="fstat-no" title="function not covered" >as</span>ync (): Promise&lt;void&gt; =&gt; {
 <span class="cstat-no" title="statement not covered" >    if (!companyId) <span class="cstat-no" title="statement not covered" >return;</span></span>
-    
+
 <span class="cstat-no" title="statement not covered" >    try {</span>
 <span class="cstat-no" title="statement not covered" >      setLoading(true);</span>
       const company = <span class="cstat-no" title="statement not covered" >await companiesService.getCompany(companyId);</span>
       // Garantir que metadados CNAE estejam disponíveis em company.metadata
       // A API retorna metadata diretamente no root da empresa
       const companyMetadata = <span class="cstat-no" title="statement not covered" >company.metadata || company.company?.metadata || company.people?.metadata || {};</span>
-      
+
 <span class="cstat-no" title="statement not covered" >      setFormData({</span>
         people: company.people,
         company: company.company ? {
@@ -1732,7 +1732,7 @@ export const useCompanyForm = ({ companyId, onSave }: UseCompanyFormProps) =&gt;
 <span class="cstat-no" title="statement not covered" >            if (key === 'metadata' &amp;&amp; typeof value === 'object' &amp;&amp; value !== null) {</span>
               const cleanMetadata: any = <span class="cstat-no" title="statement not covered" >{};</span>
               const metadata = <span class="cstat-no" title="statement not covered" >value as any;</span>
-              
+
               // Manter TODOS os campos de metadata da Receita Federal (mesmo se null/undefined)
               const camposRF = <span class="cstat-no" title="statement not covered" >[</span>
                 'cnae_fiscal', 'cnae_fiscal_descricao', 'cnaes_secundarios',
@@ -1741,13 +1741,13 @@ export const useCompanyForm = ({ companyId, onSave }: UseCompanyFormProps) =&gt;
                 'data_situacao_especial', 'tipo', 'efr', 'municipio', 'uf',
                 'ultima_atualizacao_rf', 'receita_ws_data', 'consulta_data'
               ];
-              
+
 <span class="cstat-no" title="statement not covered" >              for (const campo of camposRF) {</span>
 <span class="cstat-no" title="statement not covered" >                if (metadata.hasOwnProperty(campo)) {</span>
 <span class="cstat-no" title="statement not covered" >                  cleanMetadata[campo] = metadata[campo];</span>
                 }
               }
-              
+
               // Manter outros campos de metadata também
 <span class="cstat-no" title="statement not covered" >              for (const [metaKey, metaValue] of Object.entries(metadata)) {</span>
 <span class="cstat-no" title="statement not covered" >                if (!camposRF.includes(metaKey) &amp;&amp; metaValue !== undefined) {</span>

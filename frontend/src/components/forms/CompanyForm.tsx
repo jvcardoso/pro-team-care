@@ -19,16 +19,18 @@ interface CompanyFormProps {
   companyId?: number;
   onSave?: () => void;
   onCancel?: () => void;
+  onRedirectToDetails?: (companyId: number) => void;
 }
 
 const CompanyForm: React.FC<CompanyFormProps> = React.memo(
-  ({ companyId, onSave, onCancel }) => {
+  ({ companyId, onSave, onCancel, onRedirectToDetails }) => {
     return (
       <FormErrorBoundary formName="CompanyForm">
         <CompanyFormContent
           companyId={companyId}
           onSave={onSave}
           onCancel={onCancel}
+          onRedirectToDetails={onRedirectToDetails}
         />
       </FormErrorBoundary>
     );
@@ -39,6 +41,7 @@ const CompanyFormContent: React.FC<CompanyFormProps> = ({
   companyId,
   onSave,
   onCancel,
+  onRedirectToDetails,
 }) => {
   const {
     loading,
@@ -61,7 +64,7 @@ const CompanyFormContent: React.FC<CompanyFormProps> = ({
     proceedWithSave,
     setShowNumberConfirmation,
     setPendingAddresses,
-  } = useCompanyForm({ companyId, onSave });
+  } = useCompanyForm({ companyId, onSave, onRedirectToDetails });
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
@@ -222,6 +225,83 @@ const CompanyFormContent: React.FC<CompanyFormProps> = ({
             title="Endereços"
           />
         </Card>
+
+        {/* Convite para Gestor da Empresa */}
+        {!isEditing && (
+          <Card>
+            <div className="p-6">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+                Convite para Gestor da Empresa (Opcional)
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Informe o email de um gestor para receber acesso ao sistema. Um
+                email de ativação será enviado automaticamente.
+              </p>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Email do Gestor
+                  </label>
+                  <input
+                    type="email"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                    placeholder="gestor@empresa.com.br"
+                    value={formData.managerEmail || ""}
+                    onChange={(e) =>
+                      updatePeople({ managerEmail: e.target.value })
+                    }
+                    disabled={loading}
+                  />
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    O gestor receberá um email para ativar a conta e definir uma
+                    senha.
+                  </p>
+                </div>
+
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0">
+                      <svg
+                        className="h-5 w-5 text-blue-400"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                        Como funciona?
+                      </h4>
+                      <div className="mt-1 text-sm text-blue-700 dark:text-blue-300">
+                        <ul className="list-disc list-inside space-y-1">
+                          <li>
+                            Se informado, um usuário será criado automaticamente
+                          </li>
+                          <li>
+                            Um email de ativação será enviado para o gestor
+                          </li>
+                          <li>
+                            O gestor poderá ativar a conta e definir sua senha
+                          </li>
+                          <li>
+                            Você pode adicionar mais gestores depois na área de
+                            usuários
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
       </form>
 
       {/* Modal de Confirmação para Número do Endereço */}

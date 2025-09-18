@@ -366,7 +366,7 @@ class GeocodingService {
     }
 &nbsp;
     const result = <span class="cstat-no" title="statement not covered" >await response.json();</span>
-    
+
 <span class="cstat-no" title="statement not covered" >    return {</span>
       latitude: result.latitude,
       longitude: result.longitude,
@@ -397,12 +397,12 @@ class GeocodingService {
 <span class="cstat-no" title="statement not covered" >    try {</span>
       // Usar backend como proxy para Nominatim
       const result = <span class="cstat-no" title="statement not covered" >await this.nominatimGeocode(address);</span>
-      
+
       // Salvar no cache
 <span class="cstat-no" title="statement not covered" >      this.cache.set(cacheKey, result);</span>
-      
+
 <span class="cstat-no" title="statement not covered" >      return result;</span>
-      
+
     } catch (error) {
 <span class="cstat-no" title="statement not covered" >      console.warn('Geocoding falhou:', error.message);</span>
 <span class="cstat-no" title="statement not covered" >      return null;</span>
@@ -428,7 +428,7 @@ class GeocodingService {
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    try {</span>
       const geoData = <span class="cstat-no" title="statement not covered" >await this.geocode(fullAddress);</span>
-      
+
 <span class="cstat-no" title="statement not covered" >      if (geoData) {</span>
 <span class="cstat-no" title="statement not covered" >        return {</span>
           ...viaCepData,

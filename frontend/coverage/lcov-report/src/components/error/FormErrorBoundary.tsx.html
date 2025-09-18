@@ -138,12 +138,12 @@ interface FormErrorBoundaryProps {
 }
 &nbsp;
 const FormErrorBoundary: React.FC&lt;FormErrorBoundaryProps&gt; = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >({ </span></span>
-  children, 
-  formName 
+  children,
+  formName
 }) =&gt; {
   const handleError = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>rror: Error) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    console.error(`[FORM] Error in ${formName || 'unknown form'}:`, error);</span>
-    
+
     // TODO: Send to error tracking service with form context
     // analytics.track('form_error', {
     //   formName,
@@ -154,8 +154,8 @@ const FormErrorBoundary: React.FC&lt;FormErrorBoundaryProps&gt; = <span class="c
   };
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  return (</span>
-    &lt;ErrorBoundary 
-      level="form" 
+    &lt;ErrorBoundary
+      level="form"
       onError={handleError}
     &gt;
       {children}

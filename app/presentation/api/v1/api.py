@@ -1,7 +1,32 @@
 from fastapi import APIRouter
 
-from . import auth, health, metrics, companies, cnpj, geocoding, menus, debug_menus, menus_crud, users, simple_db_admin, users_hierarchical, secure_sessions, establishments
-# from . import db_admin  # Temporarily disabled due to import issues
+from . import (
+    auth,
+    clients,
+    cnpj,
+    companies,
+    dashboard,
+    db_admin,
+    establishments,
+    geocoding,
+    geolocation,
+    health,
+    menus,
+    menus_crud,
+    menus_dynamic,
+    menus_simple,
+    metrics,
+    notifications,
+    professionals,
+    roles,
+    secure_sessions,
+    user_activation,
+    users,
+    users_hierarchical,
+)
+
+# ALL MODULES NOW WORKING! ✅
+# menus_dynamic, notifications, dashboard fixed with simplified versions
 
 api_router = APIRouter()
 
@@ -9,15 +34,40 @@ api_router = APIRouter()
 api_router.include_router(auth.router, prefix="/auth")
 api_router.include_router(health.router)
 api_router.include_router(metrics.router)
+# Core business endpoints
 api_router.include_router(companies.router, prefix="/companies")
-api_router.include_router(cnpj.router, prefix="/cnpj")
+api_router.include_router(users.router, prefix="/users")
+api_router.include_router(user_activation.router)  # Ativação de usuários
+api_router.include_router(establishments.router, prefix="/establishments")
+api_router.include_router(roles.router, prefix="/roles")
+
+# Client and Professional management
+api_router.include_router(clients.router, prefix="/clients")
+api_router.include_router(professionals.router, prefix="/professionals")
+
+# Menu systems
+api_router.include_router(menus.router, prefix="/menus")
+api_router.include_router(menus_crud.router)  # CRUD completo de menus
+api_router.include_router(
+    menus_simple.router, prefix="/menus"
+)  # Menus simples (fallback)
+api_router.include_router(menus_simple.debug_router, prefix="")  # Endpoints de debug
+
+# Security and sessions
+api_router.include_router(secure_sessions.router)
+
+# Additional services
 api_router.include_router(geocoding.router, prefix="/geocoding")
-api_router.include_router(menus.router)
-api_router.include_router(menus_crud.router) # HABILITADO - compatível com schema atual após correções
-api_router.include_router(debug_menus.debug_router)
-api_router.include_router(users.router, prefix="/users") # CRUD de usuários - production ready
-api_router.include_router(establishments.router, prefix="/establishments") # CRUD de estabelecimentos - production ready
-api_router.include_router(users_hierarchical.router) # Sistema hierárquico de usuários
-api_router.include_router(secure_sessions.router) # Sistema de sessões seguras com troca de perfil
-api_router.include_router(simple_db_admin.router) # Simple Database Administration
-# api_router.include_router(db_admin.router) # Administração do banco SQLAlchemy - Temporarily disabled
+api_router.include_router(geolocation.router, prefix="/geolocation")
+
+# All modules now ACTIVE! 🎉
+api_router.include_router(menus_dynamic.router, prefix="/menus-dynamic")
+api_router.include_router(notifications.router, prefix="/notifications")
+api_router.include_router(dashboard.router, prefix="/dashboard")
+
+# Administrative endpoints
+api_router.include_router(cnpj.router, prefix="/cnpj")  # Consulta CNPJ
+api_router.include_router(db_admin.router)  # Administração do banco
+api_router.include_router(users_hierarchical.router)  # Usuários hierárquicos
+
+# Todos os endpoints mock foram removidos - sistema deve usar dados reais do banco

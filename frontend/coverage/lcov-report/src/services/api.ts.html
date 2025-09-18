@@ -530,14 +530,14 @@ const api: AxiosInstance = <span class="cstat-no" title="statement not covered" 
 <span class="cstat-no" title="statement not covered" >      localStorage.removeItem('user');</span>
 <span class="cstat-no" title="statement not covered" >      window.location.href = '/login';</span>
     }
-    
+
     // Handle other HTTP errors
     const apiError: ApiError = <span class="cstat-no" title="statement not covered" >{</span>
       detail: error.response?.data?.detail || error.message || 'Erro desconhecido',
       type: error.response?.data?.type || 'api_error',
       status_code: error.response?.status || 500
     };
-    
+
 <span class="cstat-no" title="statement not covered" >    return Promise.reject(apiError);</span>
   }
 );
@@ -550,7 +550,7 @@ const api: AxiosInstance = <span class="cstat-no" title="statement not covered" 
  * GET request tipado
  */
 export const get = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync &lt;T&gt;(</span>
-  url: string, 
+  url: string,
   options?: RequestOptions
 ): Promise&lt;T&gt; =&gt; {
   const response: AxiosResponse&lt;T&gt; = <span class="cstat-no" title="statement not covered" >await api.get(url, options);</span>
@@ -618,7 +618,7 @@ export const uploadFile = <span class="cstat-no" title="statement not covered" >
 ): Promise&lt;T&gt; =&gt; {
   const formData = <span class="cstat-no" title="statement not covered" >new FormData();</span>
 <span class="cstat-no" title="statement not covered" >  formData.append('file', file);</span>
-  
+
   const response: AxiosResponse&lt;T&gt; = <span class="cstat-no" title="statement not covered" >await api.post(url, formData, {</span>
     headers: {
       'Content-Type': 'multipart/form-data',
@@ -630,7 +630,7 @@ export const uploadFile = <span class="cstat-no" title="statement not covered" >
       }
     },
   });
-  
+
 <span class="cstat-no" title="statement not covered" >  return response.data;</span>
 };
 &nbsp;
@@ -644,7 +644,7 @@ export const downloadFile = <span class="cstat-no" title="statement not covered"
   const response: AxiosResponse&lt;Blob&gt; = <span class="cstat-no" title="statement not covered" >await api.get(url, {</span>
     responseType: 'blob',
   });
-  
+
   const blob = <span class="cstat-no" title="statement not covered" >new Blob([response.data]);</span>
   const downloadUrl = <span class="cstat-no" title="statement not covered" >window.URL.createObjectURL(blob);</span>
   const link = <span class="cstat-no" title="statement not covered" >document.createElement('a');</span>

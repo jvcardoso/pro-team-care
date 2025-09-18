@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams, useParams } from "react-router-dom";
 import { usersService } from "../services/api";
 import { PageErrorBoundary } from "../components/error";
 import Card from "../components/ui/Card";
@@ -25,6 +26,7 @@ import {
   UserCheck,
   UserX,
   UserPlus,
+  ArrowUpDown,
 } from "lucide-react";
 
 const UsersPage = () => {
@@ -52,14 +54,42 @@ const UsersPageContent = () => {
   const [itemsPerPage] = useState(10);
   const [currentView, setCurrentView] = useState("list"); // 'list', 'create', 'edit', 'details'
   const [selectedUserId, setSelectedUserId] = useState(null);
-  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
+  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] =
+    useState(false);
   const [selectedUserForPassword, setSelectedUserForPassword] = useState(null);
 
+  // URL parameters support
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { id } = useParams();
+  const establishmentId = searchParams.get("establishmentId");
+  const actionParam = searchParams.get("action");
+
+  // Handle URL parameters for direct navigation from establishment
   useEffect(() => {
-    if (currentView === "list") {
-      loadUsers();
-      loadTotalCount();
+    // Se há um ID na URL, mostrar detalhes do usuário
+    if (id) {
+      console.log("🔍 ID do usuário detectado na URL:", id);
+      setSelectedUserId(parseInt(id));
+      setCurrentView("details");
+    } else if (actionParam === "create") {
+      setCurrentView("create");
     }
+  }, [actionParam, id]);
+
+  // Debounce search term
+  useEffect(() => {
+    if (currentView !== "list") return;
+
+    const timeoutId = setTimeout(
+      () => {
+        loadUsers();
+        loadTotalCount();
+      },
+      searchTerm ? 500 : 0
+    ); // 500ms debounce for search, immediate for other filters
+
+    return () => clearTimeout(timeoutId);
   }, [currentPage, searchTerm, filterStatus, currentView]);
 
   const loadUsers = async () => {
@@ -80,11 +110,20 @@ const UsersPageContent = () => {
       const response = await usersService.getUsers(params);
       console.log("Users response:", response);
 
-      // Backend retorna { users: [...], total, page, size }
-      const users = response?.users || response || [];
+      // Backend retorna { items: [...], total, page, per_page, pages }
+      const users = response?.items || response?.users || response || [];
       console.log("Users extracted:", users?.length || 0);
 
-      setUsers(Array.isArray(users) ? users : []);
+      // Remove duplicates based on user_id to prevent React key warnings
+      const uniqueUsers = Array.isArray(users)
+        ? users.filter(
+            (user, index, self) =>
+              index === self.findIndex((u) => u.user_id === user.user_id)
+          )
+        : [];
+
+      console.log("Unique users after deduplication:", uniqueUsers.length);
+      setUsers(uniqueUsers);
     } catch (err) {
       console.error("Error loading users:", err);
       setError(
@@ -113,14 +152,18 @@ const UsersPageContent = () => {
   };
 
   const handleToggleStatus = async (userId, newStatus) => {
-    const user = users.find((u) => u.id === userId);
-    const userName = user?.person_name || user?.name || user?.email_address || "este usuário";
+    const user = users.find((u) => u.user_id === userId);
+    const userName = user?.person_name || user?.user_email || "este usuário";
     const action = newStatus ? "ativar" : "inativar";
 
     const executeToggle = async () => {
       try {
         await usersService.toggleUserStatus(userId, newStatus);
-        notify.success(`Usuário ${action === "ativar" ? "ativado" : "inativado"} com sucesso!`);
+        notify.success(
+          `Usuário ${
+            action === "ativar" ? "ativado" : "inativado"
+          } com sucesso!`
+        );
         loadUsers();
         loadTotalCount();
       } catch (err) {
@@ -162,8 +205,8 @@ const UsersPageContent = () => {
   };
 
   const handleView = (userId) => {
-    setSelectedUserId(userId);
-    setCurrentView("details");
+    // Usar URL params em vez de estado interno (Padrão C)
+    navigate(`/admin/usuarios/${userId}?tab=informacoes`);
   };
 
   const handleSave = () => {
@@ -187,13 +230,13 @@ const UsersPageContent = () => {
   };
 
   const handleBack = () => {
-    setCurrentView("list");
-    setSelectedUserId(null);
+    // Voltar para lista de usuários
+    navigate("/admin/usuarios", { replace: true });
   };
 
   const handleDeleteFromDetails = () => {
-    setCurrentView("list");
-    setSelectedUserId(null);
+    // Voltar para lista após exclusão
+    navigate("/admin/usuarios", { replace: true });
     loadUsers();
     loadTotalCount();
   };
@@ -208,6 +251,7 @@ const UsersPageContent = () => {
     return (
       <UserForm
         userId={userIdToPass}
+        establishmentId={establishmentId}
         onSave={handleSave}
         onCancel={handleCancel}
       />
@@ -328,7 +372,7 @@ const UsersPageContent = () => {
             <div className="ml-4">
               <p className="text-sm text-muted-foreground">Ativos</p>
               <p className="text-2xl font-bold text-foreground">
-                {users.filter((u) => u.is_active === true).length}
+                {users.filter((u) => u.user_is_active === true).length}
               </p>
             </div>
           </div>
@@ -342,7 +386,7 @@ const UsersPageContent = () => {
             <div className="ml-4">
               <p className="text-sm text-muted-foreground">Inativos</p>
               <p className="text-2xl font-bold text-foreground">
-                {users.filter((u) => u.is_active === false).length}
+                {users.filter((u) => u.user_is_active === false).length}
               </p>
             </div>
           </div>
@@ -356,7 +400,7 @@ const UsersPageContent = () => {
             <div className="ml-4">
               <p className="text-sm text-muted-foreground">Administradores</p>
               <p className="text-2xl font-bold text-foreground">
-                {users.filter((u) => u.is_system_admin === true).length}
+                {users.filter((u) => u.user_is_system_admin === true).length}
               </p>
             </div>
           </div>
@@ -389,36 +433,38 @@ const UsersPageContent = () => {
                 </tr>
               </thead>
               <tbody>
-                {users.map((user) => (
+                {users.map((user, index) => (
                   <tr
-                    key={user.id}
+                    key={`${user.user_id}-${index}`}
                     className="border-b border-border hover:bg-muted/50"
                   >
                     <td className="py-3 px-4">
                       <div>
                         <p className="font-medium text-foreground">
-                          {user.person_name || user.name || user.email_address}
+                          {user.person_name || user.user_email}
                         </p>
                         {user.person_name &&
-                          user.person_name !== user.email_address && (
-                            <p className="text-sm text-muted-foreground font-mono">
-                              {user.email_address}
+                          user.person_name !== user.user_email && (
+                            <p className="text-sm text-muted-foreground">
+                              {user.user_email}
                             </p>
                           )}
+                        {!user.person_name && (
+                          <p className="text-sm text-muted-foreground">
+                            ID: {user.user_id}
+                          </p>
+                        )}
                       </div>
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex flex-col gap-1">
-                        {user.roles?.map((role, index) => (
-                          <span
-                            key={index}
-                            className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800"
-                          >
-                            {role.name}
+                        {user.user_is_system_admin ? (
+                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                            Administrador
                           </span>
-                        )) || (
-                          <span className="text-sm text-muted-foreground">
-                            Sem função
+                        ) : (
+                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                            Usuário
                           </span>
                         )}
                       </div>
@@ -426,15 +472,19 @@ const UsersPageContent = () => {
                     <td className="py-3 px-4">
                       <span
                         className={getStatusBadge(
-                          user.is_active ? "active" : "inactive"
+                          user.user_is_active ? "active" : "inactive"
                         )}
                       >
-                        {getStatusLabel(user.is_active ? "active" : "inactive")}
+                        {getStatusLabel(
+                          user.user_is_active ? "active" : "inactive"
+                        )}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-foreground">
-                      {user.created_at
-                        ? new Date(user.created_at).toLocaleDateString("pt-BR")
+                      {user.user_created_at
+                        ? new Date(user.user_created_at).toLocaleDateString(
+                            "pt-BR"
+                          )
                         : "-"}
                     </td>
                     <td className="py-3 px-4">
@@ -443,32 +493,47 @@ const UsersPageContent = () => {
                         <ActionDropdown>
                           <ActionDropdown.Item
                             icon={<Eye className="h-4 w-4" />}
-                            onClick={() => handleView(user.id)}
+                            onClick={() => handleView(user.user_id)}
                           >
                             Ver Detalhes
                           </ActionDropdown.Item>
-                          
+
                           <ActionDropdown.Item
                             icon={<Edit className="h-4 w-4" />}
-                            onClick={() => handleEdit(user.id)}
+                            onClick={() => handleEdit(user.user_id)}
                             variant="default"
                           >
                             Editar Usuário
                           </ActionDropdown.Item>
-                          
+
                           <ActionDropdown.Item
                             icon={<Key className="h-4 w-4" />}
                             onClick={() => handleChangePassword(user)}
                           >
                             Alterar Senha
                           </ActionDropdown.Item>
-                          
+
                           <ActionDropdown.Item
-                            icon={user.is_active ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
-                            onClick={() => handleToggleStatus(user.id, !user.is_active)}
-                            variant={user.is_active ? "warning" : "success"}
+                            icon={
+                              user.user_is_active ? (
+                                <UserX className="h-4 w-4" />
+                              ) : (
+                                <UserCheck className="h-4 w-4" />
+                              )
+                            }
+                            onClick={() =>
+                              handleToggleStatus(
+                                user.user_id,
+                                !user.user_is_active
+                              )
+                            }
+                            variant={
+                              user.user_is_active ? "warning" : "success"
+                            }
                           >
-                            {user.is_active ? "Inativar Usuário" : "Ativar Usuário"}
+                            {user.user_is_active
+                              ? "Inativar Usuário"
+                              : "Ativar Usuário"}
                           </ActionDropdown.Item>
                         </ActionDropdown>
                       </div>
@@ -480,8 +545,78 @@ const UsersPageContent = () => {
           </div>
         </div>
 
+        {/* Tablet: Cards compactos */}
+        <div className="hidden md:block lg:hidden space-y-3 p-4">
+          {users.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500 dark:text-gray-400">
+                Nenhum usuário encontrado
+              </p>
+            </div>
+          ) : (
+            users.map((user, index) => (
+              <div
+                key={`${user?.user_id || "unknown"}-${index}`}
+                className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0 grid grid-cols-3 gap-4">
+                    <div className="col-span-2">
+                      <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {user.person_name}
+                      </h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        {user.user_email}
+                      </p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 truncate">
+                        {user.role_display_name || "Sem função"}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <span className={getStatusBadge(user.user_is_active)}>
+                        {getStatusLabel(user.user_is_active)}
+                      </span>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {user.user_created_at
+                          ? new Date(user.user_created_at).toLocaleDateString(
+                              "pt-BR"
+                            )
+                          : "-"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="ml-4 flex-shrink-0">
+                    <ActionDropdown>
+                      <ActionDropdown.Item
+                        icon={<Eye className="h-4 w-4" />}
+                        onClick={() => handleView(user.user_id)}
+                      >
+                        Ver Detalhes
+                      </ActionDropdown.Item>
+                      <ActionDropdown.Item
+                        icon={<Edit className="h-4 w-4" />}
+                        onClick={() => handleEdit(user.user_id)}
+                      >
+                        Editar
+                      </ActionDropdown.Item>
+                      <ActionDropdown.Item
+                        icon={<ArrowUpDown className="h-4 w-4" />}
+                        onClick={() =>
+                          handleToggleStatus(user.user_id, user.user_is_active)
+                        }
+                      >
+                        {user.user_is_active ? "Desativar" : "Ativar"}
+                      </ActionDropdown.Item>
+                    </ActionDropdown>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
         {/* Mobile Cards */}
-        <div className="lg:hidden space-y-4">
+        <div className="md:hidden space-y-4">
           {users.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-gray-500 dark:text-gray-400">
@@ -491,7 +626,7 @@ const UsersPageContent = () => {
           ) : (
             users.map((user, index) => (
               <UserMobileCard
-                key={user?.id || index}
+                key={`${user?.user_id || "unknown"}-${index}`}
                 user={user}
                 onView={handleView}
                 onEdit={handleEdit}

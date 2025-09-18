@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from "react";
+import { useSearchParams, useParams } from "react-router-dom";
 import { establishmentsService, companiesService } from "../services/api";
 import { PageErrorBoundary } from "../components/error";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import ActionDropdown from "../components/ui/ActionDropdown";
+import EstablishmentForm from "../components/forms/EstablishmentForm";
+import EstablishmentDetails from "../components/views/EstablishmentDetails";
 import { getStatusBadge, getStatusLabel } from "../utils/statusUtils";
+import { formatTaxId } from "../utils/formatters";
 import { notify } from "../utils/notifications.jsx";
 import {
   Building2,
@@ -21,6 +25,7 @@ import {
   ArrowUpDown,
   Calendar,
   Users,
+  Trash2,
 } from "lucide-react";
 
 const EstablishmentsPage = () => {
@@ -32,6 +37,8 @@ const EstablishmentsPage = () => {
 };
 
 const EstablishmentsPageContent = () => {
+  const [searchParams] = useSearchParams();
+  const { id } = useParams();
   const [establishments, setEstablishments] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +53,25 @@ const EstablishmentsPageContent = () => {
   const [itemsPerPage] = useState(10);
   const [currentView, setCurrentView] = useState("list"); // 'list', 'create', 'edit', 'details'
   const [selectedEstablishmentId, setSelectedEstablishmentId] = useState(null);
+
+  // Get companyId from URL parameters
+  const companyIdFromUrl = searchParams.get("companyId");
+
+  // Verificar parâmetros da URL ao carregar a página
+  useEffect(() => {
+    const actionParam = searchParams.get("action");
+
+    // Se há um ID na URL, mostrar detalhes do estabelecimento
+    if (id) {
+      console.log("🔍 ID do estabelecimento detectado na URL:", id);
+      setSelectedEstablishmentId(parseInt(id));
+      setCurrentView("details");
+    } else if (actionParam === "create") {
+      console.log("🔍 Ação de criação detectada na URL");
+      setSelectedEstablishmentId(null);
+      setCurrentView("create");
+    }
+  }, [searchParams, id]);
 
   // Opções de filtro
   const typeOptions = [
@@ -68,12 +94,28 @@ const EstablishmentsPageContent = () => {
     { value: "outro", label: "Outro" },
   ];
 
+  // Debounce search term
   useEffect(() => {
-    if (currentView === "list") {
-      loadEstablishments();
-      loadTotalCount();
-    }
-  }, [currentPage, searchTerm, filterStatus, filterCompany, filterType, filterCategory, currentView]);
+    if (currentView !== "list") return;
+
+    const timeoutId = setTimeout(
+      () => {
+        loadEstablishments();
+        loadTotalCount();
+      },
+      searchTerm ? 500 : 0
+    ); // 500ms debounce for search, immediate for other filters
+
+    return () => clearTimeout(timeoutId);
+  }, [
+    currentPage,
+    searchTerm,
+    filterStatus,
+    filterCompany,
+    filterType,
+    filterCategory,
+    currentView,
+  ]);
 
   useEffect(() => {
     loadCompanies();
@@ -81,14 +123,15 @@ const EstablishmentsPageContent = () => {
 
   const loadCompanies = async () => {
     try {
-      const response = await companiesService.getCompanies({ 
-        is_active: true, 
-        page: 1, 
-        size: 100 
+      const response = await companiesService.getCompanies({
+        is_active: true,
+        page: 1,
+        size: 100,
       });
-      setCompanies(response.companies || []);
+      // Backend retorna { companies: [...] } ou { data: [...] }
+      setCompanies(response?.companies || response?.data || []);
     } catch (err) {
-      console.error("Error loading companies:", err);
+      // Silent error for companies loading
     }
   };
 
@@ -109,15 +152,62 @@ const EstablishmentsPageContent = () => {
         ...(filterCategory && { category: filterCategory }),
       };
 
-      console.log("Loading establishments with params:", params);
-      const response = await establishmentsService.getEstablishments(params);
-      console.log("Establishments response:", response);
+      let response;
 
-      const establishments = response?.establishments || response || [];
-      setEstablishments(Array.isArray(establishments) ? establishments : []);
+      // Se há filtro por empresa, usar endpoint específico
+      if (filterCompany) {
+        response = await establishmentsService.getEstablishmentsByCompany(
+          parseInt(filterCompany),
+          params
+        );
+      } else {
+        // Tentar endpoint geral, mas com fallback
+        try {
+          response = await establishmentsService.getEstablishments(params);
+        } catch (err) {
+          // Se falhar, tentar com primeira empresa disponível
+          if (companies.length > 0) {
+            console.log(
+              "🔄 Tentando carregar estabelecimentos da primeira empresa disponível..."
+            );
+            response = await establishmentsService.getEstablishmentsByCompany(
+              companies[0].id,
+              params
+            );
+          } else {
+            throw err;
+          }
+        }
+      }
+
+      // Normalizar estrutura de resposta do backend
+      let establishments = [];
+      let total = 0;
+
+      if (response?.establishments && Array.isArray(response.establishments)) {
+        // Formato: { establishments: [...], total: n }
+        establishments = response.establishments;
+        total = response.total || 0;
+      } else if (response?.data && Array.isArray(response.data)) {
+        // Formato: { data: [...], total: n }
+        establishments = response.data;
+        total = response.total || 0;
+      } else if (Array.isArray(response)) {
+        // Formato: [...]
+        establishments = response;
+        total = response.length;
+      }
+
+      setEstablishments(establishments);
+      if (total > 0) {
+        setTotalCount(total);
+      }
     } catch (err) {
-      console.error("Error loading establishments:", err);
-      setError(`Erro ao carregar estabelecimentos: ${err.message || "Erro desconhecido"}`);
+      setError(
+        `Erro ao carregar estabelecimentos: ${
+          err.message || "Erro desconhecido"
+        }`
+      );
       setEstablishments([]);
     } finally {
       setLoading(false);
@@ -135,28 +225,68 @@ const EstablishmentsPageContent = () => {
         ...(filterType && { type: filterType }),
         ...(filterCategory && { category: filterCategory }),
       };
-      const data = await establishmentsService.countEstablishments(params);
+
+      let data;
+
+      // Se há filtro por empresa, usar endpoint específico
+      if (filterCompany) {
+        // Para contagem por empresa, podemos usar o mesmo endpoint com count
+        const response = await establishmentsService.getEstablishmentsByCompany(
+          parseInt(filterCompany),
+          { ...params, page: 1, size: 1 }
+        );
+        data = { total: response.total || 0 };
+      } else {
+        // Tentar endpoint geral, mas com fallback
+        try {
+          data = await establishmentsService.getEstablishmentsCount(params);
+        } catch (err) {
+          // Se falhar, tentar com primeira empresa disponível
+          if (companies.length > 0) {
+            console.log(
+              "🔄 Tentando contar estabelecimentos da primeira empresa disponível..."
+            );
+            const response =
+              await establishmentsService.getEstablishmentsByCompany(
+                companies[0].id,
+                { ...params, page: 1, size: 1 }
+              );
+            data = { total: response.total || 0 };
+          } else {
+            throw err;
+          }
+        }
+      }
+
       setTotalCount(data.total || 0);
     } catch (err) {
       console.error("Erro ao carregar contagem:", err);
       setTotalCount(0);
     }
   };
-
   const handleToggleStatus = async (establishmentId, newStatus) => {
     const establishment = establishments.find((e) => e.id === establishmentId);
-    const establishmentName = establishment?.person?.name || establishment?.code || "este estabelecimento";
+    const establishmentName =
+      establishment?.person?.name ||
+      establishment?.code ||
+      "este estabelecimento";
     const action = newStatus ? "ativar" : "inativar";
 
     const executeToggle = async () => {
       try {
-        await establishmentsService.toggleEstablishmentStatus(establishmentId, newStatus);
-        notify.success(`Estabelecimento ${action === "ativar" ? "ativado" : "inativado"} com sucesso!`);
+        await establishmentsService.toggleEstablishmentStatus(
+          establishmentId,
+          newStatus
+        );
+        notify.success(
+          `Estabelecimento ${
+            action === "ativar" ? "ativado" : "inativado"
+          } com sucesso!`
+        );
         loadEstablishments();
         loadTotalCount();
       } catch (err) {
         notify.error(`Erro ao ${action} estabelecimento`);
-        console.error(err);
       }
     };
 
@@ -169,7 +299,10 @@ const EstablishmentsPageContent = () => {
 
   const handleDelete = async (establishmentId) => {
     const establishment = establishments.find((e) => e.id === establishmentId);
-    const establishmentName = establishment?.person?.name || establishment?.code || "este estabelecimento";
+    const establishmentName =
+      establishment?.person?.name ||
+      establishment?.code ||
+      "este estabelecimento";
 
     const executeDelete = async () => {
       try {
@@ -178,9 +311,9 @@ const EstablishmentsPageContent = () => {
         loadEstablishments();
         loadTotalCount();
       } catch (err) {
-        const errorMessage = err.response?.data?.detail || err.message || "Erro desconhecido";
+        const errorMessage =
+          err.response?.data?.detail || err.message || "Erro desconhecido";
         notify.error(`Erro ao excluir estabelecimento: ${errorMessage}`);
-        console.error(err);
       }
     };
 
@@ -218,46 +351,48 @@ const EstablishmentsPageContent = () => {
     setSelectedEstablishmentId(null);
   };
 
-  const totalPages = Math.ceil(totalCount / itemsPerPage);
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setFilterStatus("todos");
+    setFilterCompany("");
+    setFilterType("");
+    setFilterCategory("");
+    setCurrentPage(1);
+  };
+
+  const totalPages = totalCount > 0 ? Math.ceil(totalCount / itemsPerPage) : 1;
 
   // Render different views based on current state
   if (currentView === "create" || currentView === "edit") {
-    // TODO: Implementar EstablishmentForm
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">
-            {currentView === "create" ? "Novo Estabelecimento" : "Editar Estabelecimento"}
-          </h1>
-          <Button variant="secondary" onClick={handleCancel}>
-            Voltar
-          </Button>
-        </div>
-        <Card>
-          <div className="p-8 text-center text-gray-500">
-            Formulário de estabelecimento em desenvolvimento...
-          </div>
-        </Card>
-      </div>
+      <EstablishmentForm
+        establishmentId={
+          currentView === "edit" ? selectedEstablishmentId : null
+        }
+        companyId={
+          currentView === "create"
+            ? companyIdFromUrl
+              ? parseInt(companyIdFromUrl)
+              : undefined
+            : undefined
+        }
+        onSave={handleSave}
+        onCancel={handleCancel}
+      />
     );
   }
 
   if (currentView === "details") {
-    // TODO: Implementar EstablishmentDetails
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Detalhes do Estabelecimento</h1>
-          <Button variant="secondary" onClick={handleCancel}>
-            Voltar
-          </Button>
-        </div>
-        <Card>
-          <div className="p-8 text-center text-gray-500">
-            Detalhes do estabelecimento em desenvolvimento...
-          </div>
-        </Card>
-      </div>
+      <EstablishmentDetails
+        establishmentId={selectedEstablishmentId}
+        onEdit={handleEdit}
+        onBack={handleCancel}
+        onDelete={() => {
+          handleDelete(selectedEstablishmentId);
+          handleCancel();
+        }}
+      />
     );
   }
 
@@ -267,7 +402,9 @@ const EstablishmentsPageContent = () => {
       <div className="space-y-6">
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Carregando estabelecimentos...</p>
+          <p className="mt-4 text-muted-foreground">
+            Carregando estabelecimentos...
+          </p>
         </div>
       </div>
     );
@@ -289,7 +426,9 @@ const EstablishmentsPageContent = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Estabelecimentos</h1>
+          <h1 className="text-2xl font-bold text-foreground">
+            Estabelecimentos
+          </h1>
           <p className="text-muted-foreground">
             Gerencie os estabelecimentos cadastrados no sistema
           </p>
@@ -310,7 +449,7 @@ const EstablishmentsPageContent = () => {
           {/* Search and Main Filters */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <Input
-              placeholder="Buscar estabelecimentos..."
+              placeholder="Buscar por nome, código ou CNPJ..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               leftIcon={<Search className="h-4 w-4" />}
@@ -334,8 +473,12 @@ const EstablishmentsPageContent = () => {
             >
               <option value="">Todas as empresas</option>
               {companies.map((company) => (
-                <option key={company.id} value={company.id}>
-                  {company.person?.name || `Empresa ${company.id}`}
+                <option
+                  key={company.company_id || company.id}
+                  value={company.company_id || company.id}
+                >
+                  {company.name ||
+                    `Empresa ${company.company_id || company.id}`}
                 </option>
               ))}
             </select>
@@ -371,6 +514,7 @@ const EstablishmentsPageContent = () => {
               <Button
                 variant="secondary"
                 outline
+                onClick={handleClearFilters}
                 icon={<Filter className="h-4 w-4" />}
                 size="sm"
               >
@@ -440,10 +584,10 @@ const EstablishmentsPageContent = () => {
       </div>
 
       {/* Establishments Table */}
-      <Card title="Lista de Estabelecimentos">
+      <Card title="Lista de Estabelecimentos" className="overflow-visible">
         {/* Desktop Table */}
         <div className="hidden lg:block">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto overflow-y-visible">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
@@ -490,7 +634,7 @@ const EstablishmentsPageContent = () => {
                         </p>
                         {establishment.person?.tax_id && (
                           <p className="text-xs text-muted-foreground">
-                            CNPJ: {establishment.person.tax_id}
+                            CNPJ: {formatTaxId(establishment.person.tax_id)}
                           </p>
                         )}
                       </div>
@@ -498,11 +642,12 @@ const EstablishmentsPageContent = () => {
                     <td className="py-3 px-4">
                       <div>
                         <p className="text-sm text-foreground">
-                          {establishment.company_name || `Empresa ${establishment.company_id}`}
+                          {establishment.company_name ||
+                            `Empresa ${establishment.company_id}`}
                         </p>
                         {establishment.company_tax_id && (
                           <p className="text-xs text-muted-foreground font-mono">
-                            {establishment.company_tax_id}
+                            {formatTaxId(establishment.company_tax_id)}
                           </p>
                         )}
                       </div>
@@ -523,35 +668,52 @@ const EstablishmentsPageContent = () => {
                           establishment.is_active ? "active" : "inactive"
                         )}
                       >
-                        {getStatusLabel(establishment.is_active ? "active" : "inactive")}
+                        {getStatusLabel(
+                          establishment.is_active ? "active" : "inactive"
+                        )}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-foreground">
                       {establishment.created_at
-                        ? new Date(establishment.created_at).toLocaleDateString("pt-BR")
+                        ? new Date(establishment.created_at).toLocaleDateString(
+                            "pt-BR"
+                          )
                         : "-"}
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex justify-center">
-                        <ActionDropdown>
+                        <ActionDropdown className="z-50">
                           <ActionDropdown.Item
                             icon={<Eye className="h-4 w-4" />}
                             onClick={() => handleView(establishment.id)}
                           >
                             Ver Detalhes
                           </ActionDropdown.Item>
-                          
+
                           <ActionDropdown.Item
                             icon={<Edit className="h-4 w-4" />}
                             onClick={() => handleEdit(establishment.id)}
                           >
                             Editar
                           </ActionDropdown.Item>
-                          
+
                           <ActionDropdown.Item
-                            icon={establishment.is_active ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
-                            onClick={() => handleToggleStatus(establishment.id, !establishment.is_active)}
-                            variant={establishment.is_active ? "warning" : "success"}
+                            icon={
+                              establishment.is_active ? (
+                                <UserX className="h-4 w-4" />
+                              ) : (
+                                <UserCheck className="h-4 w-4" />
+                              )
+                            }
+                            onClick={() =>
+                              handleToggleStatus(
+                                establishment.id,
+                                !establishment.is_active
+                              )
+                            }
+                            variant={
+                              establishment.is_active ? "warning" : "success"
+                            }
                           >
                             {establishment.is_active ? "Inativar" : "Ativar"}
                           </ActionDropdown.Item>
@@ -573,8 +735,85 @@ const EstablishmentsPageContent = () => {
           </div>
         </div>
 
+        {/* Tablet: Cards compactos */}
+        <div className="hidden md:block lg:hidden space-y-3 p-4">
+          {establishments.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500 dark:text-gray-400">
+                Nenhum estabelecimento encontrado
+              </p>
+            </div>
+          ) : (
+            establishments.map((establishment, index) => (
+              <div
+                key={establishment?.id || index}
+                className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0 grid grid-cols-3 gap-4">
+                    <div className="col-span-2">
+                      <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {establishment.person?.name || establishment.code}
+                      </h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        Código: {establishment.code}
+                      </p>
+                      {establishment.person?.tax_id && (
+                        <p className="text-xs text-gray-400 dark:text-gray-500 truncate font-mono">
+                          CNPJ: {establishment.person.tax_id}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-center">
+                      <div className="flex flex-wrap gap-1 justify-center">
+                        <span
+                          className={`px-2 py-1 text-xs rounded ${
+                            establishment.is_active
+                              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                              : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                          }`}
+                        >
+                          {establishment.is_active ? "Ativo" : "Inativo"}
+                        </span>
+                        {establishment.is_principal && (
+                          <span className="px-2 py-1 text-xs bg-primary/10 text-primary rounded">
+                            Principal
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="ml-4 flex-shrink-0">
+                    <ActionDropdown className="z-50">
+                      <ActionDropdown.Item
+                        icon={<Eye className="h-4 w-4" />}
+                        onClick={() => handleView(establishment.id)}
+                      >
+                        Ver Detalhes
+                      </ActionDropdown.Item>
+                      <ActionDropdown.Item
+                        icon={<Edit className="h-4 w-4" />}
+                        onClick={() => handleEdit(establishment.id)}
+                      >
+                        Editar
+                      </ActionDropdown.Item>
+                      <ActionDropdown.Item
+                        icon={<Trash2 className="h-4 w-4" />}
+                        onClick={() => handleDelete(establishment.id)}
+                        variant="danger"
+                      >
+                        Excluir
+                      </ActionDropdown.Item>
+                    </ActionDropdown>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
         {/* Mobile Cards */}
-        <div className="lg:hidden space-y-4">
+        <div className="md:hidden space-y-4">
           {establishments.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-gray-500 dark:text-gray-400">
@@ -608,7 +847,9 @@ const EstablishmentsPageContent = () => {
                       establishment.is_active ? "active" : "inactive"
                     )}
                   >
-                    {getStatusLabel(establishment.is_active ? "active" : "inactive")}
+                    {getStatusLabel(
+                      establishment.is_active ? "active" : "inactive"
+                    )}
                   </span>
                 </div>
 
@@ -629,14 +870,17 @@ const EstablishmentsPageContent = () => {
                     <Calendar className="h-4 w-4 mr-2 text-gray-500" />
                     <span className="text-gray-600 dark:text-gray-300">
                       {establishment.created_at
-                        ? new Date(establishment.created_at).toLocaleDateString("pt-BR")
+                        ? new Date(establishment.created_at).toLocaleDateString(
+                            "pt-BR"
+                          )
                         : "-"}
                     </span>
                   </div>
                   <div className="flex items-center">
                     <Users className="h-4 w-4 mr-2 text-gray-500" />
                     <span className="text-gray-600 dark:text-gray-300">
-                      {establishment.company_name?.substring(0, 20) || `Empresa ${establishment.company_id}`}
+                      {establishment.company_name?.substring(0, 20) ||
+                        `Empresa ${establishment.company_id}`}
                     </span>
                   </div>
                 </div>
@@ -649,17 +893,28 @@ const EstablishmentsPageContent = () => {
                     >
                       Ver Detalhes
                     </ActionDropdown.Item>
-                    
+
                     <ActionDropdown.Item
                       icon={<Edit className="h-4 w-4" />}
                       onClick={() => handleEdit(establishment.id)}
                     >
                       Editar
                     </ActionDropdown.Item>
-                    
+
                     <ActionDropdown.Item
-                      icon={establishment.is_active ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
-                      onClick={() => handleToggleStatus(establishment.id, !establishment.is_active)}
+                      icon={
+                        establishment.is_active ? (
+                          <UserX className="h-4 w-4" />
+                        ) : (
+                          <UserCheck className="h-4 w-4" />
+                        )
+                      }
+                      onClick={() =>
+                        handleToggleStatus(
+                          establishment.id,
+                          !establishment.is_active
+                        )
+                      }
                       variant={establishment.is_active ? "warning" : "success"}
                     >
                       {establishment.is_active ? "Inativar" : "Ativar"}
