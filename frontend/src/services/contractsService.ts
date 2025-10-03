@@ -43,6 +43,7 @@ export interface Contract {
   plan_name: string;
   monthly_value: number;
   lives_contracted: number;
+  actual_lives_count?: number; // Contagem real de vidas ativas
   lives_minimum?: number;
   lives_maximum?: number;
   allows_substitution: boolean;

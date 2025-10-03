@@ -1,21 +1,22 @@
-from typing import Any, Dict, List, Optional
 from datetime import date, datetime
+from typing import Any, Dict, List, Optional
 
 import structlog
 from sqlalchemy import Integer, and_, func, or_, select, text
 from sqlalchemy.orm import joinedload, selectinload
 
+from app.infrastructure.orm.models import Client as ClientEntity
 from app.infrastructure.orm.models import (
+    Company,
     Contract,
+    ContractLifeService,
     ContractLive,
     ContractService,
-    ContractLifeService,
-    ServicesCatalog,
+    Establishments,
+    People,
     ServiceExecution,
+    ServicesCatalog,
 )
-from app.infrastructure.orm.models import Client as ClientEntity
-from app.infrastructure.orm.models import Company, People
-from app.infrastructure.orm.models import Establishments
 from app.infrastructure.services.tenant_context_service import get_tenant_context
 
 logger = structlog.get_logger()
@@ -64,14 +65,18 @@ class ContractRepository:
             return contract_number
 
         except Exception as e:
-            logger.error("Error generating contract number", error=str(e), client_id=client_id)
+            logger.error(
+                "Error generating contract number", error=str(e), client_id=client_id
+            )
             raise
 
     async def create_contract(self, contract_data: Dict[str, Any]) -> Contract:
         """Create a new contract"""
         try:
             # Generate contract number
-            contract_number = await self._generate_contract_number(contract_data["client_id"])
+            contract_number = await self._generate_contract_number(
+                contract_data["client_id"]
+            )
 
             # Create contract entity
             contract = Contract(
@@ -90,7 +95,9 @@ class ContractRepository:
                 service_addresses=contract_data.get("service_addresses"),
                 status=contract_data.get("status", "active"),
                 created_by=contract_data.get("created_by"),
-                updated_by=contract_data.get("created_by"),  # Set updated_by to same as created_by initially
+                updated_by=contract_data.get(
+                    "created_by"
+                ),  # Set updated_by to same as created_by initially
             )
 
             self.db.add(contract)
@@ -107,7 +114,9 @@ class ContractRepository:
             return contract
 
         except Exception as e:
-            logger.error("Error creating contract", error=str(e), contract_data=contract_data)
+            logger.error(
+                "Error creating contract", error=str(e), contract_data=contract_data
+            )
             raise
 
     async def get_contract_by_id(self, contract_id: int) -> Optional[Contract]:
@@ -142,7 +151,9 @@ class ContractRepository:
             return contract
 
         except Exception as e:
-            logger.error("Error retrieving contract", error=str(e), contract_id=contract_id)
+            logger.error(
+                "Error retrieving contract", error=str(e), contract_id=contract_id
+            )
             raise
 
     async def list_contracts(
@@ -155,9 +166,21 @@ class ContractRepository:
     ) -> Dict[str, Any]:
         """List contracts with filtering and pagination"""
         try:
-            logger.info("Starting contract list query", client_id=client_id, status=status, contract_type=contract_type, page=page, size=size)
+            logger.info(
+                "Starting contract list query",
+                client_id=client_id,
+                status=status,
+                contract_type=contract_type,
+                page=page,
+                size=size,
+            )
             tenant_context = get_tenant_context()
-            logger.info("Tenant context retrieved", company_id=tenant_context.current_company_id if tenant_context else None)
+            logger.info(
+                "Tenant context retrieved",
+                company_id=(
+                    tenant_context.current_company_id if tenant_context else None
+                ),
+            )
             logger.info("Tenant context object", tenant_context=tenant_context)
             offset = (page - 1) * size
 
@@ -194,11 +217,40 @@ class ContractRepository:
             total = count_result.scalar()
             logger.info("Count query completed", total=total)
 
-            # Get paginated results
-            logger.info("Executing main query")
-            query = base_query.order_by(Contract.created_at.desc()).offset(offset).limit(size)
+            # Get paginated results with lives count
+            logger.info("Executing main query with lives count")
+            from app.infrastructure.orm.models import ContractLive
+
+            # Subquery para contar vidas ativas
+            lives_count_subquery = (
+                select(func.count(ContractLive.id))
+                .where(
+                    and_(
+                        ContractLive.contract_id == Contract.id,
+                        ContractLive.status == "active"
+                    )
+                )
+                .correlate(Contract)
+                .scalar_subquery()
+            )
+
+            query = (
+                select(Contract, lives_count_subquery.label("actual_lives_count"))
+                .where(and_(*filters) if filters else True)
+                .order_by(Contract.created_at.desc())
+                .offset(offset)
+                .limit(size)
+            )
             result = await self.db.execute(query)
-            contracts = result.scalars().all()
+            rows = result.all()
+
+            # Adicionar contagem de vidas a cada contrato
+            contracts = []
+            for row in rows:
+                contract = row[0]
+                contract.actual_lives_count = row[1] or 0
+                contracts.append(contract)
+
             logger.info("Main query completed", contracts_count=len(contracts))
 
             logger.info(
@@ -206,7 +258,11 @@ class ContractRepository:
                 total=total,
                 page=page,
                 size=size,
-                filters={"client_id": client_id, "status": status, "contract_type": contract_type},
+                filters={
+                    "client_id": client_id,
+                    "status": status,
+                    "contract_type": contract_type,
+                },
             )
 
             return {
@@ -221,7 +277,9 @@ class ContractRepository:
             logger.error("Error listing contracts", error=str(e))
             raise
 
-    async def update_contract(self, contract_id: int, update_data: Dict[str, Any]) -> Optional[Contract]:
+    async def update_contract(
+        self, contract_id: int, update_data: Dict[str, Any]
+    ) -> Optional[Contract]:
         """Update contract"""
         try:
             # Use SQLAlchemy update query
@@ -247,10 +305,14 @@ class ContractRepository:
             return contract
 
         except Exception as e:
-            logger.error("Error updating contract", error=str(e), contract_id=contract_id)
+            logger.error(
+                "Error updating contract", error=str(e), contract_id=contract_id
+            )
             raise
 
-    async def update_contract_status(self, contract_id: int, status: str) -> Optional[Contract]:
+    async def update_contract_status(
+        self, contract_id: int, status: str
+    ) -> Optional[Contract]:
         """Update contract status"""
         try:
             # Use SQLAlchemy update query
@@ -268,11 +330,17 @@ class ContractRepository:
             # Get updated contract
             contract = await self.get_contract_by_id(contract_id)
 
-            logger.info("Contract status updated successfully", contract_id=contract_id, status=status)
+            logger.info(
+                "Contract status updated successfully",
+                contract_id=contract_id,
+                status=status,
+            )
             return contract
 
         except Exception as e:
-            logger.error("Error updating contract status", error=str(e), contract_id=contract_id)
+            logger.error(
+                "Error updating contract status", error=str(e), contract_id=contract_id
+            )
             raise
 
     async def delete_contract(self, contract_id: int) -> bool:
@@ -284,10 +352,7 @@ class ContractRepository:
             stmt = (
                 update(Contract)
                 .where(Contract.id == contract_id)
-                .values(
-                    status="deleted",
-                    updated_at=datetime.utcnow()
-                )
+                .values(status="deleted", updated_at=datetime.utcnow())
             )
 
             result = await self.db.execute(stmt)
@@ -298,11 +363,15 @@ class ContractRepository:
                 logger.info("Contract deleted successfully", contract_id=contract_id)
                 return True
             else:
-                logger.warning("Contract not found for deletion", contract_id=contract_id)
+                logger.warning(
+                    "Contract not found for deletion", contract_id=contract_id
+                )
                 return False
 
         except Exception as e:
-            logger.error("Error deleting contract", error=str(e), contract_id=contract_id)
+            logger.error(
+                "Error deleting contract", error=str(e), contract_id=contract_id
+            )
             raise
 
 
@@ -323,7 +392,7 @@ class ServicesRepository:
 
             # Base query
             base_query = select(ServicesCatalog).where(
-                ServicesCatalog.status == 'active'
+                ServicesCatalog.status == "active"
             )
 
             # Apply filters
@@ -337,12 +406,18 @@ class ServicesRepository:
                 base_query = base_query.where(and_(*filters))
 
             # Count total
-            count_query = select(func.count(ServicesCatalog.id)).select_from(base_query.subquery())
+            count_query = select(func.count(ServicesCatalog.id)).select_from(
+                base_query.subquery()
+            )
             count_result = await self.db.execute(count_query)
             total = count_result.scalar()
 
             # Get paginated results
-            query = base_query.order_by(ServicesCatalog.service_name).offset(offset).limit(size)
+            query = (
+                base_query.order_by(ServicesCatalog.service_name)
+                .offset(offset)
+                .limit(size)
+            )
             result = await self.db.execute(query)
             services = result.scalars().all()
 
@@ -369,9 +444,7 @@ class ServicesRepository:
     async def get_service_by_id(self, service_id: int) -> Optional[ServicesCatalog]:
         """Get service by ID"""
         try:
-            query = select(ServicesCatalog).where(
-                ServicesCatalog.id == service_id
-            )
+            query = select(ServicesCatalog).where(ServicesCatalog.id == service_id)
 
             result = await self.db.execute(query)
             service = result.scalar_one_or_none()
@@ -384,5 +457,7 @@ class ServicesRepository:
             return service
 
         except Exception as e:
-            logger.error("Error retrieving service", error=str(e), service_id=service_id)
+            logger.error(
+                "Error retrieving service", error=str(e), service_id=service_id
+            )
             raise

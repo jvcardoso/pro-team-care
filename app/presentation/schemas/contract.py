@@ -17,7 +17,7 @@ class ContractStatus(str, Enum):
     INACTIVE = "inactive"
     SUSPENDED = "suspended"
     CANCELLED = "cancelled"  # Match database
-    EXPIRED = "expired"      # Match database
+    EXPIRED = "expired"  # Match database
 
 
 class PaymentFrequency(str, Enum):
@@ -171,6 +171,7 @@ class ContractResponse(ContractBase):
     created_at: datetime
     updated_at: datetime
     created_by: Optional[int] = None
+    actual_lives_count: Optional[int] = 0  # Contagem real de vidas ativas
 
 
 class ContractDetailed(ContractResponse):
@@ -188,8 +189,12 @@ class ContractLiveBase(BaseModel):
     person_id: int
     start_date: date
     end_date: Optional[date] = None
-    relationship_type: str = Field(..., max_length=20)  # From database: TITULAR, DEPENDENTE, FUNCIONARIO, BENEFICIARIO
-    status: str = Field(default="active", max_length=20)  # From database: ACTIVE, INACTIVE, SUBSTITUTED, CANCELLED
+    relationship_type: str = Field(
+        ..., max_length=20
+    )  # From database: TITULAR, DEPENDENTE, FUNCIONARIO, BENEFICIARIO
+    status: str = Field(
+        default="active", max_length=20
+    )  # From database: ACTIVE, INACTIVE, SUBSTITUTED, CANCELLED
     substitution_reason: Optional[str] = Field(None, max_length=100)
     primary_service_address: Optional[Dict[str, Any]] = None  # JSON field
 
@@ -225,7 +230,9 @@ class ContractServiceBase(BaseModel):
     monthly_limit: Optional[int] = None
     daily_limit: Optional[int] = None
     annual_limit: Optional[int] = None
-    unit_value: Optional[Decimal] = None  # Changed from unit_value_override to match database
+    unit_value: Optional[Decimal] = (
+        None  # Changed from unit_value_override to match database
+    )
     requires_pre_authorization: bool = False  # Added from database
     start_date: date
     end_date: Optional[date] = None
@@ -334,7 +341,9 @@ class ServiceExecutionBase(BaseModel):
     patient_response: Optional[str] = None  # Added from database
     complications: Optional[str] = None  # Added from database
     materials_used: Optional[Dict[str, Any]] = None  # Added from database
-    quality_score: Optional[int] = Field(None, ge=1, le=5)  # Changed from patient_satisfaction
+    quality_score: Optional[int] = Field(
+        None, ge=1, le=5
+    )  # Changed from patient_satisfaction
     family_satisfaction: Optional[int] = Field(None, ge=1, le=5)  # Added from database
     status: str = Field(default="scheduled", max_length=20)  # Changed to str
     cancellation_reason: Optional[str] = None  # Added from database
