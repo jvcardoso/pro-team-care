@@ -20,6 +20,7 @@ import CompaniesPage from "./pages/CompaniesPage";
 import EstablishmentsPage from "./pages/EstablishmentsPage";
 import ClientsPage from "./pages/ClientsPage";
 import ContractsPage from "./pages/ContractsPage";
+import ContractsPageWithTabs from "./pages/ContractsPageWithTabs";
 import ContractDashboard from "./components/views/ContractDashboard";
 import ContractLivesManager from "./components/views/ContractLivesManager";
 import ContractDetails from "./components/views/ContractDetails";
@@ -85,11 +86,8 @@ function App() {
                 />
                 <Route path="clientes" element={<ClientsPage />} />
                 <Route path="clientes/:id" element={<ClientsPage />} />
-                <Route path="contratos" element={<ContractsPage />} />
-                <Route
-                  path="contratos/dashboard"
-                  element={<ContractDashboard />}
-                />
+
+                {/* Rotas específicas de contratos PRIMEIRO */}
                 <Route
                   path="contratos/:id/editar"
                   element={<ContractsPage />}
@@ -98,7 +96,6 @@ function App() {
                   path="contratos/visualizar/:id"
                   element={<ContractDetails />}
                 />
-                {/* Rotas mais específicas primeiro para evitar conflitos */}
                 <Route
                   path="contratos/:id/vidas"
                   element={<ContractLivesManager />}
@@ -107,12 +104,14 @@ function App() {
                   path="contratos/:id/configuracoes"
                   element={<ContractsPage />}
                 />
+                <Route path="contratos/:id" element={<ContractsPage />} />
                 <Route
                   path="vidas"
                   element={<ContractLivesManager />}
                 />
-                {/* Rota genérica por último */}
-                <Route path="contratos/:id" element={<ContractsPage />} />
+
+                {/* Rota principal com abas */}
+                <Route path="contratos" element={<ContractsPageWithTabs />} />
                 <Route
                   path="flowbite-table-exemplo"
                   element={<FlowbiteTableExamplePage />}
