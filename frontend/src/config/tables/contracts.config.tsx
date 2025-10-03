@@ -43,7 +43,7 @@ export const createContractsConfig = (actions?: {
       type: "text",
       sortable: true,
       render: (value, item) => (
-        <div>
+        <div className="whitespace-nowrap">
           <div className="text-base font-semibold">{value}</div>
           <div className="font-normal text-gray-500 dark:text-gray-400">ID: {item.id}</div>
         </div>
@@ -65,7 +65,7 @@ export const createContractsConfig = (actions?: {
       label: "Tipo",
       type: "badge",
       render: (value) => (
-        <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">
+        <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300 whitespace-nowrap">
           {getContractTypeLabel(value)}
         </span>
       ),
