@@ -8,7 +8,7 @@ const RecentActivities = ({ activities }) => {
           <h3 className="card-title">📝 Atividades Recentes</h3>
         </div>
         <div className="card-content">
-          <p className="text-center text-gray-500 py-8">
+          <p className="text-center text-gray-500 dark:text-gray-400 py-8">
             Nenhuma atividade recente
           </p>
         </div>
@@ -32,12 +32,12 @@ const RecentActivities = ({ activities }) => {
 
   const getActivityColor = (type) => {
     const colors = {
-      company_created: 'bg-green-100 text-green-700',
-      subscription_created: 'bg-blue-100 text-blue-700',
-      client_created: 'bg-purple-100 text-purple-700',
-      user_created: 'bg-orange-100 text-orange-700',
+      company_created: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+      subscription_created: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+      client_created: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+      user_created: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
     };
-    return colors[type] || 'bg-gray-100 text-gray-700';
+    return colors[type] || 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
   };
 
   return (
@@ -50,19 +50,19 @@ const RecentActivities = ({ activities }) => {
           {activities.map((activity, index) => (
             <div
               key={index}
-              className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+              className="flex items-start space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
               <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getActivityColor(activity.type)}`}>
                 <span className="text-xl">{activity.icon}</span>
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
                   {activity.title}
                 </p>
-                <p className="text-xs text-gray-600 mt-1">
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                   {activity.description}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
                   {getTimeAgo(activity.timestamp)}
                 </p>
               </div>
