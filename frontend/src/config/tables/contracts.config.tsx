@@ -77,14 +77,9 @@ export const createContractsConfig = (actions?: {
       render: (value, item) => (
         <div className="flex items-center">
           <Users className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" />
-          <div>
-            <div className="font-medium">
-              {value || 0} de {item.lives_contracted || 0}
-            </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">
-              {value || 0} cadastradas
-            </div>
-          </div>
+          <span className="font-medium">
+            {value || 0}/{item.lives_contracted || 0}
+          </span>
         </div>
       ),
     },
