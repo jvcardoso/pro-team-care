@@ -347,47 +347,9 @@ const ContractLivesManager: React.FC = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center space-x-4">
-          <Button
-            onClick={() => navigate(contractId ? "/admin/contratos" : "/admin")}
-            variant="outline"
-            size="sm"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            {contractId ? "Voltar para Contratos" : "Voltar ao Dashboard"}
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-              <Users className="w-6 h-6 mr-2" />
-              Gestão de Vidas
-            </h1>
-            <p className="mt-1 text-sm text-gray-500">
-              {contract ? (
-                <>
-                  Contrato #{contract.contract_number} -{" "}
-                  {contract.client_id
-                    ? `Cliente #${contract.client_id}`
-                    : "Cliente não identificado"}
-                </>
-              ) : (
-                "Todas as vidas de todos os contratos"
-              )}
-            </p>
-          </div>
-        </div>
-        <div className="mt-4 sm:mt-0">
-          <Button onClick={handleAddLife} className="flex items-center">
-            <UserPlus className="w-4 h-4 mr-2" />
-            Adicionar Vida
-          </Button>
-        </div>
-      </div>
-
-       {/* Contract Summary */}
-       {contract && (
+    <div className="space-y-6">
+       {/* Contract Summary - apenas quando visualizando contrato específico */}
+       {contract && contractId && (
          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
            <Card>
              <div className="p-4">
