@@ -98,6 +98,11 @@ function App() {
                   path="contratos/visualizar/:id"
                   element={<ContractDetails />}
                 />
+                {/* Rotas mais específicas primeiro para evitar conflitos */}
+                <Route
+                  path="contratos/:id/vidas"
+                  element={<ContractLivesManager />}
+                />
                 <Route
                   path="contratos/:id/configuracoes"
                   element={<ContractsPage />}
@@ -106,10 +111,7 @@ function App() {
                   path="vidas"
                   element={<ContractLivesManager />}
                 />
-                <Route
-                  path="contratos/:id/vidas"
-                  element={<ContractLivesManager />}
-                />
+                {/* Rota genérica por último */}
                 <Route path="contratos/:id" element={<ContractsPage />} />
                 <Route
                   path="flowbite-table-exemplo"

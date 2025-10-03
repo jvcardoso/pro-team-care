@@ -1,12 +1,16 @@
 from typing import List, Optional
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Query, status as http_status
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import status as http_status
 
 from app.domain.entities.user import User
 from app.infrastructure.auth import get_current_user
 from app.infrastructure.database import get_db
-from app.infrastructure.repositories.contract_repository import ContractRepository, ServicesRepository
+from app.infrastructure.repositories.contract_repository import (
+    ContractRepository,
+    ServicesRepository,
+)
 from app.infrastructure.services.tenant_context_service import get_tenant_context
 from app.presentation.decorators.simple_permissions import require_permission
 from app.presentation.schemas.contract import (
@@ -18,9 +22,15 @@ from app.presentation.schemas.contract import (
     ContractStatus,
     ContractType,
     ContractUpdate,
+    ServicesCatalogResponse,
     ServicesListParams,
     ServicesListResponse,
-    ServicesCatalogResponse,
+)
+from app.presentation.schemas.contract_lives import (
+    ContractLifeCreate,
+    ContractLifeHistoryResponse,
+    ContractLifeResponse,
+    ContractLifeUpdate,
 )
 
 logger = structlog.get_logger()
@@ -28,7 +38,9 @@ logger = structlog.get_logger()
 router = APIRouter()
 
 
-@router.post("/", response_model=ContractResponse, status_code=http_status.HTTP_201_CREATED)
+@router.post(
+    "/", response_model=ContractResponse, status_code=http_status.HTTP_201_CREATED
+)
 @require_permission("contracts.create")
 async def create_contract(
     contract_data: ContractCreate,
@@ -58,10 +70,14 @@ async def create_contract(
 
     except Exception as e:
         await db.rollback()
-        logger.error("Error creating contract", error=str(e), contract_data=contract_data.model_dump())
+        logger.error(
+            "Error creating contract",
+            error=str(e),
+            contract_data=contract_data.model_dump(),
+        )
         raise HTTPException(
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro interno do servidor ao criar contrato"
+            detail="Erro interno do servidor ao criar contrato",
         )
 
 
@@ -71,18 +87,25 @@ async def test_contracts_endpoint(db=Depends(get_db)):
     try:
         from sqlalchemy import text
 
-        result = await db.execute(text("SELECT COUNT(*) as count FROM master.contracts"))
+        result = await db.execute(
+            text("SELECT COUNT(*) as count FROM master.contracts")
+        )
         count = result.scalar()
         return {"contracts_table_exists": True, "contracts_count": count}
     except Exception as e:
         return {"contracts_table_exists": False, "error": str(e)}
 
+
 @router.get("/", response_model=ContractListResponse)
 @require_permission("contracts.view")
 async def list_contracts(
     client_id: Optional[int] = Query(None, description="Filter by client ID"),
-    contract_status: Optional[ContractStatus] = Query(None, description="Filter by contract status"),
-    contract_type: Optional[ContractType] = Query(None, description="Filter by contract type"),
+    contract_status: Optional[ContractStatus] = Query(
+        None, description="Filter by contract status"
+    ),
+    contract_type: Optional[ContractType] = Query(
+        None, description="Filter by contract type"
+    ),
     page: int = Query(1, ge=1, description="Page number"),
     size: int = Query(50, ge=1, le=100, description="Page size"),
     db=Depends(get_db),
@@ -90,7 +113,12 @@ async def list_contracts(
 ):
     """List contracts with filtering and pagination"""
     try:
-        logger.info("Starting contracts list request", client_id=client_id, status=contract_status, contract_type=contract_type)
+        logger.info(
+            "Starting contracts list request",
+            client_id=client_id,
+            status=contract_status,
+            contract_type=contract_type,
+        )
         contract_repo = ContractRepository(db)
 
         result = await contract_repo.list_contracts(
@@ -103,15 +131,30 @@ async def list_contracts(
 
         # Convert contracts to response models
         try:
-            logger.info("Converting contracts to response models", contracts_count=len(result["contracts"]))
+            logger.info(
+                "Converting contracts to response models",
+                contracts_count=len(result["contracts"]),
+            )
             if result["contracts"]:
-                logger.info("First contract data", contract_data=result["contracts"][0].__dict__ if hasattr(result["contracts"][0], '__dict__') else str(result["contracts"][0]))
+                logger.info(
+                    "First contract data",
+                    contract_data=(
+                        result["contracts"][0].__dict__
+                        if hasattr(result["contracts"][0], "__dict__")
+                        else str(result["contracts"][0])
+                    ),
+                )
             contracts_response = [
-                ContractResponse.model_validate(contract) for contract in result["contracts"]
+                ContractResponse.model_validate(contract)
+                for contract in result["contracts"]
             ]
             logger.info("Conversion completed successfully")
         except Exception as e:
-            logger.error("Error converting contracts to response models", error=str(e), error_type=type(e).__name__)
+            logger.error(
+                "Error converting contracts to response models",
+                error=str(e),
+                error_type=type(e).__name__,
+            )
             raise
 
         logger.info(
@@ -119,7 +162,11 @@ async def list_contracts(
             total=result["total"],
             page=page,
             size=size,
-            filters={"client_id": client_id, "status": contract_status, "contract_type": contract_type},
+            filters={
+                "client_id": client_id,
+                "status": contract_status,
+                "contract_type": contract_type,
+            },
             user_id=current_user.id,
         )
 
@@ -135,7 +182,7 @@ async def list_contracts(
         logger.error("Error listing contracts", error=str(e))
         raise HTTPException(
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro interno do servidor ao listar contratos"
+            detail="Erro interno do servidor ao listar contratos",
         )
 
 
@@ -154,7 +201,7 @@ async def get_contract(
         if not contract:
             raise HTTPException(
                 status_code=http_status.HTTP_404_NOT_FOUND,
-                detail="Contrato não encontrado"
+                detail="Contrato não encontrado",
             )
 
         logger.info(
@@ -172,7 +219,7 @@ async def get_contract(
         logger.error("Error retrieving contract", error=str(e), contract_id=contract_id)
         raise HTTPException(
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro interno do servidor ao buscar contrato"
+            detail="Erro interno do servidor ao buscar contrato",
         )
 
 
@@ -189,12 +236,14 @@ async def update_contract(
         contract_repo = ContractRepository(db)
 
         # Only include fields that are not None
-        update_dict = {k: v for k, v in update_data.model_dump().items() if v is not None}
+        update_dict = {
+            k: v for k, v in update_data.model_dump().items() if v is not None
+        }
 
         if not update_dict:
             raise HTTPException(
                 status_code=http_status.HTTP_400_BAD_REQUEST,
-                detail="Nenhum campo para atualizar foi fornecido"
+                detail="Nenhum campo para atualizar foi fornecido",
             )
 
         contract = await contract_repo.update_contract(contract_id, update_dict)
@@ -202,7 +251,7 @@ async def update_contract(
         if not contract:
             raise HTTPException(
                 status_code=http_status.HTTP_404_NOT_FOUND,
-                detail="Contrato não encontrado"
+                detail="Contrato não encontrado",
             )
 
         await db.commit()
@@ -223,7 +272,7 @@ async def update_contract(
         logger.error("Error updating contract", error=str(e), contract_id=contract_id)
         raise HTTPException(
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro interno do servidor ao atualizar contrato"
+            detail="Erro interno do servidor ao atualizar contrato",
         )
 
 
@@ -243,7 +292,7 @@ async def delete_contract(
         if not deleted:
             raise HTTPException(
                 status_code=http_status.HTTP_404_NOT_FOUND,
-                detail="Contrato não encontrado"
+                detail="Contrato não encontrado",
             )
 
         await db.commit()
@@ -261,7 +310,7 @@ async def delete_contract(
         logger.error("Error deleting contract", error=str(e), contract_id=contract_id)
         raise HTTPException(
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro interno do servidor ao deletar contrato"
+            detail="Erro interno do servidor ao deletar contrato",
         )
 
 
@@ -269,8 +318,12 @@ async def delete_contract(
 @require_permission("contracts.view")
 async def count_contracts(
     client_id: Optional[int] = Query(None, description="Filter by client ID"),
-    status: Optional[ContractStatus] = Query(None, description="Filter by contract status"),
-    contract_type: Optional[ContractType] = Query(None, description="Filter by contract type"),
+    status: Optional[ContractStatus] = Query(
+        None, description="Filter by contract status"
+    ),
+    contract_type: Optional[ContractType] = Query(
+        None, description="Filter by contract type"
+    ),
     db=Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -290,7 +343,11 @@ async def count_contracts(
         logger.info(
             "Contracts counted successfully",
             count=result["total"],
-            filters={"client_id": client_id, "status": status, "contract_type": contract_type},
+            filters={
+                "client_id": client_id,
+                "status": status,
+                "contract_type": contract_type,
+            },
             user_id=current_user.id,
         )
 
@@ -300,7 +357,7 @@ async def count_contracts(
         logger.error("Error counting contracts", error=str(e))
         raise HTTPException(
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro interno do servidor ao contar contratos"
+            detail="Erro interno do servidor ao contar contratos",
         )
 
 
@@ -334,7 +391,8 @@ async def list_services_catalog(
 
         # Convert services to response models
         services_response = [
-            ServicesCatalogResponse.model_validate(service) for service in result["services"]
+            ServicesCatalogResponse.model_validate(service)
+            for service in result["services"]
         ]
 
         logger.info(
@@ -358,7 +416,7 @@ async def list_services_catalog(
         logger.error("Error listing services catalog", error=str(e))
         raise HTTPException(
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro interno do servidor ao listar catálogo de serviços"
+            detail="Erro interno do servidor ao listar catálogo de serviços",
         )
 
 
@@ -377,7 +435,7 @@ async def get_service(
         if not service:
             raise HTTPException(
                 status_code=http_status.HTTP_404_NOT_FOUND,
-                detail="Serviço não encontrado"
+                detail="Serviço não encontrado",
             )
 
         logger.info(
@@ -395,7 +453,7 @@ async def get_service(
         logger.error("Error retrieving service", error=str(e), service_id=service_id)
         raise HTTPException(
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro interno do servidor ao buscar serviço"
+            detail="Erro interno do servidor ao buscar serviço",
         )
 
 
@@ -403,20 +461,43 @@ async def get_service(
 # CONTRACT LIVES ENDPOINTS
 # ==========================================
 
-@router.get("/{contract_id}/lives", response_model=list)
+
+@router.get("/{contract_id}/lives", response_model=List[ContractLifeResponse])
 @require_permission("contracts.view")
 async def list_contract_lives(
     contract_id: int,
     db=Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """List lives for a specific contract"""
+    """
+    Lista todas as vidas vinculadas a um contrato
+
+    **Retorna:**
+    - Lista de vidas com informações de pessoa (JOIN com people)
+    - Ordenado por data de início (mais recente primeiro)
+
+    **Permissão necessária:** `contracts.view`
+    """
     try:
         from sqlalchemy import select
-        from app.infrastructure.orm.models import ContractLive, People
 
+        from app.application.validators.contract_lives_validator import (
+            ContractLivesValidator,
+        )
+        from app.infrastructure.orm.models import ContractLive, People
+        from app.presentation.schemas.contract_lives import ContractLifeResponse
+
+        # Validar que contrato existe
+        validator = ContractLivesValidator(db)
+        await validator.validate_contract_exists(contract_id)
+
+        # Buscar vidas com JOIN em people
         query = (
-            select(ContractLive, People.name.label("person_name"), People.tax_id.label("person_cpf"))
+            select(
+                ContractLive,
+                People.name.label("person_name"),
+                People.tax_id.label("person_cpf"),
+            )
             .join(People, ContractLive.person_id == People.id)
             .where(ContractLive.contract_id == contract_id)
             .order_by(ContractLive.start_date.desc())
@@ -425,23 +506,27 @@ async def list_contract_lives(
         result = await db.execute(query)
         lives_data = result.all()
 
+        # Converter para schema Pydantic
         lives = []
         for live, person_name, person_cpf in lives_data:
-            lives.append({
+            life_dict = {
                 "id": live.id,
                 "contract_id": live.contract_id,
                 "person_id": live.person_id,
                 "person_name": person_name,
                 "person_cpf": person_cpf,
-                "start_date": live.start_date.isoformat() if live.start_date else None,
-                "end_date": live.end_date.isoformat() if live.end_date else None,
-                "status": live.status,
+                "start_date": live.start_date,
+                "end_date": live.end_date,
+                "status": live.status or "active",
                 "relationship_type": live.relationship_type,
-                "substitution_allowed": True,  # Default for now
-                "notes": live.substitution_reason,
-                "created_at": live.created_at.isoformat() if live.created_at else None,
-                "updated_at": live.updated_at.isoformat() if live.updated_at else None,
-            })
+                "substitution_reason": live.substitution_reason,
+                "allows_substitution": True,  # Default (campo não existe na tabela)
+                "primary_service_address": live.primary_service_address,
+                "created_at": live.created_at,
+                "updated_at": live.updated_at,
+                "created_by": live.created_by,
+            }
+            lives.append(ContractLifeResponse(**life_dict))
 
         logger.info(
             "Contract lives listed successfully",
@@ -452,74 +537,99 @@ async def list_contract_lives(
 
         return lives
 
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error("Error listing contract lives", error=str(e), contract_id=contract_id)
+        logger.error(
+            "Error listing contract lives", error=str(e), contract_id=contract_id
+        )
         raise HTTPException(
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro interno do servidor ao listar vidas do contrato"
+            detail="Erro interno do servidor ao listar vidas do contrato",
         )
 
 
-@router.post("/{contract_id}/lives", response_model=dict)
+@router.post("/{contract_id}/lives", response_model=dict, status_code=http_status.HTTP_201_CREATED)
 @require_permission("contracts.lives.manage")
 async def add_contract_life(
     contract_id: int,
-    life_data: dict,
+    life_data: ContractLifeCreate,
     db=Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Add a new life to a contract"""
+    """
+    Adiciona uma nova vida ao contrato
+
+    **Validações aplicadas:**
+    - Contrato existe e está ativo
+    - Não há sobreposição de períodos para a mesma pessoa
+    - Período da vida está dentro do período do contrato
+    - Limites de vidas (mínimo, máximo, contratado) não foram excedidos
+    - Validação de datas (end_date >= start_date)
+
+    **Permissão necessária:** `contracts.lives.manage`
+    """
     try:
-        from sqlalchemy import select
-        from app.infrastructure.orm.models import ContractLive, People, Contract
         from datetime import datetime
 
-        # Validate contract exists
-        contract_query = select(Contract).where(Contract.id == contract_id)
-        contract_result = await db.execute(contract_query)
-        contract = contract_result.scalar_one_or_none()
+        from sqlalchemy import select
 
-        if not contract:
-            raise HTTPException(
-                status_code=http_status.HTTP_404_NOT_FOUND,
-                detail="Contrato não encontrado"
-            )
+        from app.application.validators.contract_lives_validator import (
+            ContractLivesValidator,
+        )
+        from app.infrastructure.orm.models import ContractLive, People
+        from app.infrastructure.services.tenant_context_service import TenantContext
 
-        # Check if person exists or create one
-        person_name = life_data.get("person_name")
-        if not person_name:
-            raise HTTPException(
-                status_code=http_status.HTTP_400_BAD_REQUEST,
-                detail="Nome da pessoa é obrigatório"
-            )
+        # Inicializar validador
+        validator = ContractLivesValidator(db)
 
-        # For now, create a simple person record (in real app, this would be more sophisticated)
-        person_query = select(People).where(People.name == person_name)
+        # Validação 1: Contrato existe e está ativo
+        contract = await validator.validate_contract_exists(contract_id)
+
+        # Validação 2: Limites de vidas (adicionar)
+        await validator.validate_lives_limits(contract_id, action="add")
+
+        # Validação 3: Período dentro do contrato
+        await validator.validate_date_within_contract_period(
+            contract_id, life_data.start_date, life_data.end_date
+        )
+
+        # Buscar ou criar pessoa
+        person_query = select(People).where(People.name == life_data.person_name)
         person_result = await db.execute(person_query)
         person = person_result.scalar_one_or_none()
 
         if not person:
-            # Create new person - simplified for now
+            # Criar nova pessoa (PF)
+            # Obter company_id do contexto de tenant
+            tenant_context = TenantContext.get_context()
+            company_id = tenant_context.get("company_id", 1)  # Fallback para company_id=1
+
             person = People(
-                name=person_name,
+                name=life_data.person_name,
                 person_type="PF",
                 status="active",
-                company_id=1,  # Default company - in real app, this would come from context
-                tax_id=f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",  # Temporary tax_id
+                company_id=company_id,
+                tax_id=f"TEMP{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",  # CPF temporário
             )
             db.add(person)
             await db.flush()
             await db.refresh(person)
 
-        # Create contract life
+        # Validação 4: Não há sobreposição de períodos
+        await validator.validate_no_period_overlap(
+            contract_id, person.id, life_data.start_date, life_data.end_date
+        )
+
+        # Criar vida no contrato
         contract_life = ContractLive(
             contract_id=contract_id,
             person_id=person.id,
-            start_date=datetime.fromisoformat(life_data.get("start_date")).date(),
-            end_date=datetime.fromisoformat(life_data.get("end_date")).date() if life_data.get("end_date") else None,
-            relationship_type=life_data.get("relationship_type", "FUNCIONARIO"),
+            start_date=life_data.start_date,
+            end_date=life_data.end_date,
+            relationship_type=life_data.relationship_type,
             status="active",
-            substitution_reason=life_data.get("notes"),
+            substitution_reason=life_data.notes,
             created_by=current_user.id,
         )
 
@@ -531,23 +641,30 @@ async def add_contract_life(
             "Contract life added successfully",
             contract_id=contract_id,
             life_id=contract_life.id,
-            person_name=person_name,
+            person_id=person.id,
+            person_name=life_data.person_name,
             user_id=current_user.id,
         )
 
         return {
             "id": contract_life.id,
-            "message": f"{person_name} adicionado ao contrato com sucesso"
+            "person_id": person.id,
+            "message": f"{life_data.person_name} adicionado ao contrato com sucesso",
         }
 
     except HTTPException:
         raise
     except Exception as e:
         await db.rollback()
-        logger.error("Error adding contract life", error=str(e), contract_id=contract_id)
+        logger.error(
+            "Error adding contract life",
+            error=str(e),
+            contract_id=contract_id,
+            life_data=life_data.model_dump(),
+        )
         raise HTTPException(
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro interno do servidor ao adicionar vida ao contrato"
+            detail=f"Erro interno do servidor ao adicionar vida ao contrato: {str(e)}",
         )
 
 
@@ -556,20 +673,34 @@ async def add_contract_life(
 async def update_contract_life(
     contract_id: int,
     life_id: int,
-    life_data: dict,
+    life_data: ContractLifeUpdate,
     db=Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Update or substitute a contract life"""
+    """
+    Atualiza uma vida do contrato (usualmente para encerrar ou substituir)
+
+    **Casos de uso comuns:**
+    - Encerrar vida: definir `end_date` e `status = 'cancelled'`
+    - Substituir vida: definir `status = 'substituted'` e `substitution_reason`
+    - Atualizar observações: definir `notes`
+
+    **Validações aplicadas:**
+    - Vida existe e pertence ao contrato
+    - end_date >= start_date (se fornecido)
+
+    **Permissão necessária:** `contracts.lives.manage`
+    """
     try:
-        from sqlalchemy import select, update
-        from app.infrastructure.orm.models import ContractLive
         from datetime import datetime
 
-        # Find the life to update
+        from sqlalchemy import select, update
+
+        from app.infrastructure.orm.models import ContractLive
+
+        # Buscar vida para atualizar
         query = select(ContractLive).where(
-            ContractLive.id == life_id,
-            ContractLive.contract_id == contract_id
+            ContractLive.id == life_id, ContractLive.contract_id == contract_id
         )
         result = await db.execute(query)
         contract_life = result.scalar_one_or_none()
@@ -577,31 +708,38 @@ async def update_contract_life(
         if not contract_life:
             raise HTTPException(
                 status_code=http_status.HTTP_404_NOT_FOUND,
-                detail="Vida do contrato não encontrada"
+                detail=f"Vida {life_id} não encontrada no contrato {contract_id}",
             )
 
-        # Update the life
+        # Validar end_date >= start_date (se fornecido)
+        if life_data.end_date and life_data.end_date < contract_life.start_date:
+            raise HTTPException(
+                status_code=http_status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    f"end_date ({life_data.end_date}) deve ser posterior ou igual a "
+                    f"start_date ({contract_life.start_date})"
+                ),
+            )
+
+        # Montar dados para atualização (apenas campos fornecidos)
         update_data = {}
-        if "end_date" in life_data:
-            update_data["end_date"] = datetime.fromisoformat(life_data["end_date"]).date() if life_data["end_date"] else None
-        if "status" in life_data:
-            update_data["status"] = life_data["status"]
-        if "relationship_type" in life_data:
-            update_data["relationship_type"] = life_data["relationship_type"]
-        if "substitution_reason" in life_data:
-            update_data["substitution_reason"] = life_data["substitution_reason"]
-        if "primary_service_address" in life_data:
-            update_data["primary_service_address"] = life_data["primary_service_address"]
+        if life_data.end_date is not None:
+            update_data["end_date"] = life_data.end_date
+        if life_data.status is not None:
+            update_data["status"] = life_data.status
+        if life_data.notes is not None:
+            # Nota: campo 'notes' não existe, mas 'substitution_reason' sim
+            update_data["substitution_reason"] = life_data.notes
+        if life_data.substitution_reason is not None:
+            update_data["substitution_reason"] = life_data.substitution_reason
 
+        # Sempre atualizar timestamp
         update_data["updated_at"] = datetime.utcnow()
-        # Note: updated_by field doesn't exist in contract_lives table based on database structure
 
+        # Executar update
         stmt = (
-            update(ContractLive)
-            .where(ContractLive.id == life_id)
-            .values(**update_data)
+            update(ContractLive).where(ContractLive.id == life_id).values(**update_data)
         )
-
         await db.execute(stmt)
         await db.commit()
 
@@ -609,23 +747,36 @@ async def update_contract_life(
             "Contract life updated successfully",
             contract_id=contract_id,
             life_id=life_id,
+            updated_fields=list(update_data.keys()),
             user_id=current_user.id,
         )
 
-        return {"message": "Vida do contrato atualizada com sucesso"}
+        return {
+            "message": "Vida do contrato atualizada com sucesso",
+            "life_id": life_id,
+            "updated_fields": list(update_data.keys()),
+        }
 
     except HTTPException:
         raise
     except Exception as e:
         await db.rollback()
-        logger.error("Error updating contract life", error=str(e), contract_id=contract_id, life_id=life_id)
+        logger.error(
+            "Error updating contract life",
+            error=str(e),
+            contract_id=contract_id,
+            life_id=life_id,
+            life_data=life_data.model_dump(exclude_unset=True),
+        )
         raise HTTPException(
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro interno do servidor ao atualizar vida do contrato"
+            detail=f"Erro interno do servidor ao atualizar vida do contrato: {str(e)}",
         )
 
 
-@router.delete("/{contract_id}/lives/{life_id}", status_code=http_status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{contract_id}/lives/{life_id}", status_code=http_status.HTTP_204_NO_CONTENT
+)
 @require_permission("contracts.lives.manage")
 async def remove_contract_life(
     contract_id: int,
@@ -633,16 +784,36 @@ async def remove_contract_life(
     db=Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Remove (terminate) a life from contract"""
+    """
+    Remove (encerra) uma vida do contrato
+
+    **Comportamento:** Soft delete
+    - Define `status = 'cancelled'`
+    - Define `end_date = hoje`
+    - **NÃO deleta** fisicamente o registro (preserva auditoria)
+
+    **Validações aplicadas:**
+    - Vida existe e pertence ao contrato
+    - Limite mínimo de vidas não é violado
+
+    **Permissão necessária:** `contracts.lives.manage`
+    """
     try:
-        from sqlalchemy import select, update
-        from app.infrastructure.orm.models import ContractLive
         from datetime import datetime
 
-        # Find the life to remove
+        from sqlalchemy import select, update
+
+        from app.application.validators.contract_lives_validator import (
+            ContractLivesValidator,
+        )
+        from app.infrastructure.orm.models import ContractLive
+
+        # Inicializar validador
+        validator = ContractLivesValidator(db)
+
+        # Buscar vida para remover
         query = select(ContractLive).where(
-            ContractLive.id == life_id,
-            ContractLive.contract_id == contract_id
+            ContractLive.id == life_id, ContractLive.contract_id == contract_id
         )
         result = await db.execute(query)
         contract_life = result.scalar_one_or_none()
@@ -650,18 +821,20 @@ async def remove_contract_life(
         if not contract_life:
             raise HTTPException(
                 status_code=http_status.HTTP_404_NOT_FOUND,
-                detail="Vida do contrato não encontrada"
+                detail=f"Vida {life_id} não encontrada no contrato {contract_id}",
             )
 
-        # Terminate the life (soft delete)
+        # Validar limite mínimo de vidas (antes de remover)
+        await validator.validate_lives_limits(contract_id, action="remove")
+
+        # Encerrar vida (soft delete)
         stmt = (
             update(ContractLive)
             .where(ContractLive.id == life_id)
             .values(
                 status="cancelled",
                 end_date=datetime.utcnow().date(),
-                updated_at=datetime.utcnow()
-                # Note: updated_by field doesn't exist in contract_lives table
+                updated_at=datetime.utcnow(),
             )
         )
 
@@ -679,8 +852,126 @@ async def remove_contract_life(
         raise
     except Exception as e:
         await db.rollback()
-        logger.error("Error removing contract life", error=str(e), contract_id=contract_id, life_id=life_id)
+        logger.error(
+            "Error removing contract life",
+            error=str(e),
+            contract_id=contract_id,
+            life_id=life_id,
+        )
         raise HTTPException(
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro interno do servidor ao remover vida do contrato"
+            detail="Erro interno do servidor ao remover vida do contrato",
+        )
+
+
+@router.get("/{contract_id}/lives/{life_id}/history", response_model=ContractLifeHistoryResponse)
+@require_permission("contracts.view")
+async def get_contract_life_history(
+    contract_id: int,
+    life_id: int,
+    db=Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Busca histórico completo de auditoria de uma vida
+
+    **Retorna:**
+    - Todos os eventos de mudança (created, updated, substituted, cancelled)
+    - Campos alterados em cada evento
+    - Valores antigos e novos
+    - Informações do usuário que fez a mudança
+
+    **Permissão necessária:** `contracts.view`
+    """
+    try:
+        from sqlalchemy import select, text
+
+        from app.infrastructure.orm.models import ContractLive, People
+        from app.presentation.schemas.contract_lives import (
+            ContractLifeHistoryEvent,
+            ContractLifeHistoryResponse,
+        )
+
+        # Validar que vida existe e pertence ao contrato
+        query = select(ContractLive, People.name.label("person_name")).join(
+            People, ContractLive.person_id == People.id
+        ).where(
+            ContractLive.id == life_id,
+            ContractLive.contract_id == contract_id
+        )
+        result = await db.execute(query)
+        row = result.one_or_none()
+
+        if not row:
+            raise HTTPException(
+                status_code=http_status.HTTP_404_NOT_FOUND,
+                detail=f"Vida {life_id} não encontrada no contrato {contract_id}",
+            )
+
+        contract_life, person_name = row
+
+        # Buscar histórico de auditoria
+        history_query = text("""
+            SELECT
+                h.id,
+                h.contract_life_id,
+                h.action,
+                h.changed_fields,
+                h.old_values,
+                h.new_values,
+                h.changed_by,
+                h.changed_at,
+                u.full_name as changed_by_name
+            FROM master.contract_lives_history h
+            LEFT JOIN master.users u ON h.changed_by = u.id
+            WHERE h.contract_life_id = :life_id
+            ORDER BY h.changed_at DESC
+        """)
+
+        history_result = await db.execute(history_query, {"life_id": life_id})
+        history_rows = history_result.fetchall()
+
+        # Converter para lista de eventos
+        events = []
+        for row in history_rows:
+            event = ContractLifeHistoryEvent(
+                id=row.id,
+                contract_life_id=row.contract_life_id,
+                action=row.action,
+                changed_fields=row.changed_fields,
+                old_values=row.old_values,
+                new_values=row.new_values,
+                changed_by=row.changed_by,
+                changed_by_name=row.changed_by_name,
+                changed_at=row.changed_at,
+            )
+            events.append(event)
+
+        logger.info(
+            "Contract life history retrieved successfully",
+            contract_id=contract_id,
+            life_id=life_id,
+            events_count=len(events),
+            user_id=current_user.id,
+        )
+
+        return ContractLifeHistoryResponse(
+            contract_life_id=life_id,
+            person_name=person_name,
+            events=events,
+            total_events=len(events),
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "Error getting contract life history",
+            error=str(e),
+            contract_id=contract_id,
+            life_id=life_id,
+        )
+        raise HTTPException(
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro interno do servidor ao buscar histórico: {str(e)}",
         )

@@ -1,6 +1,8 @@
 /**
  * Contract Lives Table Configuration
  * Defines all settings for the contract lives data table
+ *
+ * ATUALIZADO: Usando tipos do backend (contract-lives.types.ts)
  */
 
 import React from "react";
@@ -20,25 +22,14 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
+  History,
+  ArrowRightLeft,
 } from "lucide-react";
 import { DataTableConfig } from "../../types/dataTable.types";
+import type { ContractLife, ContractLivesTableCallbacks } from "../../types/contract-lives.types";
 
-export interface ContractLife {
-  id: number;
-  contract_id: number;
-  person_id: number;
-  person_name: string;
-  person_cpf?: string;
-  start_date: string;
-  end_date?: string;
-  status: "active" | "inactive" | "suspended" | "terminated";
-  substitution_allowed: boolean;
-  notes?: string;
-  created_at: string;
-  updated_at: string;
-  contract_number?: string;
-  client_name?: string;
-}
+// Re-export do tipo para compatibilidade
+export type { ContractLife };
 
 export const createContractLivesConfig = (actions?: {
   onView?: (life: ContractLife) => void;
@@ -235,8 +226,8 @@ export const createContractLivesConfig = (actions?: {
         { value: "all", label: "📋 Todos Status" },
         { value: "active", label: "✅ Ativa" },
         { value: "inactive", label: "⏸️ Inativa" },
-        { value: "suspended", label: "⏳ Suspensa" },
-        { value: "terminated", label: "❌ Terminada" },
+        { value: "substituted", label: "🔄 Substituída" },
+        { value: "cancelled", label: "❌ Cancelada" },
       ],
     },
     {
@@ -352,15 +343,15 @@ function getStatusBadge(status: string): JSX.Element {
   const statusConfig = {
     active: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
     inactive: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
-    suspended: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
-    terminated: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+    substituted: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
+    cancelled: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
   };
 
   const statusLabels = {
     active: "Ativa",
     inactive: "Inativa",
-    suspended: "Suspensa",
-    terminated: "Terminada",
+    substituted: "Substituída",
+    cancelled: "Cancelada",
   };
 
   return (

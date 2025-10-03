@@ -7,6 +7,14 @@ import axios from "axios";
 import axiosRetry from "axios-retry";
 import { createAxiosConfig, RETRY_CONFIG } from "../config/http.ts";
 import { createCacheInterceptor, httpCache } from "./httpCache.ts";
+import type {
+  ContractLife,
+  ContractLifeCreateDTO,
+  ContractLifeUpdateDTO,
+  ContractLifeMutationResponse,
+  ContractLifeStats,
+  ContractLifeHistory,
+} from "../types/contract-lives.types";
 
 // ===============================
 // TYPES
@@ -401,16 +409,25 @@ class ContractsService {
   /**
    * Listar vidas de um contrato
    */
-  async listContractLives(contractId: number): Promise<any[]> {
-    const response = await api.get(`/api/v1/contracts/${contractId}/lives`);
+  async listContractLives(contractId: number): Promise<ContractLife[]> {
+    const response = await api.get<ContractLife[]>(
+      `/api/v1/contracts/${contractId}/lives`
+    );
     return response.data;
   }
 
   /**
    * Adicionar vida ao contrato
+   *
+   * @param contractId - ID do contrato
+   * @param lifeData - Dados da vida a ser criada
+   * @returns Response com ID da vida criada
    */
-  async addContractLife(contractId: number, lifeData: any): Promise<any> {
-    const response = await api.post(
+  async addContractLife(
+    contractId: number,
+    lifeData: ContractLifeCreateDTO
+  ): Promise<ContractLifeMutationResponse> {
+    const response = await api.post<ContractLifeMutationResponse>(
       `/api/v1/contracts/${contractId}/lives`,
       lifeData
     );
@@ -419,13 +436,18 @@ class ContractsService {
 
   /**
    * Atualizar vida do contrato
+   *
+   * @param contractId - ID do contrato
+   * @param lifeId - ID da vida
+   * @param lifeData - Dados a serem atualizados (apenas campos fornecidos)
+   * @returns Response com confirmação
    */
   async updateContractLife(
     contractId: number,
     lifeId: number,
-    lifeData: any
-  ): Promise<any> {
-    const response = await api.put(
+    lifeData: ContractLifeUpdateDTO
+  ): Promise<ContractLifeMutationResponse> {
+    const response = await api.put<ContractLifeMutationResponse>(
       `/api/v1/contracts/${contractId}/lives/${lifeId}`,
       lifeData
     );
@@ -433,10 +455,46 @@ class ContractsService {
   }
 
   /**
-   * Remover vida do contrato
+   * Remover vida do contrato (soft delete)
+   *
+   * Define status='cancelled' e end_date=hoje
+   * NÃO deleta o registro fisicamente
+   *
+   * @param contractId - ID do contrato
+   * @param lifeId - ID da vida
    */
   async removeContractLife(contractId: number, lifeId: number): Promise<void> {
     await api.delete(`/api/v1/contracts/${contractId}/lives/${lifeId}`);
+  }
+
+  /**
+   * Buscar estatísticas de vidas de um contrato
+   *
+   * @param contractId - ID do contrato
+   * @returns Estatísticas consolidadas
+   */
+  async getContractLivesStats(contractId: number): Promise<ContractLifeStats> {
+    const response = await api.get<ContractLifeStats>(
+      `/api/v1/contracts/${contractId}/lives/stats`
+    );
+    return response.data;
+  }
+
+  /**
+   * Buscar histórico de uma vida (auditoria)
+   *
+   * @param contractId - ID do contrato
+   * @param lifeId - ID da vida
+   * @returns Histórico completo de eventos
+   */
+  async getContractLifeHistory(
+    contractId: number,
+    lifeId: number
+  ): Promise<ContractLifeHistory> {
+    const response = await api.get<ContractLifeHistory>(
+      `/api/v1/contracts/${contractId}/lives/${lifeId}/history`
+    );
+    return response.data;
   }
 }
 
