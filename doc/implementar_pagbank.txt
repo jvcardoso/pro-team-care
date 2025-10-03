@@ -1,0 +1,514 @@
+# DEMANDA TÉCNICA: SISTEMA DE COBRANÇA HÍBRIDO PAGBANK
+**Analista de Requisitos e Sistemas - Pro Team Care**
+
+## 1. RESUMO EXECUTIVO
+
+**Objetivo**: Implementar sistema de cobrança híbrido integrando PagBank para pagamentos recorrentes (cartão) e avulsos (PIX, Boleto, Cartão).
+
+**Premissa de Negócio**: 1 Establishment = 1 Contrato de Cobrança mensal, com escolha da modalidade pelo cliente e fallback automático.
+
+**Status Atual do Sistema**:  INFRAESTRUTURA PRONTA
+- Sistema de billing completo já implementado
+- Modelos de dados robustos (contract_billing_schedules, contract_invoices)
+- APIs REST funcionais (/api/v1/billing)
+- Frontend com componentes billing prontos
+
+## 2. ANÁLISE DA INFRAESTRUTURA EXISTENTE
+
+### 2.1 Estrutura de Banco de Dados ( PRONTA)
+
+**Tabelas Centrais**:
+- `contract_billing_schedules` - Agendamentos de cobrança
+- `contract_invoices` - Faturas geradas
+- `payment_receipts` - Comprovantes de pagamento
+- `billing_audit_log` - Auditoria completa
+
+**Relacionamentos Identificados**:
+```
+Establishments (1) ’ Contracts (N) ’ ContractBillingSchedule (1)
+Contracts (1) ’ ContractInvoices (N) ’ PaymentReceipts (N)
+```
+
+### 2.2 APIs Backend ( FUNCIONAIS)
+
+**Endpoints Existentes**:
+- `/api/v1/billing/schedules` - CRUD completo
+- `/api/v1/billing/invoices` - Gestão de faturas
+- `/api/v1/billing/receipts` - Upload de comprovantes
+- `/api/v1/billing/dashboard` - Métricas e analytics
+- `/api/v1/billing/auto-billing/run` - Faturamento automático
+
+### 2.3 Frontend ( COMPONENTES PRONTOS)
+
+**Componentes Existentes**:
+- `BillingDashboard` - Dashboard principal
+- `InvoiceTable` - Gestão de faturas
+- `BillingMetricsCards` - KPIs de cobrança
+- `PaymentMethodBadge` - Indicadores visuais
+- `ReceiptUpload` - Upload de comprovantes
+
+## 3. GAPS TÉCNICOS IDENTIFICADOS
+
+### 3.1 Integrações Externas (L AUSENTE)
+- Cliente PagBank para pagamentos recorrentes
+- Cliente PagBank para checkout avulso
+- Webhook handlers para notificações
+- Sistema de retry para falhas
+
+### 3.2 Modelos de Dados (= EXTENSÃO NECESSÁRIA)
+- Campos para subscription_id (PagBank)
+- Campos para preferência de cobrança
+- Controle de fallback automático
+- Histórico de tentativas
+
+### 3.3 Lógica de Negócio (= IMPLEMENTAÇÃO)
+- Seleção automática de modalidade
+- Fallback recorrente ’ manual
+- Sincronização com PagBank
+- Notificações antecipadas
+
+## 4. DEMANDA TÉCNICA ESTRUTURADA
+
+### FASE 1: EXTENSÃO DO MODELO DE DADOS
+
+#### 4.1 Nova Migração Alembic
+**Arquivo**: `016_pagbank_integration.py`
+
+```sql
+-- Adicionar campos ao contract_billing_schedules
+ALTER TABLE master.contract_billing_schedules ADD COLUMN billing_method VARCHAR(20) DEFAULT 'manual';
+ALTER TABLE master.contract_billing_schedules ADD COLUMN pagbank_subscription_id VARCHAR(100);
+ALTER TABLE master.contract_billing_schedules ADD COLUMN pagbank_customer_id VARCHAR(100);
+ALTER TABLE master.contract_billing_schedules ADD COLUMN auto_fallback_enabled BOOLEAN DEFAULT TRUE;
+ALTER TABLE master.contract_billing_schedules ADD COLUMN last_attempt_date DATE;
+ALTER TABLE master.contract_billing_schedules ADD COLUMN attempt_count INTEGER DEFAULT 0;
+
+-- Adicionar constraint
+ALTER TABLE master.contract_billing_schedules ADD CONSTRAINT billing_method_check
+    CHECK (billing_method IN ('recurrent', 'manual'));
+
+-- Criar tabela para histórico de transações PagBank
+CREATE TABLE master.pagbank_transactions (
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    invoice_id BIGINT REFERENCES master.contract_invoices(id),
+    transaction_type VARCHAR(20) NOT NULL, -- 'recurrent', 'checkout'
+    pagbank_transaction_id VARCHAR(100),
+    pagbank_charge_id VARCHAR(100),
+    status VARCHAR(20) NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    payment_method VARCHAR(20),
+    error_message TEXT,
+    webhook_data JSON,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+
+    CONSTRAINT pagbank_trans_type_check CHECK (transaction_type IN ('recurrent', 'checkout')),
+    CONSTRAINT pagbank_status_check CHECK (status IN ('pending', 'approved', 'declined', 'failed', 'cancelled'))
+);
+
+-- Índices para performance
+CREATE INDEX pagbank_transactions_invoice_id_idx ON master.pagbank_transactions(invoice_id);
+CREATE INDEX pagbank_transactions_status_idx ON master.pagbank_transactions(status);
+CREATE INDEX pagbank_transactions_type_idx ON master.pagbank_transactions(transaction_type);
+```
+
+#### 4.2 Atualização de Modelos ORM
+**Arquivo**: `app/infrastructure/orm/models.py`
+
+```python
+# Adicionar ao modelo ContractBillingSchedule
+billing_method = Column(String(20), default="manual")
+pagbank_subscription_id = Column(String(100))
+pagbank_customer_id = Column(String(100))
+auto_fallback_enabled = Column(Boolean, default=True)
+last_attempt_date = Column(Date)
+attempt_count = Column(Integer, default=0)
+
+# Novo modelo
+class PagBankTransaction(Base):
+    __tablename__ = "pagbank_transactions"
+    __table_args__ = {"schema": "master"}
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    invoice_id = Column(BigInteger, ForeignKey("master.contract_invoices.id"))
+    transaction_type = Column(String(20), nullable=False)
+    pagbank_transaction_id = Column(String(100))
+    pagbank_charge_id = Column(String(100))
+    status = Column(String(20), nullable=False)
+    amount = Column(Numeric(10, 2), nullable=False)
+    payment_method = Column(String(20))
+    error_message = Column(Text)
+    webhook_data = Column(JSON)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    # Relationships
+    invoice = relationship("ContractInvoice", back_populates="pagbank_transactions")
+```
+
+### FASE 2: INTEGRAÇÃO PAGBANK
+
+#### 2.1 Cliente PagBank Service
+**Arquivo**: `app/infrastructure/services/pagbank_service.py`
+
+```python
+class PagBankService:
+    def __init__(self):
+        self.base_url_recurrent = "https://api.assinaturas.pagseguro.com"
+        self.base_url_checkout = "https://api.pagseguro.com"
+        self.token = settings.PAGBANK_TOKEN
+
+    # PAGAMENTOS RECORRENTES
+    async def create_subscription_plan(self, contract_data: Dict) -> Dict:
+        """Criar plano de assinatura"""
+
+    async def create_customer(self, client_data: Dict) -> Dict:
+        """Criar cliente PagBank"""
+
+    async def create_subscription(self, plan_id: str, customer_id: str) -> Dict:
+        """Criar assinatura recorrente"""
+
+    async def cancel_subscription(self, subscription_id: str) -> Dict:
+        """Cancelar assinatura"""
+
+    # PAGAMENTOS AVULSOS
+    async def create_checkout_session(self, invoice_data: Dict) -> Dict:
+        """Criar sessão de checkout"""
+
+    async def get_transaction_status(self, transaction_id: str) -> Dict:
+        """Consultar status da transação"""
+
+    # WEBHOOKS
+    async def verify_webhook_signature(self, payload: str, signature: str) -> bool:
+        """Verificar assinatura do webhook"""
+
+    async def process_webhook_notification(self, payload: Dict) -> None:
+        """Processar notificação do webhook"""
+```
+
+#### 2.2 Repository Extension
+**Arquivo**: `app/infrastructure/repositories/billing_repository.py`
+
+```python
+# Adicionar métodos ao BillingRepository existente
+
+async def update_billing_method(
+    self,
+    schedule_id: int,
+    billing_method: str,
+    pagbank_data: Dict = None
+) -> ContractBillingSchedule:
+    """Atualizar método de cobrança"""
+
+async def create_pagbank_transaction(self, transaction_data: Dict) -> PagBankTransaction:
+    """Criar registro de transação PagBank"""
+
+async def update_pagbank_transaction_status(
+    self,
+    transaction_id: str,
+    status: str,
+    webhook_data: Dict = None
+) -> PagBankTransaction:
+    """Atualizar status da transação"""
+
+async def get_failed_recurrent_billings(self, days_back: int = 7) -> List[ContractBillingSchedule]:
+    """Buscar cobranças recorrentes que falharam para fallback"""
+```
+
+### FASE 3: LÓGICA DE NEGÓCIO
+
+#### 3.1 Billing Service Extension
+**Arquivo**: `app/infrastructure/services/billing_service.py`
+
+```python
+# Adicionar ao BillingService existente
+
+async def setup_recurrent_billing(self, contract_id: int, client_data: Dict) -> Dict:
+    """Configurar cobrança recorrente"""
+    # 1. Criar customer no PagBank
+    # 2. Criar subscription
+    # 3. Atualizar billing_schedule
+
+async def setup_manual_billing(self, contract_id: int) -> Dict:
+    """Configurar cobrança manual"""
+    # 1. Atualizar billing_schedule para manual
+    # 2. Configurar notificações
+
+async def process_recurrent_billing_failure(self, schedule_id: int) -> Dict:
+    """Processar falha na cobrança recorrente"""
+    # 1. Incrementar attempt_count
+    # 2. Se attempt_count >= 3, fazer fallback para manual
+    # 3. Enviar notificação
+
+async def create_checkout_for_invoice(self, invoice_id: int) -> Dict:
+    """Criar checkout para fatura específica"""
+    # 1. Buscar dados da fatura
+    # 2. Criar sessão de checkout PagBank
+    # 3. Retornar link de pagamento
+
+async def run_automatic_recurrent_billing(self) -> Dict:
+    """Executar cobrança recorrente automática"""
+    # 1. Buscar schedules recorrentes com data vencida
+    # 2. Processar cada subscription
+    # 3. Criar invoices correspondentes
+    # 4. Registrar tentativas
+```
+
+#### 3.2 Webhook Handler
+**Arquivo**: `app/infrastructure/services/pagbank_webhook_service.py`
+
+```python
+class PagBankWebhookService:
+    async def handle_subscription_notification(self, payload: Dict) -> None:
+        """Processar notificação de assinatura"""
+
+    async def handle_payment_notification(self, payload: Dict) -> None:
+        """Processar notificação de pagamento"""
+
+    async def handle_checkout_notification(self, payload: Dict) -> None:
+        """Processar notificação de checkout"""
+
+    async def sync_subscription_status(self, subscription_id: str) -> None:
+        """Sincronizar status da assinatura"""
+```
+
+### FASE 4: APIS REST
+
+#### 4.1 Novos Endpoints
+**Arquivo**: `app/presentation/api/v1/billing.py`
+
+```python
+# Adicionar ao router existente
+
+@router.post("/schedules/{schedule_id}/setup-recurrent")
+@require_permission("billing_manage", context_type="company")
+async def setup_recurrent_billing(
+    schedule_id: int,
+    client_data: RecurrentBillingSetup,
+    db: AsyncSession = Depends(get_db)
+):
+    """Configurar cobrança recorrente para um schedule"""
+
+@router.post("/schedules/{schedule_id}/setup-manual")
+@require_permission("billing_manage", context_type="company")
+async def setup_manual_billing(
+    schedule_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """Configurar cobrança manual"""
+
+@router.post("/invoices/{invoice_id}/checkout")
+@require_permission("billing_view", context_type="company")
+async def create_invoice_checkout(
+    invoice_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """Criar checkout para fatura específica"""
+
+@router.post("/webhooks/pagbank")
+async def pagbank_webhook(request: Request):
+    """Endpoint para webhooks do PagBank"""
+
+@router.post("/billing/run-recurrent")
+@require_permission("billing_admin", context_type="system")
+async def run_recurrent_billing(
+    db: AsyncSession = Depends(get_db)
+):
+    """Executar cobrança recorrente (job automático)"""
+```
+
+#### 4.2 Schemas Extension
+**Arquivo**: `app/presentation/schemas/billing.py`
+
+```python
+# Adicionar novos schemas
+
+class RecurrentBillingSetup(BaseModel):
+    card_number: str
+    card_holder_name: str
+    card_expiry_month: int
+    card_expiry_year: int
+    card_cvv: str
+    billing_address: Dict
+
+class PagBankTransactionResponse(BaseModel):
+    id: int
+    invoice_id: int
+    transaction_type: str
+    pagbank_transaction_id: Optional[str]
+    status: str
+    amount: Decimal
+    payment_method: Optional[str]
+    error_message: Optional[str]
+    created_at: datetime
+
+class CheckoutSessionResponse(BaseModel):
+    checkout_url: str
+    session_id: str
+    expires_at: datetime
+```
+
+### FASE 5: FRONTEND
+
+#### 5.1 Componentes de Configuração
+**Arquivo**: `frontend/src/components/billing/BillingMethodSelector.tsx`
+
+```typescript
+interface BillingMethodSelectorProps {
+  scheduleId: number;
+  currentMethod: 'recurrent' | 'manual';
+  onMethodChange: (method: string) => void;
+}
+
+export const BillingMethodSelector: React.FC<BillingMethodSelectorProps>
+```
+
+#### 5.2 Formulário de Cartão
+**Arquivo**: `frontend/src/components/billing/RecurrentBillingSetup.tsx`
+
+```typescript
+interface RecurrentBillingSetupProps {
+  scheduleId: number;
+  onSetupComplete: () => void;
+}
+
+export const RecurrentBillingSetup: React.FC<RecurrentBillingSetupProps>
+```
+
+#### 5.3 Integração com Service
+**Arquivo**: `frontend/src/services/billingService.ts`
+
+```typescript
+// Adicionar ao billingService existente
+
+async setupRecurrentBilling(scheduleId: number, cardData: RecurrentBillingSetup): Promise<any>
+async setupManualBilling(scheduleId: number): Promise<any>
+async createInvoiceCheckout(invoiceId: number): Promise<CheckoutSessionResponse>
+async getBillingMethodStatus(scheduleId: number): Promise<any>
+```
+
+### FASE 6: JOBS AUTOMATIZADOS
+
+#### 6.1 Scheduled Tasks
+**Arquivo**: `app/infrastructure/services/billing_scheduler_service.py`
+
+```python
+class BillingSchedulerService:
+    async def run_daily_recurrent_billing(self) -> None:
+        """Job diário para cobranças recorrentes"""
+
+    async def run_fallback_detection(self) -> None:
+        """Job para detectar falhas e fazer fallback"""
+
+    async def run_notification_reminders(self) -> None:
+        """Job para enviar lembretes de vencimento"""
+
+    async def sync_pagbank_subscriptions(self) -> None:
+        """Job para sincronizar status das assinaturas"""
+```
+
+## 5. CRONOGRAMA DE IMPLEMENTAÇÃO
+
+### Sprint 1 (5 dias): Fundação
+- [ ] Migração 016_pagbank_integration.py
+- [ ] Extensão modelos ORM
+- [ ] Estrutura básica PagBankService
+- [ ] Testes unitários básicos
+
+### Sprint 2 (8 dias): Integração PagBank
+- [ ] Cliente PagBank completo
+- [ ] Webhook handlers
+- [ ] Extension BillingRepository
+- [ ] Testes de integração
+
+### Sprint 3 (7 days): APIs Backend
+- [ ] Novos endpoints billing
+- [ ] Schemas Pydantic
+- [ ] Validações e tratamento de erros
+- [ ] Documentação OpenAPI
+
+### Sprint 4 (6 dias): Frontend
+- [ ] Componentes de configuração
+- [ ] Formulários de setup
+- [ ] Integração com APIs
+- [ ] Testes E2E
+
+### Sprint 5 (4 dias): Jobs e Finalização
+- [ ] Scheduler service
+- [ ] Monitoramento e logs
+- [ ] Deployment e configuração
+- [ ] Documentação final
+
+## 6. CONSIDERAÇÕES TÉCNICAS
+
+### 6.1 Segurança
+- Armazenamento seguro de tokens PagBank
+- Validação de assinaturas webhook
+- Criptografia de dados sensíveis de cartão
+- Rate limiting em endpoints críticos
+
+### 6.2 Observabilidade
+- Logs estruturados para todas as transações
+- Métricas de sucesso/falha por método
+- Alertas para falhas recorrentes
+- Dashboard de monitoramento
+
+### 6.3 Resilência
+- Retry automático para falhas temporárias
+- Circuit breaker para APIs PagBank
+- Fallback gracioso recorrente ’ manual
+- Queue para processamento assíncrono
+
+### 6.4 Performance
+- Cache de configurações PagBank
+- Processamento batch de webhooks
+- Índices otimizados para consultas
+- Monitoramento de latência
+
+## 7. DEPENDENCIES E CONFIGURAÇÕES
+
+### 7.1 Variáveis de Ambiente
+```bash
+PAGBANK_TOKEN=your_pagbank_token
+PAGBANK_WEBHOOK_SECRET=webhook_secret_key
+PAGBANK_ENVIRONMENT=sandbox|production
+BILLING_FALLBACK_ATTEMPTS=3
+BILLING_RETRY_INTERVAL_HOURS=24
+```
+
+### 7.2 Permissões Necessárias
+- `billing_view` - Visualizar cobranças
+- `billing_manage` - Configurar métodos de cobrança
+- `billing_admin` - Executar jobs administrativos
+- `billing_webhook` - Processar webhooks
+
+## 8. CRITÉRIOS DE ACEITE
+
+### 8.1 Funcionalidades Principais
+- [ ] Cliente pode escolher método de cobrança (recorrente/manual)
+- [ ] Configuração recorrente via cartão funcional
+- [ ] Checkout manual com PIX/Boleto/Cartão funcional
+- [ ] Fallback automático após 3 tentativas falhadas
+- [ ] Notificações antecipadas para cobrança manual
+- [ ] Dashboard com métricas de cobrança por método
+
+### 8.2 Integração PagBank
+- [ ] Assinaturas recorrentes criadas corretamente
+- [ ] Webhooks processados em tempo real
+- [ ] Sincronização de status precisa
+- [ ] Tratamento de erros robusto
+
+### 8.3 Performance e Estabilidade
+- [ ] Tempo de resposta < 2s para configuração
+- [ ] Processamento batch de 1000+ faturas/hora
+- [ ] Taxa de erro < 1% em condições normais
+- [ ] Fallback funcional em 100% dos casos
+
+---
+
+**Demanda gerada por**: Analista de Requisitos e Sistemas
+**Data**: 2025-01-22
+**Estimativa Total**: 30 dias úteis (6 sprints)
+**Complexidade**: Alta
+**Dependências Externas**: API PagBank, Webhooks
+**Risk Level**: Médio (integração externa, dados financeiros sensíveis)

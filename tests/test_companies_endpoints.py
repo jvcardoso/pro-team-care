@@ -31,20 +31,20 @@ class TestCompaniesEndpoints:
         assert response.status_code == 200
 
         data = response.json()
-        assert "items" in data
+        assert "companies" in data
         assert "total" in data
         assert "page" in data
-        assert "size" in data
-        assert isinstance(data["items"], list)
+        assert "per_page" in data
+        assert isinstance(data["companies"], list)
 
     def test_get_companies_list_with_pagination(self, client: TestClient):
         """Test GET /api/v1/companies com paginação"""
-        response = client.get("/api/v1/companies?page=1&size=10")
+        response = client.get("/api/v1/companies?skip=0&limit=10")
         assert response.status_code == 200
 
         data = response.json()
         assert data["page"] == 1
-        assert data["size"] == 10
+        assert data["per_page"] == 10
 
     def test_get_companies_list_with_search(self, client: TestClient):
         """Test GET /api/v1/companies com busca"""

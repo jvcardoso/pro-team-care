@@ -213,7 +213,7 @@ export const RolesPage = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Nome Técnico
               </label>
-              <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
+              <p className="text-sm text-gray-900 bg-gray-50 dark:bg-gray-700 p-2 rounded">
                 {role.name}
               </p>
             </div>
@@ -222,7 +222,7 @@ export const RolesPage = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Nome de Exibição
               </label>
-              <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
+              <p className="text-sm text-gray-900 bg-gray-50 dark:bg-gray-700 p-2 rounded">
                 {role.display_name}
               </p>
             </div>
@@ -240,7 +240,7 @@ export const RolesPage = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Nível Hierárquico
               </label>
-              <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
+              <p className="text-sm text-gray-900 bg-gray-50 dark:bg-gray-700 p-2 rounded">
                 {role.level} - {getLevelLabel(role.level)}
               </p>
             </div>
@@ -281,7 +281,7 @@ export const RolesPage = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Descrição
               </label>
-              <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded">
+              <p className="text-sm text-gray-900 bg-gray-50 dark:bg-gray-700 p-3 rounded">
                 {role.description}
               </p>
             </div>
@@ -296,7 +296,7 @@ export const RolesPage = () => {
           {loadingPermissions ? (
             <div className="text-center py-4">
               <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-              <p className="mt-2 text-sm text-gray-600">
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
                 Carregando permissões...
               </p>
             </div>
@@ -350,7 +350,7 @@ export const RolesPage = () => {
           <h4 className="text-sm font-medium text-gray-700 mb-2">
             Informações do Sistema
           </h4>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-gray-500">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-gray-500 dark:text-gray-400">
             <div>
               <span className="font-medium">ID:</span> {role.id}
             </div>
@@ -442,7 +442,7 @@ export const RolesPage = () => {
           {/* Filtros em grid responsivo */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <select
-              className="border border-gray-300 rounded-md px-3 py-2 text-sm"
+              className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm"
               value={filters.context_type}
               onChange={(e) =>
                 setFilters((prev) => ({
@@ -458,7 +458,7 @@ export const RolesPage = () => {
             </select>
 
             <select
-              className="border border-gray-300 rounded-md px-3 py-2 text-sm"
+              className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm"
               value={filters.is_active}
               onChange={(e) =>
                 setFilters((prev) => ({ ...prev, is_active: e.target.value }))
@@ -632,7 +632,7 @@ export const RolesPage = () => {
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 Nenhum perfil encontrado
               </h3>
-              <p className="text-gray-500">
+              <p className="text-gray-500 dark:text-gray-400">
                 {Object.values(filters).some((v) => v !== "")
                   ? "Tente ajustar os filtros de busca"
                   : "Comece criando o primeiro perfil do sistema"}
@@ -665,7 +665,7 @@ export const RolesPage = () => {
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200">
                     {roles.map((role) => (
                       <tr key={role.id} className="hover:bg-gray-50">
                         <td className="px-3 py-4">
@@ -691,10 +691,10 @@ export const RolesPage = () => {
                           </span>
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
+                          <div className="text-sm text-gray-900 dark:text-white">
                             {role.level}
                           </div>
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
                             {getLevelLabel(role.level)}
                           </div>
                         </td>
@@ -715,7 +715,7 @@ export const RolesPage = () => {
                               Sistema
                             </span>
                           ) : (
-                            <span className="text-sm text-gray-500">-</span>
+                            <span className="text-sm text-gray-500 dark:text-gray-400">-</span>
                           )}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-center">
@@ -756,7 +756,7 @@ export const RolesPage = () => {
                     <h3 className="text-lg font-medium text-gray-900 mb-2">
                       Nenhum perfil encontrado
                     </h3>
-                    <p className="text-gray-500">
+                    <p className="text-gray-500 dark:text-gray-400">
                       {Object.values(filters).some((v) => v !== "")
                         ? "Tente ajustar os filtros de busca"
                         : "Comece criando o primeiro perfil do sistema"}
@@ -850,7 +850,7 @@ export const RolesPage = () => {
                     <h3 className="text-lg font-medium text-gray-900 mb-2">
                       Nenhum perfil encontrado
                     </h3>
-                    <p className="text-gray-500">
+                    <p className="text-gray-500 dark:text-gray-400">
                       {Object.values(filters).some((v) => v !== "")
                         ? "Tente ajustar os filtros de busca"
                         : "Comece criando o primeiro perfil do sistema"}
@@ -871,7 +871,7 @@ export const RolesPage = () => {
 
               {/* Paginação */}
               {pagination.total_pages > 1 && (
-                <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                <div className="bg-white dark:bg-gray-800 px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
                   <div className="flex-1 flex justify-between sm:hidden">
                     <Button
                       variant="outline"
@@ -900,7 +900,7 @@ export const RolesPage = () => {
                   </div>
                   <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                     <div>
-                      <p className="text-sm text-gray-700">
+                      <p className="text-sm text-gray-700 dark:text-gray-300">
                         Mostrando{" "}
                         <span className="font-medium">
                           {(pagination.page - 1) * pagination.size + 1}
@@ -967,7 +967,7 @@ export const RolesPage = () => {
                             return (
                               <span
                                 key={pageNum}
-                                className="px-3 py-2 text-gray-500"
+                                className="px-3 py-2 text-gray-500 dark:text-gray-400"
                               >
                                 ...
                               </span>

@@ -11,7 +11,7 @@
 
 CREATE OR REPLACE FUNCTION master.get_accessible_users_hierarchical(
     requesting_user_id BIGINT
-) RETURNS TABLE(
+) RETURNS TABLE (
     accessible_user_id BIGINT,
     access_level VARCHAR(20), -- 'full', 'company', 'establishment', 'self'
     reason TEXT
@@ -159,45 +159,51 @@ SELECT
     -- Classificação hierárquica
     CASE
         WHEN vc.user_is_system_admin THEN 'ROOT'
-        WHEN EXISTS(
-            SELECT 1 FROM master.user_roles ur2
-            JOIN master.roles r2 ON ur2.role_id = r2.id
-            WHERE ur2.user_id = vc.user_id
-              AND r2.context_type = 'company'
-              AND r2.level >= 80
-              AND ur2.deleted_at IS NULL
+        WHEN EXISTS (
+            SELECT 1 FROM master.user_roles AS ur2
+            INNER JOIN master.roles AS r2 ON ur2.role_id = r2.id
+            WHERE
+                ur2.user_id = vc.user_id
+                AND r2.context_type = 'company'
+                AND r2.level >= 80
+                AND ur2.deleted_at IS NULL
         ) THEN 'ADMIN_EMPRESA'
-        WHEN EXISTS(
-            SELECT 1 FROM master.user_roles ur3
-            JOIN master.roles r3 ON ur3.role_id = r3.id
-            WHERE ur3.user_id = vc.user_id
-              AND r3.context_type = 'establishment'
-              AND r3.level >= 60
-              AND ur3.deleted_at IS NULL
+        WHEN EXISTS (
+            SELECT 1 FROM master.user_roles AS ur3
+            INNER JOIN master.roles AS r3 ON ur3.role_id = r3.id
+            WHERE
+                ur3.user_id = vc.user_id
+                AND r3.context_type = 'establishment'
+                AND r3.level >= 60
+                AND ur3.deleted_at IS NULL
         ) THEN 'ADMIN_ESTABELECIMENTO'
         ELSE 'USUARIO_COMUM'
-    END as hierarchy_level,
+    END AS hierarchy_level,
 
     -- Contextos de acesso (empresas)
-    (SELECT ARRAY_AGG(DISTINCT ur4.context_id::text)
-     FROM master.user_roles ur4
-     JOIN master.roles r4 ON ur4.role_id = r4.id
-     WHERE ur4.user_id = vc.user_id
-       AND r4.context_type = 'company'
-       AND ur4.deleted_at IS NULL
-    ) as accessible_companies,
+    (
+        SELECT ARRAY_AGG(DISTINCT ur4.context_id::TEXT)
+        FROM master.user_roles AS ur4
+        INNER JOIN master.roles AS r4 ON ur4.role_id = r4.id
+        WHERE
+            ur4.user_id = vc.user_id
+            AND r4.context_type = 'company'
+            AND ur4.deleted_at IS NULL
+    ) AS accessible_companies,
 
     -- Contextos de acesso (estabelecimentos)
-    (SELECT ARRAY_AGG(DISTINCT ur5.context_id::text)
-     FROM master.user_roles ur5
-     JOIN master.roles r5 ON ur5.role_id = r5.id
-     WHERE ur5.user_id = vc.user_id
-       AND r5.context_type = 'establishment'
-       AND ur5.deleted_at IS NULL
-    ) as accessible_establishments
+    (
+        SELECT ARRAY_AGG(DISTINCT ur5.context_id::TEXT)
+        FROM master.user_roles AS ur5
+        INNER JOIN master.roles AS r5 ON ur5.role_id = r5.id
+        WHERE
+            ur5.user_id = vc.user_id
+            AND r5.context_type = 'establishment'
+            AND ur5.deleted_at IS NULL
+    ) AS accessible_establishments
 
-FROM master.vw_users_complete vc
-WHERE vc.user_is_active = true
+FROM master.vw_users_complete AS vc
+WHERE vc.user_is_active = TRUE
 GROUP BY
     vc.user_id, vc.user_email, vc.user_is_active, vc.user_is_system_admin,
     vc.person_name, vc.company_id, vc.establishment_code,
@@ -205,8 +211,28 @@ GROUP BY
 ORDER BY
     CASE
         WHEN vc.user_is_system_admin THEN 1
-        WHEN EXISTS(SELECT 1 FROM master.user_roles ur JOIN master.roles r ON ur.role_id = r.id WHERE ur.user_id = vc.user_id AND r.level >= 80 AND ur.deleted_at IS NULL) THEN 2
-        WHEN EXISTS(SELECT 1 FROM master.user_roles ur JOIN master.roles r ON ur.role_id = r.id WHERE ur.user_id = vc.user_id AND r.level >= 60 AND ur.deleted_at IS NULL) THEN 3
+        WHEN
+            EXISTS (
+                SELECT 1
+                FROM master.user_roles AS ur
+                INNER JOIN master.roles AS r ON ur.role_id = r.id
+                WHERE
+                    ur.user_id = vc.user_id
+                    AND r.level >= 80
+                    AND ur.deleted_at IS NULL
+            )
+            THEN 2
+        WHEN
+            EXISTS (
+                SELECT 1
+                FROM master.user_roles AS ur
+                INNER JOIN master.roles AS r ON ur.role_id = r.id
+                WHERE
+                    ur.user_id = vc.user_id
+                    AND r.level >= 60
+                    AND ur.deleted_at IS NULL
+            )
+            THEN 3
         ELSE 4
     END,
     vc.person_name;
@@ -218,31 +244,48 @@ ORDER BY
 -- View pública (dados básicos, sem informações sensíveis)
 CREATE OR REPLACE VIEW master.vw_users_public AS
 SELECT
-    user_id, user_email, user_is_active,
-    person_name, person_type, person_status,
-    company_id, establishment_code,
-    role_name, role_display_name
+    user_id,
+    user_email,
+    user_is_active,
+    person_name,
+    person_type,
+    person_status,
+    company_id,
+    establishment_code,
+    role_name,
+    role_display_name
 FROM master.vw_users_complete
-WHERE user_is_active = true
-  AND user_deleted_at IS NULL;
+WHERE
+    user_is_active = TRUE
+    AND user_deleted_at IS NULL;
 
 -- View administrativa (com dados mascarados)
 CREATE OR REPLACE VIEW master.vw_users_admin AS
 SELECT
-    user_id, user_email, user_is_active, user_is_system_admin,
-    user_last_login_at, user_created_at,
-    person_name, person_tax_id, person_status,
-    company_id, establishment_code, establishment_type,
-    role_name, role_display_name, role_level,
+    user_id,
+    user_email,
+    user_is_active,
+    user_is_system_admin,
+    user_last_login_at,
+    user_created_at,
+    person_name,
+    person_tax_id,
+    person_status,
+    company_id,
+    establishment_code,
+    establishment_type,
+    role_name,
+    role_display_name,
+    role_level,
     -- Campos mascarados de segurança
     CASE
         WHEN user_two_factor_secret IS NOT NULL THEN 'CONFIGURED'
         ELSE 'NOT_CONFIGURED'
-    END as two_factor_status,
+    END AS two_factor_status,
     CASE
         WHEN user_two_factor_recovery_codes IS NOT NULL THEN 'AVAILABLE'
         ELSE 'NOT_AVAILABLE'
-    END as recovery_codes_status
+    END AS recovery_codes_status
 FROM master.vw_users_complete
 WHERE user_deleted_at IS NULL;
 
@@ -358,10 +401,18 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- =====================================================
 
 -- Índices para otimizar as consultas hierárquicas
-CREATE INDEX IF NOT EXISTS idx_user_roles_context_type_id ON master.user_roles(context_type, context_id) WHERE deleted_at IS NULL;
-CREATE INDEX IF NOT EXISTS idx_roles_context_level ON master.roles(context_type, level);
-CREATE INDEX IF NOT EXISTS idx_user_establishments_user_est ON master.user_establishments(user_id, establishment_id) WHERE deleted_at IS NULL;
-CREATE INDEX IF NOT EXISTS idx_establishments_company ON master.establishments(company_id) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_user_roles_context_type_id ON master.user_roles (
+    context_type, context_id
+) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_roles_context_level ON master.roles (
+    context_type, level
+);
+CREATE INDEX IF NOT EXISTS idx_user_establishments_user_est ON master.user_establishments (
+    user_id, establishment_id
+) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_establishments_company ON master.establishments (
+    company_id
+) WHERE deleted_at IS NULL;
 
 -- =====================================================
 -- 6. COMENTÁRIOS E DOCUMENTAÇÃO

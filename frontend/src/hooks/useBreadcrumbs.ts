@@ -35,12 +35,78 @@ export const useBreadcrumbs = (): BreadcrumbItem[] => {
       usuarios: "Usuários",
       menus: "Menus",
       consultas: "Consultas",
+      contratos: "Contratos",
+      vidas: "Vidas",
+      autorizacoes: "Autorizações Médicas",
+      faturamento: "Faturamento",
+      faturas: "Faturas",
+      b2b: "Cobrança B2B",
+      planos: "Planos de Assinatura",
+      servicos: "Catálogo de Serviços",
+      relatorios: "Relatórios",
+      perfis: "Perfis de Acesso",
       "notification-demo": "Demonstração de Notificações",
+      "flowbite-table-exemplo": "Exemplo de Tabela",
+      visualizar: "Visualizar",
+      editar: "Editar",
+      configuracoes: "Configurações",
     };
 
     // Adicionar segmentos da rota
     pathSegments.forEach((segment, index) => {
       if (segment === "admin") return; // Já adicionado
+
+      // Para empresas, substituir ID pelo nome da empresa se disponível
+      if (pathSegments.includes("empresas") && /^\d+$/.test(segment) && index > 0) {
+        const companyName = localStorage.getItem(`company_name_${segment}`);
+        if (companyName) {
+          breadcrumbs.push({
+            label: companyName,
+            href: "/" + pathSegments.slice(0, index + 1).join("/"),
+            current: false,
+          });
+        }
+        return;
+      }
+
+      // Para clientes, substituir ID pelo nome do cliente se disponível
+      if (pathSegments.includes("clientes") && /^\d+$/.test(segment) && index > 0) {
+        const clientName = localStorage.getItem(`client_name_${segment}`);
+        if (clientName) {
+          breadcrumbs.push({
+            label: clientName,
+            href: "/" + pathSegments.slice(0, index + 1).join("/"),
+            current: false,
+          });
+        }
+        return;
+      }
+
+      // Para estabelecimentos, substituir ID pelo nome se disponível
+      if (pathSegments.includes("estabelecimentos") && /^\d+$/.test(segment) && index > 0) {
+        const establishmentName = localStorage.getItem(`establishment_name_${segment}`);
+        if (establishmentName) {
+          breadcrumbs.push({
+            label: establishmentName,
+            href: "/" + pathSegments.slice(0, index + 1).join("/"),
+            current: false,
+          });
+        }
+        return;
+      }
+
+      // Para contratos, substituir ID pelo código do contrato se disponível
+      if (pathSegments.includes("contratos") && /^\d+$/.test(segment) && index > 0) {
+        const contractCode = localStorage.getItem(`contract_code_${segment}`);
+        if (contractCode) {
+          breadcrumbs.push({
+            label: `Contrato ${contractCode}`,
+            href: "/" + pathSegments.slice(0, index + 1).join("/"),
+            current: false,
+          });
+        }
+        return;
+      }
 
       const label =
         routeLabels[segment] ||
@@ -68,34 +134,18 @@ export const useBreadcrumbs = (): BreadcrumbItem[] => {
         pacientes: "Pacientes",
         usuarios: "Usuários",
         lgpd: "LGPD",
+        faturamento: "Faturamento",
+        configuracoes: "Configurações",
+        historico: "Histórico",
       };
 
       const tabLabel = tabLabels[tab];
       if (tabLabel) {
-        // Se estamos em empresas e temos companyId, adicionar nome da empresa
-        if (
-          pathSegments.includes("empresas") &&
-          companyId &&
-          tab !== "estabelecimentos"
-        ) {
-          breadcrumbs.push({
-            label: `Empresa #${companyId}`,
-            href: `/admin/empresas?companyId=${companyId}&tab=informacoes`,
-            current: false,
-          });
-        }
-
         breadcrumbs.push({
           label: tabLabel,
           current: true,
         });
       }
-    } else if (companyId && pathSegments.includes("empresas")) {
-      // Se estamos em empresas com companyId mas sem tab específica
-      breadcrumbs.push({
-        label: `Empresa #${companyId}`,
-        current: true,
-      });
     }
 
     return breadcrumbs;

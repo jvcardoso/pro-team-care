@@ -47,28 +47,29 @@ class DeleteCompanyUseCase:
             )
             return False
 
+        company_name = existing_company.people.name if existing_company.people else "Unknown"
         logger.info(
             "Empresa encontrada, prosseguindo com exclusão",
             company_id=company_id,
-            company_name=existing_company.people.name,
+            company_name=company_name,
             user_id=user_id,
         )
 
         # Excluir empresa
-        success = await self.company_repository.delete(company_id)
+        success = await self.company_repository.delete_company(company_id)
 
         if success:
             logger.info(
                 "Empresa excluída com sucesso",
                 company_id=company_id,
-                company_name=existing_company.people.name,
+                company_name=company_name,
                 user_id=user_id,
             )
         else:
             logger.error(
                 "Falha na exclusão da empresa",
                 company_id=company_id,
-                company_name=existing_company.people.name,
+                company_name=company_name,
                 user_id=user_id,
             )
 

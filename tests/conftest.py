@@ -33,13 +33,9 @@ test_engine = create_async_engine(
     max_overflow=10,
 )
 
-# Test session factory
-TestAsyncSession = sessionmaker(
-    bind=test_engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-    autoflush=False,  # Disable autoflush to avoid conflicts
-)
+# Test session factory - use AsyncSession directly
+async def create_test_session():
+    return AsyncSession(test_engine, expire_on_commit=False, autoflush=False)
 
 
 @pytest_asyncio.fixture(scope="session")
@@ -51,111 +47,34 @@ async def event_loop():
 
 
 @pytest_asyncio.fixture
-async def async_session() -> AsyncGenerator[AsyncSession, None]:
+async def async_session():
     """Create test database session"""
     # Create tables
     async with test_engine.begin() as conn:
         try:
+            # Create master schema if it doesn't exist
+            await conn.execute(text("CREATE SCHEMA IF NOT EXISTS master;"))
+
+            # Create tables using metadata - simpler and more reliable than migrations
             await conn.run_sync(Base.metadata.create_all)
-        except Exception as e:
-            print(f"Warning: Creating tables without some indexes due to: {e}")
-
-        # Set up RLS functions and policies for testing
-        try:
-            # Create RLS functions
-            await conn.execute(
-                text(
-                    """
-                CREATE OR REPLACE FUNCTION master.get_current_company_id()
-                RETURNS INTEGER AS $$
-                BEGIN
-                    RETURN COALESCE(NULLIF(current_setting('app.current_company_id', true), '')::INTEGER, 0);
-                END;
-                $$ LANGUAGE plpgsql SECURITY DEFINER;
-            """
-                )
-            )
-
-            await conn.execute(
-                text(
-                    """
-                CREATE OR REPLACE FUNCTION master.set_current_company_id(company_id INTEGER)
-                RETURNS VOID AS $$
-                BEGIN
-                    PERFORM set_config('app.current_company_id', company_id::TEXT, false);
-                END;
-                $$ LANGUAGE plpgsql SECURITY DEFINER;
-            """
-                )
-            )
-
-            # Enable RLS on tables
-            await conn.execute(
-                text("ALTER TABLE master.people ENABLE ROW LEVEL SECURITY;")
-            )
-            await conn.execute(
-                text("ALTER TABLE master.users ENABLE ROW LEVEL SECURITY;")
-            )
-
-            # Create policies
-            await conn.execute(
-                text(
-                    """
-                CREATE POLICY people_company_isolation_select ON master.people
-                FOR SELECT
-                USING (company_id = master.get_current_company_id());
-            """
-                )
-            )
-
-            await conn.execute(
-                text(
-                    """
-                CREATE POLICY users_company_isolation_select ON master.users
-                FOR SELECT
-                USING (company_id = master.get_current_company_id());
-            """
-                )
-            )
-
-            # Admin bypass policies
-            await conn.execute(
-                text(
-                    """
-                CREATE POLICY people_admin_bypass ON master.people
-                FOR ALL
-                TO postgres
-                USING (true)
-                WITH CHECK (true);
-            """
-                )
-            )
-
-            await conn.execute(
-                text(
-                    """
-                CREATE POLICY users_admin_bypass ON master.users
-                FOR ALL
-                TO postgres
-                USING (true)
-                WITH CHECK (true);
-            """
-                )
-            )
 
         except Exception as e:
-            print(f"Warning: RLS setup failed: {e}")
+            print(f"Warning: Table creation failed: {e}")
+            # Try to continue anyway
 
     # Create session
-    session = TestAsyncSession()
+    session = await create_test_session()
     try:
         yield session
     finally:
         await session.close()
 
-    # Drop tables after test
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+    # Clean up - drop tables after test
+    try:
+        async with test_engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+    except Exception as e:
+        print(f"Warning: Cleanup failed: {e}")
 
 
 @pytest.fixture

@@ -19,10 +19,11 @@ interface EstablishmentFormProps {
   companyId?: number;
   onSave?: () => void;
   onCancel?: () => void;
+  onNavigateToClients?: (establishmentId: number, establishmentCode: string) => void;
 }
 
 const EstablishmentForm: React.FC<EstablishmentFormProps> = React.memo(
-  ({ establishmentId, companyId, onSave, onCancel }) => {
+  ({ establishmentId, companyId, onSave, onCancel, onNavigateToClients }) => {
     return (
       <FormErrorBoundary formName="EstablishmentForm">
         <EstablishmentFormContent
@@ -30,6 +31,7 @@ const EstablishmentForm: React.FC<EstablishmentFormProps> = React.memo(
           companyId={companyId}
           onSave={onSave}
           onCancel={onCancel}
+          onNavigateToClients={onNavigateToClients}
         />
       </FormErrorBoundary>
     );
@@ -41,6 +43,7 @@ const EstablishmentFormContent: React.FC<EstablishmentFormProps> = ({
   companyId,
   onSave,
   onCancel,
+  onNavigateToClients,
 }) => {
   const {
     loading,
@@ -66,7 +69,7 @@ const EstablishmentFormContent: React.FC<EstablishmentFormProps> = ({
     proceedWithSave,
     setShowNumberConfirmation,
     setPendingAddresses,
-  } = useEstablishmentForm({ establishmentId, companyId, onSave });
+  } = useEstablishmentForm({ establishmentId, companyId, onSave, onNavigateToClients });
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();

@@ -13,9 +13,10 @@ END $$;
 
 -- Buscar próximo ID disponível
 WITH next_id AS (
-    SELECT COALESCE(MAX(id), 0) + 1 as new_id
+    SELECT COALESCE(MAX(id), 0) + 1 AS new_id
     FROM master.menus
 )
+
 -- Inserir o menu Notificações
 INSERT INTO master.menus (
     id,
@@ -66,14 +67,22 @@ FROM next_id;
 
 -- Verificar resultado
 SELECT
-    id, parent_id, name, slug, url, icon,
-    is_active, is_visible, visible_in_menu
+    id,
+    parent_id,
+    name,
+    slug,
+    url,
+    icon,
+    is_active,
+    is_visible,
+    visible_in_menu
 FROM master.menus
-WHERE name = 'Notificações'
-   OR id = 100
+WHERE
+    name = 'Notificações'
+    OR id = 100
 ORDER BY level, sort_order;
 
 COMMIT;
 
 -- Mensagem de sucesso
-SELECT 'Menu "Notificações" criado com sucesso!' as resultado;
+SELECT 'Menu "Notificações" criado com sucesso!' AS resultado;

@@ -7,23 +7,27 @@ const ThemeContext = createContext({
 });
 
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState("light");
-
-  useEffect(() => {
-    // Verificar preferência salva no localStorage
+  // Inicializar com valor do localStorage imediatamente (síncrono)
+  const getInitialTheme = () => {
     const savedTheme = localStorage.getItem("pro-team-care-theme");
+    console.log("🎨 ThemeContext: Carregando tema inicial do localStorage:", savedTheme);
     if (savedTheme) {
-      setTheme(savedTheme);
-    } else {
-      // Verificar preferência do sistema
-      const prefersDark = window.matchMedia(
-        "(prefers-color-scheme: dark)"
-      ).matches;
-      setTheme(prefersDark ? "dark" : "light");
+      return savedTheme;
     }
-  }, []);
+    // Verificar preferência do sistema
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)"
+    ).matches;
+    const systemTheme = prefersDark ? "dark" : "light";
+    console.log("🎨 ThemeContext: Usando preferência do sistema:", systemTheme);
+    return systemTheme;
+  };
+
+  const [theme, setTheme] = useState(getInitialTheme);
 
   useEffect(() => {
+    console.log("🎨 ThemeContext: Aplicando tema:", theme);
+
     // Aplicar tema usando Tailwind CSS class system
     if (theme === "dark") {
       document.documentElement.classList.add("dark");
@@ -33,10 +37,27 @@ export const ThemeProvider = ({ children }) => {
 
     // Salvar no localStorage
     localStorage.setItem("pro-team-care-theme", theme);
+    console.log("🎨 ThemeContext: Tema salvo no localStorage:", theme);
   }, [theme]);
 
+  // Listener para mudanças no localStorage (sincronização entre abas)
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === "pro-team-care-theme" && e.newValue) {
+        setTheme(e.newValue);
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
   const toggleTheme = () => {
-    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+    setTheme((prev) => {
+      const newTheme = prev === "light" ? "dark" : "light";
+      console.log("🎨 ThemeContext: Alternando tema:", prev, "→", newTheme);
+      return newTheme;
+    });
   };
 
   const value = {

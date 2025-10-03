@@ -11,7 +11,7 @@
     "grepInvert": null,
     "maxFailures": 0,
     "metadata": {
-      "actualWorkers": 3
+      "actualWorkers": 4
     },
     "preserveOutput": "always",
     "reporter": [
@@ -40,7 +40,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 3
+          "actualWorkers": 4
         },
         "id": "chromium",
         "name": "chromium",
@@ -54,7 +54,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 3
+          "actualWorkers": 4
         },
         "id": "firefox",
         "name": "firefox",
@@ -68,7 +68,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 3
+          "actualWorkers": 4
         },
         "id": "webkit",
         "name": "webkit",
@@ -82,7 +82,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 3
+          "actualWorkers": 4
         },
         "id": "Mobile Chrome",
         "name": "Mobile Chrome",
@@ -96,7 +96,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 3
+          "actualWorkers": 4
         },
         "id": "Mobile Safari",
         "name": "Mobile Safari",
@@ -115,21 +115,21 @@
   },
   "suites": [
     {
-      "title": "simple-playwright.spec.js",
-      "file": "simple-playwright.spec.js",
+      "title": "company-registration-homecare-brasil.spec.ts",
+      "file": "company-registration-homecare-brasil.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "Playwright Simple Test",
-          "file": "simple-playwright.spec.js",
-          "line": 8,
+          "title": "Cadastro de Empresa - HOME CARE BRASIL SERVICOS LTDA",
+          "file": "company-registration-homecare-brasil.spec.ts",
+          "line": 16,
           "column": 6,
           "specs": [
             {
-              "title": "should load a basic page and check title",
-              "ok": true,
+              "title": "cadastro completo com CNPJ da Receita Federal - HOME CARE BRASIL",
+              "ok": false,
               "tags": [],
               "tests": [
                 {
@@ -142,28 +142,60 @@
                     {
                       "workerIndex": 0,
                       "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1452,
-                      "errors": [],
+                      "status": "timedOut",
+                      "duration": 30641,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "/home/juliano/Projetos/pro_team_care_16/frontend/e2e/company-registration-homecare-brasil.spec.ts",
+                            "column": 29,
+                            "line": 115
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m()\u001b[22m failed\n\nLocator:  getByText('Nova Empresa')\nExpected: visible\nReceived: <element(s) not found>\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('Nova Empresa')\u001b[22m\n\n\n  113 |     // ✅ VALIDAÇÃO: Verificar se o formulário carregou\n  114 |     const formTitle = page.getByText(\"Nova Empresa\");\n> 115 |     await expect(formTitle).toBeVisible({ timeout: 10000 });\n      |                             ^\n  116 |\n  117 |     // ✅ VALIDAÇÃO: Verificar se campo CNPJ está disponível\n  118 |     const cnpjInput = page.getByLabel(\"CNPJ\");\n    at /home/juliano/Projetos/pro_team_care_16/frontend/e2e/company-registration-homecare-brasil.spec.ts:115:29"
+                        }
+                      ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-09-17T18:20:42.514Z",
+                      "startTime": "2025-09-22T02:24:47.524Z",
                       "annotations": [],
-                      "attachments": []
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/juliano/Projetos/pro_team_care_16/frontend/test-results/company-registration-homec-401c0--Federal---HOME-CARE-BRASIL-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/juliano/Projetos/pro_team_care_16/frontend/test-results/company-registration-homec-401c0--Federal---HOME-CARE-BRASIL-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/juliano/Projetos/pro_team_care_16/frontend/test-results/company-registration-homec-401c0--Federal---HOME-CARE-BRASIL-chromium/error-context.md"
+                        }
+                      ]
                     }
                   ],
-                  "status": "expected"
+                  "status": "unexpected"
                 }
               ],
-              "id": "538343fbb88a4f8bbd59-7b16248d8f56e5ff36a7",
-              "file": "simple-playwright.spec.js",
-              "line": 9,
-              "column": 3
+              "id": "1072dfc14867a475b28c-0a07c350032de35aa039",
+              "file": "company-registration-homecare-brasil.spec.ts",
+              "line": 17,
+              "column": 7
             },
             {
-              "title": "should handle basic interactions",
-              "ok": true,
+              "title": "validação de CNPJ duplicado - HOME CARE BRASIL",
+              "ok": false,
               "tags": [],
               "tests": [
                 {
@@ -176,28 +208,60 @@
                     {
                       "workerIndex": 1,
                       "parallelIndex": 1,
-                      "status": "passed",
-                      "duration": 762,
-                      "errors": [],
+                      "status": "timedOut",
+                      "duration": 30654,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "/home/juliano/Projetos/pro_team_care_16/frontend/e2e/company-registration-homecare-brasil.spec.ts",
+                            "column": 21,
+                            "line": 276
+                          },
+                          "message": "Error: locator.fill: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByLabel('CNPJ')\u001b[22m\n\n\n  274 |     // Preencher CNPJ já cadastrado\n  275 |     const cnpjInput = page.getByLabel(\"CNPJ\");\n> 276 |     await cnpjInput.fill(\"48.189.995/0001-07\");\n      |                     ^\n  277 |\n  278 |     // Preencher outros campos obrigatórios rapidamente\n  279 |     const nameInput = page.getByLabel(\"Razão Social\");\n    at /home/juliano/Projetos/pro_team_care_16/frontend/e2e/company-registration-homecare-brasil.spec.ts:276:21"
+                        }
+                      ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-09-17T18:20:42.526Z",
+                      "startTime": "2025-09-22T02:24:47.587Z",
                       "annotations": [],
-                      "attachments": []
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/juliano/Projetos/pro_team_care_16/frontend/test-results/company-registration-homec-29e4d-uplicado---HOME-CARE-BRASIL-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/juliano/Projetos/pro_team_care_16/frontend/test-results/company-registration-homec-29e4d-uplicado---HOME-CARE-BRASIL-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/juliano/Projetos/pro_team_care_16/frontend/test-results/company-registration-homec-29e4d-uplicado---HOME-CARE-BRASIL-chromium/error-context.md"
+                        }
+                      ]
                     }
                   ],
-                  "status": "expected"
+                  "status": "unexpected"
                 }
               ],
-              "id": "538343fbb88a4f8bbd59-77fa8568d346dedd9beb",
-              "file": "simple-playwright.spec.js",
-              "line": 21,
-              "column": 3
+              "id": "1072dfc14867a475b28c-555b6736af5cabfe2c99",
+              "file": "company-registration-homecare-brasil.spec.ts",
+              "line": 239,
+              "column": 7
             },
             {
-              "title": "should handle form inputs",
-              "ok": true,
+              "title": "validação de endereço sem número - HOME CARE BRASIL",
+              "ok": false,
               "tags": [],
               "tests": [
                 {
@@ -210,24 +274,137 @@
                     {
                       "workerIndex": 2,
                       "parallelIndex": 2,
-                      "status": "passed",
-                      "duration": 761,
-                      "errors": [],
+                      "status": "timedOut",
+                      "duration": 30619,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "/home/juliano/Projetos/pro_team_care_16/frontend/e2e/company-registration-homecare-brasil.spec.ts",
+                            "column": 21,
+                            "line": 342
+                          },
+                          "message": "Error: locator.fill: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByLabel('CNPJ')\u001b[22m\n\n\n  340 |     // Preencher CNPJ e nome\n  341 |     const cnpjInput = page.getByLabel(\"CNPJ\");\n> 342 |     await cnpjInput.fill(\"12.345.678/0001-90\"); // CNPJ fictício\n      |                     ^\n  343 |\n  344 |     const nameInput = page.getByLabel(\"Razão Social\");\n  345 |     await nameInput.fill(\"Empresa Sem Número\");\n    at /home/juliano/Projetos/pro_team_care_16/frontend/e2e/company-registration-homecare-brasil.spec.ts:342:21"
+                        }
+                      ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-09-17T18:20:42.400Z",
+                      "startTime": "2025-09-22T02:24:47.569Z",
                       "annotations": [],
-                      "attachments": []
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/juliano/Projetos/pro_team_care_16/frontend/test-results/company-registration-homec-6c0e0-m-número---HOME-CARE-BRASIL-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/juliano/Projetos/pro_team_care_16/frontend/test-results/company-registration-homec-6c0e0-m-número---HOME-CARE-BRASIL-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/juliano/Projetos/pro_team_care_16/frontend/test-results/company-registration-homec-6c0e0-m-número---HOME-CARE-BRASIL-chromium/error-context.md"
+                        }
+                      ]
                     }
                   ],
-                  "status": "expected"
+                  "status": "unexpected"
                 }
               ],
-              "id": "538343fbb88a4f8bbd59-f636cad7a88f78459d21",
-              "file": "simple-playwright.spec.js",
-              "line": 49,
-              "column": 3
+              "id": "1072dfc14867a475b28c-1db0e476e506ee7b7a39",
+              "file": "company-registration-homecare-brasil.spec.ts",
+              "line": 306,
+              "column": 7
+            },
+            {
+              "title": "debug - HOME CARE BRASIL estrutura e validações",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "failed",
+                      "duration": 28935,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at /home/juliano/Projetos/pro_team_care_16/frontend/e2e/company-registration-homecare-brasil.spec.ts:456:28",
+                        "location": {
+                          "file": "/home/juliano/Projetos/pro_team_care_16/frontend/e2e/company-registration-homecare-brasil.spec.ts",
+                          "column": 28,
+                          "line": 456
+                        },
+                        "snippet": "  454 |       // Capturar screenshot de erro\n  455 |       await page.screenshot({ path: \"test-results/homecare-brasil-debug-error.png\", fullPage: true });\n> 456 |       expect(buttonExists).toBe(true);\n      |                            ^\n  457 |     }\n  458 |   });\n  459 | });"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/juliano/Projetos/pro_team_care_16/frontend/e2e/company-registration-homecare-brasil.spec.ts",
+                            "column": 28,
+                            "line": 456
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\n  454 |       // Capturar screenshot de erro\n  455 |       await page.screenshot({ path: \"test-results/homecare-brasil-debug-error.png\", fullPage: true });\n> 456 |       expect(buttonExists).toBe(true);\n      |                            ^\n  457 |     }\n  458 |   });\n  459 | });\n    at /home/juliano/Projetos/pro_team_care_16/frontend/e2e/company-registration-homecare-brasil.spec.ts:456:28"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "Botão 'Nova empresa' visível: \u001b[33mfalse\u001b[39m\n"
+                        },
+                        {
+                          "text": "❌ Botão 'Nova empresa' não encontrado\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-22T02:24:47.601Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/juliano/Projetos/pro_team_care_16/frontend/test-results/company-registration-homec-528f1-ASIL-estrutura-e-validações-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/juliano/Projetos/pro_team_care_16/frontend/test-results/company-registration-homec-528f1-ASIL-estrutura-e-validações-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/juliano/Projetos/pro_team_care_16/frontend/test-results/company-registration-homec-528f1-ASIL-estrutura-e-validações-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/juliano/Projetos/pro_team_care_16/frontend/e2e/company-registration-homecare-brasil.spec.ts",
+                        "column": 28,
+                        "line": 456
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "1072dfc14867a475b28c-1f4e90950132e53675fa",
+              "file": "company-registration-homecare-brasil.spec.ts",
+              "line": 378,
+              "column": 7
             }
           ]
         }
@@ -236,11 +413,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2025-09-17T18:20:34.363Z",
-    "duration": 9945.646,
-    "expected": 3,
+    "startTime": "2025-09-22T02:24:30.032Z",
+    "duration": 48630.142,
+    "expected": 0,
     "skipped": 0,
-    "unexpected": 0,
+    "unexpected": 4,
     "flaky": 0
   }
 }

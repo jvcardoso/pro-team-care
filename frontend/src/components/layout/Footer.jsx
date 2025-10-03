@@ -14,7 +14,7 @@ const Footer = () => {
             Pro Team Care
           </strong>
           <span className="hidden md:inline">
-            - Sistema de Gestão Home Care
+            - Sistemas para Cuidados de Saúde e Bem Estar da Pessoa
           </span>
         </div>
 

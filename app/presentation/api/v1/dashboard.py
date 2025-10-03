@@ -3,9 +3,12 @@ from typing import Any, Dict, List
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.user import User
 from app.infrastructure.auth import get_current_user
+from app.infrastructure.database import get_db
+from app.infrastructure.services.admin_dashboard_service import AdminDashboardService
 from app.presentation.decorators.simple_permissions import require_permission
 
 router = APIRouter()
@@ -18,14 +21,6 @@ class DashboardStats(BaseModel):
     active_users: int = 0
     total_companies: int = 0
     total_establishments: int = 0
-
-
-class AdminDashboardResponse(BaseModel):
-    """Admin dashboard response"""
-
-    stats: DashboardStats
-    recent_activities: List[Dict[str, Any]] = []
-    generated_at: datetime
 
 
 class UserDashboardResponse(BaseModel):
@@ -44,31 +39,15 @@ class EstablishmentDashboardResponse(BaseModel):
     generated_at: datetime
 
 
-@router.get("/admin", response_model=AdminDashboardResponse)
+@router.get("/admin")
 @require_permission(permission="dashboard.admin", context_type="system")
-async def get_admin_dashboard(current_user: User = Depends(get_current_user)):
-    """Dashboard principal para administradores"""
-    return AdminDashboardResponse(
-        stats=DashboardStats(
-            total_users=100,
-            active_users=80,
-            total_companies=10,
-            total_establishments=25,
-        ),
-        recent_activities=[
-            {
-                "action": "user_login",
-                "user": "admin@example.com",
-                "timestamp": "2025-01-01T10:00:00",
-            },
-            {
-                "action": "user_created",
-                "user": "new@user.com",
-                "timestamp": "2025-01-01T09:30:00",
-            },
-        ],
-        generated_at=datetime.now(),
-    )
+async def get_admin_dashboard(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Dashboard principal para administradores com dados reais"""
+    service = AdminDashboardService(db)
+    return await service.get_dashboard_metrics()
 
 
 @router.get("/user", response_model=UserDashboardResponse)

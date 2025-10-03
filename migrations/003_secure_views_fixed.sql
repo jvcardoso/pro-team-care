@@ -9,40 +9,44 @@ SELECT
     u.id AS user_id,
     u.email_address AS user_email,
     u.is_active AS user_is_active,
-    CASE WHEN u.two_factor_secret IS NOT NULL THEN true ELSE false END AS user_has_2fa,
     u.last_login_at AS user_last_login_at,
     u.created_at AS user_created_at,
+    p.name AS person_name,
 
     -- PERSON DATA (PUBLIC)
-    p.name AS person_name,
-    p.person_type AS person_type,
+    p.person_type,
     p.is_active AS person_is_active,
-
-    -- COMPANY DATA (BASIC)
     c.id AS company_id,
 
-    -- ESTABLISHMENT DATA (BASIC)
+    -- COMPANY DATA (BASIC)
     e.code AS establishment_code,
+
+    -- ESTABLISHMENT DATA (BASIC)
     e.type AS establishment_type,
     e.is_active AS establishment_is_active,
+    r.name AS role_name,
 
     -- ROLE DATA (BASIC)
-    r.name AS role_name,
     r.display_name AS role_display_name,
-    r.level AS role_level
+    r.level AS role_level,
+    coalesce (u.two_factor_secret IS NOT NULL, FALSE) AS user_has_2fa
 
-FROM master.users u
-    INNER JOIN master.people p ON u.person_id = p.id
-    LEFT JOIN master.user_establishments ue ON u.id = ue.user_id AND ue.deleted_at IS NULL
-    LEFT JOIN master.establishments e ON ue.establishment_id = e.id AND e.deleted_at IS NULL
-    LEFT JOIN master.companies c ON e.company_id = c.id AND c.deleted_at IS NULL
-    LEFT JOIN master.user_roles ur ON u.id = ur.user_id AND ur.deleted_at IS NULL
-    LEFT JOIN master.roles r ON ur.role_id = r.id
+FROM master.users AS u
+INNER JOIN master.people AS p ON u.person_id = p.id
+LEFT JOIN
+    master.user_establishments AS ue
+    ON u.id = ue.user_id AND ue.deleted_at IS NULL
+LEFT JOIN
+    master.establishments AS e
+    ON ue.establishment_id = e.id AND e.deleted_at IS NULL
+LEFT JOIN master.companies AS c ON e.company_id = c.id AND c.deleted_at IS NULL
+LEFT JOIN master.user_roles AS ur ON u.id = ur.user_id AND ur.deleted_at IS NULL
+LEFT JOIN master.roles AS r ON ur.role_id = r.id
 
 WHERE
     u.deleted_at IS NULL
     AND p.deleted_at IS NULL
-    AND u.is_active = true
+    AND u.is_active = TRUE
 
 ORDER BY u.id;
 
@@ -56,46 +60,59 @@ SELECT
     u.is_system_admin AS user_is_system_admin,
 
     -- MASKED SENSITIVE FIELDS
-    CASE WHEN u.two_factor_secret IS NOT NULL THEN 'CONFIGURED' ELSE 'NOT_CONFIGURED' END AS user_2fa_status,
-    CASE WHEN u.two_factor_recovery_codes IS NOT NULL THEN 'AVAILABLE' ELSE 'NOT_AVAILABLE' END AS user_2fa_recovery_status,
-
     u.last_login_at AS user_last_login_at,
     u.created_at AS user_created_at,
 
-    -- PERSON DATA (COMPLETE)
     p.name AS person_name,
-    p.person_type AS person_type,
+    p.person_type,
+
+    -- PERSON DATA (COMPLETE)
     p.tax_id AS person_tax_id,
     p.birth_date AS person_birth_date,
     p.is_active AS person_is_active,
-
-    -- LGPD STATUS (MASKED)
-    CASE WHEN p.lgpd_consent_version IS NOT NULL THEN 'PROVIDED' ELSE 'NOT_PROVIDED' END AS person_lgpd_status,
     p.lgpd_consent_given_at AS person_lgpd_consent_date,
-
-    -- COMPANY DATA
     c.id AS company_id,
 
-    -- ESTABLISHMENT DATA
+    -- LGPD STATUS (MASKED)
     e.id AS establishment_id,
     e.code AS establishment_code,
-    e.type AS establishment_type,
-    e.is_active AS establishment_is_active,
 
-    -- ROLE DATA
+    -- COMPANY DATA
+    e.type AS establishment_type,
+
+    -- ESTABLISHMENT DATA
+    e.is_active AS establishment_is_active,
     r.id AS role_id,
     r.name AS role_name,
     r.display_name AS role_display_name,
-    r.level AS role_level,
-    r.context_type AS role_context_type
 
-FROM master.users u
-    INNER JOIN master.people p ON u.person_id = p.id
-    LEFT JOIN master.user_establishments ue ON u.id = ue.user_id AND ue.deleted_at IS NULL
-    LEFT JOIN master.establishments e ON ue.establishment_id = e.id AND e.deleted_at IS NULL
-    LEFT JOIN master.companies c ON e.company_id = c.id AND c.deleted_at IS NULL
-    LEFT JOIN master.user_roles ur ON u.id = ur.user_id AND ur.deleted_at IS NULL
-    LEFT JOIN master.roles r ON ur.role_id = r.id
+    -- ROLE DATA
+    r.level AS role_level,
+    r.context_type AS role_context_type,
+    CASE
+        WHEN u.two_factor_secret IS NOT NULL THEN 'CONFIGURED' ELSE
+            'NOT_CONFIGURED'
+    END AS user_2fa_status,
+    CASE
+        WHEN u.two_factor_recovery_codes IS NOT NULL THEN 'AVAILABLE' ELSE
+            'NOT_AVAILABLE'
+    END AS user_2fa_recovery_status,
+    CASE
+        WHEN p.lgpd_consent_version IS NOT NULL THEN 'PROVIDED' ELSE
+            'NOT_PROVIDED'
+    END AS person_lgpd_status
+
+FROM master.users AS u
+INNER JOIN master.people AS p ON u.person_id = p.id
+LEFT JOIN
+    master.user_establishments AS ue
+    ON u.id = ue.user_id AND ue.deleted_at IS NULL
+LEFT JOIN
+    master.establishments AS e
+    ON ue.establishment_id = e.id AND e.deleted_at IS NULL
+LEFT JOIN master.companies AS c ON e.company_id = c.id AND c.deleted_at IS NULL
+LEFT JOIN master.user_roles AS ur ON u.id = ur.user_id AND ur.deleted_at IS NULL
+LEFT JOIN master.roles AS r ON ur.role_id = r.id
 
 WHERE
     u.deleted_at IS NULL
@@ -107,7 +124,7 @@ ORDER BY u.id;
 CREATE OR REPLACE FUNCTION master.get_user_data_secure(
     requesting_user_id BIGINT,
     target_user_id BIGINT DEFAULT NULL
-) RETURNS TABLE(
+) RETURNS TABLE (
     user_id BIGINT,
     user_email VARCHAR,
     person_name VARCHAR,

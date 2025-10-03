@@ -21,6 +21,8 @@ interface ClientFormProps {
   onSave?: () => void; // Callback chamado após sucesso
   isLoading?: boolean;
   mode?: "create" | "edit";
+  establishmentId?: number;
+  establishmentCode?: string;
 }
 
 const ClientForm: React.FC<ClientFormProps> = React.memo(
@@ -31,6 +33,8 @@ const ClientForm: React.FC<ClientFormProps> = React.memo(
     onSave,
     isLoading = false,
     mode = "create",
+    establishmentId,
+    establishmentCode,
   }) => {
     return (
       <FormErrorBoundary formName="ClientForm">
@@ -41,6 +45,8 @@ const ClientForm: React.FC<ClientFormProps> = React.memo(
           onSave={onSave}
           isLoading={isLoading}
           mode={mode}
+          establishmentId={establishmentId}
+          establishmentCode={establishmentCode}
         />
       </FormErrorBoundary>
     );
@@ -54,6 +60,8 @@ const ClientFormContent: React.FC<ClientFormProps> = ({
   onSave,
   isLoading: parentLoading = false,
   mode = "create",
+  establishmentId,
+  establishmentCode,
 }) => {
   const {
     loading,
@@ -77,7 +85,12 @@ const ClientFormContent: React.FC<ClientFormProps> = ({
     handleAddressRemove,
     proceedWithSave,
     save,
-  } = useClientForm({ clientId: initialData?.id, onSave });
+  } = useClientForm({
+    clientId: initialData?.id,
+    onSave,
+    establishmentId,
+    establishmentCode
+  });
 
   const isFormLoading = loading || parentLoading;
 
@@ -356,6 +369,7 @@ const ClientFormContent: React.FC<ClientFormProps> = ({
           availableEstablishments={availableEstablishments}
           loading={loading}
           isEditing={isEditing}
+          isEstablishmentPreselected={!!establishmentId}
           onUpdateClient={updateClient}
           onUpdatePerson={updatePerson}
           onUpdateFormData={updateFormData}

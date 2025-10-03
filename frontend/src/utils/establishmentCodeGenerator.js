@@ -1,6 +1,6 @@
 /**
  * Utilitários para geração automática de códigos de estabelecimento
- * Formato: E[INICIAIS][SEQUENCIAL] - Ex: EHSC001, EABC002
+ * Formato: EST-{cod-empresa}-{seq} - Ex: EST-057-001, EST-012-002
  */
 
 /**
@@ -99,21 +99,18 @@ export const extractCompanyInitials = (companyName) => {
  * Gera um código de estabelecimento baseado na empresa
  * @param {object} company - Dados da empresa
  * @param {number} sequence - Número sequencial (opcional)
- * @returns {string} Código no formato E[INICIAIS][SEQUENCIAL]
+ * @returns {string} Código no formato EST-{cod-empresa}-{seq}
  */
 export const generateEstablishmentCode = (company, sequence = 1) => {
   if (!company) {
-    return `EST${String(sequence).padStart(3, "0")}`;
+    return `EST-000-${String(sequence).padStart(3, "0")}`;
   }
 
-  // Tentar diferentes campos para o nome da empresa
-  const companyName =
-    company.name || company.people?.name || company.person_name || "EMPRESA";
-
-  const initials = extractCompanyInitials(companyName);
+  // Usar o ID da empresa como código da empresa
+  const companyCode = String(company.id || 0).padStart(3, "0");
   const sequentialNumber = String(sequence).padStart(3, "0");
 
-  return `E${initials}${sequentialNumber}`;
+  return `EST-${companyCode}-${sequentialNumber}`;
 };
 
 /**
@@ -130,18 +127,16 @@ export const suggestEstablishmentCode = (
     return generateEstablishmentCode(null, 1);
   }
 
-  const companyName =
-    company.name || company.people?.name || company.person_name || "EMPRESA";
-  const initials = extractCompanyInitials(companyName);
-  const prefix = `E${initials}`;
+  const companyCode = String(company.id || 0).padStart(3, "0");
+  const prefix = `EST-${companyCode}-`;
 
   // Encontrar o próximo número sequencial disponível
   let maxSequence = 0;
 
   existingEstablishments.forEach((est) => {
     if (est.code && est.code.startsWith(prefix)) {
-      // Extrair número do final do código
-      const match = est.code.match(/(\d+)$/);
+      // Extrair número do final do código (após o último hífen)
+      const match = est.code.match(/-(\d+)$/);
       if (match) {
         const sequence = parseInt(match[1], 10);
         if (sequence > maxSequence) {
@@ -167,21 +162,21 @@ export const validateEstablishmentCode = (code) => {
 
   const cleanCode = code.trim().toUpperCase();
 
-  // Verificar formato: E + 2-3 letras + 3 dígitos
-  const formatRegex = /^E[A-Z]{2,3}\d{3}$/;
+  // Verificar formato: EST-XXX-XXX (onde X são dígitos)
+  const formatRegex = /^EST-\d{3}-\d{3}$/;
 
   if (!formatRegex.test(cleanCode)) {
     return {
       isValid: false,
       message:
-        "Formato inválido. Use: E + iniciais (2-3 letras) + sequencial (3 dígitos). Ex: EHSC001",
+        "Formato inválido. Use: EST-XXX-XXX (onde X são dígitos). Ex: EST-057-001",
     };
   }
 
-  if (cleanCode.length < 6 || cleanCode.length > 7) {
+  if (cleanCode.length !== 11) {
     return {
       isValid: false,
-      message: "Código deve ter entre 6 e 7 caracteres",
+      message: "Código deve ter exatamente 11 caracteres (EST-XXX-XXX)",
     };
   }
 
@@ -194,24 +189,24 @@ export const validateEstablishmentCode = (code) => {
 export const getCodeExamples = () => {
   return [
     {
-      company: "Hospital Santa Catarina",
-      expected: "EHSC001",
-      explanation: "E + HSC (Hospital Santa Catarina) + 001",
+      company: { id: 57, name: "Hospital Santa Catarina" },
+      expected: "EST-057-001",
+      explanation: "EST + código da empresa (057) + sequencial (001)",
     },
     {
-      company: "Associação Beneficente Síria",
-      expected: "EABS001",
-      explanation: "E + ABS (Associação Beneficente Síria) + 001",
+      company: { id: 12, name: "Associação Beneficente Síria" },
+      expected: "EST-012-001",
+      explanation: "EST + código da empresa (012) + sequencial (001)",
     },
     {
-      company: "Clínica Médica Avançada LTDA",
-      expected: "ECMA001",
-      explanation: "E + CMA (Clínica Médica Avançada) + 001",
+      company: { id: 123, name: "Clínica Médica Avançada LTDA" },
+      expected: "EST-123-001",
+      explanation: "EST + código da empresa (123) + sequencial (001)",
     },
     {
-      company: "Instituto de Cardiologia",
-      expected: "EIC001",
-      explanation: "E + IC + primeira letra repetida = EIC + 001",
+      company: { id: 5, name: "Instituto de Cardiologia" },
+      expected: "EST-005-001",
+      explanation: "EST + código da empresa (005) + sequencial (001)",
     },
   ];
 };

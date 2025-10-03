@@ -280,6 +280,323 @@ class EmailService:
             print(f"Erro ao enviar email de reset: {str(e)}")
             return False
 
+    async def send_contract_acceptance_email(
+        self,
+        company_name: str,
+        recipient_email: str,
+        recipient_name: str,
+        contract_token: str,
+    ) -> bool:
+        """
+        Envia email de aceite de contrato para empresa
+
+        Args:
+            company_name: Nome da empresa
+            recipient_email: Email do destinatário
+            recipient_name: Nome do destinatário
+            contract_token: Token de aceite do contrato
+
+        Returns:
+            bool: True se enviado com sucesso
+        """
+        if not self.send_emails:
+            print(f"[EMAIL SIMULADO] Aceite de contrato para: {recipient_email}")
+            print(f"Token: {contract_token}")
+            print(f"Link: {self.frontend_url}/contract-acceptance/{contract_token}")
+            return True
+
+        try:
+            msg = MIMEMultipart("alternative")
+            msg["From"] = "ProTeamCare <noreply@protiamcare.com>"
+            msg["To"] = recipient_email
+            msg["Subject"] = f"Ative sua empresa no ProTeamCare - {company_name}"
+
+            html_content = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>Aceite de Contrato - ProTeamCare</title>
+                <style>
+                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                    .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }}
+                    .content {{ background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }}
+                    .button {{ display: inline-block; background: #667eea; color: white; padding: 14px 40px; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }}
+                    .footer {{ text-align: center; margin-top: 30px; color: #666; font-size: 12px; }}
+                    .token {{ background: #e9ecef; padding: 10px; border-radius: 4px; font-family: monospace; word-break: break-all; margin: 15px 0; }}
+                    .highlight {{ background: #fff3cd; padding: 15px; border-left: 4px solid #ffc107; margin: 20px 0; }}
+                    .checklist {{ background: white; padding: 20px; border-radius: 5px; margin: 20px 0; }}
+                    .checklist li {{ margin: 10px 0; padding-left: 25px; position: relative; }}
+                    .checklist li:before {{ content: "✓"; position: absolute; left: 0; color: #28a745; font-weight: bold; }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>🎉 Bem-vindo ao ProTeamCare!</h1>
+                        <p>Sua empresa <strong>{company_name}</strong> foi cadastrada</p>
+                    </div>
+                    <div class="content">
+                        <h2>Olá, {recipient_name}!</h2>
+
+                        <p>Sua empresa foi cadastrada com sucesso no <strong>ProTeamCare</strong>, o sistema completo de gestão para empresas de home care.</p>
+
+                        <div class="highlight">
+                            <strong>⚠️ Ação necessária:</strong> Para ativar o acesso ao sistema, você precisa aceitar nossos Termos de Uso e Política de Privacidade.
+                        </div>
+
+                        <p><strong>📋 Próximos passos:</strong></p>
+
+                        <div class="checklist">
+                            <ul style="list-style: none; padding: 0; margin: 0;">
+                                <li>Clique no botão abaixo para acessar os termos</li>
+                                <li>Leia atentamente os Termos de Uso</li>
+                                <li>Aceite os termos clicando em "Aceitar"</li>
+                                <li>Receba email para criar seu usuário gestor</li>
+                                <li>Acesse o sistema e comece a usar!</li>
+                            </ul>
+                        </div>
+
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="{self.frontend_url}/contract-acceptance/{contract_token}" class="button">
+                                📄 Aceitar Termos de Uso
+                            </a>
+                        </div>
+
+                        <p><strong>Ou copie e cole este link no seu navegador:</strong></p>
+                        <div class="token">{self.frontend_url}/contract-acceptance/{contract_token}</div>
+
+                        <div style="background: #e7f3ff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                            <p style="margin: 0;"><strong>🔒 Segurança:</strong></p>
+                            <p style="margin: 5px 0 0 0;">Este link é único e seguro. Ele expira em <strong>7 dias</strong> por motivos de segurança.</p>
+                        </div>
+
+                        <p>Se você não solicitou este cadastro, pode ignorar este email.</p>
+
+                        <hr style="margin: 30px 0; border: none; border-top: 1px solid #ddd;">
+
+                        <p style="font-size: 12px; color: #666;">
+                            <strong>Precisa de ajuda?</strong><br>
+                            Entre em contato: suporte@proteamcare.com<br>
+                            WhatsApp: (11) 99999-9999
+                        </p>
+                    </div>
+                    <div class="footer">
+                        <p>© 2025 ProTeamCare. Todos os direitos reservados.</p>
+                        <p>Este é um email automático, não responda.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+
+            text_content = f"""
+            Bem-vindo ao ProTeamCare!
+
+            Olá, {recipient_name}!
+
+            Sua empresa {company_name} foi cadastrada com sucesso no ProTeamCare.
+
+            Para ativar o acesso, você precisa aceitar nossos Termos de Uso.
+
+            Acesse o link abaixo:
+            {self.frontend_url}/contract-acceptance/{contract_token}
+
+            Este link expira em 7 dias.
+
+            Próximos passos:
+            1. Aceitar os termos de uso
+            2. Receber email para criar usuário gestor
+            3. Acessar o sistema
+
+            Se você não solicitou este cadastro, pode ignorar este email.
+
+            --
+            ProTeamCare
+            suporte@proteamcare.com
+            """
+
+            msg.attach(MIMEText(text_content, "plain"))
+            msg.attach(MIMEText(html_content, "html"))
+
+            with self._create_smtp_connection() as server:
+                server.send_message(msg)
+
+            return True
+
+        except Exception as e:
+            print(f"Erro ao enviar email de aceite de contrato: {str(e)}")
+            return False
+
+    async def send_create_manager_email(
+        self,
+        company_name: str,
+        recipient_email: str,
+        recipient_name: str,
+        user_creation_token: str,
+    ) -> bool:
+        """
+        Envia email para criar usuário gestor após aceite de contrato
+
+        Args:
+            company_name: Nome da empresa
+            recipient_email: Email do destinatário
+            recipient_name: Nome do destinatário
+            user_creation_token: Token de criação de usuário
+
+        Returns:
+            bool: True se enviado com sucesso
+        """
+        if not self.send_emails:
+            print(f"[EMAIL SIMULADO] Criação de usuário gestor para: {recipient_email}")
+            print(f"Token: {user_creation_token}")
+            print(f"Link: {self.frontend_url}/create-manager/{user_creation_token}")
+            return True
+
+        try:
+            msg = MIMEMultipart("alternative")
+            msg["From"] = "ProTeamCare <noreply@protiamcare.com>"
+            msg["To"] = recipient_email
+            msg["Subject"] = f"Configure seu acesso - Gestor da {company_name}"
+
+            html_content = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>Criar Usuário Gestor - ProTeamCare</title>
+                <style>
+                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                    .header {{ background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }}
+                    .content {{ background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }}
+                    .button {{ display: inline-block; background: #28a745; color: white; padding: 14px 40px; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }}
+                    .footer {{ text-align: center; margin-top: 30px; color: #666; font-size: 12px; }}
+                    .token {{ background: #e9ecef; padding: 10px; border-radius: 4px; font-family: monospace; word-break: break-all; margin: 15px 0; }}
+                    .success {{ background: #d4edda; padding: 15px; border-left: 4px solid #28a745; margin: 20px 0; }}
+                    .steps {{ background: white; padding: 20px; border-radius: 5px; margin: 20px 0; }}
+                    .step {{ margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 5px; }}
+                    .step-number {{ display: inline-block; width: 30px; height: 30px; background: #28a745; color: white; border-radius: 50%; text-align: center; line-height: 30px; font-weight: bold; margin-right: 10px; }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>✅ Contrato Aceito!</h1>
+                        <p>Agora vamos configurar seu acesso</p>
+                    </div>
+                    <div class="content">
+                        <h2>Olá, {recipient_name}!</h2>
+
+                        <div class="success">
+                            <strong>✓ Contrato aceito com sucesso!</strong><br>
+                            Agora você precisa criar sua conta de gestor para acessar o sistema.
+                        </div>
+
+                        <p>Você será o <strong>Gestor Principal</strong> da empresa <strong>{company_name}</strong>, com acesso total ao sistema.</p>
+
+                        <div class="steps">
+                            <h3 style="margin-top: 0;">📝 Como criar sua conta:</h3>
+
+                            <div class="step">
+                                <span class="step-number">1</span>
+                                <strong>Clique no botão abaixo</strong><br>
+                                <small>Você será redirecionado para a página de criação de conta</small>
+                            </div>
+
+                            <div class="step">
+                                <span class="step-number">2</span>
+                                <strong>Preencha seus dados</strong><br>
+                                <small>Nome completo, email e senha segura</small>
+                            </div>
+
+                            <div class="step">
+                                <span class="step-number">3</span>
+                                <strong>Confirme a criação</strong><br>
+                                <small>Sua conta será criada e você poderá fazer login</small>
+                            </div>
+
+                            <div class="step">
+                                <span class="step-number">4</span>
+                                <strong>Acesse o sistema</strong><br>
+                                <small>Comece a usar o ProTeamCare!</small>
+                            </div>
+                        </div>
+
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="{self.frontend_url}/create-manager/{user_creation_token}" class="button">
+                                👤 Criar Minha Conta
+                            </a>
+                        </div>
+
+                        <p><strong>Ou copie e cole este link no seu navegador:</strong></p>
+                        <div class="token">{self.frontend_url}/create-manager/{user_creation_token}</div>
+
+                        <div style="background: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                            <p style="margin: 0;"><strong>⏰ Importante:</strong></p>
+                            <p style="margin: 5px 0 0 0;">Este link expira em <strong>24 horas</strong>. Se expirar, entre em contato com o suporte.</p>
+                        </div>
+
+                        <div style="background: #e7f3ff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                            <p style="margin: 0;"><strong>🎯 O que você poderá fazer:</strong></p>
+                            <ul style="margin: 10px 0 0 0;">
+                                <li>Gerenciar estabelecimentos</li>
+                                <li>Cadastrar clientes e profissionais</li>
+                                <li>Controlar contratos e serviços</li>
+                                <li>Emitir relatórios gerenciais</li>
+                                <li>Configurar assinatura e faturamento</li>
+                            </ul>
+                        </div>
+
+                        <p>Estamos ansiosos para ter você conosco!</p>
+                    </div>
+                    <div class="footer">
+                        <p>© 2025 ProTeamCare. Todos os direitos reservados.</p>
+                        <p>Este é um email automático, não responda.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+
+            text_content = f"""
+            Contrato Aceito! Configure seu acesso
+
+            Olá, {recipient_name}!
+
+            Contrato aceito com sucesso!
+
+            Agora você precisa criar sua conta de gestor da empresa {company_name}.
+
+            Acesse o link abaixo:
+            {self.frontend_url}/create-manager/{user_creation_token}
+
+            Este link expira em 24 horas.
+
+            Próximos passos:
+            1. Acessar o link
+            2. Preencher seus dados
+            3. Criar senha segura
+            4. Fazer login no sistema
+
+            --
+            ProTeamCare
+            suporte@proteamcare.com
+            """
+
+            msg.attach(MIMEText(text_content, "plain"))
+            msg.attach(MIMEText(html_content, "html"))
+
+            with self._create_smtp_connection() as server:
+                server.send_message(msg)
+
+            return True
+
+        except Exception as e:
+            print(f"Erro ao enviar email de criação de gestor: {str(e)}")
+            return False
+
     @staticmethod
     def generate_token() -> str:
         """Gera token seguro para ativação/reset"""

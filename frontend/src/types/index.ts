@@ -14,7 +14,6 @@ export * from "./components";
 
 // Re-exports mais utilizados (tipos)
 export type {
-  Company,
   People,
   Phone,
   Email,
@@ -34,6 +33,14 @@ export type {
   ClientValidationResponse,
   PersonForClient,
 } from "./api";
+
+// Company types
+export type {
+  Company,
+  CompanyDetailed,
+  CompanyCreate,
+  CompanyUpdate,
+} from "./company.types";
 
 // Re-exports de enums (valores) - SINCRONIZADOS
 export {

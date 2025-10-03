@@ -50,10 +50,9 @@ class ContextFilter:
 
         # 🔒 USUÁRIO NORMAL: COM filtros
         if hasattr(user, "company_id") and user.company_id:
-            from app.infrastructure.orm.models import Company
-
-            # Para tabela Company, filtrar pelo ID da empresa do usuário
-            filtered_query = query.where(Company.id == user.company_id)
+            # Usar o alias se fornecido, senão usar Company
+            table_to_use = company_table_alias if company_table_alias is not None else Company
+            filtered_query = query.where(table_to_use.id == user.company_id)
 
             await logger.ainfo(
                 "🔒 Aplicando filtro de empresa",

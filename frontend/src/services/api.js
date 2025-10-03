@@ -239,7 +239,7 @@ export const companiesService = {
   // Listar empresas com paginação e filtros
   getCompanies: async (params = {}) => {
     const response = await api.get("/api/v1/companies/", { params });
-    return response.data;
+    return response.data.companies;
   },
 
   // Contar total de empresas
@@ -289,6 +289,12 @@ export const companiesService = {
   // Obter apenas contatos da empresa
   getCompanyContacts: async (id) => {
     const response = await api.get(`/api/v1/companies/${id}/contacts`);
+    return response.data;
+  },
+
+  // Obter estatísticas agregadas da empresa
+  getCompanyStats: async (companyId) => {
+    const response = await api.get(`/api/v1/companies/${companyId}/stats`);
     return response.data;
   },
 };
@@ -562,6 +568,27 @@ export const apiRequest = async (method, url, data = null, params = {}) => {
     console.error(`API ${method.toUpperCase()} ${url} failed:`, error);
     throw error;
   }
+};
+
+// Generic HTTP methods with data extraction
+export const get = async (url, config = {}) => {
+  const response = await api.get(url, config);
+  return response.data;
+};
+
+export const post = async (url, data = null, config = {}) => {
+  const response = await api.post(url, data, config);
+  return response.data;
+};
+
+export const put = async (url, data = null, config = {}) => {
+  const response = await api.put(url, data, config);
+  return response.data;
+};
+
+export const del = async (url, config = {}) => {
+  const response = await api.delete(url, config);
+  return response.data;
 };
 
 export { api, secureSessionService };

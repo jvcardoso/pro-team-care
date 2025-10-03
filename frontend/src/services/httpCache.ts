@@ -171,10 +171,7 @@ setInterval(() => {
   httpCache.cleanup();
 }, 5 * 60 * 1000);
 
-// Limpar cache de dados dinâmicos na inicialização
-httpCache.invalidatePattern("/users");
-httpCache.invalidatePattern("/establishments");
-httpCache.invalidatePattern("/clients");
+// Cache de dados dinâmicos será invalidado conforme necessário pelas operações CRUD
 
 // 🔄 Interceptor para cache automático em requests GET
 export const createCacheInterceptor = (axiosInstance: any) => {

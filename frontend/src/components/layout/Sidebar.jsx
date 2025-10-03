@@ -30,6 +30,9 @@ import {
   ChevronRight,
   Bell,
   Database,
+  Package,
+  CreditCard,
+  DollarSign,
 } from "lucide-react";
 
 const Sidebar = ({ collapsed }) => {
@@ -40,6 +43,7 @@ const Sidebar = ({ collapsed }) => {
     examples: false,
     pages: false,
     healthcare: false,
+    billing: false,
     extras: false,
   });
 
@@ -67,7 +71,7 @@ const Sidebar = ({ collapsed }) => {
           label: "Notificações",
           path: "/admin/notification-demo",
           icon: <Bell className="h-4 w-4" />,
-          badge: { text: "New", color: "bg-blue-500" },
+          badge: { text: "Novo", color: "bg-blue-500" },
         },
       ],
     },
@@ -109,6 +113,21 @@ const Sidebar = ({ collapsed }) => {
           icon: <UserPlus className="h-4 w-4" />,
         },
         {
+          label: "Contratos",
+          path: "/admin/contratos",
+          icon: <FileText className="h-4 w-4" />,
+        },
+        {
+          label: "Catálogo de Serviços",
+          path: "/admin/servicos",
+          icon: <Package className="h-4 w-4" />,
+        },
+        {
+          label: "Autorizações Médicas",
+          path: "/admin/autorizacoes",
+          icon: <Heart className="h-4 w-4" />,
+        },
+        {
           label: "Usuários",
           path: "/admin/usuarios",
           icon: <Users className="h-4 w-4" />,
@@ -122,6 +141,35 @@ const Sidebar = ({ collapsed }) => {
           label: "Menus",
           path: "/admin/menus",
           icon: <Settings className="h-4 w-4" />,
+        },
+      ],
+    },
+    {
+      key: "billing",
+      label: "Faturamento",
+      icon: <CreditCard className="h-5 w-5" />,
+      badge: { text: "B2B", color: "bg-indigo-500" },
+      submenu: [
+        {
+          label: "Dashboard",
+          path: "/admin/faturamento/dashboard",
+          icon: <BarChart3 className="h-4 w-4" />,
+        },
+        {
+          label: "Faturas",
+          path: "/admin/faturamento/faturas",
+          icon: <Receipt className="h-4 w-4" />,
+        },
+        {
+          label: "Faturamento B2B",
+          path: "/admin/faturamento/b2b",
+          icon: <DollarSign className="h-4 w-4" />,
+        },
+        {
+          label: "Planos de Assinatura",
+          path: "/admin/faturamento/planos",
+          icon: <Package className="h-4 w-4" />,
+          badge: { text: "Novo", color: "bg-green-500" },
         },
       ],
     },

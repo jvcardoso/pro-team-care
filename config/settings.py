@@ -211,6 +211,37 @@ class Settings(BaseSettings):
         return v.upper()
 
     # =================================
+    # CONFIGURAÇÕES PAGBANK
+    # =================================
+
+    # PagBank API Configuration
+    PAGBANK_TOKEN: str = Field(
+        default_factory=lambda: os.getenv("PAGBANK_TOKEN", "")
+    )
+    PAGBANK_WEBHOOK_SECRET: str = Field(
+        default_factory=lambda: os.getenv("PAGBANK_WEBHOOK_SECRET", "")
+    )
+    PAGBANK_ENVIRONMENT: str = Field(
+        default_factory=lambda: os.getenv("PAGBANK_ENVIRONMENT", "sandbox")
+    )
+
+    # Application URLs for PagBank integration
+    BASE_URL: str = Field(
+        default_factory=lambda: os.getenv("BASE_URL", "http://192.168.11.83:8000")
+    )
+    FRONTEND_URL: str = Field(
+        default_factory=lambda: os.getenv("FRONTEND_URL", "http://192.168.11.83:3000")
+    )
+
+    @validator("PAGBANK_ENVIRONMENT")
+    def validate_pagbank_environment(cls, v: str) -> str:
+        """Valida ambiente PagBank"""
+        valid_environments = ["sandbox", "production"]
+        if v.lower() not in valid_environments:
+            raise ValueError(f"PAGBANK_ENVIRONMENT deve ser um de: {valid_environments}")
+        return v.lower()
+
+    # =================================
     # CONFIGURAÇÕES DE CACHE (Redis)
     # =================================
 

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -6,14 +6,31 @@ import { AppErrorBoundary } from "./components/error";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AdminLayout from "./components/layout/AdminLayout";
 import LoginPage from "./pages/LoginPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ActivationPage from "./pages/ActivationPage";
+import ContractAcceptancePage from "./pages/ContractAcceptancePage";
+import CreateManagerPage from "./pages/CreateManagerPage";
 import DashboardPage from "./pages/DashboardPage";
 import PacientesPage from "./pages/PacientesPage";
 import ProfissionaisPage from "./pages/ProfissionaisPage";
 import ConsultasPage from "./pages/ConsultasPage";
 import EmpresasPage from "./pages/EmpresasPage";
+import CompaniesPage from "./pages/CompaniesPage";
 import EstablishmentsPage from "./pages/EstablishmentsPage";
 import ClientsPage from "./pages/ClientsPage";
+import ContractsPage from "./pages/ContractsPage";
+import ContractDashboard from "./components/views/ContractDashboard";
+import ContractLivesManager from "./components/views/ContractLivesManager";
+import ContractDetails from "./components/views/ContractDetails";
+import FlowbiteTableExamplePage from "./pages/FlowbiteTableExamplePage";
+import ReportsPage from "./pages/ReportsPage";
+import ServicesCatalogPage from "./pages/ServicesCatalogPage";
+import MedicalAuthorizationsPage from "./pages/MedicalAuthorizationsPage";
+import BillingDashboardPage from "./pages/BillingDashboardPage";
+import B2BBillingPage from "./pages/B2BBillingPage";
+import SubscriptionPlansPage from "./pages/SubscriptionPlansPage";
+import InvoicesPage from "./pages/InvoicesPage";
 import MenusPage from "./pages/MenusPage";
 import UsersPage from "./pages/UsersPage";
 import { RolesPage } from "./pages/RolesPage";
@@ -33,7 +50,11 @@ function App() {
             <Routes>
               {/* Public routes */}
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
               <Route path="/activate/:token" element={<ActivationPage />} />
+              <Route path="/contract-acceptance/:token" element={<ContractAcceptancePage />} />
+              <Route path="/create-manager/:token" element={<CreateManagerPage />} />
 
               {/* Redirect root to admin */}
               <Route path="/" element={<Navigate to="/admin" replace />} />
@@ -64,6 +85,59 @@ function App() {
                 />
                 <Route path="clientes" element={<ClientsPage />} />
                 <Route path="clientes/:id" element={<ClientsPage />} />
+                <Route path="contratos" element={<ContractsPage />} />
+                <Route
+                  path="contratos/dashboard"
+                  element={<ContractDashboard />}
+                />
+                <Route
+                  path="contratos/:id/editar"
+                  element={<ContractsPage />}
+                />
+                <Route
+                  path="contratos/visualizar/:id"
+                  element={<ContractDetails />}
+                />
+                <Route
+                  path="contratos/:id/configuracoes"
+                  element={<ContractsPage />}
+                />
+                <Route
+                  path="vidas"
+                  element={<ContractLivesManager />}
+                />
+                <Route
+                  path="contratos/:id/vidas"
+                  element={<ContractLivesManager />}
+                />
+                <Route path="contratos/:id" element={<ContractsPage />} />
+                <Route
+                  path="flowbite-table-exemplo"
+                  element={<FlowbiteTableExamplePage />}
+                />
+                <Route path="relatorios" element={<ReportsPage />} />
+                <Route path="servicos" element={<ServicesCatalogPage />} />
+                <Route
+                  path="autorizacoes"
+                  element={<MedicalAuthorizationsPage />}
+                />
+                <Route
+                  path="autorizacoes/:id"
+                  element={<MedicalAuthorizationsPage />}
+                />
+                <Route
+                  path="faturamento/dashboard"
+                  element={<BillingDashboardPage />}
+                />
+                <Route path="faturamento/faturas" element={<InvoicesPage />} />
+                <Route
+                  path="faturamento/b2b"
+                  element={<B2BBillingPage />}
+                />
+                <Route
+                  path="faturamento/planos"
+                  element={<SubscriptionPlansPage />}
+                />
                 <Route path="menus" element={<MenusPage />} />
                 <Route path="usuarios" element={<UsersPage />} />
                 <Route path="usuarios/:id" element={<UsersPage />} />

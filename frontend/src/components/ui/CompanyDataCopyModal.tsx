@@ -45,7 +45,7 @@ interface CompanyData {
 interface CompanyDataCopyModalProps {
   isOpen: boolean;
   company: CompanyData | null;
-  onConfirm: () => void;
+  onConfirm: (shouldCopy: boolean) => void;
   onCancel: () => void;
 }
 

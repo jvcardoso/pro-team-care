@@ -28,6 +28,7 @@ interface ClientBasicDataSectionProps {
   availableEstablishments: any[];
   loading: boolean;
   isEditing: boolean;
+  isEstablishmentPreselected: boolean;
   onUpdateClient: (field: string, value: any) => void;
   onUpdatePerson: (field: string, value: any) => void;
   onUpdateFormData: (updates: any) => void;
@@ -40,6 +41,7 @@ export const ClientBasicDataSection: React.FC<ClientBasicDataSectionProps> = ({
   availableEstablishments,
   loading,
   isEditing,
+  isEstablishmentPreselected,
   onUpdateClient,
   onUpdatePerson,
   onUpdateFormData,
@@ -122,25 +124,36 @@ export const ClientBasicDataSection: React.FC<ClientBasicDataSectionProps> = ({
                     : ""
                 }
                 onChange={() => {}} // Read-only, só pode ser alterado via busca
-                placeholder="Clique em Buscar para selecionar estabelecimento..."
+                placeholder={
+                  isEstablishmentPreselected
+                    ? "Estabelecimento selecionado automaticamente"
+                    : "Clique em Buscar para selecionar estabelecimento..."
+                }
                 className="flex-1"
                 readOnly
                 required={!!formData.establishment_id}
-                disabled={loading}
+                disabled={loading || isEstablishmentPreselected}
               />
-              <Button
-                type="button"
-                variant="secondary"
-                outline
-                onClick={onEstablishmentSearch}
-                icon={<Search className="h-4 w-4" />}
-                className="shrink-0"
-                title="Buscar estabelecimento"
-                disabled={loading}
-              >
-                <span className="hidden sm:inline">Buscar</span>
-              </Button>
+              {!isEstablishmentPreselected && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  outline
+                  onClick={onEstablishmentSearch}
+                  icon={<Search className="h-4 w-4" />}
+                  className="shrink-0"
+                  title="Buscar estabelecimento"
+                  disabled={loading}
+                >
+                  <span className="hidden sm:inline">Buscar</span>
+                </Button>
+              )}
             </div>
+            {isEstablishmentPreselected && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Estabelecimento selecionado automaticamente. O campo não pode ser alterado.
+              </p>
+            )}
           </div>
 
           <div>
@@ -157,7 +170,7 @@ export const ClientBasicDataSection: React.FC<ClientBasicDataSectionProps> = ({
                       e.target.value.toUpperCase()
                     )
                   }
-                  placeholder="Ex: CHSC001, CCMA002"
+                  placeholder="Ex: CLI-057-001, CLI-012-002"
                   required
                   disabled={loading}
                   icon={<CreditCard className="h-4 w-4" />}
@@ -185,16 +198,11 @@ export const ClientBasicDataSection: React.FC<ClientBasicDataSectionProps> = ({
             </div>
             {selectedEstablishment && (
               <p className="text-xs text-muted-foreground mt-1">
-                💡 Formato: C + iniciais do estabelecimento + sequencial (Ex: C
-                {selectedEstablishment.name
-                  ? selectedEstablishment.name
-                      .split(" ")
-                      .slice(0, 3)
-                      .map((w) => w[0])
-                      .join("")
-                      .toUpperCase()
-                  : "EST"}
-                001)
+                💡 Formato: CLI-{selectedEstablishment.code
+                  ? selectedEstablishment.code.match(/EST-(\d{3})-\d{3}/)?.[1] || "000"
+                  : "000"}-XXX (Ex: CLI-{selectedEstablishment.code
+                  ? selectedEstablishment.code.match(/EST-(\d{3})-\d{3}/)?.[1] || "000"
+                  : "000"}-001)
               </p>
             )}
           </div>
@@ -281,7 +289,8 @@ export const ClientBasicDataSection: React.FC<ClientBasicDataSectionProps> = ({
                 placeholder="Digite CPF (000.000.000-00) ou CNPJ (00.000.000/0000-00)"
                 required
                 icon={<CreditCard className="h-4 w-4" />}
-                disabled={loading}
+                disabled={loading || isEditing}
+                readOnly={isEditing}
                 className={`${
                   formData.person.tax_id &&
                   !detectPersonTypeFromTaxId(formData.person.tax_id).isValid &&
@@ -291,10 +300,15 @@ export const ClientBasicDataSection: React.FC<ClientBasicDataSectionProps> = ({
                       detectPersonTypeFromTaxId(formData.person.tax_id).isValid
                     ? "border-green-300 focus:border-green-500"
                     : ""
-                }`}
+                } ${isEditing ? "bg-gray-50 cursor-not-allowed" : ""}`}
               />
               {formData.person.tax_id && (
                 <div className="mt-1">
+                  {isEditing && (
+                    <p className="text-xs text-muted-foreground mb-1">
+                      🔒 CPF/CNPJ não pode ser alterado após cadastro por questões de segurança
+                    </p>
+                  )}
                   {(() => {
                     const detection = detectPersonTypeFromTaxId(
                       formData.person.tax_id

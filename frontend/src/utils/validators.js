@@ -24,7 +24,7 @@ export const validateCPF = (cpf) => {
     sum += parseInt(numbers[i]) * (10 - i);
   }
   let remainder = 11 - (sum % 11);
-  let firstDigit = remainder >= 10 ? 0 : remainder;
+  const firstDigit = remainder >= 10 ? 0 : remainder;
 
   if (parseInt(numbers[9]) !== firstDigit) return false;
 
@@ -34,7 +34,7 @@ export const validateCPF = (cpf) => {
     sum += parseInt(numbers[i]) * (11 - i);
   }
   remainder = 11 - (sum % 11);
-  let secondDigit = remainder >= 10 ? 0 : remainder;
+  const secondDigit = remainder >= 10 ? 0 : remainder;
 
   return parseInt(numbers[10]) === secondDigit;
 };
@@ -55,7 +55,7 @@ export const validateCNPJ = (cnpj) => {
     sum += parseInt(numbers[i]) * weights1[i];
   }
   let remainder = sum % 11;
-  let firstDigit = remainder < 2 ? 0 : 11 - remainder;
+  const firstDigit = remainder < 2 ? 0 : 11 - remainder;
 
   if (parseInt(numbers[12]) !== firstDigit) return false;
 
@@ -66,7 +66,7 @@ export const validateCNPJ = (cnpj) => {
     sum += parseInt(numbers[i]) * weights2[i];
   }
   remainder = sum % 11;
-  let secondDigit = remainder < 2 ? 0 : 11 - remainder;
+  const secondDigit = remainder < 2 ? 0 : 11 - remainder;
 
   return parseInt(numbers[13]) === secondDigit;
 };

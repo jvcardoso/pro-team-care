@@ -3,6 +3,7 @@ import { establishmentsService, companiesService } from "../services/api";
 import { validateEmail } from "../utils/validators";
 import { notify } from "../utils/notifications";
 import addressEnrichmentService from "../services/addressEnrichmentService";
+import { suggestEstablishmentCode } from "../utils/establishmentCodeGenerator";
 import {
   Phone,
   Email,
@@ -71,12 +72,14 @@ interface UseEstablishmentFormProps {
   establishmentId?: number;
   companyId?: number;
   onSave?: () => void;
+  onNavigateToClients?: (establishmentId: number, establishmentCode: string) => void;
 }
 
 export const useEstablishmentForm = ({
   establishmentId,
   companyId,
   onSave,
+  onNavigateToClients,
 }: UseEstablishmentFormProps) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -258,6 +261,24 @@ export const useEstablishmentForm = ({
           `✅ Empresa ${companyId} carregada e pré-selecionada:`,
           company.name || company.people?.name || `Empresa ${company.id}`
         );
+
+        // Sugerir código automaticamente se o campo estiver vazio
+        if (!formData.establishment.code || formData.establishment.code.trim() === "") {
+          try {
+            const response = await establishmentsService.getEstablishmentsByCompany(companyId);
+            const existingEstablishments = response?.establishments || response || [];
+            const suggestedCode = suggestEstablishmentCode(company, existingEstablishments);
+
+            setFormData((prev) => ({
+              ...prev,
+              establishment: { ...prev.establishment, code: suggestedCode }
+            }));
+
+            console.log(`✨ Código sugerido automaticamente: ${suggestedCode}`);
+          } catch (error) {
+            console.warn("⚠️ Erro ao sugerir código automaticamente:", error);
+          }
+        }
       } catch (err) {
         console.error(`❌ Erro ao carregar empresa ${companyId}:`, err);
         // Não bloquear o formulário se não conseguir carregar a empresa
@@ -267,13 +288,17 @@ export const useEstablishmentForm = ({
   );
 
   useEffect(() => {
-    loadCompanies();
-    if (establishmentId) {
-      loadEstablishment();
-    } else if (companyId && !establishmentId) {
-      // Se é criação E tem companyId, carregar empresa específica
-      loadSelectedCompany(companyId);
-    }
+    const initializeForm = async () => {
+      await loadCompanies();
+      if (establishmentId) {
+        await loadEstablishment();
+      } else if (companyId && !establishmentId) {
+        // Se é criação E tem companyId, carregar empresa específica E aguardar
+        await loadSelectedCompany(companyId);
+      }
+    };
+
+    initializeForm();
   }, [
     establishmentId,
     companyId,
@@ -632,15 +657,38 @@ export const useEstablishmentForm = ({
       );
 
       // Salvar dados
+      let savedEstablishment;
       if (isEditing) {
-        await establishmentsService.updateEstablishment(
+        savedEstablishment = await establishmentsService.updateEstablishment(
           establishmentId!,
           cleanedData
         );
         notify.success("Estabelecimento atualizado com sucesso!");
       } else {
-        await establishmentsService.createEstablishment(cleanedData);
+        savedEstablishment = await establishmentsService.createEstablishment(cleanedData);
         notify.success("Estabelecimento criado com sucesso!");
+
+        // Pergunta se deseja adicionar clientes apenas para novo estabelecimento
+        if (onNavigateToClients && savedEstablishment) {
+          const establishmentId = savedEstablishment.id || savedEstablishment.data?.id;
+          const establishmentCode = cleanedData.code;
+
+          notify.confirm(
+            "Adicionar Clientes",
+            `Estabelecimento "${cleanedData.person.name}" criado com sucesso!\n\nDeseja adicionar clientes a este estabelecimento agora?`,
+            () => {
+              // Confirmar - navegar para clientes
+              onNavigateToClients(establishmentId, establishmentCode);
+            },
+            () => {
+              // Cancelar - continuar fluxo normal
+              if (onSave) {
+                onSave();
+              }
+            }
+          );
+          return; // Não chamar onSave aqui, será chamado no callback
+        }
       }
 
       // Enriquecer endereços automaticamente após salvamento bem-sucedido

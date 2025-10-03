@@ -52,8 +52,8 @@ class CompanyRepositoryInterface(ABC):
         """Atualizar empresa existente"""
 
     @abstractmethod
-    async def delete(self, company_id: int) -> None:
-        """Deletar empresa (soft delete)"""
+    async def delete_company(self, company_id: int) -> bool:
+        """Deletar empresa (soft delete) - retorna True se sucesso"""
 
     @abstractmethod
     async def search(self, filters: Dict[str, Any]) -> List[CompanyEntity]:

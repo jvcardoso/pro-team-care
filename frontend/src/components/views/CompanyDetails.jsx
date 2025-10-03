@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { companiesService, establishmentsService } from "../../services/api";
 import Card from "../ui/Card";
 import Button from "../ui/Button";
+import EntityDetailsLayout from "./EntityDetailsLayout";
 import CompanyBasicInfo from "../entities/CompanyBasicInfo";
 import ReceitaFederalInfo from "../metadata/ReceitaFederalInfo";
+import {
+  PhoneDisplayCard,
+  EmailDisplayCard,
+  AddressDisplayCard,
+} from "../contacts";
 import {
   getStatusBadge,
   getStatusLabel,
@@ -15,23 +21,26 @@ import {
   formatZipCode,
 } from "../../utils/statusUtils";
 import { notify } from "../../utils/notifications.jsx";
+import CompanyBillingCard from "../billing/CompanyBillingCard";
+import SubscriptionManagementModal from "../billing/SubscriptionManagementModal";
+import CreateInvoiceModal from "../billing/CreateInvoiceModal";
 import {
   ArrowLeft,
   Edit,
   Trash2,
-  Phone,
-  Mail,
-  MapPin,
   Building,
-  Calendar,
+  Users,
   User,
-  Globe,
-  MessageCircle,
-  Send,
-  Navigation,
-  ExternalLink,
+  Briefcase,
+  CreditCard,
   Plus,
 } from "lucide-react";
+import BillingInfoCard from "../billing/BillingInfoCard";
+import { clientsService } from "../../services/clientsService";
+import DataTableTemplate from "../shared/DataTable/DataTableTemplate";
+import { useDataTable } from "../../hooks/useDataTable";
+import { createCompanyClientsConfig } from "../../config/tables/companyClients.config";
+import CompanyActivationTab from "../companies/CompanyActivationTab";
 
 const CompanyDetails = ({
   companyId,
@@ -41,35 +50,57 @@ const CompanyDetails = ({
   initialTab = "informacoes",
 }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [company, setCompany] = useState(null);
   const [establishments, setEstablishments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState(initialTab);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [selectedSubscription, setSelectedSubscription] = useState(null);
+  const [billingDataKey, setBillingDataKey] = useState(0);
+  const [companyStats, setCompanyStats] = useState({
+    establishments_count: 0,
+    clients_count: 0,
+    professionals_count: 0,
+  });
+  const [clients, setClients] = useState([]);
+  const [loadingClients, setLoadingClients] = useState(false);
 
-  // Verificar se há parâmetro de aba na URL
+  // Hook para tabela de clientes
+  const clientsDataTableProps = useDataTable({
+    config: createCompanyClientsConfig({
+      onView: (client) => navigate(`/admin/clientes/${client.id}?tab=informacoes`),
+    }),
+    initialData: clients,
+  });
+
+  // Verificar parâmetro de aba na URL
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const tabParam = urlParams.get("tab");
+    const tabParam = searchParams.get("tab");
     if (
       tabParam &&
       [
         "informacoes",
+        "ativacao",
         "estabelecimentos",
         "clientes",
         "profissionais",
         "pacientes",
         "usuarios",
+        "faturamento",
         "lgpd",
       ].includes(tabParam)
     ) {
       setActiveTab(tabParam);
     }
-  }, [initialTab]);
+  }, [searchParams]);
 
   useEffect(() => {
     if (companyId) {
       loadCompany();
+      loadCompanyStats();
     }
   }, [companyId]);
 
@@ -79,22 +110,43 @@ const CompanyDetails = ({
     }
   }, [activeTab, companyId]);
 
+  useEffect(() => {
+    if (activeTab === "clientes" && companyId) {
+      loadClients();
+    }
+  }, [activeTab, companyId]);
+
   const loadCompany = async () => {
     try {
       setLoading(true);
       const data = await companiesService.getCompany(companyId);
 
-      // Debug: Verificar estrutura dos dados (sem exposição de PII)
       if (process.env.NODE_ENV === "development") {
         console.log("CompanyDetails - Estrutura de metadados verificada");
       }
 
       setCompany(data);
+
+      // Salvar nome da empresa no localStorage para breadcrumb
+      if (data?.people?.name) {
+        localStorage.setItem(`company_name_${companyId}`, data.people.name);
+      }
+
+      setError(null);
     } catch (err) {
       setError("Erro ao carregar empresa");
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCompanyStats = async () => {
+    try {
+      const stats = await companiesService.getCompanyStats(companyId);
+      setCompanyStats(stats);
+    } catch (err) {
+      console.error("Erro ao carregar estatísticas:", err);
     }
   };
 
@@ -111,6 +163,27 @@ const CompanyDetails = ({
       console.error("Erro ao carregar estabelecimentos:", err);
       setEstablishments([]);
     }
+  };
+
+  const loadClients = async () => {
+    try {
+      setLoadingClients(true);
+      const response = await clientsService.getAll({
+        page: 1,
+        size: 100,
+      });
+      setClients(response?.clients || []);
+    } catch (err) {
+      console.error("Erro ao carregar clientes:", err);
+      setClients([]);
+    } finally {
+      setLoadingClients(false);
+    }
+  };
+
+  const handleTabChange = (newTab) => {
+    setActiveTab(newTab);
+    navigate(`/admin/empresas/${companyId}?tab=${newTab}`, { replace: true });
   };
 
   const handleDelete = async () => {
@@ -134,382 +207,113 @@ const CompanyDetails = ({
     );
   };
 
-  const openWhatsApp = (phone) => {
-    const number = phone.number.replace(/\D/g, "");
-    const url = `https://wa.me/${phone.country_code}${number}`;
-    window.open(url, "_blank");
-  };
+  // Definição de tabs
+  const tabs = [
+    { key: "informacoes", label: "Informações", shortLabel: "Info" },
+    { key: "ativacao", label: "Ativação", shortLabel: "Ativa\u00e7\u00e3o" },
+    { key: "estabelecimentos", label: "Estabelecimentos", shortLabel: "Estab." },
+    { key: "clientes", label: "Clientes", shortLabel: "Client." },
+    { key: "profissionais", label: "Profissionais", shortLabel: "Profis." },
+    { key: "pacientes", label: "Pacientes", shortLabel: "Pacient." },
+    { key: "usuarios", label: "Usuários", shortLabel: "Users" },
+    { key: "faturamento", label: "Faturamento", shortLabel: "Cobrança" },
+    { key: "lgpd", label: "LGPD", shortLabel: "LGPD" },
+  ];
 
-  const openEmail = (email) => {
-    const url = `mailto:${email.email_address}`;
-    window.open(url, "_blank");
-  };
+  // Action buttons
+  const actionButtons = [
+    {
+      label: "Editar",
+      onClick: () => onEdit?.(companyId),
+      variant: "primary",
+      icon: <Edit className="h-4 w-4" />,
+    },
+    {
+      label: "Excluir",
+      onClick: handleDelete,
+      variant: "danger",
+      outline: true,
+      icon: <Trash2 className="h-4 w-4" />,
+    },
+  ];
 
-  const openGoogleMaps = (address) => {
-    const query = encodeURIComponent(
-      `${address.street}, ${address.number}, ${address.city}, ${address.state}, ${address.zip_code}, ${address.country}`
-    );
-    const url = `https://www.google.com/maps/search/?api=1&query=${query}`;
-    window.open(url, "_blank");
-  };
+  // Métricas para cards horizontais
+  const metrics = company
+    ? [
+        {
+          icon: <Building className="h-6 w-6" />,
+          label: "Estabelecimentos",
+          value: companyStats.establishments_count,
+          color: "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400",
+          onClick: () => handleTabChange("estabelecimentos"),
+        },
+        {
+          icon: <Users className="h-6 w-6" />,
+          label: "Clientes",
+          value: companyStats.clients_count,
+          color: "bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400",
+          onClick: () => handleTabChange("clientes"),
+        },
+        {
+          icon: <Briefcase className="h-6 w-6" />,
+          label: "Profissionais",
+          value: companyStats.professionals_count,
+          color: "bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400",
+          onClick: () => handleTabChange("profissionais"),
+        },
+      ]
+    : [];
 
-  const openWaze = (address) => {
-    const query = encodeURIComponent(
-      `${address.street}, ${address.number}, ${address.city}, ${address.state}`
-    );
-    const url = `https://waze.com/ul?q=${query}`;
-    window.open(url, "_blank");
-  };
-
-  if (loading) {
-    return (
-      <div className="text-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-        <p className="mt-4 text-muted-foreground">Carregando empresa...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-red-600 mb-4">{error}</p>
-        <Button onClick={loadCompany}>Tentar Novamente</Button>
-      </div>
-    );
-  }
-
-  if (!company) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground">Empresa não encontrada</p>
-        <Button
-          onClick={onBack}
-          className="mt-4"
-          icon={<ArrowLeft className="h-4 w-4" />}
-        >
-          Voltar
-        </Button>
-      </div>
-    );
-  }
+  // Status badge
+  const statusBadge = company && (
+    <span className={getStatusBadge(company.people.status)}>
+      {getStatusLabel(company.people.status)}
+    </span>
+  );
 
   return (
-    <div className="space-y-4 sm:space-y-6 px-4 sm:px-0">
-      {/* Header */}
-      <div className="space-y-4">
-        {/* Back Button */}
-        <div>
-          <Button
-            variant="secondary"
-            outline
-            onClick={onBack}
-            icon={<ArrowLeft className="h-4 w-4" />}
-          >
-            Voltar
-          </Button>
-        </div>
-
-        {/* Company Info and Actions */}
-        <div className="flex flex-col gap-4">
-          <div className="min-w-0">
-            <h1 className="text-lg sm:text-2xl font-bold text-foreground break-words">
-              {company.people.name}
-            </h1>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-2">
-              {company.people.trade_name &&
-                company.people.trade_name !== company.people.name && (
-                  <p className="text-sm sm:text-base text-muted-foreground break-words">
-                    {company.people.trade_name}
-                  </p>
-                )}
-              <span className={getStatusBadge(company.people.status)}>
-                {getStatusLabel(company.people.status)}
-              </span>
-            </div>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-            <Button
-              variant="primary"
-              onClick={() => onEdit?.(companyId)}
-              icon={<Edit className="h-4 w-4" />}
-              className="w-full sm:w-auto"
-            >
-              Editar
-            </Button>
-            <Button
-              variant="danger"
-              outline
-              onClick={handleDelete}
-              icon={<Trash2 className="h-4 w-4" />}
-              className="w-full sm:w-auto"
-            >
-              Excluir
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="border-b border-border">
-        <div className="overflow-x-auto scrollbar-hide">
-          <div className="flex space-x-1 sm:space-x-4 lg:space-x-8 min-w-max">
-            <button
-              onClick={() => setActiveTab("informacoes")}
-              className={`py-3 sm:py-4 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
-                activeTab === "informacoes"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
-              }`}
-            >
-              <span className="hidden sm:inline">Informações</span>
-              <span className="sm:hidden">Info</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("estabelecimentos")}
-              className={`py-3 sm:py-4 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
-                activeTab === "estabelecimentos"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
-              }`}
-            >
-              <span className="hidden sm:inline">Estabelecimentos</span>
-              <span className="sm:hidden">Estab.</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("clientes")}
-              className={`py-3 sm:py-4 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
-                activeTab === "clientes"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
-              }`}
-            >
-              <span className="hidden sm:inline">Clientes</span>
-              <span className="sm:hidden">Client.</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("profissionais")}
-              className={`py-3 sm:py-4 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
-                activeTab === "profissionais"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
-              }`}
-            >
-              <span className="hidden sm:inline">Profissionais</span>
-              <span className="sm:hidden">Profis.</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("pacientes")}
-              className={`py-3 sm:py-4 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
-                activeTab === "pacientes"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
-              }`}
-            >
-              <span className="hidden sm:inline">Pacientes</span>
-              <span className="sm:hidden">Pacient.</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("usuarios")}
-              className={`py-3 sm:py-4 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
-                activeTab === "usuarios"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
-              }`}
-            >
-              <span className="hidden sm:inline">Usuários</span>
-              <span className="sm:hidden">Users</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("lgpd")}
-              className={`py-3 sm:py-4 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
-                activeTab === "lgpd"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
-              }`}
-            >
-              LGPD
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Tab Content */}
-      {activeTab === "informacoes" && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Informações Básicas */}
-          <div className="lg:col-span-2 space-y-6">
+    <>
+      <EntityDetailsLayout
+        title={company?.people?.name || "Carregando..."}
+        subtitle={
+          company?.people?.trade_name &&
+          company.people.trade_name !== company.people.name
+            ? company.people.trade_name
+            : undefined
+        }
+        icon={<Building className="h-6 w-6" />}
+        statusBadge={statusBadge}
+        backButton={{ onClick: () => navigate("/admin/empresas"), label: "Voltar" }}
+        actionButtons={actionButtons}
+        tabs={tabs}
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        metrics={metrics}
+        loading={loading}
+        error={error}
+        onRetry={loadCompany}
+      >
+        {/* Tab: Informações */}
+        {activeTab === "informacoes" && company && (
+          <div className="space-y-6">
             <CompanyBasicInfo company={company} />
 
-            {/* Telefones */}
-            {company.phones && company.phones.length > 0 && (
-              <Card title="Telefones">
-                <div className="space-y-4">
-                  {company.phones.map((phone, index) => (
-                    <div
-                      key={phone.id || index}
-                      className="p-3 bg-muted/30 rounded-lg"
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                          <Phone className="h-4 w-4 text-blue-600 dark:text-blue-300" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-medium text-foreground">
-                            {formatPhone(phone)}
-                          </p>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <span>{getPhoneTypeLabel(phone.type)}</span>
-                            {phone.is_principal && (
-                              <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded">
-                                Principal
-                              </span>
-                            )}
-                            {phone.is_whatsapp && (
-                              <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded">
-                                WhatsApp
-                              </span>
-                            )}
-                          </div>
+            <PhoneDisplayCard
+              phones={company.phones || []}
+              formatPhone={formatPhone}
+              getPhoneTypeLabel={getPhoneTypeLabel}
+            />
 
-                          {/* Padrão visual unificado para todos os dispositivos */}
-                          {phone.is_whatsapp && (
-                            <div className="mt-3">
-                              <button
-                                onClick={() => openWhatsApp(phone)}
-                                className="flex items-center justify-center gap-2 w-full p-3 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-700 dark:text-green-300 rounded-lg transition-colors"
-                              >
-                                <MessageCircle className="h-5 w-5" />
-                                <span className="text-sm font-medium">
-                                  Abrir no WhatsApp
-                                </span>
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            )}
+            <EmailDisplayCard
+              emails={company.emails || []}
+              getEmailTypeLabel={getEmailTypeLabel}
+            />
 
-            {/* E-mails */}
-            {company.emails && company.emails.length > 0 && (
-              <Card title="E-mails">
-                <div className="space-y-4">
-                  {company.emails.map((email, index) => (
-                    <div
-                      key={email.id || index}
-                      className="p-3 bg-muted/30 rounded-lg"
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                          <Mail className="h-4 w-4 text-green-600 dark:text-green-300" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-medium text-foreground break-all">
-                            {email.email_address}
-                          </p>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <span>{getEmailTypeLabel(email.type)}</span>
-                            {email.is_principal && (
-                              <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded">
-                                Principal
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Padrão visual unificado para todos os dispositivos */}
-                          <div className="mt-3">
-                            <button
-                              onClick={() => openEmail(email)}
-                              className="flex items-center justify-center gap-2 w-full p-3 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg transition-colors"
-                            >
-                              <Send className="h-5 w-5" />
-                              <span className="text-sm font-medium">
-                                Enviar Email
-                              </span>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            )}
-
-            {/* Endereços */}
-            {company.addresses && company.addresses.length > 0 && (
-              <Card title="Endereços">
-                <div className="space-y-4">
-                  {company.addresses.map((address, index) => (
-                    <div
-                      key={address.id || index}
-                      className="p-4 bg-muted/30 rounded-lg"
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
-                          <MapPin className="h-4 w-4 text-orange-600 dark:text-orange-300" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="font-medium text-foreground">
-                              {getAddressTypeLabel(address.type)}
-                            </span>
-                            {address.is_principal && (
-                              <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded">
-                                Principal
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-foreground">
-                            {address.street}
-                            {address.number && `, ${address.number}`}
-                            {address.details && ` - ${address.details}`}
-                          </p>
-                          <p className="text-foreground">
-                            {address.neighborhood}, {address.city} -{" "}
-                            {address.state}
-                          </p>
-                          <p className="text-muted-foreground">
-                            CEP: {formatZipCode(address.zip_code)}
-                            {address.country &&
-                              address.country !== "Brasil" &&
-                              ` - ${address.country}`}
-                          </p>
-
-                          {/* Padrão visual unificado para todos os dispositivos */}
-                          <div className="mt-3">
-                            <div className="grid grid-cols-2 gap-2">
-                              <button
-                                onClick={() => openGoogleMaps(address)}
-                                className="flex items-center justify-center gap-2 p-3 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 rounded-lg transition-colors"
-                              >
-                                <Navigation className="h-5 w-5" />
-                                <span className="text-sm font-medium">
-                                  Maps
-                                </span>
-                              </button>
-                              <button
-                                onClick={() => openWaze(address)}
-                                className="flex items-center justify-center gap-2 p-3 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded-lg transition-colors"
-                              >
-                                <ExternalLink className="h-5 w-5" />
-                                <span className="text-sm font-medium">
-                                  Waze
-                                </span>
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            )}
+            <AddressDisplayCard
+              addresses={company.addresses || []}
+              getAddressTypeLabel={getAddressTypeLabel}
+              formatZipCode={formatZipCode}
+            />
 
             <ReceitaFederalInfo
               metadata={
@@ -519,43 +323,11 @@ const CompanyDetails = ({
                 {}
               }
             />
-          </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Resumo */}
-            <Card title="Resumo">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">
-                    Estabelecimentos
-                  </span>
-                  <span className="font-medium text-foreground">
-                    {establishments.length}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Clientes</span>
-                  <span className="font-medium text-muted-foreground">
-                    Em breve
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Profissionais</span>
-                  <span className="font-medium text-muted-foreground">
-                    Em breve
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Pacientes</span>
-                  <span className="font-medium text-muted-foreground">
-                    Em breve
-                  </span>
-                </div>
-              </div>
-            </Card>
+            {/* Card de Faturamento */}
+            <BillingInfoCard companyId={company.id} />
 
-            {/* Metadados */}
+            {/* Informações do Sistema */}
             <Card title="Informações do Sistema">
               <div className="space-y-4 text-sm">
                 <div>
@@ -580,208 +352,235 @@ const CompanyDetails = ({
                     {new Date(company.updated_at).toLocaleString("pt-BR")}
                   </p>
                 </div>
-                {company.display_order !== null && (
-                  <div>
-                    <label className="block text-muted-foreground mb-1">
-                      Ordem de Exibição
-                    </label>
-                    <p className="text-foreground">{company.display_order}</p>
-                  </div>
-                )}
               </div>
             </Card>
-
-            {/* Configurações */}
-            {company.settings && Object.keys(company.settings).length > 0 && (
-              <Card title="Configurações">
-                <div className="space-y-2 text-sm">
-                  {Object.entries(company.settings).map(([key, value]) => (
-                    <div
-                      key={key}
-                      className="flex items-center justify-between"
-                    >
-                      <span className="text-muted-foreground capitalize">
-                        {key.replace("_", " ")}
-                      </span>
-                      <span className="text-foreground">
-                        {typeof value === "boolean"
-                          ? value
-                            ? "Sim"
-                            : "Não"
-                          : String(value)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            )}
           </div>
-        </div>
-      )}
+        )}
 
-      {activeTab === "estabelecimentos" && (
-        <div className="space-y-6">
-          {/* Header com botão Novo Estabelecimento */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h3 className="text-lg font-medium text-foreground">
-                Estabelecimentos da Empresa
-              </h3>
-              <p className="text-muted-foreground">
-                Gerencie os estabelecimentos vinculados a esta empresa
-              </p>
-            </div>
-            <Button
-              onClick={() => {
-                navigate(
-                  `/admin/estabelecimentos?companyId=${companyId}&action=create`
-                );
-              }}
-              icon={<Plus className="h-4 w-4" />}
-              className="w-full sm:w-auto whitespace-nowrap"
-            >
-              <span className="hidden sm:inline">Novo Estabelecimento</span>
-              <span className="sm:hidden">+ Estabelecimento</span>
-            </Button>
-          </div>
+        {/* Tab: Ativação */}
+        {activeTab === "ativacao" && company && (
+          <CompanyActivationTab
+            companyId={company.id}
+            companyName={company.people?.name || `Empresa ${company.id}`}
+          />
+        )}
 
-          {/* Lista de Estabelecimentos */}
-          {establishments.length === 0 ? (
-            <div className="text-center py-12">
-              <Building className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">
-                Nenhum estabelecimento encontrado
-              </h3>
-              <p className="text-muted-foreground mb-6">
-                Esta empresa ainda não possui estabelecimentos cadastrados
-              </p>
+        {/* Tab: Estabelecimentos */}
+        {activeTab === "estabelecimentos" && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-medium text-foreground">
+                  Estabelecimentos da Empresa
+                </h3>
+                <p className="text-muted-foreground">
+                  Gerencie os estabelecimentos vinculados a esta empresa
+                </p>
+              </div>
               <Button
-                onClick={() => {
-                  navigate(
-                    `/admin/estabelecimentos?companyId=${companyId}&action=create`
-                  );
-                }}
+                onClick={() =>
+                  navigate(`/admin/estabelecimentos?companyId=${companyId}&action=create`)
+                }
                 icon={<Plus className="h-4 w-4" />}
+                className="w-full sm:w-auto whitespace-nowrap"
               >
-                Criar Primeiro Estabelecimento
+                <span className="hidden sm:inline">Novo Estabelecimento</span>
+                <span className="sm:hidden">+ Estabelecimento</span>
               </Button>
             </div>
-          ) : (
-            <div className="grid gap-4">
-              {establishments.map((establishment) => (
-                <Card key={establishment.id} className="p-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3">
-                        <Building className="h-5 w-5 text-primary flex-shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <h4 className="font-medium text-foreground break-words">
-                            {establishment.person?.name || establishment.code}
-                          </h4>
-                          <p className="text-sm text-muted-foreground">
-                            Código: {establishment.code}
-                          </p>
-                          {establishment.person?.tax_id && (
-                            <p className="text-sm text-muted-foreground break-all">
-                              CNPJ: {establishment.person.tax_id}
+
+            {establishments.length === 0 ? (
+              <div className="text-center py-12">
+                <Building className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">
+                  Nenhum estabelecimento encontrado
+                </h3>
+                <p className="text-muted-foreground mb-6">
+                  Esta empresa ainda não possui estabelecimentos cadastrados
+                </p>
+                <Button
+                  onClick={() =>
+                    navigate(`/admin/estabelecimentos?companyId=${companyId}&action=create`)
+                  }
+                  icon={<Plus className="h-4 w-4" />}
+                >
+                  Criar Primeiro Estabelecimento
+                </Button>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {establishments.map((establishment) => (
+                  <Card key={establishment.id} className="p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3">
+                          <Building className="h-5 w-5 text-primary flex-shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <h4 className="font-medium text-foreground break-words">
+                              {establishment.person?.name || establishment.code}
+                            </h4>
+                            <p className="text-sm text-muted-foreground">
+                              Código: {establishment.code}
                             </p>
-                          )}
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-2">
-                      <div className="flex flex-wrap gap-2">
-                        <span
-                          className={`px-2 py-1 text-xs rounded whitespace-nowrap ${
-                            establishment.is_active
-                              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-                              : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
-                          }`}
-                        >
-                          {establishment.is_active ? "Ativo" : "Inativo"}
-                        </span>
-                        {establishment.is_principal && (
-                          <span className="px-2 py-1 text-xs bg-primary/10 text-primary rounded whitespace-nowrap">
-                            Principal
-                          </span>
-                        )}
                       </div>
                       <Button
                         size="sm"
                         variant="secondary"
                         outline
-                        onClick={() => {
-                          navigate(
-                            `/admin/estabelecimentos/${establishment.id}?tab=informacoes`
-                          );
-                        }}
-                        className="w-full sm:w-auto whitespace-nowrap"
+                        onClick={() =>
+                          navigate(`/admin/estabelecimentos/${establishment.id}?tab=informacoes`)
+                        }
                       >
                         Ver Detalhes
                       </Button>
                     </div>
-                  </div>
-                </Card>
-              ))}
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tab: Clientes */}
+        {activeTab === "clientes" && (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-medium text-foreground">
+                Clientes da Empresa
+              </h3>
+              <p className="text-muted-foreground">
+                Lista de todos os clientes da empresa em todos os estabelecimentos
+              </p>
             </div>
-          )}
-        </div>
-      )}
 
-      {activeTab === "clientes" && (
-        <div className="text-center py-12">
-          <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">Clientes</h3>
-          <p className="text-muted-foreground">
-            Em breve: Gerencie os clientes desta empresa
-          </p>
-        </div>
-      )}
+            {loadingClients ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <span className="ml-3 text-muted-foreground">Carregando clientes...</span>
+              </div>
+            ) : (
+              <DataTableTemplate
+                config={createCompanyClientsConfig({
+                  onView: (client) => navigate(`/admin/clientes/${client.id}?tab=informacoes`),
+                })}
+                tableData={clientsDataTableProps}
+              />
+            )}
+          </div>
+        )}
 
-      {activeTab === "profissionais" && (
-        <div className="text-center py-12">
-          <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">
-            Profissionais
-          </h3>
-          <p className="text-muted-foreground">
-            Em breve: Gerencie os profissionais desta empresa
-          </p>
-        </div>
-      )}
+        {/* Tab: Profissionais */}
+        {activeTab === "profissionais" && (
+          <div className="text-center py-12">
+            <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">
+              Profissionais
+            </h3>
+            <p className="text-muted-foreground">
+              Em breve: Gerencie os profissionais desta empresa
+            </p>
+          </div>
+        )}
 
-      {activeTab === "pacientes" && (
-        <div className="text-center py-12">
-          <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">
-            Pacientes
-          </h3>
-          <p className="text-muted-foreground">
-            Em breve: Gerencie os pacientes desta empresa
-          </p>
-        </div>
-      )}
+        {/* Tab: Pacientes */}
+        {activeTab === "pacientes" && (
+          <div className="text-center py-12">
+            <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">
+              Pacientes
+            </h3>
+            <p className="text-muted-foreground">
+              Em breve: Gerencie os pacientes desta empresa
+            </p>
+          </div>
+        )}
 
-      {activeTab === "usuarios" && (
-        <div className="text-center py-12">
-          <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">Usuários</h3>
-          <p className="text-muted-foreground">
-            Em breve: Gerencie os usuários desta empresa
-          </p>
-        </div>
-      )}
+        {/* Tab: Usuários */}
+        {activeTab === "usuarios" && (
+          <div className="text-center py-12">
+            <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Usuários</h3>
+            <p className="text-muted-foreground">
+              Em breve: Gerencie os usuários desta empresa
+            </p>
+          </div>
+        )}
 
-      {activeTab === "lgpd" && (
-        <div className="text-center py-12">
-          <Globe className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">LGPD</h3>
-          <p className="text-muted-foreground">
-            Em breve: Gerencie as configurações de privacidade e LGPD
-          </p>
-        </div>
+        {/* Tab: Faturamento */}
+        {activeTab === "faturamento" && company && (
+          <div className="space-y-6">
+            <CompanyBillingCard
+              key={billingDataKey}
+              company={{
+                id: company.id,
+                name: company.name || company.people?.name || `Empresa ${company.id}`,
+                tax_id: company.people?.tax_id,
+              }}
+              onCreateSubscription={() => {
+                setSelectedSubscription(null);
+                setShowSubscriptionModal(true);
+              }}
+              onManageSubscription={(subscription) => {
+                setSelectedSubscription(subscription);
+                setShowSubscriptionModal(true);
+              }}
+              onCreateInvoice={(companyId, subscription) => {
+                setSelectedSubscription(subscription);
+                setShowInvoiceModal(true);
+              }}
+            />
+          </div>
+        )}
+
+        {/* Tab: LGPD */}
+        {activeTab === "lgpd" && (
+          <div className="text-center py-12">
+            <h3 className="text-lg font-medium text-foreground mb-2">LGPD</h3>
+            <p className="text-muted-foreground">
+              Em breve: Gerencie as configurações de privacidade e LGPD
+            </p>
+          </div>
+        )}
+      </EntityDetailsLayout>
+
+      {/* Modais */}
+      {company && (
+        <>
+          <SubscriptionManagementModal
+            isOpen={showSubscriptionModal}
+            onClose={() => setShowSubscriptionModal(false)}
+            company={{
+              id: company.id,
+              name: company.people?.name || `Empresa ${company.id}`,
+              tax_id: company.people?.tax_id,
+            }}
+            subscription={selectedSubscription}
+            onSuccess={() => {
+              setShowSubscriptionModal(false);
+              setSelectedSubscription(null);
+              setBillingDataKey((prev) => prev + 1);
+              loadCompany();
+            }}
+          />
+
+          <CreateInvoiceModal
+            isOpen={showInvoiceModal}
+            onClose={() => setShowInvoiceModal(false)}
+            companyId={company.id}
+            companyName={company.people?.name || `Empresa ${company.id}`}
+            subscription={selectedSubscription}
+            onSuccess={() => {
+              setShowInvoiceModal(false);
+              setSelectedSubscription(null);
+              setBillingDataKey((prev) => prev + 1);
+              loadCompany();
+            }}
+          />
+        </>
       )}
-    </div>
+    </>
   );
 };
 

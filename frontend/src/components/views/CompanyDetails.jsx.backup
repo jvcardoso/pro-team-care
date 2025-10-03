@@ -1,0 +1,790 @@
+import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { companiesService, establishmentsService } from "../../services/api";
+import Card from "../ui/Card";
+import Button from "../ui/Button";
+import CompanyBasicInfo from "../entities/CompanyBasicInfo";
+import ReceitaFederalInfo from "../metadata/ReceitaFederalInfo";
+import {
+  PhoneDisplayCard,
+  EmailDisplayCard,
+  AddressDisplayCard,
+} from "../contacts";
+import {
+  getStatusBadge,
+  getStatusLabel,
+  getPhoneTypeLabel,
+  getEmailTypeLabel,
+  getAddressTypeLabel,
+  formatPhone,
+  formatZipCode,
+} from "../../utils/statusUtils";
+import { notify } from "../../utils/notifications.jsx";
+import CompanyBillingCard from "../billing/CompanyBillingCard";
+import SubscriptionManagementModal from "../billing/SubscriptionManagementModal";
+import CreateInvoiceModal from "../billing/CreateInvoiceModal";
+import {
+  ArrowLeft,
+  Edit,
+  Trash2,
+  Building,
+  Calendar,
+  User,
+  Globe,
+  Plus,
+  CreditCard,
+} from "lucide-react";
+import BillingInfoCard from "../billing/BillingInfoCard";
+import { clientsService } from "../../services/clientsService";
+import DataTableTemplate from "../shared/DataTable/DataTableTemplate";
+import { useDataTable } from "../../hooks/useDataTable";
+import { createCompanyClientsConfig } from "../../config/tables/companyClients.config";
+
+const CompanyDetails = ({
+  companyId,
+  onEdit,
+  onBack,
+  onDelete,
+  initialTab = "informacoes",
+}) => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [company, setCompany] = useState(null);
+  const [establishments, setEstablishments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState(initialTab);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [selectedSubscription, setSelectedSubscription] = useState(null);
+   const [billingDataKey, setBillingDataKey] = useState(0); // Para forçar re-render do billing
+    const [companyStats, setCompanyStats] = useState({
+      establishments_count: 0,
+      clients_count: 0,
+      professionals_count: 0,
+    });
+    const [clients, setClients] = useState([]);
+    const [loadingClients, setLoadingClients] = useState(false);
+
+    // Hook para tabela de clientes
+    const clientsDataTableProps = useDataTable({
+      config: createCompanyClientsConfig({
+        onView: (client) => navigate(`/admin/clientes/${client.id}?tab=informacoes`),
+      }),
+      initialData: clients,
+    });
+
+    // Verificar se há parâmetro de aba na URL
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (
+      tabParam &&
+      [
+        "informacoes",
+        "estabelecimentos",
+        "clientes",
+        "profissionais",
+        "pacientes",
+        "usuarios",
+        "faturamento",
+        "lgpd",
+      ].includes(tabParam)
+    ) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
+
+   useEffect(() => {
+     if (companyId) {
+       loadCompany();
+       loadCompanyStats();
+     }
+   }, [companyId]);
+
+   useEffect(() => {
+     if (activeTab === "estabelecimentos" && companyId) {
+       loadEstablishments();
+     }
+   }, [activeTab, companyId]);
+
+   // Carregar clientes quando aba "clientes" é ativada
+   useEffect(() => {
+     if (activeTab === "clientes" && companyId) {
+       loadClients();
+     }
+   }, [activeTab, companyId]);
+
+    const loadCompany = async () => {
+      try {
+        setLoading(true);
+        const data = await companiesService.getCompany(companyId);
+
+        // Debug: Verificar estrutura dos dados (sem exposição de PII)
+        if (process.env.NODE_ENV === "development") {
+          console.log("CompanyDetails - Estrutura de metadados verificada");
+        }
+
+        setCompany(data);
+
+        // Salvar nome da empresa no localStorage para breadcrumb
+        if (data?.people?.name) {
+          localStorage.setItem(`company_name_${companyId}`, data.people.name);
+        }
+      } catch (err) {
+        setError("Erro ao carregar empresa");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+   const loadCompanyStats = async () => {
+     try {
+       const stats = await companiesService.getCompanyStats(companyId);
+       setCompanyStats(stats);
+     } catch (err) {
+       console.error("Erro ao carregar estatísticas:", err);
+     }
+   };
+
+  const loadEstablishments = async () => {
+    try {
+      const response = await establishmentsService.getEstablishmentsByCompany(
+        companyId
+      );
+      const establishmentsData = response?.establishments || response || [];
+      setEstablishments(
+        Array.isArray(establishmentsData) ? establishmentsData : []
+      );
+    } catch (err) {
+      console.error("Erro ao carregar estabelecimentos:", err);
+      setEstablishments([]);
+    }
+    };
+
+    // Carregar clientes da empresa
+    const loadClients = async () => {
+      try {
+        setLoadingClients(true);
+        // NÃO passar establishment_id para buscar de TODOS estabelecimentos
+        const response = await clientsService.getAll({
+          page: 1,
+          size: 100, // Backend limita em 100 (não 1000)
+        });
+        setClients(response?.clients || []);
+      } catch (err) {
+        console.error("Erro ao carregar clientes:", err);
+        setClients([]);
+      } finally {
+        setLoadingClients(false);
+      }
+    };
+
+     // Função para trocar aba e atualizar URL
+    const handleTabChange = (newTab) => {
+      setActiveTab(newTab);
+      navigate(`/admin/empresas/${companyId}?tab=${newTab}`, { replace: true });
+    };
+
+
+
+   const handleDelete = async () => {
+    const executeDelete = async () => {
+      try {
+        await companiesService.deleteCompany(companyId);
+        notify.success("Empresa excluída com sucesso!");
+        onDelete?.();
+      } catch (err) {
+        notify.error("Erro ao excluir empresa");
+        console.error(err);
+      }
+    };
+
+    notify.confirmDelete(
+      "Excluir Empresa",
+      `Tem certeza que deseja excluir a empresa "${
+        company?.people?.name || "esta empresa"
+      }"?`,
+      executeDelete
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="text-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        <p className="mt-4 text-muted-foreground">Carregando empresa...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-600 mb-4">{error}</p>
+        <Button onClick={loadCompany}>Tentar Novamente</Button>
+      </div>
+    );
+  }
+
+  if (!company) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">Empresa não encontrada</p>
+        <Button
+          onClick={onBack}
+          className="mt-4"
+          icon={<ArrowLeft className="h-4 w-4" />}
+        >
+          Voltar
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 sm:space-y-6 px-4 sm:px-0">
+      {/* Header */}
+      <div className="space-y-4">
+        {/* Company Info and Actions */}
+        <div className="flex flex-col gap-4">
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-2xl font-bold text-foreground break-words">
+              {company.people.name}
+            </h1>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-2">
+              {company.people.trade_name &&
+                company.people.trade_name !== company.people.name && (
+                  <p className="text-sm sm:text-base text-muted-foreground break-words">
+                    {company.people.trade_name}
+                  </p>
+                )}
+              <span className={getStatusBadge(company.people.status)}>
+                {getStatusLabel(company.people.status)}
+              </span>
+            </div>
+          </div>
+           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+             <Button
+               variant="secondary"
+               outline
+               onClick={() => navigate("/admin/empresas")}
+               icon={<ArrowLeft className="h-4 w-4" />}
+               className="w-full sm:w-auto"
+             >
+               Voltar
+             </Button>
+             <Button
+               variant="primary"
+               onClick={() => onEdit?.(companyId)}
+               icon={<Edit className="h-4 w-4" />}
+               className="w-full sm:w-auto"
+             >
+               Editar
+             </Button>
+             <Button
+               variant="danger"
+               outline
+               onClick={handleDelete}
+               icon={<Trash2 className="h-4 w-4" />}
+               className="w-full sm:w-auto"
+             >
+               Excluir
+             </Button>
+           </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="border-b border-border">
+        <div className="overflow-x-auto scrollbar-hide">
+          <div className="flex space-x-1 sm:space-x-4 lg:space-x-8 min-w-max">
+            <button
+              onClick={() => handleTabChange("informacoes")}
+              className={`py-3 sm:py-4 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
+                activeTab === "informacoes"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+              }`}
+            >
+              <span className="hidden sm:inline">Informações</span>
+              <span className="sm:hidden">Info</span>
+            </button>
+            <button
+              onClick={() => handleTabChange("estabelecimentos")}
+              className={`py-3 sm:py-4 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
+                activeTab === "estabelecimentos"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+              }`}
+            >
+              <span className="hidden sm:inline">Estabelecimentos</span>
+              <span className="sm:hidden">Estab.</span>
+            </button>
+            <button
+              onClick={() => handleTabChange("clientes")}
+              className={`py-3 sm:py-4 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
+                activeTab === "clientes"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+              }`}
+            >
+              <span className="hidden sm:inline">Clientes</span>
+              <span className="sm:hidden">Client.</span>
+            </button>
+            <button
+              onClick={() => handleTabChange("profissionais")}
+              className={`py-3 sm:py-4 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
+                activeTab === "profissionais"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+              }`}
+            >
+              <span className="hidden sm:inline">Profissionais</span>
+              <span className="sm:hidden">Profis.</span>
+            </button>
+            <button
+              onClick={() => handleTabChange("pacientes")}
+              className={`py-3 sm:py-4 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
+                activeTab === "pacientes"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+              }`}
+            >
+              <span className="hidden sm:inline">Pacientes</span>
+              <span className="sm:hidden">Pacient.</span>
+            </button>
+            <button
+              onClick={() => handleTabChange("usuarios")}
+              className={`py-3 sm:py-4 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
+                activeTab === "usuarios"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+              }`}
+            >
+              <span className="hidden sm:inline">Usuários</span>
+              <span className="sm:hidden">Users</span>
+            </button>
+            <button
+              onClick={() => handleTabChange("faturamento")}
+              className={`py-3 sm:py-4 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
+                activeTab === "faturamento"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+              }`}
+            >
+              <span className="hidden sm:inline">
+                Faturamento
+              </span>
+              <span className="sm:hidden">Cobrança</span>
+            </button>
+            <button
+              onClick={() => handleTabChange("lgpd")}
+              className={`py-3 sm:py-4 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
+                activeTab === "lgpd"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+              }`}
+            >
+              LGPD
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === "informacoes" && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Informações Básicas */}
+          <div className="lg:col-span-2 space-y-6">
+            <CompanyBasicInfo company={company} />
+
+            {/* Contatos - Novos componentes reutilizáveis */}
+            <PhoneDisplayCard
+              phones={company.phones || []}
+              formatPhone={formatPhone}
+              getPhoneTypeLabel={getPhoneTypeLabel}
+            />
+
+            <EmailDisplayCard
+              emails={company.emails || []}
+              getEmailTypeLabel={getEmailTypeLabel}
+            />
+
+            <AddressDisplayCard
+              addresses={company.addresses || []}
+              getAddressTypeLabel={getAddressTypeLabel}
+              formatZipCode={formatZipCode}
+            />
+
+            <ReceitaFederalInfo
+              metadata={
+                company.company?.metadata ||
+                company.people?.metadata ||
+                company.metadata ||
+                {}
+              }
+            />
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Resumo */}
+            <Card title="Resumo">
+              <div className="space-y-4">
+                 <div className="flex items-center justify-between">
+                   <span className="text-muted-foreground">
+                     Estabelecimentos
+                   </span>
+                   <span className="font-medium text-foreground">
+                     {companyStats.establishments_count}
+                   </span>
+                 </div>
+                 <div className="flex items-center justify-between">
+                   <span className="text-muted-foreground">Clientes</span>
+                   <span className="font-medium text-foreground">
+                     {companyStats.clients_count}
+                   </span>
+                 </div>
+                 <div className="flex items-center justify-between">
+                   <span className="text-muted-foreground">Profissionais</span>
+                   <span className="font-medium text-foreground">
+                     {companyStats.professionals_count}
+                   </span>
+                 </div>
+                 <div className="flex items-center justify-between">
+                   <span className="text-muted-foreground">Pacientes</span>
+                   <span className="font-medium text-muted-foreground">
+                     Em breve
+                   </span>
+                 </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Faturamento</span>
+                   <Button
+                     variant="outline"
+                     size="sm"
+                     onClick={() => handleTabChange("faturamento")}
+                     className="text-xs py-1 px-2"
+                   >
+                    <CreditCard className="h-3 w-3 mr-1" />
+                    Ver
+                  </Button>
+                </div>
+              </div>
+             </Card>
+
+             {/* Card de Faturamento */}
+             <BillingInfoCard companyId={company.id} />
+
+             {/* Metadados */}
+            <Card title="Informações do Sistema">
+              <div className="space-y-4 text-sm">
+                <div>
+                  <label className="block text-muted-foreground mb-1">
+                    ID da Empresa
+                  </label>
+                  <p className="text-foreground font-mono">#{company.id}</p>
+                </div>
+                <div>
+                  <label className="block text-muted-foreground mb-1">
+                    Criado em
+                  </label>
+                  <p className="text-foreground">
+                    {new Date(company.created_at).toLocaleString("pt-BR")}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-muted-foreground mb-1">
+                    Atualizado em
+                  </label>
+                  <p className="text-foreground">
+                    {new Date(company.updated_at).toLocaleString("pt-BR")}
+                  </p>
+                </div>
+                {company.display_order !== null && (
+                  <div>
+                    <label className="block text-muted-foreground mb-1">
+                      Ordem de Exibição
+                    </label>
+                    <p className="text-foreground">{company.display_order}</p>
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            {/* Configurações */}
+            {company.settings && Object.keys(company.settings).length > 0 && (
+              <Card title="Configurações">
+                <div className="space-y-2 text-sm">
+                  {Object.entries(company.settings).map(([key, value]) => (
+                    <div
+                      key={key}
+                      className="flex items-center justify-between"
+                    >
+                      <span className="text-muted-foreground capitalize">
+                        {key.replace("_", " ")}
+                      </span>
+                      <span className="text-foreground">
+                        {typeof value === "boolean"
+                          ? value
+                            ? "Sim"
+                            : "Não"
+                          : String(value)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+          </div>
+        </div>
+      )}
+
+      {activeTab === "estabelecimentos" && (
+        <div className="space-y-6">
+          {/* Header com botão Novo Estabelecimento */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-medium text-foreground">
+                Estabelecimentos da Empresa
+              </h3>
+              <p className="text-muted-foreground">
+                Gerencie os estabelecimentos vinculados a esta empresa
+              </p>
+            </div>
+            <Button
+              onClick={() => {
+                navigate(
+                  `/admin/estabelecimentos?companyId=${companyId}&action=create`
+                );
+              }}
+              icon={<Plus className="h-4 w-4" />}
+              className="w-full sm:w-auto whitespace-nowrap"
+            >
+              <span className="hidden sm:inline">Novo Estabelecimento</span>
+              <span className="sm:hidden">+ Estabelecimento</span>
+            </Button>
+          </div>
+
+          {/* Lista de Estabelecimentos */}
+          {establishments.length === 0 ? (
+            <div className="text-center py-12">
+              <Building className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">
+                Nenhum estabelecimento encontrado
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                Esta empresa ainda não possui estabelecimentos cadastrados
+              </p>
+              <Button
+                onClick={() => {
+                  navigate(
+                    `/admin/estabelecimentos?companyId=${companyId}&action=create`
+                  );
+                }}
+                icon={<Plus className="h-4 w-4" />}
+              >
+                Criar Primeiro Estabelecimento
+              </Button>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {establishments.map((establishment) => (
+                <Card key={establishment.id} className="p-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3">
+                        <Building className="h-5 w-5 text-primary flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-medium text-foreground break-words">
+                            {establishment.person?.name || establishment.code}
+                          </h4>
+                          <p className="text-sm text-muted-foreground">
+                            Código: {establishment.code}
+                          </p>
+                          {establishment.person?.tax_id && (
+                            <p className="text-sm text-muted-foreground break-all">
+                              CNPJ: {establishment.person.tax_id}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-2">
+                      <div className="flex flex-wrap gap-2">
+                        <span
+                          className={`px-2 py-1 text-xs rounded whitespace-nowrap ${
+                            establishment.is_active
+                              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                              : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                          }`}
+                        >
+                          {establishment.is_active ? "Ativo" : "Inativo"}
+                        </span>
+                        {establishment.is_principal && (
+                          <span className="px-2 py-1 text-xs bg-primary/10 text-primary rounded whitespace-nowrap">
+                            Principal
+                          </span>
+                        )}
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        outline
+                        onClick={() => {
+                          navigate(
+                            `/admin/estabelecimentos/${establishment.id}?tab=informacoes`
+                          );
+                        }}
+                        className="w-full sm:w-auto whitespace-nowrap"
+                      >
+                        Ver Detalhes
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === "clientes" && (
+        <div className="space-y-6">
+          {/* Header sem botão */}
+          <div className="flex flex-col gap-2">
+            <h3 className="text-lg font-medium text-foreground">
+              Clientes da Empresa
+            </h3>
+            <p className="text-muted-foreground">
+              Lista de todos os clientes da empresa em todos os estabelecimentos
+            </p>
+          </div>
+
+          {loadingClients ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <span className="ml-3 text-muted-foreground">Carregando clientes...</span>
+            </div>
+          ) : (
+            <DataTableTemplate
+              config={createCompanyClientsConfig({
+                onView: (client) => navigate(`/admin/clientes/${client.id}?tab=informacoes`),
+              })}
+              tableData={clientsDataTableProps}
+            />
+          )}
+        </div>
+      )}
+
+      {activeTab === "profissionais" && (
+        <div className="text-center py-12">
+          <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">
+            Profissionais
+          </h3>
+          <p className="text-muted-foreground">
+            Em breve: Gerencie os profissionais desta empresa
+          </p>
+        </div>
+      )}
+
+      {activeTab === "pacientes" && (
+        <div className="text-center py-12">
+          <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">
+            Pacientes
+          </h3>
+          <p className="text-muted-foreground">
+            Em breve: Gerencie os pacientes desta empresa
+          </p>
+        </div>
+      )}
+
+      {activeTab === "usuarios" && (
+        <div className="text-center py-12">
+          <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">Usuários</h3>
+          <p className="text-muted-foreground">
+            Em breve: Gerencie os usuários desta empresa
+          </p>
+        </div>
+      )}
+
+      {activeTab === "faturamento" && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Card de Cobrança da Empresa */}
+            <div className="lg:col-span-2">
+              <CompanyBillingCard
+                key={billingDataKey} // Força re-render quando muda
+                company={{
+                  id: company.id,
+                  name: company.name || company.people?.name || `Empresa ${company.id}`,
+                  tax_id: company.people?.tax_id,
+                }}
+                onCreateSubscription={(companyId) => {
+                  setSelectedSubscription(null);
+                  setShowSubscriptionModal(true);
+                }}
+                onManageSubscription={(subscription) => {
+                  console.log('🔍 CompanyDetails - onManageSubscription recebeu:', subscription);
+                  setSelectedSubscription(subscription);
+                  setShowSubscriptionModal(true);
+                }}
+                onCreateInvoice={(companyId, subscription) => {
+                  setSelectedSubscription(subscription);
+                  setShowInvoiceModal(true);
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "lgpd" && (
+        <div className="text-center py-12">
+          <Globe className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">LGPD</h3>
+          <p className="text-muted-foreground">
+            Em breve: Gerencie as configurações de privacidade e LGPD
+          </p>
+        </div>
+      )}
+
+      {/* Modais */}
+      <SubscriptionManagementModal
+        isOpen={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        company={{
+          id: company.id,
+          name: company.people?.name || `Empresa ${company.id}`,
+          tax_id: company.people?.tax_id,
+        }}
+        subscription={selectedSubscription}
+        onSuccess={() => {
+          setShowSubscriptionModal(false);
+          setSelectedSubscription(null);
+          setBillingDataKey(prev => prev + 1); // Força re-render do CompanyBillingCard
+          loadCompany(); // Reload para atualizar dados
+        }}
+      />
+
+      <CreateInvoiceModal
+        isOpen={showInvoiceModal}
+        onClose={() => setShowInvoiceModal(false)}
+        companyId={company.id}
+        companyName={company.people?.name || `Empresa ${company.id}`}
+        subscription={selectedSubscription}
+        onSuccess={() => {
+          setShowInvoiceModal(false);
+          setSelectedSubscription(null);
+          setBillingDataKey(prev => prev + 1); // Força re-render do CompanyBillingCard
+          loadCompany(); // Reload para atualizar dados
+        }}
+      />
+    </div>
+  );
+};
+
+export default CompanyDetails;

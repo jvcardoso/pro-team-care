@@ -23,10 +23,9 @@ const ProtectedRoute = ({ children }) => {
   // Se não está autenticado, redirecionar para login
   if (!isAuthenticated) {
     // Salvar a URL atual para redirecionar após o login
-    sessionStorage.setItem(
-      "redirectAfterLogin",
-      location.pathname + location.search
-    );
+    const redirectUrl = location.pathname + location.search;
+    console.log("🔄 ProtectedRoute salvando redirectAfterLogin:", redirectUrl);
+    sessionStorage.setItem("redirectAfterLogin", redirectUrl);
     return <Navigate to="/login" replace />;
   }
 

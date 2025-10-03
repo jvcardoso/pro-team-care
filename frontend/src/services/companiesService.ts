@@ -3,8 +3,8 @@
  * Implementação TypeScript com type safety completo
  */
 
-import { get, post, put, del } from "./api.ts";
-import { httpCache } from "./httpCache.ts";
+import { get, post, put, del } from "./api.js";
+import { httpCache } from "./httpCache";
 import {
   Company,
   CompanyDetailed,
@@ -138,6 +138,18 @@ class CompaniesService {
       }
       throw error;
     }
+  }
+
+  /**
+   * Buscar estatísticas agregadas da empresa
+   */
+  async getCompanyStats(companyId: number): Promise<{
+    company_id: number;
+    establishments_count: number;
+    clients_count: number;
+    professionals_count: number;
+  }> {
+    return get<any>(`${this.basePath}/${companyId}/stats`);
   }
 
   /**

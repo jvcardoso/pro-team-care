@@ -5,8 +5,8 @@ import Sidebar from "./Sidebar";
 import DynamicSidebar from "../navigation/DynamicSidebar";
 import Footer from "./Footer";
 import ImpersonationBanner from "../security/ImpersonationBanner";
-import Breadcrumb from "../ui/Breadcrumb";
-import { useBreadcrumbs } from "../../hooks/useBreadcrumbs";
+import BreadcrumbBar from "./BreadcrumbBar";
+import CommandPalette from "../navigation/CommandPalette";
 import { authService } from "../../services/api";
 
 const AdminLayout: React.FC = React.memo(() => {
@@ -16,9 +16,9 @@ const AdminLayout: React.FC = React.memo(() => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [useDynamicMenus, setUseDynamicMenus] = useState<boolean>(true);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState<boolean>(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const breadcrumbs = useBreadcrumbs();
 
   // 🔒 Verificar autenticação com validação JWT real
   useEffect(() => {
@@ -161,30 +161,6 @@ const AdminLayout: React.FC = React.memo(() => {
     }
   }, [isMobile]);
 
-  // Generate breadcrumb
-  const generateBreadcrumb = (): string => {
-    const pathnames = location.pathname.split("/").filter((x) => x);
-    const breadcrumbs = ["Home"];
-
-    pathnames.forEach((pathname) => {
-      let label = pathname.charAt(0).toUpperCase() + pathname.slice(1);
-
-      const customLabels: Record<string, string> = {
-        admin: "Admin",
-        dashboard: "Dashboard",
-        demo: "Layout Demo",
-        notifications: "Demo de Notificações",
-      };
-
-      if (customLabels[pathname]) {
-        label = customLabels[pathname];
-      }
-
-      breadcrumbs.push(label);
-    });
-
-    return breadcrumbs.join(" / ");
-  };
 
   // Remover funcionalidades de debug
 
@@ -282,12 +258,14 @@ const AdminLayout: React.FC = React.memo(() => {
         <Header
           sidebarCollapsed={isMobile ? false : sidebarCollapsed}
           onToggleSidebar={toggleSidebar}
-          breadcrumb={generateBreadcrumb()}
+          breadcrumb={null}
           isMobile={isMobile}
           sidebarOpen={sidebarOpen}
+          onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
         />
 
-        {/* Banner removido - simplificação */}
+        {/* Breadcrumb Bar - Sticky navigation */}
+        <BreadcrumbBar />
 
         {/* Main Content Area */}
         <main
@@ -300,12 +278,6 @@ const AdminLayout: React.FC = React.memo(() => {
         >
           <div className="py-6">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-              {/* Breadcrumb Navigation */}
-              {breadcrumbs.length > 1 && (
-                <div className="mb-6">
-                  <Breadcrumb items={breadcrumbs} />
-                </div>
-              )}
               <Outlet />
             </div>
           </div>
@@ -314,6 +286,12 @@ const AdminLayout: React.FC = React.memo(() => {
         {/* Footer */}
         <Footer />
       </div>
+
+      {/* Command Palette - Global no AdminLayout */}
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+      />
     </div>
   );
 });

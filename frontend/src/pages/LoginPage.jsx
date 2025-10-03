@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { notify } from "../utils/notifications.jsx";
 
@@ -48,6 +49,7 @@ const LoginPage = () => {
     password: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Mapear tipo de dispositivo para imagem de fundo
   const getBackgroundImage = () => {
@@ -61,18 +63,7 @@ const LoginPage = () => {
     }
   };
 
-  useEffect(() => {
-    // Se não está carregando e já está autenticado, redirecionar
-    if (!loading && isAuthenticated) {
-      const redirectUrl = sessionStorage.getItem("redirectAfterLogin");
-      if (redirectUrl) {
-        sessionStorage.removeItem("redirectAfterLogin");
-        navigate(redirectUrl, { replace: true });
-      } else {
-        navigate("/admin", { replace: true });
-      }
-    }
-  }, [navigate, loading, isAuthenticated]);
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -94,10 +85,13 @@ const LoginPage = () => {
 
         // Verificar se há uma URL para redirecionar
         const redirectUrl = sessionStorage.getItem("redirectAfterLogin");
+        console.log("🔄 Verificando redirectAfterLogin após login:", redirectUrl);
         if (redirectUrl) {
           sessionStorage.removeItem("redirectAfterLogin");
+          console.log("✅ Redirecionando para:", redirectUrl);
           navigate(redirectUrl, { replace: true });
         } else {
+          console.log("⚠️ Nenhum redirectAfterLogin encontrado, redirecionando para /admin");
           navigate("/admin", { replace: true });
         }
       }
@@ -178,18 +172,29 @@ const LoginPage = () => {
                 >
                   Senha
                 </label>
-                <div className="mt-1">
+                <div className="mt-1 relative">
                   <input
                     id="password"
                     name="password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     autoComplete="current-password"
                     required
                     value={formData.password}
                     onChange={handleChange}
-                    className="input-field"
+                    className="input-field pr-10"
                     placeholder="••••••••"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5 text-gray-400" />
+                    ) : (
+                      <Eye className="h-5 w-5 text-gray-400" />
+                    )}
+                  </button>
                 </div>
               </div>
 
@@ -207,6 +212,17 @@ const LoginPage = () => {
                   ) : (
                     "Entrar"
                   )}
+                </button>
+              </div>
+
+              {/* Link para recuperação de senha */}
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => navigate("/forgot-password")}
+                  className="text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                >
+                  Esqueceu sua senha?
                 </button>
               </div>
             </form>

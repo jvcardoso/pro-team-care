@@ -6,8 +6,8 @@
 
 -- 1. Adicionar campos faltantes
 ALTER TABLE master.establishments
-    ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0,
-    ADD COLUMN IF NOT EXISTS metadata JSONB NULL;
+ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN IF NOT EXISTS metadata JSONB NULL;
 
 -- 2. Popular display_order para registros existentes
 UPDATE master.establishments
@@ -20,7 +20,7 @@ ON master.establishments (company_id, display_order)
 WHERE deleted_at IS NULL;
 
 CREATE INDEX IF NOT EXISTS idx_establishments_metadata_gin
-ON master.establishments USING GIN (metadata)
+ON master.establishments USING gin (metadata)
 WHERE deleted_at IS NULL AND metadata IS NOT NULL;
 
 -- 4. Constraint única display_order por company
@@ -31,14 +31,14 @@ WHERE deleted_at IS NULL;
 -- 5. Constraint business rule: apenas 1 principal por company
 CREATE UNIQUE INDEX IF NOT EXISTS idx_establishments_company_principal_unique
 ON master.establishments (company_id)
-WHERE deleted_at IS NULL AND is_principal = true;
+WHERE deleted_at IS NULL AND is_principal = TRUE;
 
 -- 6. Função de Validação Company->Establishment
 CREATE OR REPLACE FUNCTION master.validate_establishment_creation(
     company_id_param BIGINT,
     code_param VARCHAR,
-    is_principal_param BOOLEAN DEFAULT false
-) RETURNS TABLE(
+    is_principal_param BOOLEAN DEFAULT FALSE
+) RETURNS TABLE (
     is_valid BOOLEAN,
     error_message TEXT,
     suggested_display_order INTEGER
@@ -128,15 +128,22 @@ SELECT
     e.is_principal AS establishment_is_principal,
     e.display_order AS establishment_order,
     -- Mascaramento de dados sensíveis
-    CONCAT('COMP_', e.company_id) AS company_reference,
+    e.created_at,
     -- Status dos campos JSONB
-    CASE WHEN e.settings IS NOT NULL THEN 'CONFIGURED' ELSE 'DEFAULT' END AS settings_status,
-    CASE WHEN e.metadata IS NOT NULL THEN 'HAS_METADATA' ELSE 'NO_METADATA' END AS metadata_status,
-    CASE WHEN e.operating_hours IS NOT NULL THEN 'HAS_HOURS' ELSE 'DEFAULT_HOURS' END AS hours_status,
-    e.created_at
-FROM master.establishments e
-WHERE e.deleted_at IS NULL
-  AND e.is_active = true
+    CONCAT('COMP_', e.company_id) AS company_reference,
+    CASE
+        WHEN e.settings IS NOT NULL THEN 'CONFIGURED' ELSE 'DEFAULT'
+    END AS settings_status,
+    CASE
+        WHEN e.metadata IS NOT NULL THEN 'HAS_METADATA' ELSE 'NO_METADATA'
+    END AS metadata_status,
+    CASE
+        WHEN e.operating_hours IS NOT NULL THEN 'HAS_HOURS' ELSE 'DEFAULT_HOURS'
+    END AS hours_status
+FROM master.establishments AS e
+WHERE
+    e.deleted_at IS NULL
+    AND e.is_active = TRUE
 ORDER BY e.company_id, e.display_order;
 
 -- 9. View Admin Completa
@@ -147,19 +154,28 @@ SELECT
     p.name AS company_name,
     p.tax_id AS company_tax_id,
     -- Contadores de relacionamentos
-    (SELECT COUNT(*) FROM master.user_establishments ue
-     WHERE ue.establishment_id = e.id AND ue.deleted_at IS NULL) AS user_count,
-    (SELECT COUNT(*) FROM master.professionals pr
-     WHERE pr.establishment_id = e.id AND pr.deleted_at IS NULL) AS professional_count,
-    (SELECT COUNT(*) FROM master.clients cl
-     WHERE cl.establishment_id = e.id AND cl.deleted_at IS NULL) AS client_count,
-    (SELECT COUNT(*) FROM master.establishment_settings es
-     WHERE es.establishment_id = e.id AND es.deleted_at IS NULL) AS setting_count
-FROM master.establishments e
-JOIN master.companies c ON e.company_id = c.id
-JOIN master.people p ON c.person_id = p.id
-WHERE e.deleted_at IS NULL
-  AND c.deleted_at IS NULL
+    (
+        SELECT COUNT(*) FROM master.user_establishments AS ue
+        WHERE ue.establishment_id = e.id AND ue.deleted_at IS NULL
+    ) AS user_count,
+    (
+        SELECT COUNT(*) FROM master.professionals AS pr
+        WHERE pr.establishment_id = e.id AND pr.deleted_at IS NULL
+    ) AS professional_count,
+    (
+        SELECT COUNT(*) FROM master.clients AS cl
+        WHERE cl.establishment_id = e.id AND cl.deleted_at IS NULL
+    ) AS client_count,
+    (
+        SELECT COUNT(*) FROM master.establishment_settings AS es
+        WHERE es.establishment_id = e.id AND es.deleted_at IS NULL
+    ) AS setting_count
+FROM master.establishments AS e
+INNER JOIN master.companies AS c ON e.company_id = c.id
+INNER JOIN master.people AS p ON c.person_id = p.id
+WHERE
+    e.deleted_at IS NULL
+    AND c.deleted_at IS NULL
 ORDER BY c.id, e.display_order;
 
 -- 10. View Hierárquica Company->Establishment
@@ -178,10 +194,15 @@ SELECT
     e.display_order AS establishment_order,
     pe.name AS establishment_name,
     -- Indicadores de relacionamento
-    CASE WHEN e.person_id = c.person_id THEN 'SAME_ENTITY' ELSE 'DIFFERENT_ENTITY' END AS entity_relationship
-FROM master.companies c
-JOIN master.people pc ON c.person_id = pc.id
-LEFT JOIN master.establishments e ON c.id = e.company_id AND e.deleted_at IS NULL
-LEFT JOIN master.people pe ON e.person_id = pe.id
+    CASE
+        WHEN e.person_id = c.person_id THEN 'SAME_ENTITY' ELSE
+            'DIFFERENT_ENTITY'
+    END AS entity_relationship
+FROM master.companies AS c
+INNER JOIN master.people AS pc ON c.person_id = pc.id
+LEFT JOIN
+    master.establishments AS e
+    ON c.id = e.company_id AND e.deleted_at IS NULL
+LEFT JOIN master.people AS pe ON e.person_id = pe.id
 WHERE c.deleted_at IS NULL
 ORDER BY c.display_order, e.display_order;

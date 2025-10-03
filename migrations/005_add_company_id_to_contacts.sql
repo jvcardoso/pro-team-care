@@ -11,15 +11,15 @@
 
 -- Adicionar company_id na tabela phones
 ALTER TABLE master.phones
-ADD COLUMN company_id BIGINT REFERENCES master.companies(id);
+ADD COLUMN company_id BIGINT REFERENCES master.companies (id);
 
 -- Adicionar company_id na tabela emails
 ALTER TABLE master.emails
-ADD COLUMN company_id BIGINT REFERENCES master.companies(id);
+ADD COLUMN company_id BIGINT REFERENCES master.companies (id);
 
 -- Adicionar company_id na tabela addresses
 ALTER TABLE master.addresses
-ADD COLUMN company_id BIGINT REFERENCES master.companies(id);
+ADD COLUMN company_id BIGINT REFERENCES master.companies (id);
 
 -- ====================================================================
 -- PASSO 2: Popular company_id com base nos relacionamentos existentes
@@ -28,45 +28,60 @@ ADD COLUMN company_id BIGINT REFERENCES master.companies(id);
 -- Popular phones.company_id
 -- Phones são ligados a people via phoneable_id, e people são ligados a companies
 UPDATE master.phones
-SET company_id = (
-    SELECT c.id
-    FROM master.companies c
-    WHERE c.person_id = phones.phoneable_id
-    AND phones.phoneable_type = 'People'
-)
-WHERE phones.phoneable_type = 'People'
-AND phones.phoneable_id IN (SELECT person_id FROM master.companies);
+SET
+    company_id = (
+        SELECT c.id
+        FROM master.companies AS c
+        WHERE
+            c.person_id = phones.phoneable_id
+            AND phones.phoneable_type = 'People'
+    )
+WHERE
+    phones.phoneable_type = 'People'
+    AND phones.phoneable_id IN (SELECT person_id FROM master.companies);
 
 -- Popular emails.company_id
 UPDATE master.emails
-SET company_id = (
-    SELECT c.id
-    FROM master.companies c
-    WHERE c.person_id = emails.emailable_id
-    AND emails.emailable_type = 'People'
-)
-WHERE emails.emailable_type = 'People'
-AND emails.emailable_id IN (SELECT person_id FROM master.companies);
+SET
+    company_id = (
+        SELECT c.id
+        FROM master.companies AS c
+        WHERE
+            c.person_id = emails.emailable_id
+            AND emails.emailable_type = 'People'
+    )
+WHERE
+    emails.emailable_type = 'People'
+    AND emails.emailable_id IN (SELECT person_id FROM master.companies);
 
 -- Popular addresses.company_id
 UPDATE master.addresses
-SET company_id = (
-    SELECT c.id
-    FROM master.companies c
-    WHERE c.person_id = addresses.addressable_id
-    AND addresses.addressable_type = 'People'
-)
-WHERE addresses.addressable_type = 'People'
-AND addresses.addressable_id IN (SELECT person_id FROM master.companies);
+SET
+    company_id = (
+        SELECT c.id
+        FROM master.companies AS c
+        WHERE
+            c.person_id = addresses.addressable_id
+            AND addresses.addressable_type = 'People'
+    )
+WHERE
+    addresses.addressable_type = 'People'
+    AND addresses.addressable_id IN (SELECT person_id FROM master.companies);
 
 -- ====================================================================
 -- PASSO 3: Criar índices para performance
 -- ====================================================================
 
 -- Índices company_id para performance multi-tenant
-CREATE INDEX phones_company_id_idx ON master.phones(company_id) WHERE company_id IS NOT NULL;
-CREATE INDEX emails_company_id_idx ON master.emails(company_id) WHERE company_id IS NOT NULL;
-CREATE INDEX addresses_company_id_idx ON master.addresses(company_id) WHERE company_id IS NOT NULL;
+CREATE INDEX phones_company_id_idx ON master.phones (
+    company_id
+) WHERE company_id IS NOT NULL;
+CREATE INDEX emails_company_id_idx ON master.emails (
+    company_id
+) WHERE company_id IS NOT NULL;
+CREATE INDEX addresses_company_id_idx ON master.addresses (
+    company_id
+) WHERE company_id IS NOT NULL;
 
 -- ====================================================================
 -- PASSO 4: Verificação dos resultados

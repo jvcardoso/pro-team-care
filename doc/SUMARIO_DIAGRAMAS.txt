@@ -1,0 +1,151 @@
+================================================================================
+SUMÁRIO COMPLETO - DIAGRAMAS PRO TEAM CARE
+================================================================================
+Gerado em: 2025-01-01
+Localização: /home/juliano/Projetos/pro_team_care_16/doc/
+
+================================================================================
+ARQUIVOS GERADOS
+================================================================================
+
+📄 DOCUMENTAÇÃO (2 arquivos)
+├── DIAGRAMAS_README.md .................. Documentação completa e detalhada
+└── INDICE_VISUAL.md ..................... Índice rápido para navegação
+
+📊 DIAGRAMAS DRAW.IO (9 arquivos)
+├── visao_geral_modulos.drawio ........... **NOVO** Visão panorâmica de todos os módulos
+├── arquitetura_sistema.drawio ........... Arquitetura Clean Architecture
+├── mapa_frontend.drawio ................. Estrutura completa do frontend React
+├── fluxo_home_care.drawio ............... Fluxo de negócio Home Care
+├── erd_core.drawio ...................... ERD: Autenticação e Permissões
+├── erd_multi-tenant.drawio .............. ERD: Multi-tenant
+├── erd_cadastros.drawio ................. ERD: Cadastros Base
+├── erd_home_care_contratos.drawio ....... ERD: Contratos e Serviços
+└── erd_financeiro_contratos.drawio ...... ERD: Faturamento
+
+📈 TOTAL: 11 arquivos | ~120 KB
+
+================================================================================
+RESUMO POR CATEGORIA
+================================================================================
+
+1️⃣ VISÃO GERAL E ARQUITETURA (2 diagramas)
+   • visao_geral_modulos.drawio .......... 11 módulos do sistema
+   • arquitetura_sistema.drawio .......... Clean Architecture completa
+
+2️⃣ MODELO DE DADOS - ERD (5 diagramas)
+   • erd_core.drawio ..................... 8 tabelas (users, roles, permissions)
+   • erd_multi-tenant.drawio ............. 2 tabelas (companies, establishments)
+   • erd_cadastros.drawio ................ 6 tabelas (people, clients, contacts)
+   • erd_home_care_contratos.drawio ...... 5 tabelas (contracts, lives, services)
+   • erd_financeiro_contratos.drawio ..... 4 tabelas (invoices, receipts)
+
+3️⃣ FLUXOS DE NEGÓCIO (1 diagrama)
+   • fluxo_home_care.drawio .............. Jornada completa do cliente
+
+4️⃣ FRONTEND (1 diagrama)
+   • mapa_frontend.drawio ................ 27 páginas + 50+ componentes
+
+================================================================================
+COBERTURA DA DOCUMENTAÇÃO
+================================================================================
+
+✅ Backend
+   • Arquitetura: Clean Architecture (4 camadas)
+   • API: 38 routers, 200+ endpoints
+   • Repositórios: 15+
+   • Serviços: 12+
+   • Schemas: 15+
+
+✅ Frontend
+   • Páginas: 27 documentadas
+   • Componentes: 50+ documentados
+   • Services: 15+ documentados
+   • Hooks: 10+ documentados
+   • Contexts: 2 (Auth, Theme)
+
+✅ Banco de Dados
+   • Tabelas: 45 (25 principais documentadas nos ERDs)
+   • Relacionamentos: 96 foreign keys
+   • Módulos: 11 organizados
+
+✅ Fluxos de Negócio
+   • Home Care: 11 etapas documentadas
+   • Atores: 4 (Comercial, Médico, Execução, Financeiro)
+
+================================================================================
+COMO USAR
+================================================================================
+
+📖 Para Leitura Rápida
+   1. Abra: INDICE_VISUAL.md
+   2. Identifique o diagrama desejado
+   3. Abra o arquivo .drawio correspondente
+
+📚 Para Entendimento Completo
+   1. Leia: DIAGRAMAS_README.md
+   2. Navegue pelos diagramas conforme o guia
+
+🎯 Por Objetivo
+
+   "Entender arquitetura geral"
+   → visao_geral_modulos.drawio
+   → arquitetura_sistema.drawio
+
+   "Ver modelo de dados"
+   → erd_*.drawio (5 diagramas modulares)
+
+   "Entender regras de negócio"
+   → fluxo_home_care.drawio
+
+   "Trabalhar no frontend"
+   → mapa_frontend.drawio
+
+================================================================================
+FERRAMENTAS NECESSÁRIAS
+================================================================================
+
+• Draw.io Desktop: https://github.com/jgraph/drawio-desktop/releases
+• Draw.io Online: https://app.diagrams.net/
+• VS Code Extension: "Draw.io Integration"
+
+================================================================================
+ESTATÍSTICAS FINAIS
+================================================================================
+
+📊 Diagramas Gerados
+   • Visão Geral/Arquitetura: 2
+   • ERDs (Modelo de Dados): 5
+   • Fluxos de Negócio: 1
+   • Frontend: 1
+   • Documentação: 2
+
+📈 Elementos Documentados
+   • Módulos: 11
+   • Tabelas: 25 (principais)
+   • Endpoints: 200+
+   • Páginas Frontend: 27
+   • Componentes: 50+
+
+🎨 Organização
+   • Diagramas por módulo (evita arquivos gigantes)
+   • Cores distintas por categoria
+   • Legendas explicativas em todos os diagramas
+   • Índices de navegação rápida
+
+================================================================================
+PRÓXIMOS PASSOS SUGERIDOS
+================================================================================
+
+□ Criar diagrama de sequência para autenticação JWT
+□ Adicionar diagrama de deployment (infraestrutura)
+□ Documentar integrações de APIs externas
+□ Criar diagrama C4 Model completo
+□ Adicionar diagramas de casos de uso por módulo
+
+================================================================================
+FIM DO SUMÁRIO
+================================================================================
+
+Gerado automaticamente por Claude Code
+Pro Team Care © 2025

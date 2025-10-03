@@ -6,13 +6,22 @@ Implementa isolamento de dados baseado no usuário logado
 from typing import List, Optional
 
 import structlog
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, or_, select, func
+from sqlalchemy.orm import aliased
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.domain.entities.user import User
 from app.infrastructure.filters.context_filters import get_auto_filter
-from app.infrastructure.orm.models import Company, People
+
+from app.infrastructure.orm.models import (
+    Company,
+    People,
+    Establishments,
+    Client,
+    Professional,
+    User as UserModel,
+)
 from app.infrastructure.repositories.company_repository import CompanyRepository
 
 logger = structlog.get_logger()
@@ -46,16 +55,26 @@ class FilteredCompanyRepository(CompanyRepository):
             Lista de empresas filtradas baseadas no contexto do usuário
         """
         try:
-            # Construir query base
+            # Usar alias para Company para evitar problemas de correlação
+            company_alias = aliased(Company)
+
+            # Construir query base com contagens calculadas no banco usando subqueries correlacionadas
+            establishments_count_sub = select(func.count(Establishments.id)).where(Establishments.company_id == company_alias.id).correlate(company_alias).scalar_subquery().label('establishments_count')
+            clients_count_sub = select(func.count(func.distinct(Client.id))).select_from(Establishments).join(Client, Client.establishment_id == Establishments.id).where(Establishments.company_id == company_alias.id).correlate(company_alias).scalar_subquery().label('clients_count')
+            professionals_count_sub = select(func.count(func.distinct(Professional.id))).select_from(Establishments).join(Professional, Professional.establishment_id == Establishments.id).where(Establishments.company_id == company_alias.id).correlate(company_alias).scalar_subquery().label('professionals_count')
+            users_count_sub = select(func.count(UserModel.id)).where(UserModel.company_id == company_alias.id).correlate(company_alias).scalar_subquery().label('users_count')
+
             query = (
-                select(Company)
-                .join(People, Company.person_id == People.id)
-                .options(
-                    selectinload(Company.people).selectinload(People.phones),
-                    selectinload(Company.people).selectinload(People.emails),
-                    selectinload(Company.people).selectinload(People.addresses),
+                select(company_alias)
+                .add_columns(
+                    establishments_count_sub,
+                    clients_count_sub,
+                    professionals_count_sub,
+                    users_count_sub
                 )
-                .where(Company.deleted_at.is_(None))  # Excluir registros deletados
+                .join(People, company_alias.person_id == People.id)
+                .where(company_alias.deleted_at.is_(None))  # Excluir registros deletados
+                .options(selectinload(company_alias.people))
             )
 
             # Aplicar filtro de status se especificado (baseado na tabela people)
@@ -65,7 +84,7 @@ class FilteredCompanyRepository(CompanyRepository):
 
             # 🔒 APLICAR FILTROS DE CONTEXTO AUTOMATICAMENTE
             auto_filter = get_auto_filter(user)
-            query = await auto_filter.for_companies(query, Company)
+            query = await auto_filter.for_companies(query, company_alias)
 
             # Aplicar paginação
             offset = (page - 1) * size
@@ -73,7 +92,17 @@ class FilteredCompanyRepository(CompanyRepository):
 
             # Executar query
             result = await self.db.execute(query)
-            companies = result.scalars().all()
+            rows = result.all()
+
+            # Processar resultados e adicionar contagens aos objetos Company
+            companies = []
+            for row in rows:
+                company = row[0]  # Company object
+                company.establishments_count = row[1] or 0
+                company.clients_count = row[2] or 0
+                company.professionals_count = row[3] or 0
+                company.users_count = row[4] or 0
+                companies.append(company)
 
             await logger.ainfo(
                 "✅ Empresas carregadas com filtros",
@@ -229,11 +258,14 @@ class FilteredCompanyRepository(CompanyRepository):
             from sqlalchemy import func
 
             # Construir query de contagem
-            query = select(func.count(Company.id))
+            query = select(func.count(Company.id)).join(
+                People, Company.person_id == People.id
+            )
 
-            # Aplicar filtro de status se especificado
+            # Aplicar filtro de status se especificado (baseado na tabela people)
             if is_active is not None:
-                query = query.where(Company.is_active == is_active)
+                status_value = "active" if is_active else "inactive"
+                query = query.where(People.status == status_value)
 
             # 🔒 APLICAR FILTROS DE CONTEXTO
             auto_filter = get_auto_filter(user)

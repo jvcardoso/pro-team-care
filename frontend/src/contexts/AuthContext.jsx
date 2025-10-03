@@ -87,11 +87,30 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
 
+      // Preservar dados antes de limpar
+      const savedRedirectUrl = sessionStorage.getItem('redirectAfterLogin');
+      const savedTheme = localStorage.getItem('pro-team-care-theme');
+      console.log("🔄 Preservando redirectAfterLogin:", savedRedirectUrl);
+      console.log("🔄 Preservando tema:", savedTheme);
+
       // Limpar completamente qualquer sessão anterior
       localStorage.clear();
       sessionStorage.clear();
       setUser(null);
       setToken(null);
+
+      // Restaurar dados preservados
+      if (savedRedirectUrl) {
+        sessionStorage.setItem('redirectAfterLogin', savedRedirectUrl);
+        console.log("✅ redirectAfterLogin restaurado:", savedRedirectUrl);
+      } else {
+        console.log("⚠️ Nenhum redirectAfterLogin para restaurar");
+      }
+
+      if (savedTheme) {
+        localStorage.setItem('pro-team-care-theme', savedTheme);
+        console.log("✅ Tema restaurado:", savedTheme);
+      }
 
       console.log("🧹 Dados anteriores limpos, iniciando novo login");
 

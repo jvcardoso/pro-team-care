@@ -336,10 +336,23 @@ class CompanyList(BaseModel):
     trade_name: Optional[str]
     tax_id: str
     status: PersonStatus
-    phones_count: int = 0
-    emails_count: int = 0
-    addresses_count: int = 0
+    establishments_count: int = 0
+    clients_count: int = 0
+    professionals_count: int = 0
+    users_count: int = 0
     created_at: datetime
     updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CompanyListResponse(BaseModel):
+    """Resposta paginada para listagem de empresas"""
+
+    companies: List[CompanyList]
+    total: int
+    page: int
+    per_page: int
+    pages: int
 
     model_config = ConfigDict(from_attributes=True)

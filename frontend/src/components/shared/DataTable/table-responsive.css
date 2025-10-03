@@ -1,0 +1,43 @@
+/* Estilos responsivos para tabelas */
+
+/* Para telas muito pequenas, reduzir padding */
+@media (max-width: 640px) {
+  .table-responsive .px-3 {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  .table-responsive .px-4 {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .table-responsive .p-4 {
+    padding: 0.75rem;
+  }
+}
+
+/* Melhorar a rolagem horizontal */
+.table-responsive {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Esconder texto muito longo em células pequenas */
+.table-responsive td {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Melhorar aparência dos cards mobile */
+@media (max-width: 768px) {
+  .mobile-card {
+    margin-bottom: 0.75rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  }
+
+  .mobile-card:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+}

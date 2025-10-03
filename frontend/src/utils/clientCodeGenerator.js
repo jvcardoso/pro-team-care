@@ -1,6 +1,6 @@
 /**
  * Utilitários para geração automática de códigos de cliente
- * Formato: C[INICIAIS_ESTABELECIMENTO][SEQUENCIAL] - Ex: CHSC001, CABC002
+ * Formato: CLI-{cod-empresa}-{seq} - Ex: CLI-057-001, CLI-012-001
  * Garantia de UNICIDADE por estabelecimento conforme constraint do banco
  */
 
@@ -107,24 +107,20 @@ export const extractEstablishmentInitials = (establishmentName) => {
  * Gera um código de cliente baseado no estabelecimento
  * @param {object} establishment - Dados do estabelecimento
  * @param {number} sequence - Número sequencial (opcional)
- * @returns {string} Código no formato C[INICIAIS][SEQUENCIAL]
+ * @returns {string} Código no formato CLI-{cod-empresa}-{seq}
  */
 export const generateClientCode = (establishment, sequence = 1) => {
   if (!establishment) {
-    return `CLI${String(sequence).padStart(3, "0")}`;
+    return `CLI-000-${String(sequence).padStart(3, "0")}`;
   }
 
-  // Tentar diferentes campos para o nome do estabelecimento
-  const establishmentName =
-    establishment.name ||
-    establishment.person?.name ||
-    establishment.person_name ||
-    "ESTABELECIMENTO";
-
-  const initials = extractEstablishmentInitials(establishmentName);
+  // Extrair código da empresa do código do estabelecimento (EST-057-002 → 057)
+  const establishmentCode = establishment.code || `EST-000-001`;
+  const companyCodeMatch = establishmentCode.match(/EST-(\d{3})-\d{3}/);
+  const companyCode = companyCodeMatch ? companyCodeMatch[1] : "000";
   const sequentialNumber = String(sequence).padStart(3, "0");
 
-  return `C${initials}${sequentialNumber}`;
+  return `CLI-${companyCode}-${sequentialNumber}`;
 };
 
 /**
@@ -139,16 +135,15 @@ export const suggestClientCode = (establishment, existingClients = []) => {
     return generateClientCode(null, 1);
   }
 
-  const establishmentName =
-    establishment.name ||
-    establishment.person?.name ||
-    establishment.person_name ||
-    "ESTABELECIMENTO";
+  // Extrair código da empresa do código do estabelecimento (EST-057-002 → 057)
+  const establishmentCode = establishment.code || `EST-000-001`;
+  const companyCodeMatch = establishmentCode.match(/EST-(\d{3})-\d{3}/);
+  const companyCode = companyCodeMatch ? companyCodeMatch[1] : "000";
+  const prefix = `CLI-${companyCode}-`;
 
-  const initials = extractEstablishmentInitials(establishmentName);
-  const prefix = `C${initials}`;
-
-  console.log(`🔍 Gerando código para estabelecimento: ${establishmentName}`);
+  console.log(`🔍 Gerando código para estabelecimento: ${establishment.name || establishment.person?.name}`);
+  console.log(`📋 Código do estabelecimento: ${establishmentCode}`);
+  console.log(`📋 Código da empresa extraído: ${companyCode}`);
   console.log(`📋 Prefixo: ${prefix}`);
   console.log(`📊 Clientes existentes: ${existingClients.length}`);
 
@@ -158,8 +153,8 @@ export const suggestClientCode = (establishment, existingClients = []) => {
   existingClients.forEach((client) => {
     const code = client.client_code || client.code;
     if (code && code.startsWith(prefix)) {
-      // Extrair número do final do código
-      const match = code.match(/(\d+)$/);
+      // Extrair número do final do código (após o último hífen)
+      const match = code.match(/-(\d+)$/);
       if (match) {
         const sequence = parseInt(match[1], 10);
         if (sequence > maxSequence) {
@@ -193,21 +188,21 @@ export const validateClientCode = (code) => {
 
   const cleanCode = code.trim().toUpperCase();
 
-  // Verificar formato: C + 2-3 letras + 3 dígitos
-  const formatRegex = /^C[A-Z]{2,3}\d{3}$/;
+  // Verificar formato: CLI-XXX-XXX (onde X são dígitos)
+  const formatRegex = /^CLI-\d{3}-\d{3}$/;
 
   if (!formatRegex.test(cleanCode)) {
     return {
       isValid: false,
       message:
-        "Formato inválido. Use: C + iniciais (2-3 letras) + sequencial (3 dígitos). Ex: CHSC001",
+        "Formato inválido. Use: CLI-XXX-XXX (onde X são dígitos). Ex: CLI-057-001",
     };
   }
 
-  if (cleanCode.length < 6 || cleanCode.length > 7) {
+  if (cleanCode.length !== 11) {
     return {
       isValid: false,
-      message: "Código deve ter entre 6 e 7 caracteres",
+      message: "Código deve ter exatamente 11 caracteres (CLI-XXX-XXX)",
     };
   }
 
@@ -251,24 +246,24 @@ export const isClientCodeDuplicated = (
 export const getClientCodeExamples = () => {
   return [
     {
-      establishment: "Hospital Santa Catarina",
-      expected: "CHSC001",
-      explanation: "C + HSC (Hospital Santa Catarina) + 001",
+      establishment: { code: "EST-057-001", name: "Hospital Santa Catarina" },
+      expected: "CLI-057-001",
+      explanation: "CLI + código da empresa (057) + sequencial (001)",
     },
     {
-      establishment: "Clínica Médica Avançada",
-      expected: "CCMA001",
-      explanation: "C + CMA (Clínica Médica Avançada) + 001",
+      establishment: { code: "EST-012-002", name: "Clínica Médica Avançada" },
+      expected: "CLI-012-001",
+      explanation: "CLI + código da empresa (012) + sequencial (001)",
     },
     {
-      establishment: "UPA Central Norte",
-      expected: "CCN001",
-      explanation: "C + CN (Central Norte) + 001 (UPA removido)",
+      establishment: { code: "EST-123-001", name: "UPA Central Norte" },
+      expected: "CLI-123-001",
+      explanation: "CLI + código da empresa (123) + sequencial (001)",
     },
     {
-      establishment: "Centro Cardiológico",
-      expected: "CCAR001",
-      explanation: "C + CAR (palavra única, primeiras 3 letras) + 001",
+      establishment: { code: "EST-005-003", name: "Centro Cardiológico" },
+      expected: "CLI-005-001",
+      explanation: "CLI + código da empresa (005) + sequencial (001)",
     },
   ];
 };

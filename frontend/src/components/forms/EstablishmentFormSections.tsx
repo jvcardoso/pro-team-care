@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import Card from "../ui/Card";
 import Input from "../ui/Input";
 import Button from "../ui/Button";
 import CompanySearchInput from "../search/CompanySearchInput";
+import CompanyDataCopyModal from "../ui/CompanyDataCopyModal";
 import { mapCompanyDataToEstablishment } from "../../utils/companyDataMapper";
 import { formatTaxId } from "../../utils/formatters";
 import { establishmentsService } from "../../services/api";
@@ -73,6 +74,10 @@ export const EstablishmentBasicDataSection: React.FC<
   onUpdateEmails,
   onUpdateAddresses,
 }) => {
+  // Estado para controlar o modal de cópia de dados
+  const [showDataCopyModal, setShowDataCopyModal] = useState(false);
+  const [pendingCompanyForCopy, setPendingCompanyForCopy] = useState<Company | null>(null);
+
   // Encontrar a empresa selecionada para exibir no componente
   const selectedCompany = companies.find(
     (company) => company.id === formData.establishment.company_id
@@ -152,7 +157,13 @@ export const EstablishmentBasicDataSection: React.FC<
     }
   };
 
-  // Função para copiar dados da empresa para o formulário
+  // Função para mostrar modal de confirmação de cópia
+  const handleCompanyDataCopyRequest = (company: any) => {
+    setPendingCompanyForCopy(company);
+    setShowDataCopyModal(true);
+  };
+
+  // Função para executar cópia de dados da empresa para o formulário
   const handleCompanyDataCopy = (company: any) => {
     try {
       console.log("🔄 Iniciando cópia de dados da empresa:", company);
@@ -239,6 +250,7 @@ export const EstablishmentBasicDataSection: React.FC<
   ];
 
   return (
+    <>
     <Card
       title="Dados do Estabelecimento"
       icon={<Building className="h-5 w-5" />}
@@ -252,25 +264,46 @@ export const EstablishmentBasicDataSection: React.FC<
               <label className="block text-sm font-medium text-muted-foreground mb-2">
                 Empresa *
               </label>
-              <Input
-                value={
-                  selectedCompany?.name ||
-                  selectedCompany?.people?.name ||
-                  selectedCompany?.person?.name ||
-                  selectedCompany?.company?.name ||
-                  selectedCompany?.person_name ||
-                  "Empresa não encontrada"
-                }
-                disabled={true}
-                readOnly={true}
-                placeholder="Empresa vinculada"
-                icon={<Building className="h-4 w-4" />}
-                helper={
-                  isEditing
-                    ? "A empresa não pode ser alterada após a criação do estabelecimento"
-                    : "Empresa selecionada automaticamente"
-                }
-              />
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <Input
+                    value={
+                      selectedCompany?.people?.name ||
+                      selectedCompany?.person?.name ||
+                      selectedCompany?.name ||
+                      selectedCompany?.person_name ||
+                      `Empresa ID ${formData.establishment.company_id}` ||
+                      "Carregando empresa..."
+                    }
+                    disabled={true}
+                    readOnly={true}
+                    placeholder="Empresa vinculada"
+                    icon={<Building className="h-4 w-4" />}
+                  />
+                </div>
+                {isCompanyPreselected && selectedCompany && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    outline
+                    onClick={() => handleCompanyDataCopyRequest(selectedCompany)}
+                    disabled={loading}
+                    icon={<Wand2 className="h-4 w-4" />}
+                    className="shrink-0"
+                    title="Copiar dados da empresa para o estabelecimento"
+                  >
+                    <span className="hidden sm:inline">Copiar Dados</span>
+                    <span className="sm:hidden">Copiar</span>
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {isEditing
+                  ? "A empresa não pode ser alterada após a criação do estabelecimento"
+                  : isCompanyPreselected
+                  ? "Empresa selecionada automaticamente. Use 'Copiar Dados' para preencher o formulário."
+                  : "Empresa selecionada automaticamente"}
+              </p>
             </div>
           ) : (
             // Modo criação: permitir seleção de empresa
@@ -345,7 +378,7 @@ export const EstablishmentBasicDataSection: React.FC<
                   onChange={(e) =>
                     onUpdateEstablishment("code", e.target.value.toUpperCase())
                   }
-                  placeholder="Ex: EHSC001, EABS002"
+                  placeholder="Ex: EST-057-001, EST-012-002"
                   required
                   disabled={loading}
                   icon={<Building className="h-4 w-4" />}
@@ -372,16 +405,7 @@ export const EstablishmentBasicDataSection: React.FC<
             </div>
             {selectedCompany && (
               <p className="text-xs text-muted-foreground mt-1">
-                💡 Formato: E + iniciais da empresa + sequencial (Ex: E
-                {selectedCompany.name
-                  ? selectedCompany.name
-                      .split(" ")
-                      .slice(0, 3)
-                      .map((w) => w[0])
-                      .join("")
-                      .toUpperCase()
-                  : "ABC"}
-                001)
+                💡 Formato: EST-{String(selectedCompany.id || 0).padStart(3, "0")}-XXX (Ex: EST-{String(selectedCompany.id || 0).padStart(3, "0")}-001)
               </p>
             )}
           </div>
@@ -519,6 +543,26 @@ export const EstablishmentBasicDataSection: React.FC<
         </div>
       </div>
     </Card>
+
+    {/* Modal de confirmação de cópia de dados */}
+    {showDataCopyModal && pendingCompanyForCopy && (
+      <CompanyDataCopyModal
+        isOpen={showDataCopyModal}
+        company={pendingCompanyForCopy}
+        onConfirm={(shouldCopy) => {
+          if (shouldCopy) {
+            handleCompanyDataCopy(pendingCompanyForCopy);
+          }
+          setShowDataCopyModal(false);
+          setPendingCompanyForCopy(null);
+        }}
+        onCancel={() => {
+          setShowDataCopyModal(false);
+          setPendingCompanyForCopy(null);
+        }}
+      />
+    )}
+    </>
   );
 };
 

@@ -2,6 +2,7 @@
 Views PostgreSQL mapeadas como modelos SQLAlchemy read-only
 """
 
+from typing import Any
 from sqlalchemy import (
     JSON,
     BigInteger,
@@ -12,9 +13,10 @@ from sqlalchemy import (
     String,
     Text,
 )
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import DeclarativeBase
 
-Base = declarative_base()
+class Base(DeclarativeBase):
+    pass
 
 
 # =====================================

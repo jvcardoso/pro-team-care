@@ -1,5 +1,6 @@
 from typing import Optional
 
+from typing import Any
 from sqlalchemy import (
     JSON,
     BigInteger,
@@ -18,10 +19,12 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
-Base = declarative_base()
+
+class Base(DeclarativeBase):
+    pass
 
 
 class People(Base):
@@ -38,7 +41,7 @@ class People(Base):
         Index("people_tax_id_idx", "tax_id"),
         Index("people_name_idx", "name"),
         Index("people_status_idx", "status"),
-        Index("people_metadata_fulltext", "metadata", postgresql_using="gin"),
+        # Index("people_metadata_fulltext", "metadata", postgresql_using="gin"),  # Disabled due to GIN index issue
         {"schema": "master"},
     )
 
@@ -99,10 +102,18 @@ class People(Base):
 class Company(Base):
     __tablename__ = "companies"
     __table_args__ = (
+        CheckConstraint(
+            "access_status IN ('pending_contract', 'contract_signed', 'pending_user', 'active', 'suspended')",
+            name="companies_access_status_check",
+        ),
         UniqueConstraint("person_id", name="companies_person_id_unique"),
         Index("companies_person_id_idx", "person_id"),
-        Index("companies_metadata_fulltext", "metadata", postgresql_using="gin"),
-        Index("companies_settings_fulltext", "settings", postgresql_using="gin"),
+        Index("companies_access_status_idx", "access_status"),
+        Index("companies_contract_accepted_at_idx", "contract_accepted_at"),
+        Index("companies_activated_at_idx", "activated_at"),
+        Index("companies_activation_sent_at_idx", "activation_sent_at"),
+        # Index("companies_metadata_fulltext", "metadata", postgresql_using="gin"),  # Disabled due to GIN index issue
+        # Index("companies_settings_fulltext", "settings", postgresql_using="gin"),  # Disabled due to GIN index issue
         {"schema": "master"},
     )
 
@@ -114,6 +125,19 @@ class Company(Base):
     metadata_ = Column("metadata", JSON)
     display_order = Column(Integer, default=0)
 
+    # Company activation fields
+    access_status = Column(String(20), default="pending_contract")
+    contract_terms_version = Column(String(10), nullable=True)
+    contract_accepted_at = Column(DateTime, nullable=True)
+    contract_accepted_by = Column(String(255), nullable=True)
+    contract_ip_address = Column(String(45), nullable=True)
+    activation_sent_at = Column(DateTime, nullable=True)
+    activation_sent_to = Column(String(255), nullable=True)
+    activated_at = Column(DateTime, nullable=True)
+    activated_by_user_id = Column(
+        BigInteger, ForeignKey("master.users.id"), nullable=True
+    )
+
     # Audit fields
     created_at = Column(DateTime, nullable=False, default=func.now())
     updated_at = Column(
@@ -123,6 +147,15 @@ class Company(Base):
 
     # Relationships
     people = relationship("People", back_populates="company", foreign_keys=[person_id])
+    establishments = relationship("Establishments", back_populates="company")
+    users = relationship("User", back_populates="company", foreign_keys="[User.company_id]")
+    activated_by_user = relationship(
+        "User", foreign_keys=[activated_by_user_id], uselist=False
+    )
+
+    # B2B Billing relationships
+    subscriptions = relationship("CompanySubscription", back_populates="company", cascade="all, delete-orphan")
+    proteamcare_invoices = relationship("ProTeamCareInvoice", back_populates="company", cascade="all, delete-orphan")
 
 
 class Establishments(Base):
@@ -173,7 +206,9 @@ class Establishments(Base):
 
     # Relationships
     person = relationship("People", foreign_keys=[person_id])
-    company = relationship("Company", foreign_keys=[company_id])
+    company = relationship(
+        "Company", back_populates="establishments", foreign_keys=[company_id]
+    )
 
 
 class Phone(Base):
@@ -400,7 +435,7 @@ class Menu(Base):
         Index("menus_permission_idx", "permission_name"),
         Index("menus_status_visible_idx", "status", "is_visible", "visible_in_menu"),
         Index("menus_context_idx", "company_specific", "establishment_specific"),
-        Index("menus_fulltext_idx", "full_path_name", postgresql_using="gin"),
+        # Index("menus_fulltext_idx", "full_path_name", postgresql_using="gin"),  # Disabled due to GIN index issue
         # Constraint de slug único por nível
         UniqueConstraint("slug", "parent_id", name="menus_slug_parent_unique"),
         {"schema": "master"},
@@ -570,7 +605,7 @@ class User(Base):
 
     # Relationships
     person = relationship("People", back_populates="user")
-    company = relationship("Company", foreign_keys=[company_id])
+    company = relationship("Company", back_populates="users", foreign_keys=[company_id])
     establishment = relationship("Establishments", foreign_keys=[establishment_id])
     invited_by = relationship(
         "User", remote_side=[id], foreign_keys=[invited_by_user_id]
@@ -938,6 +973,7 @@ class Client(Base):
     # Relationships
     person = relationship("People", back_populates="clients")
     establishment = relationship("Establishments", back_populates="clients")
+    contracts = relationship("Contract", back_populates="client")
 
 
 # Adicionar relacionamento inverso em People
@@ -968,3 +1004,1228 @@ People.clients = relationship(
 Establishments.user_establishments = relationship(
     "UserEstablishment", back_populates="establishment", cascade="all, delete-orphan"
 )
+
+
+# =============================
+# HOME CARE CONTRACT MODELS
+# =============================
+
+
+class ServicesCatalog(Base):
+    """Catálogo de serviços home care"""
+
+    __tablename__ = "services_catalog"
+    __table_args__ = (
+        CheckConstraint(
+            "service_category IN ('ENFERMAGEM', 'FISIOTERAPIA', 'MEDICINA', 'NUTRIÇÃO', 'PSICOLOGIA', 'FONOAUDIOLOGIA', 'TERAPIA_OCUPACIONAL', 'EQUIPAMENTO')",
+            name="services_catalog_category_check",
+        ),
+        CheckConstraint(
+            "service_type IN ('VISITA', 'PROCEDIMENTO', 'MEDICAÇÃO', 'EQUIPAMENTO', 'CONSULTA', 'TERAPIA', 'EXAME', 'LOCAÇÃO')",
+            name="services_catalog_type_check",
+        ),
+        CheckConstraint(
+            "billing_unit IN ('UNIT', 'HOUR', 'DAY', 'WEEK', 'MONTH', 'SESSION')",
+            name="services_catalog_billing_unit_check",
+        ),
+        CheckConstraint(
+            "status IN ('active', 'inactive', 'draft')",
+            name="services_catalog_status_check",
+        ),
+        UniqueConstraint("service_code", name="services_catalog_code_unique"),
+        Index("services_catalog_category_idx", "service_category"),
+        Index("services_catalog_type_idx", "service_type"),
+        Index("services_catalog_status_idx", "status"),
+        Index("services_catalog_code_idx", "service_code"),
+        {"schema": "master"},
+    )
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    service_code = Column(String(20), nullable=False)
+    service_name = Column(String(100), nullable=False)
+    service_category = Column(String(50), nullable=False)
+    service_type = Column(String(30), nullable=False)
+
+    # Características do Serviço
+    requires_prescription = Column(Boolean, default=False)
+    requires_specialist = Column(Boolean, default=False)
+    home_visit_required = Column(Boolean, default=True)
+
+    # Valores e Controle
+    default_unit_value = Column(Numeric(10, 2))
+    billing_unit = Column(String(20), default="UNIT")
+
+    # Regulamentações
+    anvisa_regulated = Column(Boolean, default=False)
+    requires_authorization = Column(Boolean, default=False)
+
+    # Descrição e instruções
+    description = Column(Text)
+    instructions = Column(Text)
+    contraindications = Column(Text)
+
+    # Status
+    status = Column(String(20), default="active")
+
+    # Audit fields
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_at = Column(
+        DateTime, nullable=False, default=func.now(), onupdate=func.now()
+    )
+
+
+class Contract(Base):
+    """Contratos home care"""
+
+    __tablename__ = "contracts"
+    __table_args__ = (
+        CheckConstraint(
+            "contract_type IN ('INDIVIDUAL', 'CORPORATIVO', 'EMPRESARIAL')",
+            name="contracts_type_check",
+        ),
+        CheckConstraint(
+            "control_period IN ('DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY')",
+            name="contracts_control_period_check",
+        ),
+        CheckConstraint(
+            "status IN ('active', 'inactive', 'suspended', 'cancelled', 'expired')",
+            name="contracts_status_check",
+        ),
+        UniqueConstraint("contract_number", name="contracts_number_unique"),
+        Index("contracts_client_id_idx", "client_id"),
+        Index("contracts_status_idx", "status"),
+        Index("contracts_start_date_idx", "start_date"),
+        Index("contracts_number_idx", "contract_number"),
+        {"schema": "master"},
+    )
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    client_id = Column(BigInteger, ForeignKey("master.clients.id"), nullable=False)
+    contract_number = Column(String(50), nullable=False)
+    contract_type = Column(String(20), nullable=False)
+
+    # Controle de Vidas
+    lives_contracted = Column(Integer, nullable=False, default=1)
+    lives_minimum = Column(Integer)  # tolerância mínima
+    lives_maximum = Column(Integer)  # tolerância máxima
+
+    # Flexibilidade
+    allows_substitution = Column(Boolean, default=False)
+    control_period = Column(String(10), default="MONTHLY")
+
+    # Dados do Contrato
+    plan_name = Column(String(100), nullable=False)
+    monthly_value = Column(Numeric(10, 2), nullable=False)
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date)
+
+    # Localização (múltiplos endereços)
+    service_address_type = Column(String(10), default="PATIENT")
+    service_addresses = Column(JSON)
+
+    # Status
+    status = Column(String(20), default="active")
+
+    # Observações
+    notes = Column(Text)  # Campo para observações do contrato
+
+    # Audit fields
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_at = Column(
+        DateTime, nullable=False, default=func.now(), onupdate=func.now()
+    )
+    created_by = Column(BigInteger, ForeignKey("master.users.id"))
+    updated_by = Column(BigInteger, ForeignKey("master.users.id"))
+
+    # Relationships
+    client = relationship("Client", back_populates="contracts")
+    lives = relationship(
+        "ContractLive", back_populates="contract", overlaps="contract_lives"
+    )
+    services = relationship(
+        "ContractService", back_populates="contract", overlaps="contract_services"
+    )
+    billing_schedule = relationship(
+        "ContractBillingSchedule", back_populates="contract", uselist=False
+    )
+    invoices = relationship(
+        "ContractInvoice", back_populates="contract", cascade="all, delete-orphan"
+    )
+
+
+class ContractLive(Base):
+    """Vidas vinculadas aos contratos"""
+
+    __tablename__ = "contract_lives"
+    __table_args__ = (
+        CheckConstraint(
+            "relationship_type IN ('TITULAR', 'DEPENDENTE', 'FUNCIONARIO', 'BENEFICIARIO')",
+            name="contract_lives_relationship_check",
+        ),
+        CheckConstraint(
+            "status IN ('active', 'inactive', 'substituted', 'cancelled')",
+            name="contract_lives_status_check",
+        ),
+        UniqueConstraint(
+            "contract_id",
+            "person_id",
+            "start_date",
+            name="contract_lives_unique_period",
+        ),
+        Index("contract_lives_contract_id_idx", "contract_id"),
+        Index("contract_lives_person_id_idx", "person_id"),
+        Index("contract_lives_status_idx", "status"),
+        Index("contract_lives_date_range_idx", "start_date", "end_date"),
+        {"schema": "master"},
+    )
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    contract_id = Column(BigInteger, ForeignKey("master.contracts.id"), nullable=False)
+    person_id = Column(BigInteger, ForeignKey("master.people.id"), nullable=False)
+
+    # Período de Vinculação
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date)  # NULL = ativa
+
+    # Tipo de Relação
+    relationship_type = Column(String(20), nullable=False)
+
+    # Status
+    status = Column(String(20), default="active")
+    substitution_reason = Column(String(100))
+
+    # Localização Específica
+    primary_service_address = Column(JSON)
+
+    # Audit fields
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_at = Column(
+        DateTime, nullable=False, default=func.now(), onupdate=func.now()
+    )
+    created_by = Column(BigInteger, ForeignKey("master.users.id"))
+
+    # Relationships
+    contract = relationship("Contract", back_populates="lives")
+
+
+class ContractService(Base):
+    """Serviços permitidos no contrato"""
+
+    __tablename__ = "contract_services"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('active', 'inactive', 'suspended')",
+            name="contract_services_status_check",
+        ),
+        UniqueConstraint(
+            "contract_id",
+            "service_id",
+            "start_date",
+            name="contract_services_unique_period",
+        ),
+        Index("contract_services_contract_id_idx", "contract_id"),
+        Index("contract_services_service_id_idx", "service_id"),
+        Index("contract_services_status_idx", "status"),
+        Index("contract_services_date_range_idx", "start_date", "end_date"),
+        {"schema": "master"},
+    )
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    contract_id = Column(BigInteger, ForeignKey("master.contracts.id"), nullable=False)
+    service_id = Column(
+        BigInteger, ForeignKey("master.services_catalog.id"), nullable=False
+    )
+
+    # Limites e Controles do Contrato
+    monthly_limit = Column(Integer)  # quantidade máxima por mês por vida
+    daily_limit = Column(Integer)  # quantidade máxima por dia por vida
+    annual_limit = Column(Integer)  # limite anual por vida
+
+    # Valores Específicos do Contrato
+    unit_value = Column(Numeric(10, 2))  # valor específico para este contrato
+    requires_pre_authorization = Column(Boolean, default=False)
+
+    # Período de Validade
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date)
+
+    # Status
+    status = Column(String(20), default="active")
+
+    # Audit fields
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_by = Column(BigInteger, ForeignKey("master.users.id"))
+
+    # Relationships
+    contract = relationship("Contract", back_populates="services")
+
+
+class ContractLifeService(Base):
+    """Serviços específicos por vida"""
+
+    __tablename__ = "contract_life_services"
+    __table_args__ = (
+        CheckConstraint(
+            "priority_level IN ('URGENT', 'HIGH', 'NORMAL', 'LOW')",
+            name="contract_life_services_priority_check",
+        ),
+        CheckConstraint(
+            "status IN ('active', 'inactive', 'suspended')",
+            name="contract_life_services_status_check",
+        ),
+        UniqueConstraint(
+            "contract_life_id",
+            "service_id",
+            "start_date",
+            name="contract_life_services_unique_period",
+        ),
+        Index("contract_life_services_contract_life_id_idx", "contract_life_id"),
+        Index("contract_life_services_service_id_idx", "service_id"),
+        Index("contract_life_services_status_idx", "status"),
+        Index("contract_life_services_authorized_idx", "is_authorized"),
+        {"schema": "master"},
+    )
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    contract_life_id = Column(
+        BigInteger, ForeignKey("master.contract_lives.id"), nullable=False
+    )
+    service_id = Column(
+        BigInteger, ForeignKey("master.services_catalog.id"), nullable=False
+    )
+
+    # Autorização Individual
+    is_authorized = Column(Boolean, default=True)
+    authorization_date = Column(Date)
+    authorized_by = Column(
+        BigInteger, ForeignKey("master.users.id")
+    )  # médico responsável
+
+    # Limites Individuais (sobrepõem os do contrato)
+    monthly_limit_override = Column(Integer)
+    daily_limit_override = Column(Integer)
+    annual_limit_override = Column(Integer)
+
+    # Dados Médicos
+    medical_indication = Column(Text)
+    contraindications = Column(Text)
+    special_instructions = Column(Text)
+    priority_level = Column(String(20), default="NORMAL")
+
+    # Período de Autorização
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date)
+
+    # Status
+    status = Column(String(20), default="active")
+
+    # Audit fields
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_at = Column(
+        DateTime, nullable=False, default=func.now(), onupdate=func.now()
+    )
+    created_by = Column(BigInteger, ForeignKey("master.users.id"))
+
+
+# Classe ServiceExecution removida - definição duplicada existe mais abaixo
+
+
+# =============================
+# RELATIONSHIPS FOR CONTRACT MODELS
+# =============================
+
+# Contract relationships
+Contract.client = relationship("Client", back_populates="contracts")
+Contract.contract_lives = relationship(
+    "ContractLive", back_populates="contract", cascade="all, delete-orphan"
+)
+Contract.contract_services = relationship(
+    "ContractService", back_populates="contract", cascade="all, delete-orphan"
+)
+
+# ContractLive relationships
+ContractLive.contract = relationship("Contract", back_populates="contract_lives")
+ContractLive.person = relationship("People", back_populates="contract_lives")
+ContractLive.life_services = relationship(
+    "ContractLifeService", back_populates="contract_life", cascade="all, delete-orphan"
+)
+# ContractLive.service_executions = relationship("ServiceExecution", back_populates="contract_life", cascade="all, delete-orphan")  # Comentado - ServiceExecution antiga removida
+
+# ContractService relationships
+ContractService.contract = relationship("Contract", back_populates="contract_services")
+ContractService.service = relationship(
+    "ServicesCatalog", back_populates="contract_services"
+)
+
+# ContractLifeService relationships
+ContractLifeService.contract_life = relationship(
+    "ContractLive", back_populates="life_services"
+)
+ContractLifeService.service = relationship(
+    "ServicesCatalog", back_populates="life_services"
+)
+
+# ServiceExecution relationships - COMENTADO: ServiceExecution antiga foi removida, nova definição existe mais abaixo
+# ServiceExecution.contract_life = relationship("ContractLive", back_populates="service_executions")
+# ServiceExecution.service = relationship("ServicesCatalog", back_populates="service_executions")
+# ServiceExecution.professional = relationship("User", foreign_keys=[ServiceExecution.professional_id])
+
+# ServicesCatalog relationships
+ServicesCatalog.contract_services = relationship(
+    "ContractService", back_populates="service"
+)
+ServicesCatalog.life_services = relationship(
+    "ContractLifeService", back_populates="service"
+)
+# ServicesCatalog.service_executions = relationship("ServiceExecution", back_populates="service")  # Comentado - ServiceExecution antiga removida
+
+
+# Medical Authorization Models
+class MedicalAuthorization(Base):
+    """Autorizações médicas para serviços"""
+
+    __tablename__ = "medical_authorizations"
+    __table_args__ = {"schema": "master"}
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    contract_life_id = Column(
+        BigInteger, ForeignKey("master.contract_lives.id"), nullable=False
+    )
+    service_id = Column(
+        BigInteger, ForeignKey("master.services_catalog.id"), nullable=False
+    )
+    doctor_id = Column(BigInteger, ForeignKey("master.users.id"), nullable=False)
+    authorization_code = Column(String(50), nullable=False, unique=True)
+    authorization_date = Column(Date, nullable=False)
+    valid_from = Column(Date, nullable=False)
+    valid_until = Column(Date, nullable=False)
+
+    # Session limits
+    sessions_authorized = Column(Integer)
+    sessions_remaining = Column(Integer)
+    monthly_limit = Column(Integer)
+    weekly_limit = Column(Integer)
+    daily_limit = Column(Integer)
+
+    # Medical information
+    medical_indication = Column(Text, nullable=False)
+    contraindications = Column(Text)
+    special_instructions = Column(Text)
+    urgency_level = Column(String(20), default="NORMAL")
+    requires_supervision = Column(Boolean, default=False)
+    supervision_notes = Column(Text)
+    diagnosis_cid = Column(String(10))
+    diagnosis_description = Column(Text)
+    treatment_goals = Column(Text)
+    expected_duration_days = Column(Integer)
+
+    # Renewal
+    renewal_allowed = Column(Boolean, default=True)
+    renewal_conditions = Column(Text)
+
+    # Status
+    status = Column(String(20), default="active")
+    cancellation_reason = Column(Text)
+    cancelled_at = Column(DateTime)
+    cancelled_by = Column(BigInteger, ForeignKey("master.users.id"))
+
+    # Audit
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_at = Column(
+        DateTime, nullable=False, default=func.now(), onupdate=func.now()
+    )
+    created_by = Column(BigInteger, ForeignKey("master.users.id"))
+    updated_by = Column(BigInteger, ForeignKey("master.users.id"))
+
+    # Relationships
+    contract_life = relationship(
+        "ContractLive", back_populates="medical_authorizations"
+    )
+    service = relationship("ServicesCatalog", back_populates="medical_authorizations")
+    doctor = relationship("User", foreign_keys=[doctor_id])
+    cancelled_by_user = relationship("User", foreign_keys=[cancelled_by])
+    created_by_user = relationship("User", foreign_keys=[created_by])
+    updated_by_user = relationship("User", foreign_keys=[updated_by])
+    renewals_as_original = relationship(
+        "AuthorizationRenewal",
+        foreign_keys="AuthorizationRenewal.original_authorization_id",
+        back_populates="original_authorization",
+    )
+    renewals_as_new = relationship(
+        "AuthorizationRenewal",
+        foreign_keys="AuthorizationRenewal.new_authorization_id",
+        back_populates="new_authorization",
+    )
+    history = relationship("AuthorizationHistory", back_populates="authorization")
+
+
+class AuthorizationRenewal(Base):
+    """Renovações de autorizações médicas"""
+
+    __tablename__ = "authorization_renewals"
+    __table_args__ = {"schema": "master"}
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    original_authorization_id = Column(
+        BigInteger, ForeignKey("master.medical_authorizations.id"), nullable=False
+    )
+    new_authorization_id = Column(
+        BigInteger, ForeignKey("master.medical_authorizations.id"), nullable=False
+    )
+    renewal_date = Column(Date, nullable=False)
+    renewal_reason = Column(Text)
+    changes_made = Column(Text)
+    approved_by = Column(BigInteger, ForeignKey("master.users.id"), nullable=False)
+    created_at = Column(DateTime, nullable=False, default=func.now())
+
+    # Relationships
+    original_authorization = relationship(
+        "MedicalAuthorization",
+        foreign_keys=[original_authorization_id],
+        back_populates="renewals_as_original",
+    )
+    new_authorization = relationship(
+        "MedicalAuthorization",
+        foreign_keys=[new_authorization_id],
+        back_populates="renewals_as_new",
+    )
+    approved_by_user = relationship("User")
+
+
+class AuthorizationHistory(Base):
+    """Histórico de mudanças em autorizações"""
+
+    __tablename__ = "authorization_history"
+    __table_args__ = {"schema": "master"}
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    authorization_id = Column(
+        BigInteger, ForeignKey("master.medical_authorizations.id"), nullable=False
+    )
+    action = Column(String(50), nullable=False)
+    field_changed = Column(String(100))
+    old_value = Column(Text)
+    new_value = Column(Text)
+    reason = Column(Text)
+    performed_by = Column(BigInteger, ForeignKey("master.users.id"), nullable=False)
+    performed_at = Column(DateTime, nullable=False, default=func.now())
+    ip_address = Column(String(45))
+    user_agent = Column(Text)
+
+    # Relationships
+    authorization = relationship("MedicalAuthorization", back_populates="history")
+    performed_by_user = relationship("User")
+
+
+# Add reverse relationships to existing models
+Client.contracts = relationship(
+    "Contract", back_populates="client", cascade="all, delete-orphan"
+)
+People.contract_lives = relationship(
+    "ContractLive", back_populates="person", cascade="all, delete-orphan"
+)
+
+# Update ContractLive to include medical authorizations
+ContractLive.medical_authorizations = relationship(
+    "MedicalAuthorization", back_populates="contract_life", cascade="all, delete-orphan"
+)
+
+# Update ServicesCatalog to include medical authorizations
+ServicesCatalog.medical_authorizations = relationship(
+    "MedicalAuthorization", back_populates="service"
+)
+
+
+# === LIMITS CONTROL MODELS ===
+
+
+class LimitsConfiguration(Base):
+    """Configuração de limites automáticos"""
+
+    __tablename__ = "limits_configuration"
+    __table_args__ = {"schema": "master"}
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    limit_type = Column(String(20), nullable=False)  # sessions, financial, frequency
+    entity_type = Column(
+        String(20), nullable=False
+    )  # authorization, contract, service, global
+    entity_id = Column(BigInteger)  # ID da entidade (pode ser null para globais)
+    limit_value = Column(Numeric(15, 2), nullable=False)
+    limit_period = Column(String(20))  # daily, weekly, monthly
+    description = Column(Text)
+    override_allowed = Column(Boolean, default=False, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+
+class ServiceUsageTracking(Base):
+    """Rastreamento de uso de serviços"""
+
+    __tablename__ = "service_usage_tracking"
+    __table_args__ = {"schema": "master"}
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    authorization_id = Column(
+        BigInteger, ForeignKey("master.medical_authorizations.id"), nullable=False
+    )
+    sessions_used = Column(Integer, nullable=False)
+    execution_date = Column(Date, nullable=False)
+    executed_by = Column(BigInteger, ForeignKey("master.users.id"), nullable=False)
+    notes = Column(Text)
+    created_at = Column(DateTime, nullable=False, default=func.now())
+
+    # Relationships
+    authorization = relationship("MedicalAuthorization")
+    executed_by_user = relationship("User")
+
+
+class LimitsViolation(Base):
+    """Violações de limites"""
+
+    __tablename__ = "limits_violations"
+    __table_args__ = {"schema": "master"}
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    authorization_id = Column(
+        BigInteger, ForeignKey("master.medical_authorizations.id"), nullable=False
+    )
+    violation_type = Column(
+        String(50), nullable=False
+    )  # sessions_exceeded, financial_exceeded, etc
+    attempted_value = Column(Numeric(15, 2), nullable=False)
+    limit_value = Column(Numeric(15, 2), nullable=False)
+    description = Column(Text, nullable=False)
+    detected_by = Column(BigInteger, ForeignKey("master.users.id"), nullable=False)
+    detected_at = Column(DateTime, nullable=False, default=func.now())
+
+    # Relationships
+    authorization = relationship("MedicalAuthorization")
+    detected_by_user = relationship("User")
+
+
+class AlertsConfiguration(Base):
+    """Configuração de alertas"""
+
+    __tablename__ = "alerts_configuration"
+    __table_args__ = {"schema": "master"}
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    alert_type = Column(
+        String(30), nullable=False
+    )  # limit_warning, expiry_warning, etc
+    entity_type = Column(
+        String(20), nullable=False
+    )  # authorization, contract, service, global
+    entity_id = Column(BigInteger)  # ID da entidade (pode ser null para globais)
+    threshold_value = Column(Numeric(15, 2))
+    threshold_percentage = Column(Numeric(5, 2))
+    message_template = Column(Text, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+
+class AlertsLog(Base):
+    """Log de alertas disparados"""
+
+    __tablename__ = "alerts_log"
+    __table_args__ = {"schema": "master"}
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    alert_config_id = Column(
+        BigInteger, ForeignKey("master.alerts_configuration.id"), nullable=False
+    )
+    entity_id = Column(BigInteger, nullable=False)
+    message = Column(Text, nullable=False)
+    severity = Column(
+        String(20), nullable=False, default="medium"
+    )  # low, medium, high, critical
+    data = Column(JSON)  # Dados contextuais do alerta
+    created_at = Column(DateTime, nullable=False, default=func.now())
+
+    # Relationships
+    alert_config = relationship("AlertsConfiguration")
+
+
+# === SERVICE EXECUTION MODELS ===
+
+
+class ServiceExecution(Base):
+    """Execução de serviços home care"""
+
+    __tablename__ = "service_executions"
+    __table_args__ = {"schema": "master"}
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    authorization_id = Column(
+        BigInteger, ForeignKey("master.medical_authorizations.id"), nullable=False
+    )
+    professional_id = Column(BigInteger, ForeignKey("master.users.id"), nullable=False)
+    patient_id = Column(BigInteger, ForeignKey("master.users.id"), nullable=False)
+    service_id = Column(
+        BigInteger, ForeignKey("master.services_catalog.id"), nullable=False
+    )
+    execution_code = Column(String(30), nullable=False, unique=True)
+    execution_date = Column(Date, nullable=False)
+    start_time = Column(Time, nullable=False)
+    end_time = Column(Time)
+    duration_minutes = Column(Integer)
+    sessions_consumed = Column(Integer, nullable=False, default=1)
+    location_type = Column(
+        String(20), nullable=False
+    )  # home, clinic, hospital, telemedicine
+    address_id = Column(BigInteger, ForeignKey("master.addresses.id"))
+    coordinates = Column(String(50))  # GPS coordinates
+    status = Column(
+        String(20), nullable=False, default="scheduled"
+    )  # scheduled, in_progress, completed, cancelled, no_show
+    pre_execution_notes = Column(Text)
+    execution_notes = Column(Text)
+    post_execution_notes = Column(Text)
+    patient_signature = Column(Text)  # Base64 signature
+    professional_signature = Column(Text)  # Base64 signature
+    materials_used = Column(JSON)
+    equipment_used = Column(JSON)
+    complications = Column(Text)
+    next_session_recommended = Column(Date)
+    satisfaction_rating = Column(Integer)  # 1-5 scale
+    satisfaction_comments = Column(Text)
+    photos = Column(JSON)  # Array of photo metadata
+    documents = Column(JSON)  # Array of document metadata
+    billing_amount = Column(Numeric(10, 2))
+    billing_status = Column(
+        String(20), default="pending"
+    )  # pending, approved, rejected, paid
+    cancelled_reason = Column(Text)
+    cancelled_by = Column(BigInteger, ForeignKey("master.users.id"))
+    cancelled_at = Column(DateTime)
+    created_by = Column(BigInteger, ForeignKey("master.users.id"), nullable=False)
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_by = Column(BigInteger, ForeignKey("master.users.id"))
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    # Relationships
+    authorization = relationship("MedicalAuthorization")
+    professional = relationship("User", foreign_keys=[professional_id])
+    patient = relationship("User", foreign_keys=[patient_id])
+    service = relationship("ServicesCatalog")
+    address = relationship("Address")
+    cancelled_by_user = relationship("User", foreign_keys=[cancelled_by])
+    created_by_user = relationship("User", foreign_keys=[created_by])
+    updated_by_user = relationship("User", foreign_keys=[updated_by])
+    checklists = relationship(
+        "ExecutionChecklist", back_populates="execution", cascade="all, delete-orphan"
+    )
+
+
+class ProfessionalSchedule(Base):
+    """Agenda dos profissionais"""
+
+    __tablename__ = "professional_schedules"
+    __table_args__ = {"schema": "master"}
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    professional_id = Column(BigInteger, ForeignKey("master.users.id"), nullable=False)
+    date = Column(Date, nullable=False)
+    start_time = Column(Time, nullable=False)
+    end_time = Column(Time, nullable=False)
+    is_available = Column(Boolean, nullable=False, default=True)
+    location_preference = Column(String(20))  # home, clinic, any
+    max_distance_km = Column(Integer)
+    notes = Column(Text)
+    created_by = Column(BigInteger, ForeignKey("master.users.id"), nullable=False)
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_by = Column(BigInteger, ForeignKey("master.users.id"))
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    # Relationships
+    professional = relationship("User", foreign_keys=[professional_id])
+    created_by_user = relationship("User", foreign_keys=[created_by])
+    updated_by_user = relationship("User", foreign_keys=[updated_by])
+
+
+class ExecutionChecklist(Base):
+    """Checklist de execução de serviços"""
+
+    __tablename__ = "execution_checklists"
+    __table_args__ = {"schema": "master"}
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    execution_id = Column(
+        BigInteger, ForeignKey("master.service_executions.id"), nullable=False
+    )
+    checklist_type = Column(
+        String(30), nullable=False
+    )  # pre_execution, during_execution, post_execution
+    item_code = Column(String(50), nullable=False)
+    item_description = Column(String(200), nullable=False)
+    is_required = Column(Boolean, nullable=False, default=True)
+    is_completed = Column(Boolean, nullable=False, default=False)
+    completed_at = Column(DateTime)
+    completed_by = Column(BigInteger, ForeignKey("master.users.id"))
+    notes = Column(Text)
+    created_at = Column(DateTime, nullable=False, default=func.now())
+
+    # Relationships
+    execution = relationship("ServiceExecution", back_populates="checklists")
+    completed_by_user = relationship("User")
+
+
+# === AUTOMATED REPORTS MODELS ===
+
+
+class AutomatedReport(Base):
+    """Relatórios automáticos gerados"""
+
+    __tablename__ = "automated_reports"
+    __table_args__ = {"schema": "master"}
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    report_type = Column(
+        String(30), nullable=False
+    )  # monthly_contract, monthly_company, annual_summary
+    company_id = Column(BigInteger, ForeignKey("master.companies.id"))
+    contract_id = Column(BigInteger, ForeignKey("master.contracts.id"))
+    report_year = Column(Integer, nullable=False)
+    report_month = Column(Integer)  # NULL para relatórios anuais
+    generated_at = Column(DateTime, nullable=False)
+    report_data = Column(JSON, nullable=False)  # Dados completos do relatório
+    file_path = Column(String(500))  # Caminho para arquivo PDF/Excel se gerado
+    email_sent = Column(Boolean, default=False)  # Flag se foi enviado por email
+    email_sent_at = Column(DateTime)
+    recipients = Column(JSON)  # Lista de destinatários do email
+    status = Column(
+        String(20), default="generated"
+    )  # generated, sent, archived, failed
+    error_message = Column(Text)  # Mensagem de erro se falhou
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    # Relationships
+    company = relationship("Company")
+    contract = relationship("Contract")
+
+
+class ReportSchedule(Base):
+    """Agendamentos para geração automática de relatórios"""
+
+    __tablename__ = "report_schedules"
+    __table_args__ = {"schema": "master"}
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    schedule_name = Column(String(100), nullable=False)
+    schedule_type = Column(String(20), nullable=False)  # monthly, quarterly, annual
+    company_id = Column(
+        BigInteger, ForeignKey("master.companies.id")
+    )  # NULL = todas as empresas
+    contract_id = Column(
+        BigInteger, ForeignKey("master.contracts.id")
+    )  # NULL = todos os contratos da empresa
+    report_types = Column(JSON, nullable=False)  # Tipos de relatório a gerar
+    recipients = Column(JSON, nullable=False)  # Lista de emails destinatários
+    is_active = Column(Boolean, nullable=False, default=True)
+    next_execution = Column(DateTime, nullable=False)
+    last_execution = Column(DateTime)
+    execution_day = Column(Integer)  # Dia do mês para execução (1-31)
+    execution_hour = Column(Integer, default=8)  # Hora de execução (0-23)
+    timezone = Column(String(50), default="America/Sao_Paulo")
+    created_by = Column(BigInteger, ForeignKey("master.users.id"), nullable=False)
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_by = Column(BigInteger, ForeignKey("master.users.id"))
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    # Relationships
+    company = relationship("Company")
+    contract = relationship("Contract")
+    created_by_user = relationship("User", foreign_keys=[created_by])
+    updated_by_user = relationship("User", foreign_keys=[updated_by])
+
+
+class ReportExecutionLog(Base):
+    """Log de execução de relatórios"""
+
+    __tablename__ = "report_execution_log"
+    __table_args__ = {"schema": "master"}
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    schedule_id = Column(
+        BigInteger, ForeignKey("master.report_schedules.id")
+    )  # NULL para execuções manuais
+    execution_type = Column(String(20), nullable=False)  # scheduled, manual, api
+    started_at = Column(DateTime, nullable=False)
+    completed_at = Column(DateTime)
+    status = Column(String(20), nullable=False)  # running, completed, failed
+    total_reports = Column(Integer, default=0)
+    successful_reports = Column(Integer, default=0)
+    failed_reports = Column(Integer, default=0)
+    execution_summary = Column(JSON)  # Resumo detalhado da execução
+    error_details = Column(Text)
+    triggered_by = Column(
+        BigInteger, ForeignKey("master.users.id")
+    )  # User que iniciou execução manual
+
+    # Relationships
+    schedule = relationship("ReportSchedule")
+    triggered_by_user = relationship("User")
+
+
+# === BILLING SYSTEM MODELS ===
+
+
+class ContractBillingSchedule(Base):
+    """Agenda de faturamento para contratos"""
+
+    __tablename__ = "contract_billing_schedules"
+    __table_args__ = (
+        CheckConstraint(
+            "billing_cycle IN ('DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'SEMI_ANNUAL', 'ANNUAL')",
+            name="contract_billing_schedules_cycle_check",
+        ),
+        CheckConstraint(
+            "billing_day >= 1 AND billing_day <= 31",
+            name="contract_billing_schedules_day_check",
+        ),
+        CheckConstraint(
+            "billing_method IN ('recurrent', 'manual')",
+            name="billing_method_check",
+        ),
+        UniqueConstraint("contract_id", name="contract_billing_schedules_contract_unique"),
+        Index("contract_billing_schedules_contract_id_idx", "contract_id"),
+        Index("contract_billing_schedules_next_billing_idx", "next_billing_date"),
+        Index("contract_billing_schedules_is_active_idx", "is_active"),
+        Index("contract_billing_schedules_billing_method_idx", "billing_method"),
+        Index("contract_billing_schedules_pagbank_subscription_idx", "pagbank_subscription_id"),
+        Index("contract_billing_schedules_pagbank_customer_idx", "pagbank_customer_id"),
+        {"schema": "master"},
+    )
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    contract_id = Column(BigInteger, ForeignKey("master.contracts.id", ondelete="CASCADE"), nullable=False)
+    billing_cycle = Column(String(20), nullable=False, default="MONTHLY")
+    billing_day = Column(Integer, nullable=False, default=1)
+    next_billing_date = Column(Date, nullable=False)
+    amount_per_cycle = Column(Numeric(10, 2), nullable=False)
+    is_active = Column(Boolean, default=True)
+
+    # PagBank integration fields
+    billing_method = Column(String(20), default="manual")
+    pagbank_subscription_id = Column(String(100))
+    pagbank_customer_id = Column(String(100))
+    auto_fallback_enabled = Column(Boolean, default=True)
+    last_attempt_date = Column(Date)
+    attempt_count = Column(Integer, default=0)
+
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_at = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
+    created_by = Column(BigInteger, ForeignKey("master.users.id"))
+
+    # Relationships
+    contract = relationship("Contract", back_populates="billing_schedule")
+    created_by_user = relationship("User")
+
+
+class ContractInvoice(Base):
+    """Faturas de contratos"""
+
+    __tablename__ = "contract_invoices"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('pendente', 'enviada', 'paga', 'vencida', 'cancelada', 'em_atraso')",
+            name="contract_invoices_status_check",
+        ),
+        CheckConstraint(
+            "lives_count >= 0",
+            name="contract_invoices_lives_count_check",
+        ),
+        CheckConstraint(
+            "base_amount >= 0",
+            name="contract_invoices_base_amount_check",
+        ),
+        CheckConstraint(
+            "total_amount >= 0",
+            name="contract_invoices_total_amount_check",
+        ),
+        UniqueConstraint("invoice_number", name="contract_invoices_number_unique"),
+        Index("contract_invoices_contract_id_idx", "contract_id"),
+        Index("contract_invoices_status_idx", "status"),
+        Index("contract_invoices_due_date_idx", "due_date"),
+        Index("contract_invoices_issued_date_idx", "issued_date"),
+        Index("contract_invoices_billing_period_idx", "billing_period_start", "billing_period_end"),
+        Index("contract_invoices_number_idx", "invoice_number"),
+        {"schema": "master"},
+    )
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    contract_id = Column(BigInteger, ForeignKey("master.contracts.id", ondelete="CASCADE"), nullable=False)
+    invoice_number = Column(String(50), nullable=False)
+    billing_period_start = Column(Date, nullable=False)
+    billing_period_end = Column(Date, nullable=False)
+    lives_count = Column(Integer, nullable=False)
+    base_amount = Column(Numeric(10, 2), nullable=False)
+    additional_services_amount = Column(Numeric(10, 2), default=0.00)
+    discounts = Column(Numeric(10, 2), default=0.00)
+    taxes = Column(Numeric(10, 2), default=0.00)
+    total_amount = Column(Numeric(10, 2), nullable=False)
+    status = Column(String(20), nullable=False, default="pendente")
+    due_date = Column(Date, nullable=False)
+    issued_date = Column(Date, nullable=False, default=func.current_date())
+    paid_date = Column(Date)
+    payment_method = Column(String(50))
+    payment_reference = Column(String(100))
+    payment_notes = Column(Text)
+    observations = Column(Text)
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_at = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
+    created_by = Column(BigInteger, ForeignKey("master.users.id"))
+    updated_by = Column(BigInteger, ForeignKey("master.users.id"))
+
+    # Relationships
+    contract = relationship("Contract", back_populates="invoices")
+    receipts = relationship("PaymentReceipt", back_populates="invoice", cascade="all, delete-orphan")
+    pagbank_transactions = relationship("PagBankTransaction", back_populates="invoice", cascade="all, delete-orphan")
+    created_by_user = relationship("User", foreign_keys=[created_by])
+    updated_by_user = relationship("User", foreign_keys=[updated_by])
+
+
+class PaymentReceipt(Base):
+    """Comprovantes de pagamento"""
+
+    __tablename__ = "payment_receipts"
+    __table_args__ = (
+        CheckConstraint(
+            "verification_status IN ('pendente', 'aprovado', 'rejeitado')",
+            name="payment_receipts_verification_status_check",
+        ),
+        CheckConstraint(
+            "file_size >= 0",
+            name="payment_receipts_file_size_check",
+        ),
+        Index("payment_receipts_invoice_id_idx", "invoice_id"),
+        Index("payment_receipts_verification_status_idx", "verification_status"),
+        Index("payment_receipts_upload_date_idx", "upload_date"),
+        Index("payment_receipts_uploaded_by_idx", "uploaded_by"),
+        {"schema": "master"},
+    )
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    invoice_id = Column(BigInteger, ForeignKey("master.contract_invoices.id", ondelete="CASCADE"), nullable=False)
+    file_name = Column(String(255), nullable=False)
+    file_path = Column(String(500), nullable=False)
+    file_type = Column(String(10))
+    file_size = Column(BigInteger)
+    upload_date = Column(DateTime, nullable=False, default=func.now())
+    verification_status = Column(String(20), default="pendente")
+    verified_by = Column(BigInteger, ForeignKey("master.users.id"))
+    verified_at = Column(DateTime)
+    notes = Column(Text)
+    uploaded_by = Column(BigInteger, ForeignKey("master.users.id"))
+
+    # Relationships
+    invoice = relationship("ContractInvoice", back_populates="receipts")
+    uploaded_by_user = relationship("User", foreign_keys=[uploaded_by])
+    verified_by_user = relationship("User", foreign_keys=[verified_by])
+
+
+class BillingAuditLog(Base):
+    """Log de auditoria para operações de faturamento"""
+
+    __tablename__ = "billing_audit_log"
+    __table_args__ = (
+        CheckConstraint(
+            "entity_type IN ('invoice', 'receipt', 'schedule')",
+            name="billing_audit_log_entity_type_check",
+        ),
+        CheckConstraint(
+            "action IN ('created', 'updated', 'deleted', 'status_changed')",
+            name="billing_audit_log_action_check",
+        ),
+        Index("billing_audit_log_entity_idx", "entity_type", "entity_id"),
+        Index("billing_audit_log_timestamp_idx", "timestamp"),
+        Index("billing_audit_log_user_id_idx", "user_id"),
+        {"schema": "master"},
+    )
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    entity_type = Column(String(50), nullable=False)
+    entity_id = Column(BigInteger, nullable=False)
+    action = Column(String(20), nullable=False)
+    old_values = Column(JSON)
+    new_values = Column(JSON)
+    user_id = Column(BigInteger, ForeignKey("master.users.id"))
+    timestamp = Column(DateTime, nullable=False, default=func.now())
+    ip_address = Column(String(45))
+    user_agent = Column(String(500))
+
+    # Relationships
+    user = relationship("User")
+
+
+class PagBankTransaction(Base):
+    """Transações PagBank para billing"""
+
+    __tablename__ = "pagbank_transactions"
+    __table_args__ = (
+        CheckConstraint(
+            "transaction_type IN ('recurrent', 'checkout')",
+            name="pagbank_trans_type_check",
+        ),
+        CheckConstraint(
+            "status IN ('pending', 'approved', 'declined', 'failed', 'cancelled')",
+            name="pagbank_status_check",
+        ),
+        CheckConstraint(
+            "amount >= 0",
+            name="pagbank_amount_check",
+        ),
+        Index("pagbank_transactions_invoice_id_idx", "invoice_id"),
+        Index("pagbank_transactions_status_idx", "status"),
+        Index("pagbank_transactions_type_idx", "transaction_type"),
+        Index("pagbank_transactions_pagbank_transaction_id_idx", "pagbank_transaction_id"),
+        Index("pagbank_transactions_pagbank_charge_id_idx", "pagbank_charge_id"),
+        Index("pagbank_transactions_created_at_idx", "created_at"),
+        {"schema": "master"},
+    )
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    invoice_id = Column(BigInteger, ForeignKey("master.contract_invoices.id", ondelete="CASCADE"), nullable=False)
+    transaction_type = Column(String(20), nullable=False)
+    pagbank_transaction_id = Column(String(100))
+    pagbank_charge_id = Column(String(100))
+    status = Column(String(20), nullable=False)
+    amount = Column(Numeric(10, 2), nullable=False)
+    payment_method = Column(String(20))
+    error_message = Column(Text)
+    webhook_data = Column(JSON)
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_at = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
+
+    # Relationships
+    invoice = relationship("ContractInvoice", back_populates="pagbank_transactions")
+
+
+# =============================
+# B2B BILLING MODELS (Pro Team Care)
+# =============================
+
+
+class SubscriptionPlan(Base):
+    """Planos de assinatura do Pro Team Care"""
+
+    __tablename__ = "subscription_plans"
+    __table_args__ = (
+        CheckConstraint(
+            "monthly_price >= 0",
+            name="subscription_plans_price_check",
+        ),
+        Index("subscription_plans_name_idx", "name"),
+        Index("subscription_plans_is_active_idx", "is_active"),
+        {"schema": "master"},
+    )
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    name = Column(String(50), nullable=False)
+    description = Column(Text)
+    monthly_price = Column(Numeric(10, 2), nullable=False)
+    features = Column(JSON)
+    max_users = Column(Integer)
+    max_establishments = Column(Integer)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_at = Column(DateTime, nullable=True)
+
+    # Relationships
+    company_subscriptions = relationship("CompanySubscription", back_populates="plan")
+
+
+class CompanySubscription(Base):
+    """Assinaturas das empresas clientes"""
+
+    __tablename__ = "company_subscriptions"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('active', 'cancelled', 'suspended', 'expired')",
+            name="company_subscriptions_status_check",
+        ),
+        CheckConstraint(
+            "payment_method IN ('manual', 'recurrent')",
+            name="company_subscriptions_payment_method_check",
+        ),
+        CheckConstraint(
+            "billing_day >= 1 AND billing_day <= 31",
+            name="company_subscriptions_billing_day_check",
+        ),
+        Index("company_subscriptions_company_id_idx", "company_id"),
+        Index("company_subscriptions_plan_id_idx", "plan_id"),
+        Index("company_subscriptions_status_idx", "status"),
+        Index("company_subscriptions_payment_method_idx", "payment_method"),
+        {"schema": "master"},
+    )
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    company_id = Column(BigInteger, ForeignKey("master.companies.id", ondelete="CASCADE"), nullable=False)
+    plan_id = Column(BigInteger, ForeignKey("master.subscription_plans.id"), nullable=False)
+    status = Column(String(20), nullable=False, default="active")
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date)
+    billing_day = Column(Integer, nullable=False, default=1)
+    payment_method = Column(String(20), nullable=False, default="manual")
+    pagbank_subscription_id = Column(String(100))
+    auto_renew = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_at = Column(DateTime)
+
+    # Relationships
+    company = relationship("Company", back_populates="subscriptions")
+    plan = relationship("SubscriptionPlan", back_populates="company_subscriptions")
+    invoices = relationship("ProTeamCareInvoice", back_populates="subscription")
+
+
+class ProTeamCareInvoice(Base):
+    """Faturas do Pro Team Care para empresas clientes"""
+
+    __tablename__ = "proteamcare_invoices"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('pending', 'paid', 'overdue', 'cancelled')",
+            name="proteamcare_invoices_status_check",
+        ),
+        CheckConstraint(
+            "payment_method IN ('manual', 'recurrent')",
+            name="proteamcare_invoices_payment_method_check",
+        ),
+        CheckConstraint(
+            "amount >= 0",
+            name="proteamcare_invoices_amount_check",
+        ),
+        UniqueConstraint("invoice_number", name="proteamcare_invoices_number_unique"),
+        Index("proteamcare_invoices_company_id_idx", "company_id"),
+        Index("proteamcare_invoices_subscription_id_idx", "subscription_id"),
+        Index("proteamcare_invoices_status_idx", "status"),
+        Index("proteamcare_invoices_due_date_idx", "due_date"),
+        Index("proteamcare_invoices_invoice_number_idx", "invoice_number"),
+        {"schema": "master"},
+    )
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    company_id = Column(BigInteger, ForeignKey("master.companies.id", ondelete="CASCADE"), nullable=False)
+    subscription_id = Column(BigInteger, ForeignKey("master.company_subscriptions.id", ondelete="CASCADE"), nullable=False)
+    invoice_number = Column(String(50), nullable=False)
+    amount = Column(Numeric(10, 2), nullable=False)
+    billing_period_start = Column(Date, nullable=False)
+    billing_period_end = Column(Date, nullable=False)
+    due_date = Column(Date, nullable=False)
+    status = Column(String(20), nullable=False, default="pending")
+    payment_method = Column(String(20), nullable=False, default="manual")
+    paid_at = Column(DateTime)
+    pagbank_checkout_url = Column(Text)
+    pagbank_session_id = Column(String(100))
+    pagbank_transaction_id = Column(String(100))
+    notes = Column(Text)
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_at = Column(DateTime)
+
+    # Relationships
+    company = relationship("Company", back_populates="proteamcare_invoices")
+    subscription = relationship("CompanySubscription", back_populates="invoices")

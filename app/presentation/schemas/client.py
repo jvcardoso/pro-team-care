@@ -129,10 +129,14 @@ class PersonBaseForClient(BaseModel):
         clean_tax_id = re.sub(r"\D", "", v)
 
         if len(clean_tax_id) == 11:
-            # CPF - manter limpo para armazenamento no banco
+            # CPF - validar formato básico
+            if not clean_tax_id.isdigit():
+                raise ValueError("CPF deve conter apenas números")
             return clean_tax_id
         elif len(clean_tax_id) == 14:
-            # CNPJ - manter limpo para armazenamento no banco
+            # CNPJ - validar formato básico
+            if not clean_tax_id.isdigit():
+                raise ValueError("CNPJ deve conter apenas números")
             return clean_tax_id
         else:
             raise ValueError("tax_id deve ter 11 dígitos (CPF) ou 14 dígitos (CNPJ)")

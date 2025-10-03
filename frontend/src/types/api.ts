@@ -155,6 +155,58 @@ export interface CompanyFormData {
   addresses: Address[];
 }
 
+// 🏢 Company List Interface - Para listagem em tabelas
+export interface CompanyList {
+  id: number;
+  name: string;
+  trade_name?: string;
+  tax_id: string;
+  person_type: PersonType;
+  status: CompanyStatus;
+  tax_regime?: TaxRegime;
+  city?: string;
+  state?: BrazilianState;
+  created_at: string;
+  updated_at?: string;
+  // Campos calculados para a tabela
+  primary_phone?: string;
+  primary_email?: string;
+  full_address?: string;
+}
+
+// 🏢 Company Detailed Interface - Para visualização detalhada
+export interface CompanyDetailed {
+  id: number;
+  people: People;
+  phones: Phone[];
+  emails: Email[];
+  addresses: Address[];
+  created_at: string;
+  updated_at?: string;
+  metadata?: Record<string, any>;
+}
+
+// 🏢 Company Create Interface - Para criação
+export interface CompanyCreate {
+  people: Omit<People, "id">;
+  phones?: Phone[];
+  emails?: Email[];
+  addresses?: Address[];
+  company?: {
+    settings?: Record<string, any>;
+    metadata?: Record<string, any>;
+    display_order?: number;
+  };
+}
+
+// 🏢 Company Update Interface - Para atualização
+export interface CompanyUpdate {
+  people?: Partial<People>;
+  phones?: Phone[];
+  emails?: Email[];
+  addresses?: Address[];
+}
+
 // 👤 Client Interfaces - Sincronizado com Client models
 
 // Person para Client - dados completos da pessoa física/jurídica

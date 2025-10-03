@@ -839,7 +839,7 @@ class ClientRepository:
                 select(Phone)
                 .where(
                     and_(
-                        Phone.phoneable_type == "App\\Models\\Person",
+                        Phone.phoneable_type == "people",
                         Phone.phoneable_id == person_id,
                         Phone.deleted_at.is_(None),
                     )
@@ -854,7 +854,7 @@ class ClientRepository:
                 select(Email)
                 .where(
                     and_(
-                        Email.emailable_type == "App\\Models\\Person",
+                        Email.emailable_type == "people",
                         Email.emailable_id == person_id,
                         Email.deleted_at.is_(None),
                     )
@@ -869,7 +869,7 @@ class ClientRepository:
                 select(Address)
                 .where(
                     and_(
-                        Address.addressable_type == "App\\Models\\Person",
+                        Address.addressable_type == "people",
                         Address.addressable_id == person_id,
                         Address.deleted_at.is_(None),
                     )
@@ -955,9 +955,9 @@ class ClientRepository:
             status=client_entity.status,
             created_at=self._to_naive_datetime(client_entity.created_at),
             updated_at=self._to_naive_datetime(client_entity.updated_at),
-            name=client_entity.person.name,
-            tax_id=client_entity.person.tax_id,
-            person_type=client_entity.person.person_type,
+            name=client_entity.person.name if client_entity.person else f"Cliente {client_entity.id}",
+            tax_id=client_entity.person.tax_id if client_entity.person else "",
+            person_type=client_entity.person.person_type if client_entity.person else "PF",
             person=person_data,
             establishment_name=establishment_name or "",
             establishment_code=establishment_code or "",

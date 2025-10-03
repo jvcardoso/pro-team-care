@@ -11,9 +11,9 @@ import {
   Settings,
   LogOut,
   Mail,
-  Search,
   ChevronDown,
   X,
+  Command,
 } from "lucide-react";
 
 const Header = ({
@@ -22,6 +22,7 @@ const Header = ({
   breadcrumb,
   isMobile,
   sidebarOpen,
+  onOpenCommandPalette, // Nova prop para abrir o CommandPalette
 }) => {
   const { theme, toggleTheme, isDark } = useTheme();
   const { user, logout, loading } = useAuth();
@@ -176,35 +177,16 @@ const Header = ({
                   <h1 className="text-sm font-semibold text-gray-900 dark:text-white">
                     Pro Team Care
                   </h1>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    AdminLTE Style
-                  </p>
+                   <p className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                     Cuidados de Saúde e Bem Estar da Pessoa
+                   </p>
                 </div>
               </div>
             </div>
-
-            {/* Breadcrumb */}
-            {breadcrumb && (
-              <nav className="hidden md:flex text-sm text-gray-500 dark:text-gray-400 ml-4">
-                {breadcrumb}
-              </nav>
-            )}
           </div>
 
           {/* Right Section */}
           <div className="flex items-center space-x-2">
-            {/* Search - Desktop only */}
-            <div className="hidden lg:block">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <input
-                  type="text"
-                  placeholder="Buscar..."
-                  className="pl-10 pr-4 py-2 w-64 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-500 dark:focus:border-blue-500 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                />
-              </div>
-            </div>
-
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
@@ -412,6 +394,24 @@ const Header = ({
                       <Settings className="h-4 w-4 mr-3" />
                       Configurações
                     </a>
+                    <hr className="my-1 border-gray-200 dark:border-gray-600" />
+                    <button
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        if (onOpenCommandPalette) {
+                          onOpenCommandPalette();
+                        }
+                      }}
+                      className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      <Command className="h-4 w-4 mr-3" />
+                      <div className="flex-1 flex items-center justify-between">
+                        <span>Executar Programa</span>
+                        <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">
+                          Ctrl+Alt+X
+                        </span>
+                      </div>
+                    </button>
                     <hr className="my-1 border-gray-200 dark:border-gray-600" />
                     <button
                       onClick={handleLogout}
