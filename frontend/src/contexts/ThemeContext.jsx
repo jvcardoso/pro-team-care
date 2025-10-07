@@ -10,7 +10,10 @@ export const ThemeProvider = ({ children }) => {
   // Inicializar com valor do localStorage imediatamente (síncrono)
   const getInitialTheme = () => {
     const savedTheme = localStorage.getItem("pro-team-care-theme");
-    console.log("🎨 ThemeContext: Carregando tema inicial do localStorage:", savedTheme);
+    console.log(
+      "🎨 ThemeContext: Carregando tema inicial do localStorage:",
+      savedTheme
+    );
     if (savedTheme) {
       return savedTheme;
     }

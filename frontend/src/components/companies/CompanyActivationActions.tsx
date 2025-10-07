@@ -4,14 +4,14 @@
  * Exibe botões de ação baseados no status de ativação da empresa
  */
 
-import React, { useState } from 'react';
-import { Mail, RefreshCw, Eye, CheckCircle } from 'lucide-react';
-import Button from '../ui/Button';
+import React, { useState } from "react";
+import { Mail, RefreshCw, Eye, CheckCircle } from "lucide-react";
+import Button from "../ui/Button";
 import companyActivationService, {
   canSendContractEmail,
   canResendEmail,
-} from '../../services/companyActivationService';
-import { notify } from '../../utils/notifications';
+} from "../../services/companyActivationService";
+import { notify } from "../../utils/notifications";
 
 interface CompanyActivationActionsProps {
   company: {
@@ -29,14 +29,16 @@ const CompanyActivationActions: React.FC<CompanyActivationActionsProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
-  const [recipientEmail, setRecipientEmail] = useState(company.activation_sent_to || '');
-  const [recipientName, setRecipientName] = useState('');
+  const [recipientEmail, setRecipientEmail] = useState(
+    company.activation_sent_to || ""
+  );
+  const [recipientName, setRecipientName] = useState("");
 
-  const status = company.access_status || 'pending_contract';
+  const status = company.access_status || "pending_contract";
 
   const handleSendContractEmail = async () => {
     if (!recipientEmail || !recipientName) {
-      notify.error('Preencha o email e nome do destinatário');
+      notify.error("Preencha o email e nome do destinatário");
       return;
     }
 
@@ -48,11 +50,11 @@ const CompanyActivationActions: React.FC<CompanyActivationActionsProps> = ({
         recipient_name: recipientName,
       });
 
-      notify.success('Email de ativação enviado com sucesso!');
+      notify.success("Email de ativação enviado com sucesso!");
       setShowEmailModal(false);
       onActionComplete?.();
     } catch (error: any) {
-      notify.error(error.response?.data?.detail || 'Erro ao enviar email');
+      notify.error(error.response?.data?.detail || "Erro ao enviar email");
     } finally {
       setLoading(false);
     }
@@ -62,10 +64,10 @@ const CompanyActivationActions: React.FC<CompanyActivationActionsProps> = ({
     try {
       setLoading(true);
       await companyActivationService.resendContractEmail(company.id);
-      notify.success('Email reenviado com sucesso!');
+      notify.success("Email reenviado com sucesso!");
       onActionComplete?.();
     } catch (error: any) {
-      notify.error(error.response?.data?.detail || 'Erro ao reenviar email');
+      notify.error(error.response?.data?.detail || "Erro ao reenviar email");
     } finally {
       setLoading(false);
     }
@@ -113,8 +115,8 @@ const CompanyActivationActions: React.FC<CompanyActivationActionsProps> = ({
 
           <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md">
             <p className="text-sm text-blue-800 dark:text-blue-300">
-              📧 O destinatário receberá um email com link para aceitar os termos de uso
-              do sistema. O link expira em 7 dias.
+              📧 O destinatário receberá um email com link para aceitar os
+              termos de uso do sistema. O link expira em 7 dias.
             </p>
           </div>
         </div>
@@ -135,7 +137,7 @@ const CompanyActivationActions: React.FC<CompanyActivationActionsProps> = ({
             disabled={loading}
             loading={loading}
           >
-            {loading ? 'Enviando...' : 'Enviar Email'}
+            {loading ? "Enviando..." : "Enviar Email"}
           </Button>
         </div>
       </div>

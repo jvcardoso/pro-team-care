@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import Card from '../ui/Card';
-import Button from '../ui/Button';
-import { Badge } from '../ui/Badge';
-import { notify } from '../../utils/notifications';
+import React, { useState, useEffect } from "react";
+import Card from "../ui/Card";
+import Button from "../ui/Button";
+import { Badge } from "../ui/Badge";
+import { notify } from "../../utils/notifications";
 import {
   CreditCard,
   Settings,
@@ -13,9 +13,9 @@ import {
   Building,
   Check,
   X,
-} from 'lucide-react';
-import { B2BBillingService } from '../../services/b2bBillingService';
-import type { SubscriptionPlan } from '../../types/b2b-billing.types';
+} from "lucide-react";
+import { B2BBillingService } from "../../services/b2bBillingService";
+import type { SubscriptionPlan } from "../../types/b2b-billing.types";
 
 interface SubscriptionPlansListProps {
   onCreatePlan: () => void;
@@ -39,10 +39,12 @@ const SubscriptionPlansList: React.FC<SubscriptionPlansListProps> = ({
   const loadPlans = async () => {
     try {
       setLoading(true);
-      const plansData = await B2BBillingService.getSubscriptionPlans(!showInactive);
+      const plansData = await B2BBillingService.getSubscriptionPlans(
+        !showInactive
+      );
       setPlans(plansData);
     } catch (err: any) {
-      notify.error('Erro ao carregar planos: ' + err.message);
+      notify.error("Erro ao carregar planos: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -55,18 +57,18 @@ const SubscriptionPlansList: React.FC<SubscriptionPlansListProps> = ({
 
     try {
       await B2BBillingService.deleteSubscriptionPlan(plan.id);
-      notify.success('Plano desativado com sucesso!');
+      notify.success("Plano desativado com sucesso!");
       loadPlans();
     } catch (err: any) {
-      notify.error('Erro ao desativar plano: ' + err.message);
+      notify.error("Erro ao desativar plano: " + err.message);
     }
   };
 
   const formatCurrency = (amount: number | string): string => {
-    const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
+    const numAmount = typeof amount === "string" ? parseFloat(amount) : amount;
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
     }).format(numAmount);
   };
 
@@ -76,13 +78,13 @@ const SubscriptionPlansList: React.FC<SubscriptionPlansListProps> = ({
     if (plan.max_users) {
       features.push(`Até ${plan.max_users} usuários`);
     } else {
-      features.push('Usuários ilimitados');
+      features.push("Usuários ilimitados");
     }
 
     if (plan.max_establishments) {
       features.push(`Até ${plan.max_establishments} estabelecimentos`);
     } else {
-      features.push('Estabelecimentos ilimitados');
+      features.push("Estabelecimentos ilimitados");
     }
 
     if (plan.features?.reports) {
@@ -94,7 +96,7 @@ const SubscriptionPlansList: React.FC<SubscriptionPlansListProps> = ({
     }
 
     if (plan.features?.analytics) {
-      features.push('Analytics avançado');
+      features.push("Analytics avançado");
     }
 
     if (plan.features?.integrations) {
@@ -102,7 +104,7 @@ const SubscriptionPlansList: React.FC<SubscriptionPlansListProps> = ({
     }
 
     if (plan.features?.custom_features) {
-      features.push('Recursos customizados');
+      features.push("Recursos customizados");
     }
 
     return features;
@@ -157,16 +159,24 @@ const SubscriptionPlansList: React.FC<SubscriptionPlansListProps> = ({
           <Card
             key={plan.id}
             className={`relative ${
-              !plan.is_active ? 'opacity-60 border-gray-300' : 'border-gray-200 hover:border-blue-300'
+              !plan.is_active
+                ? "opacity-60 border-gray-300"
+                : "border-gray-200 hover:border-blue-300"
             } transition-all duration-200`}
           >
             {/* Status Badge */}
             <div className="absolute top-4 right-4">
-              <Badge variant={plan.is_active ? 'success' : 'secondary'}>
+              <Badge variant={plan.is_active ? "success" : "secondary"}>
                 {plan.is_active ? (
-                  <><Check className="h-3 w-3 mr-1" />Ativo</>
+                  <>
+                    <Check className="h-3 w-3 mr-1" />
+                    Ativo
+                  </>
                 ) : (
-                  <><X className="h-3 w-3 mr-1" />Inativo</>
+                  <>
+                    <X className="h-3 w-3 mr-1" />
+                    Inativo
+                  </>
                 )}
               </Badge>
             </div>
@@ -177,12 +187,12 @@ const SubscriptionPlansList: React.FC<SubscriptionPlansListProps> = ({
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
                   {plan.name}
                 </h3>
-                <p className="text-gray-600 text-sm mb-3">
-                  {plan.description}
-                </p>
+                <p className="text-gray-600 text-sm mb-3">{plan.description}</p>
                 <div className="text-3xl font-bold text-blue-600">
                   {formatCurrency(plan.monthly_price)}
-                  <span className="text-sm font-normal text-gray-500">/mês</span>
+                  <span className="text-sm font-normal text-gray-500">
+                    /mês
+                  </span>
                 </div>
               </div>
 
@@ -190,24 +200,35 @@ const SubscriptionPlansList: React.FC<SubscriptionPlansListProps> = ({
               <div className="mb-4 space-y-2">
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Users className="h-4 w-4" />
-                  {plan.max_users ? `${plan.max_users} usuários` : 'Usuários ilimitados'}
+                  {plan.max_users
+                    ? `${plan.max_users} usuários`
+                    : "Usuários ilimitados"}
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Building className="h-4 w-4" />
-                  {plan.max_establishments ? `${plan.max_establishments} estabelecimentos` : 'Estabelecimentos ilimitados'}
+                  {plan.max_establishments
+                    ? `${plan.max_establishments} estabelecimentos`
+                    : "Estabelecimentos ilimitados"}
                 </div>
               </div>
 
               {/* Features */}
               <div className="mb-6">
-                <h4 className="text-sm font-semibold text-gray-900 mb-2">Recursos:</h4>
+                <h4 className="text-sm font-semibold text-gray-900 mb-2">
+                  Recursos:
+                </h4>
                 <ul className="space-y-1">
-                  {getFeaturesList(plan).slice(0, 4).map((feature, index) => (
-                    <li key={index} className="flex items-center gap-2 text-sm text-gray-600">
-                      <Check className="h-3 w-3 text-green-500 flex-shrink-0" />
-                      {feature}
-                    </li>
-                  ))}
+                  {getFeaturesList(plan)
+                    .slice(0, 4)
+                    .map((feature, index) => (
+                      <li
+                        key={index}
+                        className="flex items-center gap-2 text-sm text-gray-600"
+                      >
+                        <Check className="h-3 w-3 text-green-500 flex-shrink-0" />
+                        {feature}
+                      </li>
+                    ))}
                   {getFeaturesList(plan).length > 4 && (
                     <li className="text-sm text-gray-500">
                       +{getFeaturesList(plan).length - 4} outros recursos
@@ -253,12 +274,14 @@ const SubscriptionPlansList: React.FC<SubscriptionPlansListProps> = ({
             </h3>
             <p className="text-gray-500 mb-4">
               {showInactive
-                ? 'Não há planos inativos cadastrados.'
-                : 'Não há planos ativos cadastrados. Crie o primeiro plano para começar.'
-              }
+                ? "Não há planos inativos cadastrados."
+                : "Não há planos ativos cadastrados. Crie o primeiro plano para começar."}
             </p>
             {!showInactive && (
-              <Button onClick={onCreatePlan} className="flex items-center gap-2 mx-auto">
+              <Button
+                onClick={onCreatePlan}
+                className="flex items-center gap-2 mx-auto"
+              >
                 <Plus className="h-4 w-4" />
                 Criar Primeiro Plano
               </Button>

@@ -45,7 +45,9 @@ export const createContractsConfig = (actions?: {
       render: (value, item) => (
         <div className="whitespace-nowrap">
           <div className="text-base font-semibold">{value}</div>
-          <div className="font-normal text-gray-500 dark:text-gray-400">ID: {item.id}</div>
+          <div className="font-normal text-gray-500 dark:text-gray-400">
+            ID: {item.id}
+          </div>
         </div>
       ),
     },
@@ -471,20 +473,24 @@ function formatCurrency(
     type: typeof value,
     contractId,
     contractType,
-    lives
+    lives,
   });
 
   // 🔧 CORREÇÃO: Usar função utilitária robusta existente
-  let finalValue = typeof value === 'string'
-    ? parseCurrencyRobust(value)
-    : (value as number) || 0;
+  let finalValue =
+    typeof value === "string"
+      ? parseCurrencyRobust(value)
+      : (value as number) || 0;
 
   console.log("🔄 Parsing result:", { input: value, output: finalValue });
 
   // 🔧 CORREÇÃO: Validação mais robusta (permitir zero, mas não negativos)
-  if (finalValue === null || finalValue === undefined ||
-      isNaN(finalValue) || finalValue < 0) {
-
+  if (
+    finalValue === null ||
+    finalValue === undefined ||
+    isNaN(finalValue) ||
+    finalValue < 0
+  ) {
     console.log("⚠️ Usando fallback para contractId:", contractId);
 
     if (contractId && contractType && lives) {

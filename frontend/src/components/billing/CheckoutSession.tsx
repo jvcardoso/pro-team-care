@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Button } from '../ui/button';
-import { Alert, AlertDescription } from '../ui/alert';
-import { Badge } from '../ui/badge';
-import { Separator } from '../ui/separator';
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Button } from "../ui/button";
+import { Alert, AlertDescription } from "../ui/alert";
+import { Badge } from "../ui/badge";
+import { Separator } from "../ui/separator";
 import {
   Loader2,
   ExternalLink,
@@ -14,9 +14,12 @@ import {
   Copy,
   Clock,
   CheckCircle,
-  AlertCircle
-} from 'lucide-react';
-import { CheckoutSessionResponse, CheckoutState } from '../../types/pagbank.types';
+  AlertCircle,
+} from "lucide-react";
+import {
+  CheckoutSessionResponse,
+  CheckoutState,
+} from "../../types/pagbank.types";
 
 interface CheckoutSessionProps {
   invoiceId: number;
@@ -62,9 +65,12 @@ const CheckoutSession: React.FC<CheckoutSessionProps> = ({
         success: true,
         invoice_id: invoiceId,
         checkout_url: `https://sandbox.pagseguro.uol.com.br/checkout/${Date.now()}`,
-        session_id: 'SESS_' + Date.now(),
-        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        qr_code: '00020126360014BR.GOV.BCB.PIX0114+55119999999995204000053039865802BR5925Empresa Exemplo Ltda6009SAO PAULO61080540900062070503***63043D3D',
+        session_id: "SESS_" + Date.now(),
+        expires_at: new Date(
+          Date.now() + 7 * 24 * 60 * 60 * 1000
+        ).toISOString(),
+        qr_code:
+          "00020126360014BR.GOV.BCB.PIX0114+55119999999995204000053039865802BR5925Empresa Exemplo Ltda6009SAO PAULO61080540900062070503***63043D3D",
         transaction_id: Math.floor(Math.random() * 1000000),
       };
 
@@ -80,7 +86,7 @@ const CheckoutSession: React.FC<CheckoutSessionProps> = ({
     } catch (err: any) {
       setCheckoutState({
         loading: false,
-        error: err.message || 'Erro ao criar sessão de checkout',
+        error: err.message || "Erro ao criar sessão de checkout",
       });
     }
   };
@@ -93,25 +99,25 @@ const CheckoutSession: React.FC<CheckoutSessionProps> = ({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy QR code:', err);
+      console.error("Failed to copy QR code:", err);
     }
   };
 
   const handleOpenCheckout = () => {
     if (checkoutState.checkoutUrl) {
-      window.open(checkoutState.checkoutUrl, '_blank', 'noopener,noreferrer');
+      window.open(checkoutState.checkoutUrl, "_blank", "noopener,noreferrer");
     }
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
     }).format(amount);
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('pt-BR');
+    return new Date(dateString).toLocaleString("pt-BR");
   };
 
   const getTimeRemaining = (expiresAt: string) => {
@@ -119,7 +125,7 @@ const CheckoutSession: React.FC<CheckoutSessionProps> = ({
     const expiry = new Date(expiresAt).getTime();
     const diff = expiry - now;
 
-    if (diff <= 0) return 'Expirado';
+    if (diff <= 0) return "Expirado";
 
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -213,7 +219,8 @@ const CheckoutSession: React.FC<CheckoutSessionProps> = ({
 
           <div className="text-center space-y-4">
             <p className="text-gray-600">
-              Clique para criar uma sessão de pagamento segura com múltiplas opções:
+              Clique para criar uma sessão de pagamento segura com múltiplas
+              opções:
             </p>
 
             <div className="flex items-center justify-center gap-6 py-4">
@@ -231,7 +238,11 @@ const CheckoutSession: React.FC<CheckoutSessionProps> = ({
               </div>
             </div>
 
-            <Button onClick={handleCreateCheckout} size="lg" className="w-full max-w-sm">
+            <Button
+              onClick={handleCreateCheckout}
+              size="lg"
+              className="w-full max-w-sm"
+            >
               <ExternalLink className="mr-2 h-4 w-4" />
               Criar Link de Pagamento
             </Button>
@@ -263,7 +274,8 @@ const CheckoutSession: React.FC<CheckoutSessionProps> = ({
         <Alert className="border-green-200 bg-green-50">
           <CheckCircle className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-green-700">
-            Link de pagamento criado com sucesso! O cliente pode escolher entre PIX, Boleto ou Cartão.
+            Link de pagamento criado com sucesso! O cliente pode escolher entre
+            PIX, Boleto ou Cartão.
           </AlertDescription>
         </Alert>
 
@@ -315,7 +327,8 @@ const CheckoutSession: React.FC<CheckoutSessionProps> = ({
                   </Button>
                 </div>
                 <p className="text-xs text-gray-500">
-                  Copie este código para colar no app do banco ou escaneie o QR Code na página de pagamento
+                  Copie este código para colar no app do banco ou escaneie o QR
+                  Code na página de pagamento
                 </p>
               </div>
             </div>
@@ -332,14 +345,18 @@ const CheckoutSession: React.FC<CheckoutSessionProps> = ({
           {checkoutState.expiresAt && (
             <div>
               <span className="text-gray-500">Expira em:</span>
-              <p className="font-medium">{formatDate(checkoutState.expiresAt)}</p>
+              <p className="font-medium">
+                {formatDate(checkoutState.expiresAt)}
+              </p>
             </div>
           )}
         </div>
 
         {/* Instructions */}
         <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <h4 className="font-medium text-blue-900 mb-2">Instruções para o Cliente</h4>
+          <h4 className="font-medium text-blue-900 mb-2">
+            Instruções para o Cliente
+          </h4>
           <ul className="text-sm text-blue-700 space-y-1">
             <li>• Acesse o link de pagamento para ver todas as opções</li>
             <li>• Para PIX: use o QR Code ou copie o código acima</li>
@@ -351,10 +368,7 @@ const CheckoutSession: React.FC<CheckoutSessionProps> = ({
 
         {/* Actions */}
         <div className="flex items-center gap-3 pt-4 border-t">
-          <Button
-            onClick={handleOpenCheckout}
-            className="flex-1"
-          >
+          <Button onClick={handleOpenCheckout} className="flex-1">
             <ExternalLink className="mr-2 h-4 w-4" />
             Abrir Pagamento
           </Button>

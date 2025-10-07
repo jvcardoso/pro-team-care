@@ -71,7 +71,8 @@ const CompanyDetails = ({
   // Hook para tabela de clientes
   const clientsDataTableProps = useDataTable({
     config: createCompanyClientsConfig({
-      onView: (client) => navigate(`/admin/clientes/${client.id}?tab=informacoes`),
+      onView: (client) =>
+        navigate(`/admin/clientes/${client.id}?tab=informacoes`),
     }),
     initialData: clients,
   });
@@ -211,7 +212,11 @@ const CompanyDetails = ({
   const tabs = [
     { key: "informacoes", label: "Informações", shortLabel: "Info" },
     { key: "ativacao", label: "Ativação", shortLabel: "Ativa\u00e7\u00e3o" },
-    { key: "estabelecimentos", label: "Estabelecimentos", shortLabel: "Estab." },
+    {
+      key: "estabelecimentos",
+      label: "Estabelecimentos",
+      shortLabel: "Estab.",
+    },
     { key: "clientes", label: "Clientes", shortLabel: "Client." },
     { key: "profissionais", label: "Profissionais", shortLabel: "Profis." },
     { key: "pacientes", label: "Pacientes", shortLabel: "Pacient." },
@@ -244,21 +249,24 @@ const CompanyDetails = ({
           icon: <Building className="h-6 w-6" />,
           label: "Estabelecimentos",
           value: companyStats.establishments_count,
-          color: "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400",
+          color:
+            "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400",
           onClick: () => handleTabChange("estabelecimentos"),
         },
         {
           icon: <Users className="h-6 w-6" />,
           label: "Clientes",
           value: companyStats.clients_count,
-          color: "bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400",
+          color:
+            "bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400",
           onClick: () => handleTabChange("clientes"),
         },
         {
           icon: <Briefcase className="h-6 w-6" />,
           label: "Profissionais",
           value: companyStats.professionals_count,
-          color: "bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400",
+          color:
+            "bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400",
           onClick: () => handleTabChange("profissionais"),
         },
       ]
@@ -283,7 +291,10 @@ const CompanyDetails = ({
         }
         icon={<Building className="h-6 w-6" />}
         statusBadge={statusBadge}
-        backButton={{ onClick: () => navigate("/admin/empresas"), label: "Voltar" }}
+        backButton={{
+          onClick: () => navigate("/admin/empresas"),
+          label: "Voltar",
+        }}
         actionButtons={actionButtons}
         tabs={tabs}
         activeTab={activeTab}
@@ -379,7 +390,9 @@ const CompanyDetails = ({
               </div>
               <Button
                 onClick={() =>
-                  navigate(`/admin/estabelecimentos?companyId=${companyId}&action=create`)
+                  navigate(
+                    `/admin/estabelecimentos?companyId=${companyId}&action=create`
+                  )
                 }
                 icon={<Plus className="h-4 w-4" />}
                 className="w-full sm:w-auto whitespace-nowrap"
@@ -400,7 +413,9 @@ const CompanyDetails = ({
                 </p>
                 <Button
                   onClick={() =>
-                    navigate(`/admin/estabelecimentos?companyId=${companyId}&action=create`)
+                    navigate(
+                      `/admin/estabelecimentos?companyId=${companyId}&action=create`
+                    )
                   }
                   icon={<Plus className="h-4 w-4" />}
                 >
@@ -430,7 +445,9 @@ const CompanyDetails = ({
                         variant="secondary"
                         outline
                         onClick={() =>
-                          navigate(`/admin/estabelecimentos/${establishment.id}?tab=informacoes`)
+                          navigate(
+                            `/admin/estabelecimentos/${establishment.id}?tab=informacoes`
+                          )
                         }
                       >
                         Ver Detalhes
@@ -451,19 +468,23 @@ const CompanyDetails = ({
                 Clientes da Empresa
               </h3>
               <p className="text-muted-foreground">
-                Lista de todos os clientes da empresa em todos os estabelecimentos
+                Lista de todos os clientes da empresa em todos os
+                estabelecimentos
               </p>
             </div>
 
             {loadingClients ? (
               <div className="flex items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                <span className="ml-3 text-muted-foreground">Carregando clientes...</span>
+                <span className="ml-3 text-muted-foreground">
+                  Carregando clientes...
+                </span>
               </div>
             ) : (
               <DataTableTemplate
                 config={createCompanyClientsConfig({
-                  onView: (client) => navigate(`/admin/clientes/${client.id}?tab=informacoes`),
+                  onView: (client) =>
+                    navigate(`/admin/clientes/${client.id}?tab=informacoes`),
                 })}
                 tableData={clientsDataTableProps}
               />
@@ -501,7 +522,9 @@ const CompanyDetails = ({
         {activeTab === "usuarios" && (
           <div className="text-center py-12">
             <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">Usuários</h3>
+            <h3 className="text-lg font-medium text-foreground mb-2">
+              Usuários
+            </h3>
             <p className="text-muted-foreground">
               Em breve: Gerencie os usuários desta empresa
             </p>
@@ -515,7 +538,10 @@ const CompanyDetails = ({
               key={billingDataKey}
               company={{
                 id: company.id,
-                name: company.name || company.people?.name || `Empresa ${company.id}`,
+                name:
+                  company.name ||
+                  company.people?.name ||
+                  `Empresa ${company.id}`,
                 tax_id: company.people?.tax_id,
               }}
               onCreateSubscription={() => {

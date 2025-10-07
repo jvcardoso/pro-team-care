@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import Card from '../ui/Card';
-import Button from '../ui/Button';
-import { Badge } from '../ui/Badge';
-import { Alert } from '../ui/Alert';
-import { notify } from '../../utils/notifications';
+import React, { useState, useEffect } from "react";
+import Card from "../ui/Card";
+import Button from "../ui/Button";
+import { Badge } from "../ui/Badge";
+import { Alert } from "../ui/Alert";
+import { notify } from "../../utils/notifications";
 import {
   CreditCard,
   Calendar,
@@ -14,9 +14,13 @@ import {
   CheckCircle,
   Clock,
   ExternalLink,
-} from 'lucide-react';
-import { B2BBillingService } from '../../services/b2bBillingService';
-import type { CompanyBillingCardProps, CompanySubscription, ProTeamCareInvoice } from '../../types/b2b-billing.types';
+} from "lucide-react";
+import { B2BBillingService } from "../../services/b2bBillingService";
+import type {
+  CompanyBillingCardProps,
+  CompanySubscription,
+  ProTeamCareInvoice,
+} from "../../types/b2b-billing.types";
 
 const CompanyBillingCard: React.FC<CompanyBillingCardProps> = ({
   company,
@@ -25,8 +29,12 @@ const CompanyBillingCard: React.FC<CompanyBillingCardProps> = ({
   onManageSubscription,
   onCreateInvoice,
 }) => {
-  const [subscription, setSubscription] = useState<CompanySubscription | null>(initialSubscription || null);
-  const [recentInvoices, setRecentInvoices] = useState<ProTeamCareInvoice[]>([]);
+  const [subscription, setSubscription] = useState<CompanySubscription | null>(
+    initialSubscription || null
+  );
+  const [recentInvoices, setRecentInvoices] = useState<ProTeamCareInvoice[]>(
+    []
+  );
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -49,12 +57,17 @@ const CompanyBillingCard: React.FC<CompanyBillingCardProps> = ({
   const loadSubscriptionData = async () => {
     try {
       setLoading(true);
-      const subscriptionData = await B2BBillingService.getCompanySubscription(company.id);
-      console.log('🔍 CompanyBillingCard - Subscription carregada:', subscriptionData);
+      const subscriptionData = await B2BBillingService.getCompanySubscription(
+        company.id
+      );
+      console.log(
+        "🔍 CompanyBillingCard - Subscription carregada:",
+        subscriptionData
+      );
       setSubscription(subscriptionData);
     } catch (err: any) {
-      notify.error('Erro ao carregar dados da assinatura');
-      console.error('Erro ao carregar assinatura:', err);
+      notify.error("Erro ao carregar dados da assinatura");
+      console.error("Erro ao carregar assinatura:", err);
     } finally {
       setLoading(false);
     }
@@ -64,54 +77,76 @@ const CompanyBillingCard: React.FC<CompanyBillingCardProps> = ({
     if (!subscription) return;
 
     try {
-      const invoices = await B2BBillingService.getCompanyInvoices(company.id, undefined, 5);
+      const invoices = await B2BBillingService.getCompanyInvoices(
+        company.id,
+        undefined,
+        5
+      );
       setRecentInvoices(invoices);
     } catch (err: any) {
-      console.error('Erro ao carregar faturas:', err);
+      console.error("Erro ao carregar faturas:", err);
     }
   };
 
   const handleCreateCheckout = async (invoice: ProTeamCareInvoice) => {
     try {
       setLoading(true);
-      const checkoutResponse = await B2BBillingService.createCheckoutSession(invoice.id);
+      const checkoutResponse = await B2BBillingService.createCheckoutSession(
+        invoice.id
+      );
 
       if (checkoutResponse.success && checkoutResponse.checkout_url) {
         // Check if it's a mock URL
-        if (checkoutResponse.checkout_url.includes('mock-pagbank.proteamcare.com')) {
-          const amount = typeof invoice.amount === 'string' ? parseFloat(invoice.amount) : invoice.amount;
+        if (
+          checkoutResponse.checkout_url.includes("mock-pagbank.proteamcare.com")
+        ) {
+          const amount =
+            typeof invoice.amount === "string"
+              ? parseFloat(invoice.amount)
+              : invoice.amount;
           notify.info(
-            `Checkout criado em modo demonstração. Fatura: ${invoice.invoice_number} • Valor: R$ ${amount.toFixed(2)}`,
+            `Checkout criado em modo demonstração. Fatura: ${
+              invoice.invoice_number
+            } • Valor: R$ ${amount.toFixed(2)}`,
             { duration: 5000 }
           );
         } else {
-          window.open(checkoutResponse.checkout_url, '_blank', 'noopener,noreferrer');
+          window.open(
+            checkoutResponse.checkout_url,
+            "_blank",
+            "noopener,noreferrer"
+          );
         }
       }
     } catch (err: any) {
-      notify.error('Erro ao criar checkout: ' + err.message);
+      notify.error("Erro ao criar checkout: " + err.message);
     } finally {
       setLoading(false);
     }
   };
 
   const getNextBillingDate = (): string => {
-    if (!subscription) return 'N/A';
-    const nextBilling = B2BBillingService.calculateNextBillingDate(subscription);
+    if (!subscription) return "N/A";
+    const nextBilling =
+      B2BBillingService.calculateNextBillingDate(subscription);
     return B2BBillingService.formatDate(nextBilling.toISOString());
   };
 
   const getOverdueAmount = (): number => {
     return recentInvoices
-      .filter(invoice => B2BBillingService.isOverdue(invoice))
+      .filter((invoice) => B2BBillingService.isOverdue(invoice))
       .reduce((total, invoice) => {
-        const amount = typeof invoice.amount === 'string' ? parseFloat(invoice.amount) : invoice.amount;
+        const amount =
+          typeof invoice.amount === "string"
+            ? parseFloat(invoice.amount)
+            : invoice.amount;
         return total + amount;
       }, 0);
   };
 
   const getPendingInvoicesCount = (): number => {
-    return recentInvoices.filter(invoice => invoice.status === 'pending').length;
+    return recentInvoices.filter((invoice) => invoice.status === "pending")
+      .length;
   };
 
   if (loading && !subscription) {
@@ -127,7 +162,6 @@ const CompanyBillingCard: React.FC<CompanyBillingCardProps> = ({
     );
   }
 
-
   // Empresa sem assinatura
   if (!subscription) {
     return (
@@ -141,9 +175,14 @@ const CompanyBillingCard: React.FC<CompanyBillingCardProps> = ({
         <div className="px-6 py-4 text-center space-y-4">
           <div className="text-gray-500">
             <p className="text-lg font-medium">Sem assinatura ativa</p>
-            <p className="text-sm">Esta empresa ainda não possui um plano Pro Team Care</p>
+            <p className="text-sm">
+              Esta empresa ainda não possui um plano Pro Team Care
+            </p>
           </div>
-          <Button onClick={() => onCreateSubscription?.(company.id)} className="w-full">
+          <Button
+            onClick={() => onCreateSubscription?.(company.id)}
+            className="w-full"
+          >
             <CreditCard className="mr-2 h-4 w-4" />
             Criar Assinatura
           </Button>
@@ -165,7 +204,9 @@ const CompanyBillingCard: React.FC<CompanyBillingCardProps> = ({
               {company.name}
             </h3>
           </div>
-          <Badge className={B2BBillingService.getStatusColor(subscription.status)}>
+          <Badge
+            className={B2BBillingService.getStatusColor(subscription.status)}
+          >
             {B2BBillingService.getStatusLabel(subscription.status)}
           </Badge>
         </div>
@@ -175,12 +216,18 @@ const CompanyBillingCard: React.FC<CompanyBillingCardProps> = ({
         <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
           <div>
             <span className="text-sm text-gray-600">Plano</span>
-            <p className="font-medium">{subscription.plan?.name || 'Plano não identificado'}</p>
+            <p className="font-medium">
+              {subscription.plan?.name || "Plano não identificado"}
+            </p>
           </div>
           <div>
             <span className="text-sm text-gray-600">Valor Mensal</span>
             <p className="font-medium text-green-600">
-              {subscription.plan ? B2BBillingService.formatCurrency(subscription.plan.monthly_price) : 'N/A'}
+              {subscription.plan
+                ? B2BBillingService.formatCurrency(
+                    subscription.plan.monthly_price
+                  )
+                : "N/A"}
             </p>
           </div>
           <div>
@@ -193,7 +240,9 @@ const CompanyBillingCard: React.FC<CompanyBillingCardProps> = ({
           <div>
             <span className="text-sm text-gray-600">Método</span>
             <p className="font-medium">
-              {subscription.payment_method === 'recurrent' ? 'Automático' : 'Manual'}
+              {subscription.payment_method === "recurrent"
+                ? "Automático"
+                : "Manual"}
             </p>
           </div>
         </div>
@@ -201,14 +250,17 @@ const CompanyBillingCard: React.FC<CompanyBillingCardProps> = ({
         {/* Alertas */}
         {overdueAmount > 0 && (
           <Alert type="error">
-            <strong>Atenção:</strong> Existe valor em atraso de{' '}
-            <span className="font-bold">{B2BBillingService.formatCurrency(overdueAmount)}</span>
+            <strong>Atenção:</strong> Existe valor em atraso de{" "}
+            <span className="font-bold">
+              {B2BBillingService.formatCurrency(overdueAmount)}
+            </span>
           </Alert>
         )}
 
         {pendingCount > 0 && overdueAmount === 0 && (
           <Alert type="warning">
-            {pendingCount} fatura{pendingCount > 1 ? 's' : ''} pendente{pendingCount > 1 ? 's' : ''} de pagamento
+            {pendingCount} fatura{pendingCount > 1 ? "s" : ""} pendente
+            {pendingCount > 1 ? "s" : ""} de pagamento
           </Alert>
         )}
 
@@ -221,20 +273,30 @@ const CompanyBillingCard: React.FC<CompanyBillingCardProps> = ({
             </h4>
             <div className="space-y-2 max-h-32 overflow-y-auto">
               {recentInvoices.slice(0, 3).map((invoice) => (
-                <div key={invoice.id} className="flex items-center justify-between p-2 bg-white rounded border">
+                <div
+                  key={invoice.id}
+                  className="flex items-center justify-between p-2 bg-white rounded border"
+                >
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">{invoice.invoice_number}</span>
-                      <Badge size="sm" className={B2BBillingService.getStatusColor(invoice.status)}>
+                      <span className="text-sm font-medium">
+                        {invoice.invoice_number}
+                      </span>
+                      <Badge
+                        size="sm"
+                        className={B2BBillingService.getStatusColor(
+                          invoice.status
+                        )}
+                      >
                         {B2BBillingService.getStatusLabel(invoice.status)}
                       </Badge>
                     </div>
                     <div className="text-xs text-gray-600">
-                      Venc: {B2BBillingService.formatDate(invoice.due_date)} •{' '}
+                      Venc: {B2BBillingService.formatDate(invoice.due_date)} •{" "}
                       {B2BBillingService.formatCurrency(invoice.amount)}
                     </div>
                   </div>
-                  {invoice.status === 'pending' && (
+                  {invoice.status === "pending" && (
                     <Button
                       size="sm"
                       variant="outline"
@@ -256,7 +318,10 @@ const CompanyBillingCard: React.FC<CompanyBillingCardProps> = ({
             variant="outline"
             size="sm"
             onClick={() => {
-              console.log('🔍 CompanyBillingCard - Chamando onManageSubscription com:', subscription);
+              console.log(
+                "🔍 CompanyBillingCard - Chamando onManageSubscription com:",
+                subscription
+              );
               onManageSubscription?.(subscription);
             }}
             className="flex-1"

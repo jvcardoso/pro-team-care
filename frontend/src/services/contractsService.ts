@@ -330,8 +330,8 @@ class ContractsService {
    * Limpar cache de contratos
    */
   clearContractsCache(): void {
-    httpCache.invalidatePattern('/api/v1/contracts');
-    httpCache.invalidatePattern('/api/v1/services');
+    httpCache.invalidatePattern("/api/v1/contracts");
+    httpCache.invalidatePattern("/api/v1/services");
   }
 
   /**

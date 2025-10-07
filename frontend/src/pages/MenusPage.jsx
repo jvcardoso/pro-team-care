@@ -470,11 +470,15 @@ const MenusPageContent = () => {
               <Menu size={16} className="text-gray-500 dark:text-gray-400" />
 
               <div className="min-w-0 flex-1">
-                <div className="font-medium truncate text-gray-900 dark:text-white">{menu.name}</div>
+                <div className="font-medium truncate text-gray-900 dark:text-white">
+                  {menu.name}
+                </div>
                 <div className="text-gray-500 dark:text-gray-400 text-sm truncate">
                   ({menu.slug})
                   {menu.url && (
-                    <span className="text-blue-600 dark:text-blue-400 ml-2">{menu.url}</span>
+                    <span className="text-blue-600 dark:text-blue-400 ml-2">
+                      {menu.url}
+                    </span>
                   )}
                 </div>
               </div>
@@ -607,7 +611,9 @@ const MenusPageContent = () => {
     return (
       <div className="p-6">
         <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500 dark:text-gray-400">Carregando menus...</div>
+          <div className="text-gray-500 dark:text-gray-400">
+            Carregando menus...
+          </div>
         </div>
       </div>
     );
@@ -660,7 +666,10 @@ const MenusPageContent = () => {
       {error && (
         <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="text-red-600 dark:text-red-500" size={20} />
+            <AlertTriangle
+              className="text-red-600 dark:text-red-500"
+              size={20}
+            />
             <span className="text-red-800 dark:text-red-300">{error}</span>
           </div>
         </div>

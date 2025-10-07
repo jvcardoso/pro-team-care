@@ -57,7 +57,11 @@ export const useBreadcrumbs = (): BreadcrumbItem[] => {
       if (segment === "admin") return; // Já adicionado
 
       // Para empresas, substituir ID pelo nome da empresa se disponível
-      if (pathSegments.includes("empresas") && /^\d+$/.test(segment) && index > 0) {
+      if (
+        pathSegments.includes("empresas") &&
+        /^\d+$/.test(segment) &&
+        index > 0
+      ) {
         const companyName = localStorage.getItem(`company_name_${segment}`);
         if (companyName) {
           breadcrumbs.push({
@@ -70,7 +74,11 @@ export const useBreadcrumbs = (): BreadcrumbItem[] => {
       }
 
       // Para clientes, substituir ID pelo nome do cliente se disponível
-      if (pathSegments.includes("clientes") && /^\d+$/.test(segment) && index > 0) {
+      if (
+        pathSegments.includes("clientes") &&
+        /^\d+$/.test(segment) &&
+        index > 0
+      ) {
         const clientName = localStorage.getItem(`client_name_${segment}`);
         if (clientName) {
           breadcrumbs.push({
@@ -83,8 +91,14 @@ export const useBreadcrumbs = (): BreadcrumbItem[] => {
       }
 
       // Para estabelecimentos, substituir ID pelo nome se disponível
-      if (pathSegments.includes("estabelecimentos") && /^\d+$/.test(segment) && index > 0) {
-        const establishmentName = localStorage.getItem(`establishment_name_${segment}`);
+      if (
+        pathSegments.includes("estabelecimentos") &&
+        /^\d+$/.test(segment) &&
+        index > 0
+      ) {
+        const establishmentName = localStorage.getItem(
+          `establishment_name_${segment}`
+        );
         if (establishmentName) {
           breadcrumbs.push({
             label: establishmentName,
@@ -96,7 +110,11 @@ export const useBreadcrumbs = (): BreadcrumbItem[] => {
       }
 
       // Para contratos, substituir ID pelo código do contrato se disponível
-      if (pathSegments.includes("contratos") && /^\d+$/.test(segment) && index > 0) {
+      if (
+        pathSegments.includes("contratos") &&
+        /^\d+$/.test(segment) &&
+        index > 0
+      ) {
         const contractCode = localStorage.getItem(`contract_code_${segment}`);
         if (contractCode) {
           breadcrumbs.push({

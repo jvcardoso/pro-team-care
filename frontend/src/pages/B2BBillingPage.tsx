@@ -1,7 +1,7 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import B2BBillingDashboard from '../components/billing/B2BBillingDashboard';
-import type { ProTeamCareInvoice } from '../types/b2b-billing.types';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import B2BBillingDashboard from "../components/billing/B2BBillingDashboard";
+import type { ProTeamCareInvoice } from "../types/b2b-billing.types";
 
 const B2BBillingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -12,7 +12,7 @@ const B2BBillingPage: React.FC = () => {
 
   const handleInvoiceClick = (invoice: ProTeamCareInvoice) => {
     // Implementar navegação para detalhes da fatura ou modal
-    console.log('Visualizar fatura:', invoice);
+    console.log("Visualizar fatura:", invoice);
   };
 
   return (

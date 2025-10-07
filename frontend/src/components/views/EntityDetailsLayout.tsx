@@ -84,9 +84,7 @@ const EntityDetailsLayout: React.FC<EntityDetailsLayoutProps> = ({
     return (
       <div className="text-center py-12">
         <p className="text-red-600 mb-4">{error}</p>
-        {onRetry && (
-          <Button onClick={onRetry}>Tentar Novamente</Button>
-        )}
+        {onRetry && <Button onClick={onRetry}>Tentar Novamente</Button>}
       </div>
     );
   }
@@ -159,7 +157,11 @@ const EntityDetailsLayout: React.FC<EntityDetailsLayoutProps> = ({
                     {metric.value}
                   </p>
                 </div>
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${metric.color || "bg-blue-50 text-blue-600"}`}>
+                <div
+                  className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                    metric.color || "bg-blue-50 text-blue-600"
+                  }`}
+                >
                   {metric.icon}
                 </div>
               </div>

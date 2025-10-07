@@ -88,8 +88,8 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
 
       // Preservar dados antes de limpar
-      const savedRedirectUrl = sessionStorage.getItem('redirectAfterLogin');
-      const savedTheme = localStorage.getItem('pro-team-care-theme');
+      const savedRedirectUrl = sessionStorage.getItem("redirectAfterLogin");
+      const savedTheme = localStorage.getItem("pro-team-care-theme");
       console.log("🔄 Preservando redirectAfterLogin:", savedRedirectUrl);
       console.log("🔄 Preservando tema:", savedTheme);
 
@@ -101,14 +101,14 @@ export const AuthProvider = ({ children }) => {
 
       // Restaurar dados preservados
       if (savedRedirectUrl) {
-        sessionStorage.setItem('redirectAfterLogin', savedRedirectUrl);
+        sessionStorage.setItem("redirectAfterLogin", savedRedirectUrl);
         console.log("✅ redirectAfterLogin restaurado:", savedRedirectUrl);
       } else {
         console.log("⚠️ Nenhum redirectAfterLogin para restaurar");
       }
 
       if (savedTheme) {
-        localStorage.setItem('pro-team-care-theme', savedTheme);
+        localStorage.setItem("pro-team-care-theme", savedTheme);
         console.log("✅ Tema restaurado:", savedTheme);
       }
 

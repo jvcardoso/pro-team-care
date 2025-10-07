@@ -74,7 +74,9 @@ export const createEstablishmentClientsConfig = (
       sortable: true,
       render: (value, item) => (
         <div className="font-mono text-sm">
-          {item.person?.tax_id ? formatTaxId(item.person.tax_id) : "Não informado"}
+          {item.person?.tax_id
+            ? formatTaxId(item.person.tax_id)
+            : "Não informado"}
         </div>
       ),
     },
@@ -84,12 +86,16 @@ export const createEstablishmentClientsConfig = (
       type: "text",
       sortable: true,
       render: (value, item) => (
-        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-          item.person?.person_type === PersonType.PF
-            ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
-            : "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-        }`}>
-          {item.person?.person_type === PersonType.PF ? "Pessoa Física" : "Pessoa Jurídica"}
+        <span
+          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+            item.person?.person_type === PersonType.PF
+              ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+              : "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+          }`}
+        >
+          {item.person?.person_type === PersonType.PF
+            ? "Pessoa Física"
+            : "Pessoa Jurídica"}
         </span>
       ),
     },
@@ -99,11 +105,13 @@ export const createEstablishmentClientsConfig = (
       type: "text",
       sortable: true,
       render: (value, item) => (
-        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-          item.status === ClientStatus.ACTIVE
-            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-            : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-        }`}>
+        <span
+          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+            item.status === ClientStatus.ACTIVE
+              ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+              : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+          }`}
+        >
           {item.status === ClientStatus.ACTIVE ? "Ativo" : "Inativo"}
         </span>
       ),
@@ -115,7 +123,9 @@ export const createEstablishmentClientsConfig = (
       sortable: true,
       render: (value) => (
         <div className="text-sm text-gray-500 dark:text-gray-400">
-          {value ? new Date(value).toLocaleDateString("pt-BR") : "Não informado"}
+          {value
+            ? new Date(value).toLocaleDateString("pt-BR")
+            : "Não informado"}
         </div>
       ),
     },
@@ -188,11 +198,23 @@ export const createEstablishmentClientsConfig = (
       },
       {
         key: "toggle-status",
-        label: (item) => item.status === ClientStatus.ACTIVE ? "Inativar" : "Ativar",
-        icon: (item) => item.status === ClientStatus.ACTIVE ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />,
-        variant: (item) => item.status === ClientStatus.ACTIVE ? "warning" : "success",
+        label: (item) =>
+          item.status === ClientStatus.ACTIVE ? "Inativar" : "Ativar",
+        icon: (item) =>
+          item.status === ClientStatus.ACTIVE ? (
+            <UserX className="h-4 w-4" />
+          ) : (
+            <UserCheck className="h-4 w-4" />
+          ),
+        variant: (item) =>
+          item.status === ClientStatus.ACTIVE ? "warning" : "success",
         action: async (item) => {
-          console.log(`${item.status === ClientStatus.ACTIVE ? 'Inativando' : 'Ativando'} cliente:`, item);
+          console.log(
+            `${
+              item.status === ClientStatus.ACTIVE ? "Inativando" : "Ativando"
+            } cliente:`,
+            item
+          );
           // Implement toggle status logic
         },
       },
@@ -284,7 +306,9 @@ export const createEstablishmentClientsConfig = (
         title: "Total de Clientes",
         value: 0, // Will be calculated dynamically
         subtitle: "do estabelecimento",
-        icon: <Users className="h-6 w-6 text-purple-600 dark:text-purple-300" />,
+        icon: (
+          <Users className="h-6 w-6 text-purple-600 dark:text-purple-300" />
+        ),
         color: "purple",
       },
       {
@@ -292,7 +316,9 @@ export const createEstablishmentClientsConfig = (
         title: "Clientes Ativos",
         value: 0, // Will be calculated dynamically
         subtitle: "({percentage}%)",
-        icon: <UserCheck className="h-6 w-6 text-green-600 dark:text-green-300" />,
+        icon: (
+          <UserCheck className="h-6 w-6 text-green-600 dark:text-green-300" />
+        ),
         color: "green",
       },
       {

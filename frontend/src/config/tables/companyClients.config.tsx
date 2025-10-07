@@ -61,7 +61,9 @@ export const createCompanyClientsConfig = (actions?: {
           <div>
             <div className="text-sm">{value || "N/A"}</div>
             {item.establishment_code && (
-              <div className="text-xs text-gray-500">{item.establishment_code}</div>
+              <div className="text-xs text-gray-500">
+                {item.establishment_code}
+              </div>
             )}
           </div>
         </div>
@@ -97,8 +99,8 @@ export const createCompanyClientsConfig = (actions?: {
 
   // NO METRICS/CARDS - objeto vazio para compatibilidade com useDataTable
   metrics: {
-    primary: [],  // Sem métricas = array vazio
-    detailed: undefined,  // Sem detalhamento
+    primary: [], // Sem métricas = array vazio
+    detailed: undefined, // Sem detalhamento
   },
 
   // Filters (opcional, manter simples)
@@ -124,9 +126,11 @@ export const createCompanyClientsConfig = (actions?: {
       label: "Ver",
       icon: <Eye className="w-4 h-4" />,
       color: "blue",
-      onClick: actions?.onView || ((client) => {
-        console.log("Ver cliente", client);
-      }),
+      onClick:
+        actions?.onView ||
+        ((client) => {
+          console.log("Ver cliente", client);
+        }),
     },
   ],
 

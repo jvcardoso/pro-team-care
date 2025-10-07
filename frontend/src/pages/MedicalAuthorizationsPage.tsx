@@ -376,7 +376,9 @@ const MedicalAuthorizationsPageContent: React.FC = () => {
       case "suspended":
         return <Pause className="w-4 h-4 text-yellow-500" />;
       default:
-        return <AlertCircle className="w-4 h-4 text-gray-500 dark:text-gray-400" />;
+        return (
+          <AlertCircle className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+        );
     }
   };
 
@@ -703,19 +705,25 @@ const MedicalAuthorizationsPageContent: React.FC = () => {
                 <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   Paciente
                 </label>
-                <p className="text-gray-900 dark:text-white">{viewingAuth.patient_name}</p>
+                <p className="text-gray-900 dark:text-white">
+                  {viewingAuth.patient_name}
+                </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   Médico
                 </label>
-                <p className="text-gray-900 dark:text-white">{viewingAuth.doctor_name}</p>
+                <p className="text-gray-900 dark:text-white">
+                  {viewingAuth.doctor_name}
+                </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   Serviço
                 </label>
-                <p className="text-gray-900 dark:text-white">{viewingAuth.service_name}</p>
+                <p className="text-gray-900 dark:text-white">
+                  {viewingAuth.service_name}
+                </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
@@ -1050,7 +1058,9 @@ const MedicalAuthorizationsPageContent: React.FC = () => {
             <div className="flex items-center">
               <FileText className="w-8 h-8 text-blue-500" />
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total</p>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Total
+                </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {totalAuthorizations}
                 </p>
@@ -1063,7 +1073,9 @@ const MedicalAuthorizationsPageContent: React.FC = () => {
             <div className="flex items-center">
               <CheckCircle className="w-8 h-8 text-green-500" />
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Ativas</p>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Ativas
+                </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {activeAuthorizations}
                 </p>
@@ -1076,7 +1088,9 @@ const MedicalAuthorizationsPageContent: React.FC = () => {
             <div className="flex items-center">
               <AlertCircle className="w-8 h-8 text-red-500" />
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Urgentes</p>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Urgentes
+                </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {urgentAuthorizations}
                 </p>
@@ -1202,14 +1216,18 @@ const MedicalAuthorizationsPageContent: React.FC = () => {
                 <div className="space-y-2 mb-3">
                   <div className="flex items-center text-xs">
                     <User className="w-3 h-3 mr-1 text-gray-400" />
-                    <span className="text-gray-600 dark:text-gray-400">Paciente:</span>
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Paciente:
+                    </span>
                     <span className="ml-1 font-medium text-gray-900 dark:text-white">
                       {authorization.patient_name || "N/A"}
                     </span>
                   </div>
                   <div className="flex items-center text-xs">
                     <Activity className="w-3 h-3 mr-1 text-gray-400" />
-                    <span className="text-gray-600 dark:text-gray-400">Médico:</span>
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Médico:
+                    </span>
                     <span className="ml-1 font-medium text-gray-900 dark:text-white">
                       {authorization.doctor_name || "N/A"}
                     </span>
@@ -1240,13 +1258,17 @@ const MedicalAuthorizationsPageContent: React.FC = () => {
                 {/* Dates */}
                 <div className="space-y-1 mb-3">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-500 dark:text-gray-400">Válido de:</span>
+                    <span className="text-gray-500 dark:text-gray-400">
+                      Válido de:
+                    </span>
                     <span className="font-medium text-gray-900 dark:text-white">
                       {formatDate(authorization.valid_from)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-500 dark:text-gray-400">Válido até:</span>
+                    <span className="text-gray-500 dark:text-gray-400">
+                      Válido até:
+                    </span>
                     <span
                       className={`font-medium ${
                         isExpired(authorization.valid_until)

@@ -7,7 +7,7 @@ const ActionDropdown = ({
   options,
   className = "",
   actions = [], // New prop for direct actions like Brevo
-  item = null // Item data for actions
+  item = null, // Item data for actions
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [shouldOpenUpward, setShouldOpenUpward] = useState(false);
@@ -25,7 +25,7 @@ const ActionDropdown = ({
         if (usePortal) {
           const portalMenus = document.querySelectorAll('[role="menu"]');
           let isInsidePortalMenu = false;
-          portalMenus.forEach(menu => {
+          portalMenus.forEach((menu) => {
             if (menu.contains(event.target)) {
               isInsidePortalMenu = true;
             }
@@ -55,7 +55,6 @@ const ActionDropdown = ({
   // Enhanced positioning logic with portal for table containers
   useEffect(() => {
     if (isOpen && buttonRef.current) {
-
       const buttonRect = buttonRef.current.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
       const viewportWidth = window.innerWidth;
@@ -78,10 +77,14 @@ const ActionDropdown = ({
           let parent = element.parentElement;
           while (parent) {
             const style = window.getComputedStyle(parent);
-            if (style.overflow === 'auto' || style.overflow === 'scroll' ||
-                style.overflowY === 'auto' || style.overflowY === 'scroll' ||
-                parent.classList.contains('table-responsive') ||
-                parent.classList.contains('overflow-x-auto')) {
+            if (
+              style.overflow === "auto" ||
+              style.overflow === "scroll" ||
+              style.overflowY === "auto" ||
+              style.overflowY === "scroll" ||
+              parent.classList.contains("table-responsive") ||
+              parent.classList.contains("overflow-x-auto")
+            ) {
               return parent;
             }
             parent = parent.parentElement;
@@ -93,12 +96,12 @@ const ActionDropdown = ({
         const spaceBelow = viewportHeight - buttonRect.bottom;
         const spaceAbove = buttonRect.top;
 
-        console.log('Positioning analysis:', {
+        console.log("Positioning analysis:", {
           spaceBelow,
           spaceAbove,
           estimatedDropdownHeight,
           hasTableContainer: !!tableContainer,
-          tableContainerClass: tableContainer?.className
+          tableContainerClass: tableContainer?.className,
         });
 
         // Decision logic
@@ -110,25 +113,25 @@ const ActionDropdown = ({
 
             if (spaceInContainer < estimatedDropdownHeight + 20) {
               // Not enough space in container - use portal
-              console.log('Using portal - not enough space in table container');
+              console.log("Using portal - not enough space in table container");
               setUsePortal(true);
               setUseModalOverlay(false);
               setShouldOpenUpward(false);
               setPortalPosition({
                 top: buttonRect.bottom + 4,
                 left: buttonRect.right - 192,
-                width: 192
+                width: 192,
               });
             } else {
               // Enough space in container - use normal dropdown
-              console.log('Using normal dropdown downward');
+              console.log("Using normal dropdown downward");
               setUsePortal(false);
               setUseModalOverlay(false);
               setShouldOpenUpward(false);
             }
           } else {
             // No table container - use normal dropdown
-            console.log('Using normal dropdown downward - no container');
+            console.log("Using normal dropdown downward - no container");
             setUsePortal(false);
             setUseModalOverlay(false);
             setShouldOpenUpward(false);
@@ -136,24 +139,24 @@ const ActionDropdown = ({
         } else if (spaceAbove >= estimatedDropdownHeight + 20) {
           // Open upward
           if (tableContainer) {
-            console.log('Using portal upward');
+            console.log("Using portal upward");
             setUsePortal(true);
             setUseModalOverlay(false);
             setShouldOpenUpward(true);
             setPortalPosition({
               top: buttonRect.top - estimatedDropdownHeight - 4,
               left: buttonRect.right - 192,
-              width: 192
+              width: 192,
             });
           } else {
-            console.log('Using normal dropdown upward');
+            console.log("Using normal dropdown upward");
             setUsePortal(false);
             setUseModalOverlay(false);
             setShouldOpenUpward(true);
           }
         } else {
           // Not enough space anywhere - use modal
-          console.log('Using modal overlay');
+          console.log("Using modal overlay");
           setUseModalOverlay(true);
           setUsePortal(false);
           setShouldOpenUpward(false);
@@ -195,7 +198,9 @@ const ActionDropdown = ({
               <span className="w-4 h-4 mr-3 flex-shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
                 {action.icon}
               </span>
-              <span className="flex-1 text-left font-medium">{action.label}</span>
+              <span className="flex-1 text-left font-medium">
+                {action.label}
+              </span>
             </button>
           ))
         : options
@@ -225,9 +230,13 @@ const ActionDropdown = ({
               role="menuitem"
             >
               {option.icon && (
-                <span className="w-4 h-4 mr-3 flex-shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">{option.icon}</span>
+                <span className="w-4 h-4 mr-3 flex-shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
+                  {option.icon}
+                </span>
               )}
-              <span className="flex-1 text-left font-medium">{option.label}</span>
+              <span className="flex-1 text-left font-medium">
+                {option.label}
+              </span>
             </button>
           ))
         : // Render from children (backward compatibility)
@@ -251,7 +260,7 @@ const ActionDropdown = ({
       ref={dropdownRef}
       style={{
         zIndex: isOpen ? 99998 : 1,
-        position: 'relative'
+        position: "relative",
       }}
     >
       {/* Trigger Button */}
@@ -278,7 +287,7 @@ const ActionDropdown = ({
           }`}
           style={{
             zIndex: 99999,
-            position: 'absolute'
+            position: "absolute",
           }}
           role="menu"
           aria-orientation="vertical"
@@ -288,7 +297,9 @@ const ActionDropdown = ({
       )}
 
       {/* Portal Dropdown Menu - renders outside table container */}
-      {isOpen && !useModalOverlay && usePortal &&
+      {isOpen &&
+        !useModalOverlay &&
+        usePortal &&
         createPortal(
           <div
             className="fixed bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none animate-in fade-in zoom-in-95 duration-200"
@@ -297,7 +308,7 @@ const ActionDropdown = ({
               top: `${portalPosition.top}px`,
               left: `${portalPosition.left}px`,
               width: `${portalPosition.width}px`,
-              position: 'fixed'
+              position: "fixed",
             }}
             role="menu"
             aria-orientation="vertical"
@@ -305,8 +316,7 @@ const ActionDropdown = ({
             {renderDropdownContent()}
           </div>,
           document.body
-        )
-      }
+        )}
 
       {/* Modal Overlay for when there's no space */}
       {isOpen && useModalOverlay && (
@@ -344,7 +354,9 @@ const ActionDropdown = ({
                           option.disabled
                             ? "opacity-50 cursor-not-allowed text-gray-400"
                             : option.variant || option.color
-                            ? getActionColorClasses(option.variant || option.color)
+                            ? getActionColorClasses(
+                                option.variant || option.color
+                              )
                             : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
                         }
                         ${option.className || ""}

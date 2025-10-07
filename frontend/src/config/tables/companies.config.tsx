@@ -64,26 +64,30 @@ export const createCompaniesConfig = (
       type: "custom",
       render: (value, item) => (
         <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-           <div className="flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors whitespace-nowrap">
-             <Building className="w-3 h-3 mr-1.5 flex-shrink-0" />
-             <span className="font-semibold">{item.establishments_count || 0}</span>
-             <span className="ml-1 text-gray-500 dark:text-gray-400">est.</span>
-           </div>
-           <div className="flex items-center text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors whitespace-nowrap">
-             <Users className="w-3 h-3 mr-1.5 flex-shrink-0" />
-             <span className="font-semibold">{item.clients_count || 0}</span>
-             <span className="ml-1 text-gray-500 dark:text-gray-400">cli.</span>
-           </div>
-           <div className="flex items-center text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors whitespace-nowrap">
-             <UserCheck className="w-3 h-3 mr-1.5 flex-shrink-0" />
-             <span className="font-semibold">{item.professionals_count || 0}</span>
-             <span className="ml-1 text-gray-500 dark:text-gray-400">pro.</span>
-           </div>
-           <div className="flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors whitespace-nowrap">
-             <User className="w-3 h-3 mr-1.5 flex-shrink-0" />
-             <span className="font-semibold">{item.users_count || 0}</span>
-             <span className="ml-1 text-gray-500 dark:text-gray-400">usr.</span>
-           </div>
+          <div className="flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors whitespace-nowrap">
+            <Building className="w-3 h-3 mr-1.5 flex-shrink-0" />
+            <span className="font-semibold">
+              {item.establishments_count || 0}
+            </span>
+            <span className="ml-1 text-gray-500 dark:text-gray-400">est.</span>
+          </div>
+          <div className="flex items-center text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors whitespace-nowrap">
+            <Users className="w-3 h-3 mr-1.5 flex-shrink-0" />
+            <span className="font-semibold">{item.clients_count || 0}</span>
+            <span className="ml-1 text-gray-500 dark:text-gray-400">cli.</span>
+          </div>
+          <div className="flex items-center text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors whitespace-nowrap">
+            <UserCheck className="w-3 h-3 mr-1.5 flex-shrink-0" />
+            <span className="font-semibold">
+              {item.professionals_count || 0}
+            </span>
+            <span className="ml-1 text-gray-500 dark:text-gray-400">pro.</span>
+          </div>
+          <div className="flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors whitespace-nowrap">
+            <User className="w-3 h-3 mr-1.5 flex-shrink-0" />
+            <span className="font-semibold">{item.users_count || 0}</span>
+            <span className="ml-1 text-gray-500 dark:text-gray-400">usr.</span>
+          </div>
         </div>
       ),
     },

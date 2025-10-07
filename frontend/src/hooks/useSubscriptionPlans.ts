@@ -27,22 +27,33 @@ export function useSubscriptionPlans({
   onEditPlan,
   onViewPlan,
   onDeletePlan,
-}: UseSubscriptionPlansConfig = {}): UseDataTableReturn<SubscriptionPlan> & { loading: boolean; error: string | null; refetch: () => void } {
+}: UseSubscriptionPlansConfig = {}): UseDataTableReturn<SubscriptionPlan> & {
+  loading: boolean;
+  error: string | null;
+  refetch: () => void;
+} {
   const [data, setData] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Table state
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeFilters, setActiveFilters] = useState<Record<string, unknown>>({});
+  const [activeFilters, setActiveFilters] = useState<Record<string, unknown>>(
+    {}
+  );
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-
   // Create config with callbacks
-  const config = useMemo(() =>
-    createSubscriptionPlansConfig(onCreatePlan, onEditPlan, onViewPlan, onDeletePlan),
+  const config = useMemo(
+    () =>
+      createSubscriptionPlansConfig(
+        onCreatePlan,
+        onEditPlan,
+        onViewPlan,
+        onDeletePlan
+      ),
     [onCreatePlan, onEditPlan, onViewPlan, onDeletePlan]
   );
 
@@ -54,7 +65,9 @@ export function useSubscriptionPlans({
       const plansData = await B2BBillingService.getSubscriptionPlans(true); // Load all plans
       setData(plansData);
     } catch (err: unknown) {
-      const errorMessage = 'Erro ao carregar planos: ' + (err instanceof Error ? err.message : String(err));
+      const errorMessage =
+        "Erro ao carregar planos: " +
+        (err instanceof Error ? err.message : String(err));
       setError(errorMessage);
       notify.error(errorMessage);
     } finally {
@@ -82,13 +95,26 @@ export function useSubscriptionPlans({
       if (value && value !== "all") {
         filtered = filtered.filter((plan) => {
           const planValue = plan[key as keyof SubscriptionPlan];
-          if (key === "monthly_price" && typeof value === "object" && value.min !== undefined && value.max !== undefined) {
+          if (
+            key === "monthly_price" &&
+            typeof value === "object" &&
+            value.min !== undefined &&
+            value.max !== undefined
+          ) {
             // Range filter for price
             return planValue >= value.min && planValue <= value.max;
-          } else if (key === "max_users" && typeof value === "object" && value.min !== undefined && value.max !== undefined) {
+          } else if (
+            key === "max_users" &&
+            typeof value === "object" &&
+            value.min !== undefined &&
+            value.max !== undefined
+          ) {
             // Range filter for users
             const usersValue = planValue as number | null;
-            return usersValue === null || (usersValue >= value.min && usersValue <= value.max);
+            return (
+              usersValue === null ||
+              (usersValue >= value.min && usersValue <= value.max)
+            );
           }
           return planValue === value;
         });
@@ -131,7 +157,9 @@ export function useSubscriptionPlans({
     showExportDropdown: false,
     selectedItemForModal: null,
     isModalOpen: false,
-    hasActiveFilters: searchTerm !== "" || Object.values(activeFilters).some((value) => value && value !== "all"),
+    hasActiveFilters:
+      searchTerm !== "" ||
+      Object.values(activeFilters).some((value) => value && value !== "all"),
   };
 
   // Callbacks
@@ -219,16 +247,18 @@ function exportToCSV(data: SubscriptionPlan[], filename: string) {
 
   const csvContent = [
     headers.join(","),
-    ...data.map((plan) => [
-      plan.id,
-      `"${plan.name}"`,
-      `"${plan.description || ""}"`,
-      plan.monthly_price,
-      plan.max_users || "Ilimitado",
-      plan.max_establishments || "Ilimitado",
-      plan.is_active ? "Ativo" : "Inativo",
-      plan.created_at,
-    ].join(",")),
+    ...data.map((plan) =>
+      [
+        plan.id,
+        `"${plan.name}"`,
+        `"${plan.description || ""}"`,
+        plan.monthly_price,
+        plan.max_users || "Ilimitado",
+        plan.max_establishments || "Ilimitado",
+        plan.is_active ? "Ativo" : "Inativo",
+        plan.created_at,
+      ].join(",")
+    ),
   ].join("\n");
 
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -278,7 +308,9 @@ function printData(data: SubscriptionPlan[]) {
             </tr>
           </thead>
           <tbody>
-            ${data.map(plan => `
+            ${data
+              .map(
+                (plan) => `
               <tr>
                 <td>${plan.id}</td>
                 <td>${plan.name}</td>
@@ -287,7 +319,9 @@ function printData(data: SubscriptionPlan[]) {
                 <td>${plan.max_establishments || "Ilimitado"}</td>
                 <td class="status">${plan.is_active ? "Ativo" : "Inativo"}</td>
               </tr>
-            `).join("")}
+            `
+              )
+              .join("")}
           </tbody>
         </table>
       </body>

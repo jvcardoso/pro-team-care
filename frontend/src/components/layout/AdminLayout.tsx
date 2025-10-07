@@ -16,7 +16,8 @@ const AdminLayout: React.FC = React.memo(() => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [useDynamicMenus, setUseDynamicMenus] = useState<boolean>(true);
-  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState<boolean>(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] =
+    useState<boolean>(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -161,7 +162,6 @@ const AdminLayout: React.FC = React.memo(() => {
     }
   }, [isMobile]);
 
-
   // Remover funcionalidades de debug
 
   // Carregar preferência salva
@@ -175,14 +175,14 @@ const AdminLayout: React.FC = React.memo(() => {
   // Atalho de teclado para abrir CommandPalette (Ctrl + Alt + X)
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
-      if (event.ctrlKey && event.altKey && event.key === 'x') {
+      if (event.ctrlKey && event.altKey && event.key === "x") {
         event.preventDefault();
         setIsCommandPaletteOpen(true);
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   // Mostrar loading enquanto verifica autenticação

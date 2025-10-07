@@ -6,17 +6,25 @@
 /**
  * Tipos de relacionamento de uma vida com o contrato
  */
-export type RelationshipType = 'TITULAR' | 'DEPENDENTE' | 'FUNCIONARIO' | 'BENEFICIARIO';
+export type RelationshipType =
+  | "TITULAR"
+  | "DEPENDENTE"
+  | "FUNCIONARIO"
+  | "BENEFICIARIO";
 
 /**
  * Status possíveis de uma vida no contrato
  */
-export type ContractLifeStatus = 'active' | 'inactive' | 'substituted' | 'cancelled';
+export type ContractLifeStatus =
+  | "active"
+  | "inactive"
+  | "substituted"
+  | "cancelled";
 
 /**
  * Tipo de ação no histórico de auditoria
  */
-export type HistoryAction = 'created' | 'updated' | 'substituted' | 'cancelled';
+export type HistoryAction = "created" | "updated" | "substituted" | "cancelled";
 
 /**
  * Interface completa de uma vida de contrato (response da API)
@@ -164,5 +172,10 @@ export interface ContractLivesManagerProps {
 export interface ContractLifeValidationError {
   field: string;
   message: string;
-  code: 'MIN_LIVES' | 'MAX_LIVES' | 'PERIOD_OVERLAP' | 'INVALID_DATE' | 'SUBSTITUTION_NOT_ALLOWED';
+  code:
+    | "MIN_LIVES"
+    | "MAX_LIVES"
+    | "PERIOD_OVERLAP"
+    | "INVALID_DATE"
+    | "SUBSTITUTION_NOT_ALLOWED";
 }

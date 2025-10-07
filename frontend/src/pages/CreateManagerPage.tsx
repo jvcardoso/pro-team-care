@@ -4,13 +4,21 @@
  * Permite que o responsável crie seu usuário após aceitar o contrato
  */
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { CheckCircle, AlertCircle, User, Lock, Mail, Eye, EyeOff } from 'lucide-react';
-import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
-import companyActivationService from '../services/companyActivationService';
-import { notify } from '../utils/notifications';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  CheckCircle,
+  AlertCircle,
+  User,
+  Lock,
+  Mail,
+  Eye,
+  EyeOff,
+} from "lucide-react";
+import Button from "../components/ui/Button";
+import Card from "../components/ui/Card";
+import companyActivationService from "../services/companyActivationService";
+import { notify } from "../utils/notifications";
 
 const CreateManagerPage: React.FC = () => {
   const { token } = useParams<{ token: string }>();
@@ -20,15 +28,15 @@ const CreateManagerPage: React.FC = () => {
   const [creating, setCreating] = useState(false);
   const [tokenValid, setTokenValid] = useState(false);
   const [tokenExpired, setTokenExpired] = useState(false);
-  const [companyName, setCompanyName] = useState('');
+  const [companyName, setCompanyName] = useState("");
   const [userCreated, setUserCreated] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState("");
 
   // Form fields
-  const [userName, setUserName] = useState('');
-  const [userEmail, setUserEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [userName, setUserName] = useState("");
+  const [userEmail, setUserEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -61,19 +69,21 @@ const CreateManagerPage: React.FC = () => {
   const validateToken = async () => {
     try {
       setLoading(true);
-      const response = await companyActivationService.validateUserCreationToken(token!);
+      const response = await companyActivationService.validateUserCreationToken(
+        token!
+      );
 
       if (response.valid) {
         setTokenValid(true);
-        setCompanyName(response.company_name || 'Empresa');
+        setCompanyName(response.company_name || "Empresa");
       } else {
         setTokenValid(false);
         setTokenExpired(response.expired);
-        setErrorMessage(response.error_message || 'Token inválido');
+        setErrorMessage(response.error_message || "Token inválido");
       }
     } catch (error: any) {
       setTokenValid(false);
-      setErrorMessage('Erro ao validar token');
+      setErrorMessage("Erro ao validar token");
     } finally {
       setLoading(false);
     }
@@ -82,18 +92,18 @@ const CreateManagerPage: React.FC = () => {
   const handleCreateUser = async () => {
     // Validações
     if (!userName || !userEmail || !password || !confirmPassword) {
-      notify.error('Preencha todos os campos');
+      notify.error("Preencha todos os campos");
       return;
     }
 
     if (password !== confirmPassword) {
-      notify.error('As senhas não coincidem');
+      notify.error("As senhas não coincidem");
       return;
     }
 
     const isPasswordValid = Object.values(passwordValidation).every((v) => v);
     if (!isPasswordValid) {
-      notify.error('A senha não atende aos requisitos de segurança');
+      notify.error("A senha não atende aos requisitos de segurança");
       return;
     }
 
@@ -108,15 +118,15 @@ const CreateManagerPage: React.FC = () => {
       });
 
       setUserCreated(true);
-      notify.success('Usuário criado com sucesso!');
+      notify.success("Usuário criado com sucesso!");
 
       // Redirecionar para login após 3 segundos
       setTimeout(() => {
-        navigate('/login');
+        navigate("/login");
       }, 3000);
     } catch (error: any) {
-      notify.error(error.response?.data?.detail || 'Erro ao criar usuário');
-      setErrorMessage(error.response?.data?.detail || 'Erro ao criar usuário');
+      notify.error(error.response?.data?.detail || "Erro ao criar usuário");
+      setErrorMessage(error.response?.data?.detail || "Erro ao criar usuário");
     } finally {
       setCreating(false);
     }
@@ -139,16 +149,16 @@ const CreateManagerPage: React.FC = () => {
           <div className="text-center py-8">
             <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              {tokenExpired ? 'Token Expirado' : 'Token Inválido'}
+              {tokenExpired ? "Token Expirado" : "Token Inválido"}
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               {errorMessage ||
-                'O link de criação de usuário é inválido ou expirou (24 horas).'}
+                "O link de criação de usuário é inválido ou expirou (24 horas)."}
             </p>
             <p className="text-sm text-gray-500 mb-6">
               Entre em contato com o suporte para solicitar um novo link.
             </p>
-            <Button variant="primary" onClick={() => navigate('/')}>
+            <Button variant="primary" onClick={() => navigate("/")}>
               Ir para Página Inicial
             </Button>
           </div>
@@ -176,8 +186,12 @@ const CreateManagerPage: React.FC = () => {
                 ✅ Tudo Pronto!
               </h3>
               <div className="text-left text-green-700 dark:text-green-400 space-y-2">
-                <p>✓ Usuário gestor criado: <strong>{userName}</strong></p>
-                <p>✓ Email: <strong>{userEmail}</strong></p>
+                <p>
+                  ✓ Usuário gestor criado: <strong>{userName}</strong>
+                </p>
+                <p>
+                  ✓ Email: <strong>{userEmail}</strong>
+                </p>
                 <p>✓ Empresa totalmente ativada</p>
               </div>
             </div>
@@ -195,10 +209,11 @@ const CreateManagerPage: React.FC = () => {
             </div>
 
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              Você será redirecionado para a página de login em alguns segundos...
+              Você será redirecionado para a página de login em alguns
+              segundos...
             </p>
 
-            <Button variant="primary" onClick={() => navigate('/login')}>
+            <Button variant="primary" onClick={() => navigate("/login")}>
               Ir para Login Agora
             </Button>
           </div>
@@ -209,7 +224,8 @@ const CreateManagerPage: React.FC = () => {
 
   // Formulário de criação
   const isPasswordStrong = Object.values(passwordValidation).every((v) => v);
-  const passwordsMatch = password && confirmPassword && password === confirmPassword;
+  const passwordsMatch =
+    password && confirmPassword && password === confirmPassword;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4">
@@ -242,7 +258,8 @@ const CreateManagerPage: React.FC = () => {
             {/* Success Banner */}
             <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg mb-6">
               <p className="text-sm text-green-800 dark:text-green-300">
-                ✅ Contrato aceito! Agora crie seu usuário gestor para acessar o sistema.
+                ✅ Contrato aceito! Agora crie seu usuário gestor para acessar o
+                sistema.
               </p>
             </div>
 
@@ -296,7 +313,7 @@ const CreateManagerPage: React.FC = () => {
                     <Lock className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -324,38 +341,52 @@ const CreateManagerPage: React.FC = () => {
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div
                         className={
-                          passwordValidation.minLength ? 'text-green-600' : 'text-gray-400'
+                          passwordValidation.minLength
+                            ? "text-green-600"
+                            : "text-gray-400"
                         }
                       >
-                        {passwordValidation.minLength ? '✓' : '○'} Mínimo 8 caracteres
+                        {passwordValidation.minLength ? "✓" : "○"} Mínimo 8
+                        caracteres
                       </div>
                       <div
                         className={
-                          passwordValidation.hasUpperCase ? 'text-green-600' : 'text-gray-400'
+                          passwordValidation.hasUpperCase
+                            ? "text-green-600"
+                            : "text-gray-400"
                         }
                       >
-                        {passwordValidation.hasUpperCase ? '✓' : '○'} Letra maiúscula
+                        {passwordValidation.hasUpperCase ? "✓" : "○"} Letra
+                        maiúscula
                       </div>
                       <div
                         className={
-                          passwordValidation.hasLowerCase ? 'text-green-600' : 'text-gray-400'
+                          passwordValidation.hasLowerCase
+                            ? "text-green-600"
+                            : "text-gray-400"
                         }
                       >
-                        {passwordValidation.hasLowerCase ? '✓' : '○'} Letra minúscula
+                        {passwordValidation.hasLowerCase ? "✓" : "○"} Letra
+                        minúscula
                       </div>
                       <div
                         className={
-                          passwordValidation.hasNumber ? 'text-green-600' : 'text-gray-400'
+                          passwordValidation.hasNumber
+                            ? "text-green-600"
+                            : "text-gray-400"
                         }
                       >
-                        {passwordValidation.hasNumber ? '✓' : '○'} Número
+                        {passwordValidation.hasNumber ? "✓" : "○"} Número
                       </div>
                       <div
                         className={
-                          passwordValidation.hasSpecialChar ? 'text-green-600' : 'text-gray-400'
+                          passwordValidation.hasSpecialChar
+                            ? "text-green-600"
+                            : "text-gray-400"
                         }
                       >
-                        {passwordValidation.hasSpecialChar ? '✓' : '○'} Caractere especial
+                        {passwordValidation.hasSpecialChar ? "✓" : "○"}{" "}
+                        Caractere especial
                       </div>
                     </div>
                   </div>
@@ -372,7 +403,7 @@ const CreateManagerPage: React.FC = () => {
                     <Lock className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
-                    type={showConfirmPassword ? 'text' : 'password'}
+                    type={showConfirmPassword ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -394,10 +425,12 @@ const CreateManagerPage: React.FC = () => {
                 {confirmPassword && (
                   <p
                     className={`mt-1 text-xs ${
-                      passwordsMatch ? 'text-green-600' : 'text-red-600'
+                      passwordsMatch ? "text-green-600" : "text-red-600"
                     }`}
                   >
-                    {passwordsMatch ? '✓ Senhas conferem' : '✗ As senhas não conferem'}
+                    {passwordsMatch
+                      ? "✓ Senhas conferem"
+                      : "✗ As senhas não conferem"}
                   </p>
                 )}
               </div>
@@ -419,14 +452,16 @@ const CreateManagerPage: React.FC = () => {
               }
               loading={creating}
             >
-              {creating ? 'Criando Usuário...' : '👤 Criar Usuário e Ativar Empresa'}
+              {creating
+                ? "Criando Usuário..."
+                : "👤 Criar Usuário e Ativar Empresa"}
             </Button>
 
             {/* Info */}
             <div className="mt-6 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
               <p className="text-sm text-blue-800 dark:text-blue-300">
-                💡 <strong>Dica:</strong> Use uma senha forte e guarde-a em local seguro. Você
-                precisará dela para acessar o sistema.
+                💡 <strong>Dica:</strong> Use uma senha forte e guarde-a em
+                local seguro. Você precisará dela para acessar o sistema.
               </p>
             </div>
           </div>

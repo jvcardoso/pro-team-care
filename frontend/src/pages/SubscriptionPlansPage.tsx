@@ -3,21 +3,28 @@
  * Página completa de gestão de planos de assinatura usando DataTableTemplate
  */
 
-import React, { useState } from 'react';
-import DataTableTemplate from '../components/shared/DataTable/DataTableTemplate';
-import SubscriptionPlanModal from '../components/billing/SubscriptionPlanModal';
-import SubscriptionPlanViewModal from '../components/billing/SubscriptionPlanViewModal';
-import { useSubscriptionPlans } from '../hooks/useSubscriptionPlans';
-import { useCompanyBillingData, CompanyBillingData } from '../hooks/useCompanyBillingData';
-import { createSubscriptionPlansConfig } from '../config/tables/subscription-plans.config';
-import { createCompanyBillingConfig } from '../config/tables/company-billing.config';
-import type { SubscriptionPlan } from '../types/b2b-billing.types';
+import React, { useState } from "react";
+import DataTableTemplate from "../components/shared/DataTable/DataTableTemplate";
+import SubscriptionPlanModal from "../components/billing/SubscriptionPlanModal";
+import SubscriptionPlanViewModal from "../components/billing/SubscriptionPlanViewModal";
+import { useSubscriptionPlans } from "../hooks/useSubscriptionPlans";
+import {
+  useCompanyBillingData,
+  CompanyBillingData,
+} from "../hooks/useCompanyBillingData";
+import { createSubscriptionPlansConfig } from "../config/tables/subscription-plans.config";
+import { createCompanyBillingConfig } from "../config/tables/company-billing.config";
+import type { SubscriptionPlan } from "../types/b2b-billing.types";
 
 const SubscriptionPlansPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'plans' | 'company-plans'>('plans');
+  const [activeTab, setActiveTab] = useState<"plans" | "company-plans">(
+    "plans"
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(
+    null
+  );
   const [viewPlan, setViewPlan] = useState<SubscriptionPlan | null>(null);
 
   const handleCreatePlan = () => {
@@ -76,21 +83,21 @@ const SubscriptionPlansPage: React.FC = () => {
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-8">
             <button
-              onClick={() => setActiveTab('plans')}
+              onClick={() => setActiveTab("plans")}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'plans'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                activeTab === "plans"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
               💳 Planos
             </button>
             <button
-              onClick={() => setActiveTab('company-plans')}
+              onClick={() => setActiveTab("company-plans")}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'company-plans'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                activeTab === "company-plans"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
               🏢 Empresa X Planos
@@ -100,10 +107,14 @@ const SubscriptionPlansPage: React.FC = () => {
       </div>
 
       {/* Tab Content */}
-      {activeTab === 'plans' && (
+      {activeTab === "plans" && (
         <>
           <DataTableTemplate<SubscriptionPlan>
-            config={createSubscriptionPlansConfig(handleCreatePlan, handleEditPlan, handleViewPlan)}
+            config={createSubscriptionPlansConfig(
+              handleCreatePlan,
+              handleEditPlan,
+              handleViewPlan
+            )}
             tableData={tableData}
             loading={tableData.loading}
           />
@@ -123,7 +134,7 @@ const SubscriptionPlansPage: React.FC = () => {
         </>
       )}
 
-      {activeTab === 'company-plans' && (
+      {activeTab === "company-plans" && (
         <DataTableTemplate<CompanyBillingData>
           config={createCompanyBillingConfig(handleViewCompany)}
           tableData={companyBillingTableData}

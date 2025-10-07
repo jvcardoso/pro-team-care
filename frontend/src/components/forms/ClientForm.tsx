@@ -89,7 +89,7 @@ const ClientFormContent: React.FC<ClientFormProps> = ({
     clientId: initialData?.id,
     onSave,
     establishmentId,
-    establishmentCode
+    establishmentCode,
   });
 
   const isFormLoading = loading || parentLoading;

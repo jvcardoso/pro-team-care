@@ -179,21 +179,24 @@ const EstablishmentDetails = ({
           icon: <Users className="h-6 w-6" />,
           label: "Usuários",
           value: establishment.user_count || 0,
-          color: "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400",
+          color:
+            "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400",
           onClick: () => handleTabChange("usuarios"),
         },
         {
           icon: <Users className="h-6 w-6" />,
           label: "Clientes",
           value: establishment.client_count || 0,
-          color: "bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400",
+          color:
+            "bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400",
           onClick: () => handleTabChange("clientes"),
         },
         {
           icon: <UserCog className="h-6 w-6" />,
           label: "Profissionais",
           value: establishment.professional_count || 0,
-          color: "bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400",
+          color:
+            "bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400",
           onClick: () => handleTabChange("equipe"),
         },
       ]
@@ -226,7 +229,9 @@ const EstablishmentDetails = ({
 
   return (
     <EntityDetailsLayout
-      title={establishment?.person?.name || establishment?.code || "Carregando..."}
+      title={
+        establishment?.person?.name || establishment?.code || "Carregando..."
+      }
       subtitle={subtitle}
       icon={<Building className="h-6 w-6" />}
       statusBadge={statusBadge}
@@ -412,7 +417,9 @@ const EstablishmentDetails = ({
                 <label className="block text-muted-foreground mb-1">
                   Ordem de Exibição
                 </label>
-                <p className="text-foreground">{establishment.display_order || 0}</p>
+                <p className="text-foreground">
+                  {establishment.display_order || 0}
+                </p>
               </div>
             </div>
           </Card>
@@ -935,7 +942,9 @@ const EstablishmentClientsTab = ({
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <span className="ml-3 text-muted-foreground">Carregando clientes...</span>
+        <span className="ml-3 text-muted-foreground">
+          Carregando clientes...
+        </span>
       </div>
     );
   }

@@ -1,10 +1,10 @@
-import React from 'react';
+import React from "react";
 
 const OverdueInvoices = ({ invoices }) => {
   const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
     }).format(value || 0);
   };
 
@@ -18,7 +18,9 @@ const OverdueInvoices = ({ invoices }) => {
           <div className="text-center py-8 text-green-600 dark:text-green-400">
             <div className="text-5xl mb-3">✅</div>
             <p className="text-lg font-medium">Nenhuma fatura vencida!</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Todos os pagamentos em dia</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+              Todos os pagamentos em dia
+            </p>
           </div>
         </div>
       </div>
@@ -30,10 +32,16 @@ const OverdueInvoices = ({ invoices }) => {
   return (
     <div className="card border-l-4 border-red-500 dark:border-red-600">
       <div className="card-header flex items-center justify-between">
-        <h3 className="card-title text-red-700 dark:text-red-400">🔴 Faturas Vencidas - ATENÇÃO!</h3>
+        <h3 className="card-title text-red-700 dark:text-red-400">
+          🔴 Faturas Vencidas - ATENÇÃO!
+        </h3>
         <div className="text-right">
-          <p className="text-sm text-gray-600 dark:text-gray-400">Total em Atraso</p>
-          <p className="text-xl font-bold text-red-700 dark:text-red-400">{formatCurrency(totalOverdue)}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Total em Atraso
+          </p>
+          <p className="text-xl font-bold text-red-700 dark:text-red-400">
+            {formatCurrency(totalOverdue)}
+          </p>
         </div>
       </div>
       <div className="card-content">
@@ -45,7 +53,9 @@ const OverdueInvoices = ({ invoices }) => {
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <p className="font-bold text-gray-900 dark:text-white">{invoice.company_name}</p>
+                  <p className="font-bold text-gray-900 dark:text-white">
+                    {invoice.company_name}
+                  </p>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                     Fatura #{invoice.invoice_number}
                   </p>
@@ -58,7 +68,8 @@ const OverdueInvoices = ({ invoices }) => {
                     {formatCurrency(invoice.amount)}
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                    Vencimento: {new Date(invoice.due_date).toLocaleDateString('pt-BR')}
+                    Vencimento:{" "}
+                    {new Date(invoice.due_date).toLocaleDateString("pt-BR")}
                   </p>
                 </div>
               </div>

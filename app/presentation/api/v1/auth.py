@@ -27,7 +27,8 @@ async def debug_users(db=Depends(get_db)):
     """Debug endpoint to check users in database"""
     from sqlalchemy import text
 
-    query = text("""
+    query = text(
+        """
         SELECT
             u.id,
             u.email_address,
@@ -38,7 +39,8 @@ async def debug_users(db=Depends(get_db)):
         LEFT JOIN master.people p ON p.id = u.person_id
         WHERE u.deleted_at IS NULL
         LIMIT 5
-    """)
+    """
+    )
 
     result = await db.execute(query)
     users = result.fetchall()
@@ -49,7 +51,7 @@ async def debug_users(db=Depends(get_db)):
             "email": u.email_address,
             "password_preview": u.password_preview,
             "is_active": u.is_active,
-            "full_name": u.full_name
+            "full_name": u.full_name,
         }
         for u in users
     ]
@@ -59,6 +61,7 @@ async def debug_users(db=Depends(get_db)):
 async def reset_admin_password(db=Depends(get_db)):
     """Reset admin@proteamcare.com password to 'admin123'"""
     from sqlalchemy import text
+
     from app.infrastructure.auth import get_password_hash
 
     email = "admin@proteamcare.com"
@@ -68,12 +71,14 @@ async def reset_admin_password(db=Depends(get_db)):
     hashed_password = get_password_hash(new_password)
 
     # Update password
-    query = text("""
+    query = text(
+        """
         UPDATE master.users
         SET password = :password, updated_at = NOW()
         WHERE email_address = :email
         RETURNING id, email_address
-    """)
+    """
+    )
 
     result = await db.execute(query, {"password": hashed_password, "email": email})
     await db.commit()
@@ -85,7 +90,7 @@ async def reset_admin_password(db=Depends(get_db)):
             "success": True,
             "message": f"Password reset successfully for {email}",
             "user_id": user.id,
-            "new_password": new_password
+            "new_password": new_password,
         }
     else:
         raise HTTPException(status_code=404, detail="User not found")

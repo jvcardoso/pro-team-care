@@ -4,15 +4,22 @@
  * Exibe timeline completa do processo de ativação
  */
 
-import React, { useState, useEffect } from 'react';
-import { CheckCircle, Clock, XCircle, Mail, User, Building } from 'lucide-react';
-import Card from '../ui/Card';
-import Button from '../ui/Button';
-import CompanyActivationBadge from '../ui/CompanyActivationBadge';
+import React, { useState, useEffect } from "react";
+import {
+  CheckCircle,
+  Clock,
+  XCircle,
+  Mail,
+  User,
+  Building,
+} from "lucide-react";
+import Card from "../ui/Card";
+import Button from "../ui/Button";
+import CompanyActivationBadge from "../ui/CompanyActivationBadge";
 import companyActivationService, {
   CompanyActivationStatus,
-} from '../../services/companyActivationService';
-import { notify } from '../../utils/notifications';
+} from "../../services/companyActivationService";
+import { notify } from "../../utils/notifications";
 
 interface CompanyActivationTabProps {
   companyId: number;
@@ -34,10 +41,12 @@ const CompanyActivationTab: React.FC<CompanyActivationTabProps> = ({
   const loadStatus = async () => {
     try {
       setLoading(true);
-      const data = await companyActivationService.getCompanyActivationStatus(companyId);
+      const data = await companyActivationService.getCompanyActivationStatus(
+        companyId
+      );
       setStatus(data);
     } catch (error: any) {
-      notify.error('Erro ao carregar status de ativação');
+      notify.error("Erro ao carregar status de ativação");
       console.error(error);
     } finally {
       setLoading(false);
@@ -48,10 +57,10 @@ const CompanyActivationTab: React.FC<CompanyActivationTabProps> = ({
     try {
       setActionLoading(true);
       await companyActivationService.resendContractEmail(companyId);
-      notify.success('Email reenviado com sucesso!');
+      notify.success("Email reenviado com sucesso!");
       loadStatus();
     } catch (error: any) {
-      notify.error(error.response?.data?.detail || 'Erro ao reenviar email');
+      notify.error(error.response?.data?.detail || "Erro ao reenviar email");
     } finally {
       setActionLoading(false);
     }
@@ -69,7 +78,9 @@ const CompanyActivationTab: React.FC<CompanyActivationTabProps> = ({
   if (!status) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">Não foi possível carregar o status de ativação</p>
+        <p className="text-muted-foreground">
+          Não foi possível carregar o status de ativação
+        </p>
       </div>
     );
   }
@@ -77,37 +88,47 @@ const CompanyActivationTab: React.FC<CompanyActivationTabProps> = ({
   // Timeline steps
   const timelineSteps = [
     {
-      id: 'created',
-      title: 'Empresa Cadastrada',
-      description: `Cadastrada em ${status.days_since_creation || 0} dia(s) atrás`,
-      status: 'completed',
+      id: "created",
+      title: "Empresa Cadastrada",
+      description: `Cadastrada em ${
+        status.days_since_creation || 0
+      } dia(s) atrás`,
+      status: "completed",
       icon: Building,
     },
     {
-      id: 'contract_sent',
-      title: 'Email de Contrato Enviado',
+      id: "contract_sent",
+      title: "Email de Contrato Enviado",
       description: status.contract_sent
-        ? `Enviado para ${status.contract_sent_to} há ${status.days_since_contract_sent || 0} dia(s)`
-        : 'Aguardando envio',
-      status: status.contract_sent ? 'completed' : 'pending',
+        ? `Enviado para ${status.contract_sent_to} há ${
+            status.days_since_contract_sent || 0
+          } dia(s)`
+        : "Aguardando envio",
+      status: status.contract_sent ? "completed" : "pending",
       icon: Mail,
     },
     {
-      id: 'contract_accepted',
-      title: 'Contrato Aceito',
+      id: "contract_accepted",
+      title: "Contrato Aceito",
       description: status.contract_accepted
-        ? `Aceito por ${status.contract_accepted_by} em ${new Date(status.contract_accepted_at!).toLocaleString('pt-BR')}`
-        : 'Aguardando aceite do cliente',
-      status: status.contract_accepted ? 'completed' : 'pending',
+        ? `Aceito por ${status.contract_accepted_by} em ${new Date(
+            status.contract_accepted_at!
+          ).toLocaleString("pt-BR")}`
+        : "Aguardando aceite do cliente",
+      status: status.contract_accepted ? "completed" : "pending",
       icon: CheckCircle,
     },
     {
-      id: 'user_created',
-      title: 'Usuário Gestor Criado',
+      id: "user_created",
+      title: "Usuário Gestor Criado",
       description: status.has_active_user
-        ? `Criado em ${status.activated_at ? new Date(status.activated_at).toLocaleString('pt-BR') : 'N/A'}`
-        : 'Aguardando criação do usuário',
-      status: status.has_active_user ? 'completed' : 'pending',
+        ? `Criado em ${
+            status.activated_at
+              ? new Date(status.activated_at).toLocaleString("pt-BR")
+              : "N/A"
+          }`
+        : "Aguardando criação do usuário",
+      status: status.has_active_user ? "completed" : "pending",
       icon: User,
     },
   ];
@@ -149,13 +170,13 @@ const CompanyActivationTab: React.FC<CompanyActivationTabProps> = ({
                     className={`
                       w-10 h-10 rounded-full flex items-center justify-center
                       ${
-                        step.status === 'completed'
-                          ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-400'
+                        step.status === "completed"
+                          ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400"
+                          : "bg-gray-100 dark:bg-gray-700 text-gray-400"
                       }
                     `}
                   >
-                    {step.status === 'completed' ? (
+                    {step.status === "completed" ? (
                       <CheckCircle className="h-5 w-5" />
                     ) : (
                       <Clock className="h-5 w-5" />
@@ -165,7 +186,11 @@ const CompanyActivationTab: React.FC<CompanyActivationTabProps> = ({
                     <div
                       className={`
                         w-0.5 h-12 my-1
-                        ${step.status === 'completed' ? 'bg-green-200 dark:bg-green-800' : 'bg-gray-200 dark:bg-gray-700'}
+                        ${
+                          step.status === "completed"
+                            ? "bg-green-200 dark:bg-green-800"
+                            : "bg-gray-200 dark:bg-gray-700"
+                        }
                       `}
                     />
                   )}
@@ -176,12 +201,18 @@ const CompanyActivationTab: React.FC<CompanyActivationTabProps> = ({
                   <h4
                     className={`
                       font-medium
-                      ${step.status === 'completed' ? 'text-foreground' : 'text-muted-foreground'}
+                      ${
+                        step.status === "completed"
+                          ? "text-foreground"
+                          : "text-muted-foreground"
+                      }
                     `}
                   >
                     {step.title}
                   </h4>
-                  <p className="text-sm text-muted-foreground mt-1">{step.description}</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {step.description}
+                  </p>
                 </div>
               </div>
             );
@@ -192,49 +223,52 @@ const CompanyActivationTab: React.FC<CompanyActivationTabProps> = ({
       {/* Ações */}
       <Card title="Ações">
         <div className="space-y-4">
-          {status.access_status === 'pending_contract' && !status.contract_sent && (
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
-              <p className="text-sm text-yellow-800 dark:text-yellow-300 mb-3">
-                📧 Empresa aguardando envio de email de ativação
-              </p>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => {
-                  window.location.href = `/admin/empresas`;
-                }}
-              >
-                Ir para Lista e Enviar Email
-              </Button>
-            </div>
-          )}
+          {status.access_status === "pending_contract" &&
+            !status.contract_sent && (
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
+                <p className="text-sm text-yellow-800 dark:text-yellow-300 mb-3">
+                  📧 Empresa aguardando envio de email de ativação
+                </p>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    window.location.href = `/admin/empresas`;
+                  }}
+                >
+                  Ir para Lista e Enviar Email
+                </Button>
+              </div>
+            )}
 
-          {status.access_status === 'pending_contract' && status.contract_sent && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-              <p className="text-sm text-blue-800 dark:text-blue-300 mb-3">
-                ⏳ Aguardando cliente aceitar o contrato
-              </p>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleResendEmail}
-                disabled={actionLoading}
-                loading={actionLoading}
-              >
-                Reenviar Email de Contrato
-              </Button>
-            </div>
-          )}
+          {status.access_status === "pending_contract" &&
+            status.contract_sent && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                <p className="text-sm text-blue-800 dark:text-blue-300 mb-3">
+                  ⏳ Aguardando cliente aceitar o contrato
+                </p>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleResendEmail}
+                  disabled={actionLoading}
+                  loading={actionLoading}
+                >
+                  Reenviar Email de Contrato
+                </Button>
+              </div>
+            )}
 
-          {status.access_status === 'contract_signed' && (
+          {status.access_status === "contract_signed" && (
             <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
               <p className="text-sm text-green-800 dark:text-green-300">
-                ✅ Contrato aceito! Email de criação de usuário já foi enviado automaticamente.
+                ✅ Contrato aceito! Email de criação de usuário já foi enviado
+                automaticamente.
               </p>
             </div>
           )}
 
-          {status.access_status === 'pending_user' && (
+          {status.access_status === "pending_user" && (
             <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
               <p className="text-sm text-orange-800 dark:text-orange-300">
                 👤 Aguardando cliente criar usuário gestor
@@ -242,7 +276,7 @@ const CompanyActivationTab: React.FC<CompanyActivationTabProps> = ({
             </div>
           )}
 
-          {status.access_status === 'active' && (
+          {status.access_status === "active" && (
             <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
               <p className="text-sm text-green-800 dark:text-green-300">
                 🎉 Empresa totalmente ativada e funcional!
@@ -263,12 +297,14 @@ const CompanyActivationTab: React.FC<CompanyActivationTabProps> = ({
             <div>
               <p className="text-muted-foreground">Data/Hora:</p>
               <p className="font-medium">
-                {new Date(status.contract_accepted_at!).toLocaleString('pt-BR')}
+                {new Date(status.contract_accepted_at!).toLocaleString("pt-BR")}
               </p>
             </div>
             <div>
               <p className="text-muted-foreground">Versão dos Termos:</p>
-              <p className="font-medium">{status.contract_terms_version || 'N/A'}</p>
+              <p className="font-medium">
+                {status.contract_terms_version || "N/A"}
+              </p>
             </div>
           </div>
         </Card>

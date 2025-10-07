@@ -196,7 +196,12 @@ export const parseCurrencyRobust = (formattedValue) => {
  * @returns {object} {isValid: boolean, error: string, numericValue: number}
  */
 export const validateCurrency = (value, options = {}) => {
-  const { min = 0, max = null, required = false, allowNegative = false } = options;
+  const {
+    min = 0,
+    max = null,
+    required = false,
+    allowNegative = false,
+  } = options;
 
   if (required && (!value || value === "")) {
     return { isValid: false, error: "Valor é obrigatório", numericValue: 0 };
@@ -213,14 +218,18 @@ export const validateCurrency = (value, options = {}) => {
   }
 
   if (!allowNegative && numValue < 0) {
-    return { isValid: false, error: "Valor não pode ser negativo", numericValue: numValue };
+    return {
+      isValid: false,
+      error: "Valor não pode ser negativo",
+      numericValue: numValue,
+    };
   }
 
   if (min !== null && numValue < min) {
     return {
       isValid: false,
       error: `Valor mínimo: ${formatCurrencyDisplay(min)}`,
-      numericValue: numValue
+      numericValue: numValue,
     };
   }
 
@@ -228,7 +237,7 @@ export const validateCurrency = (value, options = {}) => {
     return {
       isValid: false,
       error: `Valor máximo: ${formatCurrencyDisplay(max)}`,
-      numericValue: numValue
+      numericValue: numValue,
     };
   }
 

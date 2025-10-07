@@ -28,11 +28,14 @@ INSERT INTO master.company_subscriptions (
 WITH subscription AS (
     SELECT id FROM master.company_subscriptions WHERE company_id = 57 LIMIT 1
 ),
+
 invoice_number AS (
-    SELECT 'PTC-' || EXTRACT(YEAR FROM CURRENT_DATE) || '-' ||
-           LPAD(EXTRACT(MONTH FROM CURRENT_DATE)::text, 2, '0') || '-' ||
-           LPAD('57', 4, '0') || '-001' AS number
+    SELECT
+        'PTC-' || EXTRACT(YEAR FROM CURRENT_DATE) || '-'
+        || LPAD(EXTRACT(MONTH FROM CURRENT_DATE)::text, 2, '0') || '-'
+        || LPAD('57', 4, '0') || '-001' AS number
 )
+
 INSERT INTO master.proteamcare_invoices (
     company_id,
     subscription_id,
@@ -51,8 +54,9 @@ SELECT
     invoice_number.number,
     599.00,                                    -- valor do plano Premium
     DATE_TRUNC('month', CURRENT_DATE),         -- início do período
-    DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month' - INTERVAL '1 day', -- fim do período
-    CURRENT_DATE + INTERVAL '10 days',        -- vencimento em 10 dias
+    -- fim do período
+    DATE_TRUNC('month', CURRENT_DATE) + interval '1 month' - interval '1 day',
+    CURRENT_DATE + interval '10 days',        -- vencimento em 10 dias
     'pending',                                 -- status
     'manual',                                  -- payment_method
     CURRENT_TIMESTAMP
@@ -62,11 +66,14 @@ FROM subscription, invoice_number;
 WITH subscription AS (
     SELECT id FROM master.company_subscriptions WHERE company_id = 57 LIMIT 1
 ),
+
 invoice_number AS (
-    SELECT 'PTC-' || EXTRACT(YEAR FROM CURRENT_DATE - INTERVAL '1 month') || '-' ||
-           LPAD(EXTRACT(MONTH FROM CURRENT_DATE - INTERVAL '1 month')::text, 2, '0') || '-' ||
-           LPAD('57', 4, '0') || '-001' AS number
+    SELECT
+        'PTC-' || EXTRACT(YEAR FROM CURRENT_DATE - interval '1 month') || '-'
+        || LPAD(EXTRACT(MONTH FROM CURRENT_DATE - interval '1 month')::text, 2, '0') || '-'
+        || LPAD('57', 4, '0') || '-001' AS number
 )
+
 INSERT INTO master.proteamcare_invoices (
     company_id,
     subscription_id,
@@ -84,15 +91,18 @@ SELECT
     subscription.id,
     invoice_number.number,
     599.00,                                    -- valor do plano Premium
-    DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month'), -- mês passado
-    DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 day',   -- fim do mês passado
-    CURRENT_DATE - INTERVAL '5 days',         -- venceu há 5 dias
+    DATE_TRUNC('month', CURRENT_DATE - interval '1 month'), -- mês passado
+    -- fim do mês passado
+    DATE_TRUNC('month', CURRENT_DATE) - interval '1 day',
+    CURRENT_DATE - interval '5 days',         -- venceu há 5 dias
     'pending',                                 -- status (vencida)
     'manual',                                  -- payment_method
     CURRENT_TIMESTAMP
 FROM subscription, invoice_number
 WHERE NOT EXISTS (
-    SELECT 1 FROM master.proteamcare_invoices WHERE invoice_number = invoice_number.number
+    SELECT 1
+    FROM master.proteamcare_invoices
+    WHERE invoice_number = invoice_number.number
 );
 
 -- Verificar resultado
@@ -106,10 +116,10 @@ SELECT
     cs.status,
     cs.start_date,
     cs.billing_day
-FROM master.company_subscriptions cs
-JOIN master.companies c ON cs.company_id = c.id
-JOIN master.people p ON c.person_id = p.id
-JOIN master.subscription_plans sp ON cs.plan_id = sp.id
+FROM master.company_subscriptions AS cs
+INNER JOIN master.companies AS c ON cs.company_id = c.id
+INNER JOIN master.people AS p ON c.person_id = p.id
+INNER JOIN master.subscription_plans AS sp ON cs.plan_id = sp.id
 WHERE cs.company_id = 57;
 
 -- Verificar faturas criadas

@@ -11,7 +11,7 @@ COMMENT ON COLUMN master.contracts.notes IS 'Observações adicionais sobre o co
 
 -- Índice para busca por texto (opcional, para performance futura)
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_contracts_notes_text
-ON master.contracts USING gin(to_tsvector('portuguese', notes))
+ON master.contracts USING gin (to_tsvector('portuguese', notes))
 WHERE notes IS NOT NULL;
 
 -- Migration executada com sucesso em 2024-09-24

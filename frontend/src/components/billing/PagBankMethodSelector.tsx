@@ -1,17 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Button } from '../ui/button';
-import { Alert, AlertDescription } from '../ui/alert';
-import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
-import { Label } from '../ui/label';
-import { Switch } from '../ui/switch';
-import { Loader2, CreditCard, FileText, CheckCircle, AlertCircle } from 'lucide-react';
-import { BillingMethodStatus, BillingMethodUpdate } from '../../types/pagbank.types';
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Button } from "../ui/button";
+import { Alert, AlertDescription } from "../ui/alert";
+import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
+import { Label } from "../ui/label";
+import { Switch } from "../ui/switch";
+import {
+  Loader2,
+  CreditCard,
+  FileText,
+  CheckCircle,
+  AlertCircle,
+} from "lucide-react";
+import {
+  BillingMethodStatus,
+  BillingMethodUpdate,
+} from "../../types/pagbank.types";
 
 interface PagBankMethodSelectorProps {
   contractId: number;
   currentStatus?: BillingMethodStatus;
-  onMethodChange?: (method: 'recurrent' | 'manual') => void;
+  onMethodChange?: (method: "recurrent" | "manual") => void;
   onStatusUpdate?: (status: BillingMethodStatus) => void;
   loading?: boolean;
   disabled?: boolean;
@@ -25,8 +34,8 @@ const PagBankMethodSelector: React.FC<PagBankMethodSelectorProps> = ({
   loading = false,
   disabled = false,
 }) => {
-  const [selectedMethod, setSelectedMethod] = useState<'recurrent' | 'manual'>(
-    currentStatus?.billing_method || 'manual'
+  const [selectedMethod, setSelectedMethod] = useState<"recurrent" | "manual">(
+    currentStatus?.billing_method || "manual"
   );
   const [autoFallback, setAutoFallback] = useState(
     currentStatus?.auto_fallback_enabled ?? true
@@ -41,28 +50,28 @@ const PagBankMethodSelector: React.FC<PagBankMethodSelectorProps> = ({
   }, [currentStatus]);
 
   const handleMethodChange = (value: string) => {
-    const method = value as 'recurrent' | 'manual';
+    const method = value as "recurrent" | "manual";
     setSelectedMethod(method);
     onMethodChange?.(method);
   };
 
-  const getBillingMethodIcon = (method: 'recurrent' | 'manual') => {
-    return method === 'recurrent' ? (
+  const getBillingMethodIcon = (method: "recurrent" | "manual") => {
+    return method === "recurrent" ? (
       <CreditCard className="h-5 w-5 text-blue-600" />
     ) : (
       <FileText className="h-5 w-5 text-green-600" />
     );
   };
 
-  const getBillingMethodLabel = (method: 'recurrent' | 'manual') => {
-    return method === 'recurrent' ? 'Cobrança Recorrente' : 'Cobrança Manual';
+  const getBillingMethodLabel = (method: "recurrent" | "manual") => {
+    return method === "recurrent" ? "Cobrança Recorrente" : "Cobrança Manual";
   };
 
-  const getBillingMethodDescription = (method: 'recurrent' | 'manual') => {
-    if (method === 'recurrent') {
-      return 'Pagamento automático via cartão de crédito cadastrado. Cobranças mensais automáticas.';
+  const getBillingMethodDescription = (method: "recurrent" | "manual") => {
+    if (method === "recurrent") {
+      return "Pagamento automático via cartão de crédito cadastrado. Cobranças mensais automáticas.";
     }
-    return 'Pagamento manual via PIX, Boleto ou Cartão. Cliente recebe link de pagamento.';
+    return "Pagamento manual via PIX, Boleto ou Cartão. Cliente recebe link de pagamento.";
   };
 
   const getStatusBadge = () => {
@@ -81,7 +90,7 @@ const PagBankMethodSelector: React.FC<PagBankMethodSelectorProps> = ({
       );
     }
 
-    if (method === 'recurrent' && hasFailures) {
+    if (method === "recurrent" && hasFailures) {
       return (
         <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-sm">
           <AlertCircle className="h-4 w-4" />
@@ -99,7 +108,10 @@ const PagBankMethodSelector: React.FC<PagBankMethodSelectorProps> = ({
   };
 
   const getPagBankStatusInfo = () => {
-    if (!currentStatus?.pagbank_data || currentStatus.billing_method !== 'recurrent') {
+    if (
+      !currentStatus?.pagbank_data ||
+      currentStatus.billing_method !== "recurrent"
+    ) {
       return null;
     }
 
@@ -109,13 +121,20 @@ const PagBankMethodSelector: React.FC<PagBankMethodSelectorProps> = ({
       <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
         <h4 className="font-medium text-blue-900 mb-2">Status PagBank</h4>
         <div className="space-y-1 text-sm text-blue-700">
-          <div>Assinatura: {pagbankData.subscription_id || 'N/A'}</div>
-          <div>Status: {pagbankData.subscription_status || 'N/A'}</div>
+          <div>Assinatura: {pagbankData.subscription_id || "N/A"}</div>
+          <div>Status: {pagbankData.subscription_status || "N/A"}</div>
           {pagbankData.next_billing_date && (
-            <div>Próxima cobrança: {new Date(pagbankData.next_billing_date).toLocaleDateString('pt-BR')}</div>
+            <div>
+              Próxima cobrança:{" "}
+              {new Date(pagbankData.next_billing_date).toLocaleDateString(
+                "pt-BR"
+              )}
+            </div>
           )}
           {pagbankData.status_check_error && (
-            <div className="text-red-600">Erro: {pagbankData.status_check_error}</div>
+            <div className="text-red-600">
+              Erro: {pagbankData.status_check_error}
+            </div>
           )}
         </div>
       </div>
@@ -127,7 +146,9 @@ const PagBankMethodSelector: React.FC<PagBankMethodSelectorProps> = ({
       <Card>
         <CardContent className="flex items-center justify-center py-8">
           <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
-          <span className="ml-2 text-gray-500">Carregando método de cobrança...</span>
+          <span className="ml-2 text-gray-500">
+            Carregando método de cobrança...
+          </span>
         </CardContent>
       </Card>
     );
@@ -150,19 +171,25 @@ const PagBankMethodSelector: React.FC<PagBankMethodSelectorProps> = ({
           <div className="space-y-4">
             {/* Recurrent Billing Option */}
             <div className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-              <RadioGroupItem value="recurrent" id="recurrent" className="mt-1" />
+              <RadioGroupItem
+                value="recurrent"
+                id="recurrent"
+                className="mt-1"
+              />
               <div className="flex-1">
-                <Label htmlFor="recurrent" className="flex items-center gap-2 font-medium cursor-pointer">
-                  {getBillingMethodIcon('recurrent')}
-                  {getBillingMethodLabel('recurrent')}
+                <Label
+                  htmlFor="recurrent"
+                  className="flex items-center gap-2 font-medium cursor-pointer"
+                >
+                  {getBillingMethodIcon("recurrent")}
+                  {getBillingMethodLabel("recurrent")}
                 </Label>
                 <p className="text-sm text-gray-600 mt-1">
-                  {getBillingMethodDescription('recurrent')}
+                  {getBillingMethodDescription("recurrent")}
                 </p>
                 <div className="mt-2 text-xs text-gray-500">
-                  ✓ Pagamento automático &nbsp;&nbsp;
-                  ✓ Sem interrupção do serviço &nbsp;&nbsp;
-                  ✓ Fallback automático
+                  ✓ Pagamento automático &nbsp;&nbsp; ✓ Sem interrupção do
+                  serviço &nbsp;&nbsp; ✓ Fallback automático
                 </div>
               </div>
             </div>
@@ -171,17 +198,19 @@ const PagBankMethodSelector: React.FC<PagBankMethodSelectorProps> = ({
             <div className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-gray-50 transition-colors">
               <RadioGroupItem value="manual" id="manual" className="mt-1" />
               <div className="flex-1">
-                <Label htmlFor="manual" className="flex items-center gap-2 font-medium cursor-pointer">
-                  {getBillingMethodIcon('manual')}
-                  {getBillingMethodLabel('manual')}
+                <Label
+                  htmlFor="manual"
+                  className="flex items-center gap-2 font-medium cursor-pointer"
+                >
+                  {getBillingMethodIcon("manual")}
+                  {getBillingMethodLabel("manual")}
                 </Label>
                 <p className="text-sm text-gray-600 mt-1">
-                  {getBillingMethodDescription('manual')}
+                  {getBillingMethodDescription("manual")}
                 </p>
                 <div className="mt-2 text-xs text-gray-500">
-                  ✓ PIX, Boleto e Cartão &nbsp;&nbsp;
-                  ✓ Flexibilidade de pagamento &nbsp;&nbsp;
-                  ✓ Link de checkout seguro
+                  ✓ PIX, Boleto e Cartão &nbsp;&nbsp; ✓ Flexibilidade de
+                  pagamento &nbsp;&nbsp; ✓ Link de checkout seguro
                 </div>
               </div>
             </div>
@@ -195,7 +224,8 @@ const PagBankMethodSelector: React.FC<PagBankMethodSelectorProps> = ({
               Fallback Automático
             </Label>
             <p className="text-sm text-gray-600">
-              Mudar automaticamente para cobrança manual após 3 falhas consecutivas
+              Mudar automaticamente para cobrança manual após 3 falhas
+              consecutivas
             </p>
           </div>
           <Switch
@@ -213,7 +243,7 @@ const PagBankMethodSelector: React.FC<PagBankMethodSelectorProps> = ({
               <div>
                 <span className="text-gray-500">Status:</span>
                 <span className="ml-2 font-medium">
-                  {currentStatus.is_active ? 'Ativo' : 'Inativo'}
+                  {currentStatus.is_active ? "Ativo" : "Inativo"}
                 </span>
               </div>
               <div>
@@ -226,7 +256,9 @@ const PagBankMethodSelector: React.FC<PagBankMethodSelectorProps> = ({
                 <div>
                   <span className="text-gray-500">Próxima cobrança:</span>
                   <span className="ml-2 font-medium">
-                    {new Date(currentStatus.next_billing_date).toLocaleDateString('pt-BR')}
+                    {new Date(
+                      currentStatus.next_billing_date
+                    ).toLocaleDateString("pt-BR")}
                   </span>
                 </div>
               )}
@@ -249,8 +281,8 @@ const PagBankMethodSelector: React.FC<PagBankMethodSelectorProps> = ({
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Você está prestes a alterar o método de cobrança. Esta ação pode impactar os próximos
-              pagamentos do contrato.
+              Você está prestes a alterar o método de cobrança. Esta ação pode
+              impactar os próximos pagamentos do contrato.
             </AlertDescription>
           </Alert>
         )}

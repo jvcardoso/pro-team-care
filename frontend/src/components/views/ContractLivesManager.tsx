@@ -3,7 +3,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { contractsService, Contract } from "../../services/contractsService";
 import DataTableTemplate from "../shared/DataTable/DataTableTemplate";
 import { useDataTable } from "../../hooks/useDataTable";
-import { createContractLivesConfig, ContractLife } from "../../config/tables/contractLives.config";
+import {
+  createContractLivesConfig,
+  ContractLife,
+} from "../../config/tables/contractLives.config";
 import Card from "../ui/Card";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
@@ -57,12 +60,16 @@ const ContractLivesManager: React.FC = () => {
       const activeLives = lives.filter((l) => l.status === "active").length;
 
       if (contract?.lives_maximum && activeLives >= contract.lives_maximum) {
-        notify.error(`Limite máximo de ${contract.lives_maximum} vidas atingido`);
+        notify.error(
+          `Limite máximo de ${contract.lives_maximum} vidas atingido`
+        );
         return;
       }
 
       if (contract && activeLives >= contract.lives_contracted) {
-        notify.error(`Todas as ${contract.lives_contracted} vidas contratadas já estão em uso`);
+        notify.error(
+          `Todas as ${contract.lives_contracted} vidas contratadas já estão em uso`
+        );
         return;
       }
 
@@ -198,18 +205,24 @@ const ContractLivesManager: React.FC = () => {
 
       // Load all contracts and their lives
       const contractsResponse = await contractsService.listContracts();
-      console.log(`📊 Encontrados ${contractsResponse.contracts.length} contratos`);
+      console.log(
+        `📊 Encontrados ${contractsResponse.contracts.length} contratos`
+      );
       const allLives: ContractLife[] = [];
 
       for (const contractData of contractsResponse.contracts) {
         try {
-          const livesData = await contractsService.listContractLives(contractData.id);
-          console.log(`📊 Contrato ${contractData.id} (${contractData.contract_number}): ${livesData.length} vidas`);
+          const livesData = await contractsService.listContractLives(
+            contractData.id
+          );
+          console.log(
+            `📊 Contrato ${contractData.id} (${contractData.contract_number}): ${livesData.length} vidas`
+          );
           // Add contract info to each life
-          const livesWithContract = livesData.map(life => ({
+          const livesWithContract = livesData.map((life) => ({
             ...life,
             contract_number: contractData.contract_number,
-            client_name: contractData.client_name
+            client_name: contractData.client_name,
           }));
           allLives.push(...livesWithContract);
         } catch (error) {
@@ -228,7 +241,6 @@ const ContractLivesManager: React.FC = () => {
       setLoading(false);
     }
   };
-
 
   const validateLifeRemoval = (life: ContractLife): string | null => {
     const activeLives = lives.filter((l) => l.status === "active").length;
@@ -270,7 +282,9 @@ const ContractLivesManager: React.FC = () => {
         }
       );
 
-      notify.success(`Vida de ${selectedLife.person_name} atualizada com sucesso`);
+      notify.success(
+        `Vida de ${selectedLife.person_name} atualizada com sucesso`
+      );
       setShowEditForm(false);
       setSelectedLife(null);
       loadContractAndLives(); // Reload the list
@@ -359,8 +373,6 @@ const ContractLivesManager: React.FC = () => {
     }
   };
 
-
-
   const activeLives = lives.filter((l) => l.status === "active").length;
   const totalLives = lives.length;
 
@@ -378,10 +390,14 @@ const ContractLivesManager: React.FC = () => {
         <div className="text-center">
           <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {contractId ? "Erro ao carregar contrato" : "Erro ao carregar vidas"}
+            {contractId
+              ? "Erro ao carregar contrato"
+              : "Erro ao carregar vidas"}
           </h3>
           <p className="text-gray-500 mb-4">{error}</p>
-          <Button onClick={() => navigate(contractId ? "/admin/contratos" : "/admin")}>
+          <Button
+            onClick={() => navigate(contractId ? "/admin/contratos" : "/admin")}
+          >
             {contractId ? "Voltar para Contratos" : "Voltar ao Dashboard"}
           </Button>
         </div>
@@ -391,71 +407,71 @@ const ContractLivesManager: React.FC = () => {
 
   return (
     <div className="space-y-6">
-       {/* Contract Summary - apenas quando visualizando contrato específico */}
-       {contract && contractId && (
-         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-           <Card>
-             <div className="p-4">
-               <div className="flex items-center">
-                 <Users className="w-8 h-8 text-blue-500" />
-                 <div className="ml-3">
-                   <p className="text-sm font-medium text-gray-500">
-                     Vidas Ativas
-                   </p>
-                   <p className="text-2xl font-bold text-gray-900">
-                     {activeLives}
-                   </p>
-                 </div>
-               </div>
-             </div>
-           </Card>
-           <Card>
-             <div className="p-4">
-               <div className="flex items-center">
-                 <FileText className="w-8 h-8 text-green-500" />
-                 <div className="ml-3">
-                   <p className="text-sm font-medium text-gray-500">
-                     Total de Vidas
-                   </p>
-                   <p className="text-2xl font-bold text-gray-900">{totalLives}</p>
-                 </div>
-               </div>
-             </div>
-           </Card>
-           <Card>
-             <div className="p-4">
-               <div className="flex items-center">
-                 <CheckCircle className="w-8 h-8 text-purple-500" />
-                 <div className="ml-3">
-                   <p className="text-sm font-medium text-gray-500">
-                     Vidas Contratadas
-                   </p>
-                   <p className="text-2xl font-bold text-gray-900">
-                     {contract.lives_contracted}
-                   </p>
-                 </div>
-               </div>
-             </div>
-           </Card>
-           <Card>
-             <div className="p-4">
-               <div className="flex items-center">
-                 <Calendar className="w-8 h-8 text-orange-500" />
-                 <div className="ml-3">
-                   <p className="text-sm font-medium text-gray-500">
-                     Vagas Disponíveis
-                   </p>
-                   <p className="text-2xl font-bold text-gray-900">
-                     {Math.max(0, contract.lives_contracted - activeLives)}
-                   </p>
-                 </div>
-               </div>
-             </div>
-           </Card>
-         </div>
-       )}
-
-
+      {/* Contract Summary - apenas quando visualizando contrato específico */}
+      {contract && contractId && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <div className="p-4">
+              <div className="flex items-center">
+                <Users className="w-8 h-8 text-blue-500" />
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-gray-500">
+                    Vidas Ativas
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {activeLives}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Card>
+          <Card>
+            <div className="p-4">
+              <div className="flex items-center">
+                <FileText className="w-8 h-8 text-green-500" />
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-gray-500">
+                    Total de Vidas
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {totalLives}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Card>
+          <Card>
+            <div className="p-4">
+              <div className="flex items-center">
+                <CheckCircle className="w-8 h-8 text-purple-500" />
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-gray-500">
+                    Vidas Contratadas
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {contract.lives_contracted}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Card>
+          <Card>
+            <div className="p-4">
+              <div className="flex items-center">
+                <Calendar className="w-8 h-8 text-orange-500" />
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-gray-500">
+                    Vagas Disponíveis
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {Math.max(0, contract.lives_contracted - activeLives)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* Add Life Form */}
       {showAddForm && (
@@ -476,7 +492,9 @@ const ContractLivesManager: React.FC = () => {
               Adicionar Nova Vida (Pessoa)
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              Uma vida representa uma pessoa vinculada ao contrato. Preencha os dados pessoais obrigatórios e, opcionalmente, os contatos e endereço.
+              Uma vida representa uma pessoa vinculada ao contrato. Preencha os
+              dados pessoais obrigatórios e, opcionalmente, os contatos e
+              endereço.
             </p>
 
             <form onSubmit={handleFormSubmit} className="space-y-6">
@@ -947,7 +965,9 @@ const ContractLivesManager: React.FC = () => {
               birth_date: "", // TODO: Get from person data
             },
             life: {
-              start_date: selectedLife.start_date || new Date().toISOString().split("T")[0],
+              start_date:
+                selectedLife.start_date ||
+                new Date().toISOString().split("T")[0],
               end_date: selectedLife.end_date || "",
               notes: selectedLife.notes || "",
             },
@@ -986,7 +1006,8 @@ const ContractLivesManager: React.FC = () => {
                     className="bg-gray-100 dark:bg-gray-700"
                   />
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    O nome não pode ser alterado. Use "Substituir" para trocar a pessoa.
+                    O nome não pode ser alterado. Use "Substituir" para trocar a
+                    pessoa.
                   </p>
                 </div>
                 <div>
@@ -1143,21 +1164,21 @@ const ContractLivesManager: React.FC = () => {
         </div>
       )}
 
-       {/* Lives List */}
-       <DataTableTemplate<ContractLife>
-         config={createContractLivesConfig({
-           onViewTimeline: handleViewTimeline,
-           onSubstitute: handleSubstituteLife,
-           onEdit: (life) => {
-             // For now, just show substitute form as edit
-             handleSubstituteLife(life);
-           },
-           onDelete: handleRemoveLife,
-           onAdd: handleAddLife,
-         })}
-         tableData={dataTableProps}
-         loading={loading}
-       />
+      {/* Lives List */}
+      <DataTableTemplate<ContractLife>
+        config={createContractLivesConfig({
+          onViewTimeline: handleViewTimeline,
+          onSubstitute: handleSubstituteLife,
+          onEdit: (life) => {
+            // For now, just show substitute form as edit
+            handleSubstituteLife(life);
+          },
+          onDelete: handleRemoveLife,
+          onAdd: handleAddLife,
+        })}
+        tableData={dataTableProps}
+        loading={loading}
+      />
     </div>
   );
 };

@@ -28,12 +28,3 @@ class NotificationListResponse(BaseModel):
     total: int = 0
     page: int = 1
     per_page: int = 20
-
-
-
-
-
-
-
-
-

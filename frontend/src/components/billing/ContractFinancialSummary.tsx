@@ -3,12 +3,12 @@
  * Displays financial overview for a specific contract
  */
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import billingService from '../../services/billingService';
-import { Contract } from '../../services/contractsService';
-import { InvoiceStatus, BillingMetrics } from '../../types/billing.types';
-import InvoiceStatusBadge from './InvoiceStatusBadge';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import billingService from "../../services/billingService";
+import { Contract } from "../../services/contractsService";
+import { InvoiceStatus, BillingMetrics } from "../../types/billing.types";
+import InvoiceStatusBadge from "./InvoiceStatusBadge";
 
 interface ContractFinancialSummaryProps {
   contract: Contract;
@@ -24,15 +24,16 @@ interface ContractBillingStatus {
   overdue_amount: number;
   total_paid_this_year: number;
   last_payment_date?: string;
-  status: 'current' | 'overdue' | 'suspended';
+  status: "current" | "overdue" | "suspended";
 }
 
 const ContractFinancialSummary: React.FC<ContractFinancialSummaryProps> = ({
   contract,
-  className = '',
+  className = "",
 }) => {
   const navigate = useNavigate();
-  const [billingStatus, setBillingStatus] = useState<ContractBillingStatus | null>(null);
+  const [billingStatus, setBillingStatus] =
+    useState<ContractBillingStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,18 +50,18 @@ const ContractFinancialSummary: React.FC<ContractFinancialSummaryProps> = ({
       const status = await billingService.getContractBillingStatus(contract.id);
       setBillingStatus(status);
     } catch (err: any) {
-      console.error('Error loading billing status:', err);
+      console.error("Error loading billing status:", err);
 
       // Fallback: create mock data based on contract
       const mockStatus: ContractBillingStatus = {
-        monthly_value: parseFloat(contract.monthly_value?.toString() || '0'),
+        monthly_value: parseFloat(contract.monthly_value?.toString() || "0"),
         next_billing_date: getNextBillingDate(),
         pending_invoices: 0,
         pending_amount: 0,
         overdue_invoices: 0,
         overdue_amount: 0,
         total_paid_this_year: 0,
-        status: 'current',
+        status: "current",
       };
       setBillingStatus(mockStatus);
     } finally {
@@ -71,32 +72,32 @@ const ContractFinancialSummary: React.FC<ContractFinancialSummaryProps> = ({
   const getNextBillingDate = (): string => {
     const now = new Date();
     const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    return nextMonth.toISOString().split('T')[0];
+    return nextMonth.toISOString().split("T")[0];
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'current':
-        return 'text-green-600 bg-green-50 border-green-200';
-      case 'overdue':
-        return 'text-red-600 bg-red-50 border-red-200';
-      case 'suspended':
-        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      case "current":
+        return "text-green-600 bg-green-50 border-green-200";
+      case "overdue":
+        return "text-red-600 bg-red-50 border-red-200";
+      case "suspended":
+        return "text-yellow-600 bg-yellow-50 border-yellow-200";
       default:
-        return 'text-gray-600 bg-gray-50 border-gray-200';
+        return "text-gray-600 bg-gray-50 border-gray-200";
     }
   };
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'current':
-        return 'Em dia';
-      case 'overdue':
-        return 'Em atraso';
-      case 'suspended':
-        return 'Suspenso';
+      case "current":
+        return "Em dia";
+      case "overdue":
+        return "Em atraso";
+      case "suspended":
+        return "Suspenso";
       default:
-        return 'Indefinido';
+        return "Indefinido";
     }
   };
 
@@ -105,17 +106,22 @@ const ContractFinancialSummary: React.FC<ContractFinancialSummaryProps> = ({
   };
 
   const handleBillingDashboard = () => {
-    navigate('/admin/faturamento/dashboard');
+    navigate("/admin/faturamento/dashboard");
   };
 
   if (loading) {
     return (
-      <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 ${className}`}>
+      <div
+        className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 ${className}`}
+      >
         <div className="animate-pulse">
           <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-40 mb-4"></div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-20 bg-gray-100 dark:bg-gray-700 rounded"></div>
+              <div
+                key={i}
+                className="h-20 bg-gray-100 dark:bg-gray-700 rounded"
+              ></div>
             ))}
           </div>
         </div>
@@ -125,7 +131,9 @@ const ContractFinancialSummary: React.FC<ContractFinancialSummaryProps> = ({
 
   if (error) {
     return (
-      <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 ${className}`}>
+      <div
+        className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 ${className}`}
+      >
         <div className="text-center text-gray-500 dark:text-gray-400">
           <div className="text-2xl mb-2">⚠️</div>
           <p>Erro ao carregar informações financeiras</p>
@@ -141,7 +149,9 @@ const ContractFinancialSummary: React.FC<ContractFinancialSummaryProps> = ({
   }
 
   return (
-    <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 ${className}`}>
+    <div
+      className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 ${className}`}
+    >
       {/* Header */}
       <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between">
@@ -151,10 +161,10 @@ const ContractFinancialSummary: React.FC<ContractFinancialSummaryProps> = ({
           <div className="flex items-center space-x-2">
             <span
               className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
-                billingStatus?.status || 'current'
+                billingStatus?.status || "current"
               )}`}
             >
-              {getStatusLabel(billingStatus?.status || 'current')}
+              {getStatusLabel(billingStatus?.status || "current")}
             </span>
           </div>
         </div>
@@ -167,9 +177,13 @@ const ContractFinancialSummary: React.FC<ContractFinancialSummaryProps> = ({
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-blue-900 dark:text-blue-300">Valor Mensal</p>
+                <p className="text-sm font-medium text-blue-900 dark:text-blue-300">
+                  Valor Mensal
+                </p>
                 <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                  {billingService.formatCurrency(billingStatus?.monthly_value || 0)}
+                  {billingService.formatCurrency(
+                    billingStatus?.monthly_value || 0
+                  )}
                 </p>
               </div>
               <div className="text-2xl">💳</div>
@@ -180,11 +194,13 @@ const ContractFinancialSummary: React.FC<ContractFinancialSummaryProps> = ({
           <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-green-900 dark:text-green-300">Próximo Faturamento</p>
+                <p className="text-sm font-medium text-green-900 dark:text-green-300">
+                  Próximo Faturamento
+                </p>
                 <p className="text-lg font-semibold text-green-600 dark:text-green-400">
                   {billingStatus?.next_billing_date
                     ? billingService.formatDate(billingStatus.next_billing_date)
-                    : 'Não agendado'}
+                    : "Não agendado"}
                 </p>
               </div>
               <div className="text-2xl">📅</div>
@@ -195,9 +211,13 @@ const ContractFinancialSummary: React.FC<ContractFinancialSummaryProps> = ({
           <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-purple-900 dark:text-purple-300">Pago Este Ano</p>
+                <p className="text-sm font-medium text-purple-900 dark:text-purple-300">
+                  Pago Este Ano
+                </p>
                 <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                  {billingService.formatCurrency(billingStatus?.total_paid_this_year || 0)}
+                  {billingService.formatCurrency(
+                    billingStatus?.total_paid_this_year || 0
+                  )}
                 </p>
               </div>
               <div className="text-2xl">📈</div>
@@ -206,9 +226,12 @@ const ContractFinancialSummary: React.FC<ContractFinancialSummaryProps> = ({
         </div>
 
         {/* Pending/Overdue Alerts */}
-        {(billingStatus?.pending_invoices > 0 || billingStatus?.overdue_invoices > 0) && (
+        {(billingStatus?.pending_invoices > 0 ||
+          billingStatus?.overdue_invoices > 0) && (
           <div className="mb-6">
-            <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Alertas Financeiros</h4>
+            <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
+              Alertas Financeiros
+            </h4>
             <div className="space-y-2">
               {billingStatus?.overdue_invoices > 0 && (
                 <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
@@ -219,7 +242,10 @@ const ContractFinancialSummary: React.FC<ContractFinancialSummaryProps> = ({
                         {billingStatus.overdue_invoices} fatura(s) em atraso
                       </p>
                       <p className="text-sm text-red-600 dark:text-red-400">
-                        Total: {billingService.formatCurrency(billingStatus.overdue_amount)}
+                        Total:{" "}
+                        {billingService.formatCurrency(
+                          billingStatus.overdue_amount
+                        )}
                       </p>
                     </div>
                   </div>
@@ -235,7 +261,10 @@ const ContractFinancialSummary: React.FC<ContractFinancialSummaryProps> = ({
                         {billingStatus.pending_invoices} fatura(s) pendente(s)
                       </p>
                       <p className="text-sm text-yellow-600 dark:text-yellow-400">
-                        Total: {billingService.formatCurrency(billingStatus.pending_amount)}
+                        Total:{" "}
+                        {billingService.formatCurrency(
+                          billingStatus.pending_amount
+                        )}
                       </p>
                     </div>
                   </div>

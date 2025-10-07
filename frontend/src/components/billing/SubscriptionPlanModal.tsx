@@ -1,19 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import Button from '../ui/Button';
-import Card from '../ui/Card';
-import Input from '../ui/Input';
-import Textarea from '../ui/Textarea';
-import { notify } from '../../utils/notifications';
-import {
-  X,
-  CreditCard,
-  Users,
-  Building,
-  Settings,
-  Info,
-} from 'lucide-react';
-import { B2BBillingService } from '../../services/b2bBillingService';
-import type { SubscriptionPlan } from '../../types/b2b-billing.types';
+import React, { useState, useEffect } from "react";
+import Button from "../ui/Button";
+import Card from "../ui/Card";
+import Input from "../ui/Input";
+import Textarea from "../ui/Textarea";
+import { notify } from "../../utils/notifications";
+import { X, CreditCard, Users, Building, Settings, Info } from "lucide-react";
+import { B2BBillingService } from "../../services/b2bBillingService";
+import type { SubscriptionPlan } from "../../types/b2b-billing.types";
 
 interface SubscriptionPlanModalProps {
   isOpen: boolean;
@@ -28,18 +21,20 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
   onSuccess,
   plan,
 }) => {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [monthlyPrice, setMonthlyPrice] = useState<number>(0);
   const [maxUsers, setMaxUsers] = useState<number | null>(null);
-  const [maxEstablishments, setMaxEstablishments] = useState<number | null>(null);
+  const [maxEstablishments, setMaxEstablishments] = useState<number | null>(
+    null
+  );
   const [isActive, setIsActive] = useState(true);
   const [loading, setLoading] = useState(false);
 
   // Features
-  const [reportsType, setReportsType] = useState('basic');
-  const [supportType, setSupportType] = useState('email');
-  const [integrationsType, setIntegrationsType] = useState('limited');
+  const [reportsType, setReportsType] = useState("basic");
+  const [supportType, setSupportType] = useState("email");
+  const [integrationsType, setIntegrationsType] = useState("limited");
   const [hasAnalytics, setHasAnalytics] = useState(false);
   const [hasCustomFeatures, setHasCustomFeatures] = useState(false);
 
@@ -49,31 +44,35 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
     if (isOpen) {
       if (plan) {
         setName(plan.name);
-        setDescription(plan.description || '');
-        setMonthlyPrice(typeof plan.monthly_price === 'string' ? parseFloat(plan.monthly_price) : plan.monthly_price);
+        setDescription(plan.description || "");
+        setMonthlyPrice(
+          typeof plan.monthly_price === "string"
+            ? parseFloat(plan.monthly_price)
+            : plan.monthly_price
+        );
         setMaxUsers(plan.max_users);
         setMaxEstablishments(plan.max_establishments);
         setIsActive(plan.is_active);
 
         // Features
         if (plan.features) {
-          setReportsType(plan.features.reports || 'basic');
-          setSupportType(plan.features.support || 'email');
-          setIntegrationsType(plan.features.integrations || 'limited');
+          setReportsType(plan.features.reports || "basic");
+          setSupportType(plan.features.support || "email");
+          setIntegrationsType(plan.features.integrations || "limited");
           setHasAnalytics(!!plan.features.analytics);
           setHasCustomFeatures(!!plan.features.custom_features);
         }
       } else {
         // Reset form for new plan
-        setName('');
-        setDescription('');
+        setName("");
+        setDescription("");
         setMonthlyPrice(0);
         setMaxUsers(null);
         setMaxEstablishments(null);
         setIsActive(true);
-        setReportsType('basic');
-        setSupportType('email');
-        setIntegrationsType('limited');
+        setReportsType("basic");
+        setSupportType("email");
+        setIntegrationsType("limited");
         setHasAnalytics(false);
         setHasCustomFeatures(false);
       }
@@ -83,22 +82,22 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
   const handleSave = async () => {
     // Validações
     if (!name.trim()) {
-      notify.error('Nome do plano é obrigatório');
+      notify.error("Nome do plano é obrigatório");
       return;
     }
 
     if (monthlyPrice <= 0) {
-      notify.error('Preço mensal deve ser maior que zero');
+      notify.error("Preço mensal deve ser maior que zero");
       return;
     }
 
     if (maxUsers !== null && maxUsers <= 0) {
-      notify.error('Número máximo de usuários deve ser maior que zero');
+      notify.error("Número máximo de usuários deve ser maior que zero");
       return;
     }
 
     if (maxEstablishments !== null && maxEstablishments <= 0) {
-      notify.error('Número máximo de estabelecimentos deve ser maior que zero');
+      notify.error("Número máximo de estabelecimentos deve ser maior que zero");
       return;
     }
 
@@ -123,17 +122,19 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
 
       if (isEditing && plan) {
         await B2BBillingService.updateSubscriptionPlan(plan.id, planData);
-        notify.success('Plano atualizado com sucesso!');
+        notify.success("Plano atualizado com sucesso!");
       } else {
         await B2BBillingService.createSubscriptionPlan(planData);
-        notify.success('Plano criado com sucesso!');
+        notify.success("Plano criado com sucesso!");
       }
 
       setTimeout(() => {
         onSuccess();
       }, 1000);
     } catch (err: any) {
-      notify.error(`Erro ao ${isEditing ? 'atualizar' : 'criar'} plano: ` + err.message);
+      notify.error(
+        `Erro ao ${isEditing ? "atualizar" : "criar"} plano: ` + err.message
+      );
     } finally {
       setLoading(false);
     }
@@ -148,7 +149,7 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
         <div className="flex items-center justify-between p-6 border-b border-border">
           <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
             <CreditCard className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            {isEditing ? 'Editar Plano' : 'Novo Plano de Assinatura'}
+            {isEditing ? "Editar Plano" : "Novo Plano de Assinatura"}
           </h2>
           <button
             onClick={onClose}
@@ -160,7 +161,6 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
 
         {/* Content */}
         <div className="p-6 space-y-6 overflow-y-auto max-h-[calc(90vh-140px)]">
-
           {/* Informações Básicas */}
           <Card title="Informações Básicas" icon={<Info className="h-5 w-5" />}>
             <div className="space-y-4">
@@ -198,7 +198,9 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
                   step="0.01"
                   min="0"
                   value={monthlyPrice}
-                  onChange={(e) => setMonthlyPrice(parseFloat(e.target.value) || 0)}
+                  onChange={(e) =>
+                    setMonthlyPrice(parseFloat(e.target.value) || 0)
+                  }
                   placeholder="0.00"
                   disabled={loading}
                 />
@@ -213,7 +215,10 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
                   className="rounded border-gray-300"
                   disabled={loading}
                 />
-                <label htmlFor="isActive" className="text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="isActive"
+                  className="text-sm font-medium text-gray-700"
+                >
                   Plano ativo
                 </label>
               </div>
@@ -230,8 +235,12 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
                 <Input
                   type="number"
                   min="1"
-                  value={maxUsers || ''}
-                  onChange={(e) => setMaxUsers(e.target.value ? parseInt(e.target.value) : null)}
+                  value={maxUsers || ""}
+                  onChange={(e) =>
+                    setMaxUsers(
+                      e.target.value ? parseInt(e.target.value) : null
+                    )
+                  }
                   placeholder="Deixe vazio para ilimitado"
                   disabled={loading}
                 />
@@ -247,8 +256,12 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
                 <Input
                   type="number"
                   min="1"
-                  value={maxEstablishments || ''}
-                  onChange={(e) => setMaxEstablishments(e.target.value ? parseInt(e.target.value) : null)}
+                  value={maxEstablishments || ""}
+                  onChange={(e) =>
+                    setMaxEstablishments(
+                      e.target.value ? parseInt(e.target.value) : null
+                    )
+                  }
                   placeholder="Deixe vazio para ilimitado"
                   disabled={loading}
                 />
@@ -260,7 +273,10 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
           </Card>
 
           {/* Features */}
-          <Card title="Recursos e Funcionalidades" icon={<Settings className="h-5 w-5" />}>
+          <Card
+            title="Recursos e Funcionalidades"
+            icon={<Settings className="h-5 w-5" />}
+          >
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -320,7 +336,10 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
                     className="rounded border-gray-300"
                     disabled={loading}
                   />
-                  <label htmlFor="hasAnalytics" className="text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="hasAnalytics"
+                    className="text-sm font-medium text-gray-700"
+                  >
                     Analytics Avançado
                   </label>
                 </div>
@@ -334,7 +353,10 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
                     className="rounded border-gray-300"
                     disabled={loading}
                   />
-                  <label htmlFor="hasCustomFeatures" className="text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="hasCustomFeatures"
+                    className="text-sm font-medium text-gray-700"
+                  >
                     Recursos Customizados
                   </label>
                 </div>
@@ -349,7 +371,7 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
             Cancelar
           </Button>
           <Button onClick={handleSave} disabled={loading}>
-            {loading ? 'Salvando...' : (isEditing ? 'Atualizar' : 'Criar Plano')}
+            {loading ? "Salvando..." : isEditing ? "Atualizar" : "Criar Plano"}
           </Button>
         </div>
       </div>

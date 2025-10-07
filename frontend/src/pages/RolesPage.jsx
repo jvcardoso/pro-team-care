@@ -715,7 +715,9 @@ export const RolesPage = () => {
                               Sistema
                             </span>
                           ) : (
-                            <span className="text-sm text-gray-500 dark:text-gray-400">-</span>
+                            <span className="text-sm text-gray-500 dark:text-gray-400">
+                              -
+                            </span>
                           )}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-center">

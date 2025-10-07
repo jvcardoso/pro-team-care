@@ -3,15 +3,15 @@
  * Manages billing dashboard data and state
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import billingService from '../services/billingService';
+import { useState, useEffect, useCallback } from "react";
+import billingService from "../services/billingService";
 import {
   BillingDashboardResponse,
   BillingMetrics,
   Invoice,
   ContractBillingStatus,
   BillingSchedule,
-} from '../types/billing.types';
+} from "../types/billing.types";
 
 interface UseBillingDashboardState {
   dashboard: BillingDashboardResponse | null;
@@ -30,9 +30,12 @@ interface UseBillingDashboardActions {
   clearError: () => void;
 }
 
-type UseBillingDashboardReturn = UseBillingDashboardState & UseBillingDashboardActions;
+type UseBillingDashboardReturn = UseBillingDashboardState &
+  UseBillingDashboardActions;
 
-export const useBillingDashboard = (companyId?: number): UseBillingDashboardReturn => {
+export const useBillingDashboard = (
+  companyId?: number
+): UseBillingDashboardReturn => {
   const [state, setState] = useState<UseBillingDashboardState>({
     dashboard: null,
     metrics: null,
@@ -44,16 +47,16 @@ export const useBillingDashboard = (companyId?: number): UseBillingDashboardRetu
   });
 
   const clearError = useCallback(() => {
-    setState(prev => ({ ...prev, error: null }));
+    setState((prev) => ({ ...prev, error: null }));
   }, []);
 
   const fetchDashboard = useCallback(async () => {
-    setState(prev => ({ ...prev, loading: true, error: null }));
+    setState((prev) => ({ ...prev, loading: true, error: null }));
 
     try {
       const dashboard = await billingService.getBillingDashboard();
 
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         dashboard,
         metrics: dashboard.metrics,
@@ -63,8 +66,9 @@ export const useBillingDashboard = (companyId?: number): UseBillingDashboardRetu
         loading: false,
       }));
     } catch (error: any) {
-      const errorMessage = error.response?.data?.detail || 'Erro ao carregar dashboard';
-      setState(prev => ({
+      const errorMessage =
+        error.response?.data?.detail || "Erro ao carregar dashboard";
+      setState((prev) => ({
         ...prev,
         loading: false,
         error: errorMessage,
@@ -72,32 +76,35 @@ export const useBillingDashboard = (companyId?: number): UseBillingDashboardRetu
     }
   }, []);
 
-  const fetchMetrics = useCallback(async (targetCompanyId?: number) => {
-    setState(prev => ({ ...prev, loading: true, error: null }));
+  const fetchMetrics = useCallback(
+    async (targetCompanyId?: number) => {
+      setState((prev) => ({ ...prev, loading: true, error: null }));
 
-    try {
-      const metrics = await billingService.getBillingMetrics(targetCompanyId || companyId);
+      try {
+        const metrics = await billingService.getBillingMetrics(
+          targetCompanyId || companyId
+        );
 
-      setState(prev => ({
-        ...prev,
-        metrics,
-        loading: false,
-      }));
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.detail || 'Erro ao carregar métricas';
-      setState(prev => ({
-        ...prev,
-        loading: false,
-        error: errorMessage,
-      }));
-    }
-  }, [companyId]);
+        setState((prev) => ({
+          ...prev,
+          metrics,
+          loading: false,
+        }));
+      } catch (error: any) {
+        const errorMessage =
+          error.response?.data?.detail || "Erro ao carregar métricas";
+        setState((prev) => ({
+          ...prev,
+          loading: false,
+          error: errorMessage,
+        }));
+      }
+    },
+    [companyId]
+  );
 
   const refresh = useCallback(async () => {
-    await Promise.all([
-      fetchDashboard(),
-      fetchMetrics(companyId),
-    ]);
+    await Promise.all([fetchDashboard(), fetchMetrics(companyId)]);
   }, [fetchDashboard, fetchMetrics, companyId]);
 
   // Initial load

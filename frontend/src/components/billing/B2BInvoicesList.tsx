@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import Card from '../ui/Card';
-import Button from '../ui/Button';
-import { Badge } from '../ui/Badge';
-import Input from '../ui/Input';
-import Select from 'react-select';
-import { notify } from '../../utils/notifications';
+import React, { useState, useEffect } from "react";
+import Card from "../ui/Card";
+import Button from "../ui/Button";
+import { Badge } from "../ui/Badge";
+import Input from "../ui/Input";
+import Select from "react-select";
+import { notify } from "../../utils/notifications";
 import {
   FileText,
   Search,
@@ -17,9 +17,12 @@ import {
   CheckCircle,
   Clock,
   Filter,
-} from 'lucide-react';
-import { B2BBillingService } from '../../services/b2bBillingService';
-import type { InvoiceListProps, ProTeamCareInvoice } from '../../types/b2b-billing.types';
+} from "lucide-react";
+import { B2BBillingService } from "../../services/b2bBillingService";
+import type {
+  InvoiceListProps,
+  ProTeamCareInvoice,
+} from "../../types/b2b-billing.types";
 
 const B2BInvoicesList: React.FC<InvoiceListProps> = ({
   companyId,
@@ -30,22 +33,26 @@ const B2BInvoicesList: React.FC<InvoiceListProps> = ({
 }) => {
   const [invoices, setInvoices] = useState<ProTeamCareInvoice[]>([]);
   const [loading, setLoading] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<string>(initialStatus || 'all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<'due_date' | 'amount' | 'created_at'>('due_date');
+  const [statusFilter, setStatusFilter] = useState<string>(
+    initialStatus || "all"
+  );
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState<"due_date" | "amount" | "created_at">(
+    "due_date"
+  );
 
   const statusOptions = [
-    { value: 'all', label: 'Todos os Status' },
-    { value: 'pending', label: 'Pendentes' },
-    { value: 'paid', label: 'Pagas' },
-    { value: 'overdue', label: 'Vencidas' },
-    { value: 'cancelled', label: 'Canceladas' },
+    { value: "all", label: "Todos os Status" },
+    { value: "pending", label: "Pendentes" },
+    { value: "paid", label: "Pagas" },
+    { value: "overdue", label: "Vencidas" },
+    { value: "cancelled", label: "Canceladas" },
   ];
 
   const sortOptions = [
-    { value: 'due_date', label: 'Data de Vencimento' },
-    { value: 'amount', label: 'Valor' },
-    { value: 'created_at', label: 'Data de Criação' },
+    { value: "due_date", label: "Data de Vencimento" },
+    { value: "amount", label: "Valor" },
+    { value: "created_at", label: "Data de Criação" },
   ];
 
   useEffect(() => {
@@ -60,23 +67,34 @@ const B2BInvoicesList: React.FC<InvoiceListProps> = ({
 
       if (companyId) {
         // Faturas de uma empresa específica
-        const effectiveStatus = statusFilter === 'all' ? undefined : statusFilter;
-        invoicesData = await B2BBillingService.getCompanyInvoices(companyId, effectiveStatus, limit);
-      } else if (statusFilter === 'overdue') {
+        const effectiveStatus =
+          statusFilter === "all" ? undefined : statusFilter;
+        invoicesData = await B2BBillingService.getCompanyInvoices(
+          companyId,
+          effectiveStatus,
+          limit
+        );
+      } else if (statusFilter === "overdue") {
         // Faturas vencidas globais
         invoicesData = await B2BBillingService.getOverdueInvoices();
-      } else if (statusFilter !== 'all') {
+      } else if (statusFilter !== "all") {
         // Faturas por status específico
-        invoicesData = await B2BBillingService.getInvoicesByStatus(statusFilter, limit);
+        invoicesData = await B2BBillingService.getInvoicesByStatus(
+          statusFilter,
+          limit
+        );
       } else {
         // Todas as faturas pendentes por padrão
-        invoicesData = await B2BBillingService.getInvoicesByStatus('pending', limit);
+        invoicesData = await B2BBillingService.getInvoicesByStatus(
+          "pending",
+          limit
+        );
       }
 
       setInvoices(invoicesData);
     } catch (err: any) {
-      notify.error('Erro ao carregar faturas: ' + err.message);
-      console.error('Erro ao carregar faturas:', err);
+      notify.error("Erro ao carregar faturas: " + err.message);
+      console.error("Erro ao carregar faturas:", err);
     } finally {
       setLoading(false);
     }
@@ -84,21 +102,34 @@ const B2BInvoicesList: React.FC<InvoiceListProps> = ({
 
   const handleCreateCheckout = async (invoice: ProTeamCareInvoice) => {
     try {
-      const checkoutResponse = await B2BBillingService.createCheckoutSession(invoice.id);
+      const checkoutResponse = await B2BBillingService.createCheckoutSession(
+        invoice.id
+      );
       if (checkoutResponse.success && checkoutResponse.checkout_url) {
         // Check if it's a mock URL
-        if (checkoutResponse.checkout_url.includes('mock-pagbank.proteamcare.com')) {
-          const amount = typeof invoice.amount === 'string' ? parseFloat(invoice.amount) : invoice.amount;
+        if (
+          checkoutResponse.checkout_url.includes("mock-pagbank.proteamcare.com")
+        ) {
+          const amount =
+            typeof invoice.amount === "string"
+              ? parseFloat(invoice.amount)
+              : invoice.amount;
           notify.info(
-            `Checkout criado em modo demonstração. Fatura: ${invoice.invoice_number} • Valor: R$ ${amount.toFixed(2)}`,
+            `Checkout criado em modo demonstração. Fatura: ${
+              invoice.invoice_number
+            } • Valor: R$ ${amount.toFixed(2)}`,
             { duration: 5000 }
           );
         } else {
-          window.open(checkoutResponse.checkout_url, '_blank', 'noopener,noreferrer');
+          window.open(
+            checkoutResponse.checkout_url,
+            "_blank",
+            "noopener,noreferrer"
+          );
         }
       }
     } catch (err: any) {
-      notify.error('Erro ao criar checkout: ' + err.message);
+      notify.error("Erro ao criar checkout: " + err.message);
     }
   };
 
@@ -113,19 +144,23 @@ const B2BInvoicesList: React.FC<InvoiceListProps> = ({
     })
     .sort((a, b) => {
       switch (sortBy) {
-        case 'due_date':
-          return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
-        case 'amount':
+        case "due_date":
+          return (
+            new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
+          );
+        case "amount":
           return b.amount - a.amount;
-        case 'created_at':
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case "created_at":
+          return (
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
         default:
           return 0;
       }
     });
 
   const getInvoiceIcon = (invoice: ProTeamCareInvoice) => {
-    if (invoice.status === 'paid') {
+    if (invoice.status === "paid") {
       return <CheckCircle className="h-4 w-4 text-green-600" />;
     }
     if (B2BBillingService.isOverdue(invoice)) {
@@ -135,8 +170,8 @@ const B2BInvoicesList: React.FC<InvoiceListProps> = ({
   };
 
   const getDaysInfo = (invoice: ProTeamCareInvoice) => {
-    if (invoice.status === 'paid') {
-      return 'Pago';
+    if (invoice.status === "paid") {
+      return "Pago";
     }
 
     const days = B2BBillingService.getDaysUntilDue(invoice);
@@ -144,13 +179,16 @@ const B2BInvoicesList: React.FC<InvoiceListProps> = ({
       return `${Math.abs(days)} dias em atraso`;
     }
     if (days === 0) {
-      return 'Vence hoje';
+      return "Vence hoje";
     }
     return `${days} dias para vencer`;
   };
 
   const getTotalAmount = () => {
-    return filteredAndSortedInvoices.reduce((total, invoice) => total + invoice.amount, 0);
+    return filteredAndSortedInvoices.reduce(
+      (total, invoice) => total + invoice.amount,
+      0
+    );
   };
 
   const getStatusCounts = () => {
@@ -162,7 +200,10 @@ const B2BInvoicesList: React.FC<InvoiceListProps> = ({
     };
 
     invoices.forEach((invoice) => {
-      if (B2BBillingService.isOverdue(invoice) && invoice.status === 'pending') {
+      if (
+        B2BBillingService.isOverdue(invoice) &&
+        invoice.status === "pending"
+      ) {
         counts.overdue++;
       } else {
         counts[invoice.status as keyof typeof counts]++;
@@ -207,19 +248,27 @@ const B2BInvoicesList: React.FC<InvoiceListProps> = ({
         {/* Resumo de Status */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center p-3 bg-yellow-50 rounded-lg">
-            <div className="text-lg font-bold text-yellow-700">{statusCounts.pending}</div>
+            <div className="text-lg font-bold text-yellow-700">
+              {statusCounts.pending}
+            </div>
             <div className="text-sm text-yellow-600">Pendentes</div>
           </div>
           <div className="text-center p-3 bg-green-50 rounded-lg">
-            <div className="text-lg font-bold text-green-700">{statusCounts.paid}</div>
+            <div className="text-lg font-bold text-green-700">
+              {statusCounts.paid}
+            </div>
             <div className="text-sm text-green-600">Pagas</div>
           </div>
           <div className="text-center p-3 bg-red-50 rounded-lg">
-            <div className="text-lg font-bold text-red-700">{statusCounts.overdue}</div>
+            <div className="text-lg font-bold text-red-700">
+              {statusCounts.overdue}
+            </div>
             <div className="text-sm text-red-600">Vencidas</div>
           </div>
           <div className="text-center p-3 bg-gray-50 rounded-lg">
-            <div className="text-lg font-bold text-gray-700">{statusCounts.cancelled}</div>
+            <div className="text-lg font-bold text-gray-700">
+              {statusCounts.cancelled}
+            </div>
             <div className="text-sm text-gray-600">Canceladas</div>
           </div>
         </div>
@@ -240,19 +289,20 @@ const B2BInvoicesList: React.FC<InvoiceListProps> = ({
             </div>
           </div>
           <Select
-            value={statusOptions.find(option => option.value === statusFilter)}
+            value={statusOptions.find(
+              (option) => option.value === statusFilter
+            )}
             onChange={(option) => setStatusFilter(option.value)}
             options={statusOptions}
             className="w-48"
           />
           <Select
-            value={sortOptions.find(option => option.value === sortBy)}
+            value={sortOptions.find((option) => option.value === sortBy)}
             onChange={(option) => setSortBy(option.value)}
             options={sortOptions}
             className="w-48"
           />
         </div>
-
 
         {/* Lista de Faturas */}
         <div className="space-y-3">
@@ -266,7 +316,9 @@ const B2BInvoicesList: React.FC<InvoiceListProps> = ({
               <div
                 key={invoice.id}
                 className={`p-4 border rounded-lg hover:shadow-sm transition-shadow cursor-pointer ${
-                  B2BBillingService.isOverdue(invoice) ? 'border-red-200 bg-red-50' : 'border-gray-200'
+                  B2BBillingService.isOverdue(invoice)
+                    ? "border-red-200 bg-red-50"
+                    : "border-gray-200"
                 }`}
                 onClick={() => onInvoiceClick?.(invoice)}
               >
@@ -275,15 +327,24 @@ const B2BInvoicesList: React.FC<InvoiceListProps> = ({
                     {getInvoiceIcon(invoice)}
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-medium">{invoice.invoice_number}</span>
-                        <Badge className={B2BBillingService.getStatusColor(invoice.status)}>
+                        <span className="font-medium">
+                          {invoice.invoice_number}
+                        </span>
+                        <Badge
+                          className={B2BBillingService.getStatusColor(
+                            invoice.status
+                          )}
+                        >
                           {B2BBillingService.getStatusLabel(invoice.status)}
                         </Badge>
                       </div>
                       <div className="text-sm text-gray-600">
                         <span className="flex items-center gap-1 mt-1">
                           <Calendar className="h-3 w-3" />
-                          Venc: {B2BBillingService.formatDate(invoice.due_date)} • {getDaysInfo(invoice)}
+                          Venc: {B2BBillingService.formatDate(
+                            invoice.due_date
+                          )}{" "}
+                          • {getDaysInfo(invoice)}
                         </span>
                       </div>
                     </div>
@@ -295,7 +356,9 @@ const B2BInvoicesList: React.FC<InvoiceListProps> = ({
                         {B2BBillingService.formatCurrency(invoice.amount)}
                       </div>
                       <div className="text-sm text-gray-600">
-                        {B2BBillingService.getStatusLabel(invoice.payment_method)}
+                        {B2BBillingService.getStatusLabel(
+                          invoice.payment_method
+                        )}
                       </div>
                     </div>
 
@@ -311,7 +374,7 @@ const B2BInvoicesList: React.FC<InvoiceListProps> = ({
                         <Eye className="h-4 w-4" />
                       </Button>
 
-                      {invoice.status === 'pending' && (
+                      {invoice.status === "pending" && (
                         <Button
                           size="sm"
                           onClick={(e) => {
@@ -325,7 +388,7 @@ const B2BInvoicesList: React.FC<InvoiceListProps> = ({
                         </Button>
                       )}
 
-                      {invoice.status === 'pending' && onPaymentConfirm && (
+                      {invoice.status === "pending" && onPaymentConfirm && (
                         <Button
                           size="sm"
                           variant="outline"

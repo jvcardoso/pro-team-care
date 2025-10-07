@@ -19,7 +19,10 @@ interface EstablishmentFormProps {
   companyId?: number;
   onSave?: () => void;
   onCancel?: () => void;
-  onNavigateToClients?: (establishmentId: number, establishmentCode: string) => void;
+  onNavigateToClients?: (
+    establishmentId: number,
+    establishmentCode: string
+  ) => void;
 }
 
 const EstablishmentForm: React.FC<EstablishmentFormProps> = React.memo(
@@ -69,7 +72,12 @@ const EstablishmentFormContent: React.FC<EstablishmentFormProps> = ({
     proceedWithSave,
     setShowNumberConfirmation,
     setPendingAddresses,
-  } = useEstablishmentForm({ establishmentId, companyId, onSave, onNavigateToClients });
+  } = useEstablishmentForm({
+    establishmentId,
+    companyId,
+    onSave,
+    onNavigateToClients,
+  });
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();

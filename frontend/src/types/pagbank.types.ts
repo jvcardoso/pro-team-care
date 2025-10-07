@@ -14,13 +14,13 @@ export interface PagBankBaseResponse {
 // ==========================================
 
 export interface BillingMethodUpdate {
-  billing_method: 'recurrent' | 'manual';
+  billing_method: "recurrent" | "manual";
   auto_fallback_enabled?: boolean;
 }
 
 export interface BillingMethodStatus {
   contract_id: number;
-  billing_method: 'recurrent' | 'manual';
+  billing_method: "recurrent" | "manual";
   is_active: boolean;
   next_billing_date?: string;
   auto_fallback_enabled: boolean;
@@ -110,10 +110,10 @@ export interface CheckoutSessionResponse extends PagBankBaseResponse {
 export interface PagBankTransaction {
   id: number;
   invoice_id: number;
-  transaction_type: 'recurrent' | 'checkout';
+  transaction_type: "recurrent" | "checkout";
   pagbank_transaction_id?: string;
   pagbank_charge_id?: string;
-  status: 'pending' | 'approved' | 'declined' | 'failed' | 'cancelled';
+  status: "pending" | "approved" | "declined" | "failed" | "cancelled";
   amount: number;
   payment_method?: string;
   error_message?: string;
@@ -164,7 +164,7 @@ export interface AutomaticBillingResponse extends PagBankBaseResponse {
   results?: Array<{
     schedule_id: number;
     contract_id: number;
-    status: 'success' | 'failed' | 'error';
+    status: "success" | "failed" | "error";
     invoice_id?: number;
     error?: string;
     failure_result?: any;
@@ -217,7 +217,7 @@ export interface CreditCardFormData {
 }
 
 export interface PaymentMethodSelectionData {
-  method: 'recurrent' | 'manual';
+  method: "recurrent" | "manual";
   autoFallback: boolean;
 }
 

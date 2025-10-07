@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';
-import { notify } from '../utils/notifications';
-import api from '../services/api';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
+import { notify } from "../utils/notifications";
+import api from "../services/api";
 
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
 
@@ -14,14 +14,14 @@ const ForgotPasswordPage = () => {
     e.preventDefault();
 
     if (!email) {
-      notify.error('Digite seu email');
+      notify.error("Digite seu email");
       return;
     }
 
     setIsLoading(true);
 
     try {
-      await api.post('/api/v1/auth/forgot-password', { email });
+      await api.post("/api/v1/auth/forgot-password", { email });
 
       // Sempre mostrar mensagem genérica (segurança)
       setEmailSent(true);
@@ -44,14 +44,18 @@ const ForgotPasswordPage = () => {
                 Email Enviado!
               </h2>
               <p className="text-gray-600 dark:text-gray-300 mb-6">
-                Se existe uma conta associada ao email <strong className="text-gray-900 dark:text-white">{email}</strong>,
-                você receberá um link para redefinir sua senha.
+                Se existe uma conta associada ao email{" "}
+                <strong className="text-gray-900 dark:text-white">
+                  {email}
+                </strong>
+                , você receberá um link para redefinir sua senha.
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                O link expira em 1 hora. Verifique sua caixa de spam se não receber o email.
+                O link expira em 1 hora. Verifique sua caixa de spam se não
+                receber o email.
               </p>
               <button
-                onClick={() => navigate('/login')}
+                onClick={() => navigate("/login")}
                 className="btn-secondary inline-flex items-center"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -71,7 +75,9 @@ const ForgotPasswordPage = () => {
           {/* Cabeçalho */}
           <div className="px-4 py-6 sm:px-10 text-center border-b border-gray-200 dark:border-gray-700">
             <Mail className="mx-auto h-12 w-12 text-blue-600 dark:text-blue-400 mb-3" />
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Recuperar Senha</h2>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Recuperar Senha
+            </h2>
             <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               Digite seu email para receber o link de recuperação
             </p>
@@ -114,7 +120,7 @@ const ForgotPasswordPage = () => {
                       Enviando...
                     </>
                   ) : (
-                    'Enviar Link de Recuperação'
+                    "Enviar Link de Recuperação"
                   )}
                 </button>
               </div>
@@ -122,7 +128,7 @@ const ForgotPasswordPage = () => {
               <div className="text-center">
                 <button
                   type="button"
-                  onClick={() => navigate('/login')}
+                  onClick={() => navigate("/login")}
                   className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 inline-flex items-center"
                 >
                   <ArrowLeft className="w-4 h-4 mr-1" />

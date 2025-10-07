@@ -3,18 +3,18 @@
  * Complete invoice management page with filtering and CRUD operations
  */
 
-import React, { useState, useEffect } from 'react';
-import { useInvoices } from '../hooks/useInvoices';
-import { useAuth } from '../contexts/AuthContext';
-import InvoiceTable from '../components/billing/InvoiceTable';
-import InvoiceStatusBadge from '../components/billing/InvoiceStatusBadge';
-import PaymentMethodBadge from '../components/billing/PaymentMethodBadge';
+import React, { useState, useEffect } from "react";
+import { useInvoices } from "../hooks/useInvoices";
+import { useAuth } from "../contexts/AuthContext";
+import InvoiceTable from "../components/billing/InvoiceTable";
+import InvoiceStatusBadge from "../components/billing/InvoiceStatusBadge";
+import PaymentMethodBadge from "../components/billing/PaymentMethodBadge";
 import {
   Invoice,
   InvoiceStatus,
   PaymentMethod,
   InvoiceListParams,
-} from '../types/billing.types';
+} from "../types/billing.types";
 
 const InvoicesPage: React.FC = () => {
   const { user } = useAuth();
@@ -58,26 +58,35 @@ const InvoicesPage: React.FC = () => {
     fetchInvoice(invoice.id);
   };
 
-  const handleStatusUpdate = async (invoiceId: number, status: InvoiceStatus) => {
+  const handleStatusUpdate = async (
+    invoiceId: number,
+    status: InvoiceStatus
+  ) => {
     try {
       await updateInvoiceStatus(invoiceId, status, {
-        paid_date: status === InvoiceStatus.PAGA ? new Date().toISOString().split('T')[0] : undefined,
-        payment_method: status === InvoiceStatus.PAGA ? PaymentMethod.PIX : undefined,
+        paid_date:
+          status === InvoiceStatus.PAGA
+            ? new Date().toISOString().split("T")[0]
+            : undefined,
+        payment_method:
+          status === InvoiceStatus.PAGA ? PaymentMethod.PIX : undefined,
       });
     } catch (error) {
-      console.error('Error updating invoice status:', error);
+      console.error("Error updating invoice status:", error);
     }
   };
 
-  const handleBulkAction = async (action: 'mark_paid' | 'mark_sent' | 'export') => {
+  const handleBulkAction = async (
+    action: "mark_paid" | "mark_sent" | "export"
+  ) => {
     if (selectedInvoices.length === 0) return;
 
     switch (action) {
-      case 'mark_paid':
+      case "mark_paid":
         for (const invoiceId of selectedInvoices) {
           try {
             await updateInvoiceStatus(invoiceId, InvoiceStatus.PAGA, {
-              paid_date: new Date().toISOString().split('T')[0],
+              paid_date: new Date().toISOString().split("T")[0],
               payment_method: PaymentMethod.PIX,
             });
           } catch (error) {
@@ -86,7 +95,7 @@ const InvoicesPage: React.FC = () => {
         }
         setSelectedInvoices([]);
         break;
-      case 'mark_sent':
+      case "mark_sent":
         for (const invoiceId of selectedInvoices) {
           try {
             await updateInvoiceStatus(invoiceId, InvoiceStatus.ENVIADA);
@@ -96,32 +105,38 @@ const InvoicesPage: React.FC = () => {
         }
         setSelectedInvoices([]);
         break;
-      case 'export':
+      case "export":
         // TODO: Implement export functionality
-        console.log('Exporting invoices:', selectedInvoices);
+        console.log("Exporting invoices:", selectedInvoices);
         break;
     }
   };
 
   const statusOptions = [
-    { value: '', label: 'Todos os status' },
-    { value: InvoiceStatus.PENDENTE, label: 'Pendente' },
-    { value: InvoiceStatus.ENVIADA, label: 'Enviada' },
-    { value: InvoiceStatus.PAGA, label: 'Paga' },
-    { value: InvoiceStatus.VENCIDA, label: 'Vencida' },
-    { value: InvoiceStatus.EM_ATRASO, label: 'Em Atraso' },
-    { value: InvoiceStatus.CANCELADA, label: 'Cancelada' },
+    { value: "", label: "Todos os status" },
+    { value: InvoiceStatus.PENDENTE, label: "Pendente" },
+    { value: InvoiceStatus.ENVIADA, label: "Enviada" },
+    { value: InvoiceStatus.PAGA, label: "Paga" },
+    { value: InvoiceStatus.VENCIDA, label: "Vencida" },
+    { value: InvoiceStatus.EM_ATRASO, label: "Em Atraso" },
+    { value: InvoiceStatus.CANCELADA, label: "Cancelada" },
   ];
 
   // Enhanced invoice data with computed fields
-  const enhancedInvoices = invoices.map(invoice => ({
+  const enhancedInvoices = invoices.map((invoice) => ({
     ...invoice,
-    client_name: invoice.contract?.client_name || 'N/A',
-    contract_number: invoice.contract?.contract_number || 'N/A',
-    is_overdue: new Date(invoice.due_date) < new Date() &&
-               ![InvoiceStatus.PAGA, InvoiceStatus.CANCELADA].includes(invoice.status),
-    days_overdue: new Date(invoice.due_date) < new Date() ?
-                 Math.ceil((new Date().getTime() - new Date(invoice.due_date).getTime()) / (1000 * 60 * 60 * 24)) : 0,
+    client_name: invoice.contract?.client_name || "N/A",
+    contract_number: invoice.contract?.contract_number || "N/A",
+    is_overdue:
+      new Date(invoice.due_date) < new Date() &&
+      ![InvoiceStatus.PAGA, InvoiceStatus.CANCELADA].includes(invoice.status),
+    days_overdue:
+      new Date(invoice.due_date) < new Date()
+        ? Math.ceil(
+            (new Date().getTime() - new Date(invoice.due_date).getTime()) /
+              (1000 * 60 * 60 * 24)
+          )
+        : 0,
   }));
 
   if (error) {
@@ -130,7 +145,9 @@ const InvoicesPage: React.FC = () => {
         <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
           <div className="text-center">
             <div className="text-4xl mb-4">⚠️</div>
-            <h2 className="text-lg font-medium text-gray-900 mb-2">Erro ao carregar faturas</h2>
+            <h2 className="text-lg font-medium text-gray-900 mb-2">
+              Erro ao carregar faturas
+            </h2>
             <p className="text-gray-600 mb-4">{error}</p>
             <div className="space-x-3">
               <button
@@ -170,8 +187,8 @@ const InvoicesPage: React.FC = () => {
                   onClick={() => setShowFilters(!showFilters)}
                   className={`px-4 py-2 rounded-lg border ${
                     showFilters
-                      ? 'bg-blue-50 border-blue-200 text-blue-700'
-                      : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                      ? "bg-blue-50 border-blue-200 text-blue-700"
+                      : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                   }`}
                 >
                   🔍 Filtros
@@ -181,7 +198,7 @@ const InvoicesPage: React.FC = () => {
                   disabled={loading}
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
                 >
-                  {loading ? '⏳' : '🔄'} Atualizar
+                  {loading ? "⏳" : "🔄"} Atualizar
                 </button>
                 <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
                   ➕ Nova Fatura
@@ -208,7 +225,9 @@ const InvoicesPage: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Pendentes</p>
-                <p className="text-2xl font-bold text-yellow-600">{pendingInvoices.length}</p>
+                <p className="text-2xl font-bold text-yellow-600">
+                  {pendingInvoices.length}
+                </p>
               </div>
               <div className="text-2xl">⏳</div>
             </div>
@@ -217,7 +236,9 @@ const InvoicesPage: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Em Atraso</p>
-                <p className="text-2xl font-bold text-red-600">{overdueInvoices.length}</p>
+                <p className="text-2xl font-bold text-red-600">
+                  {overdueInvoices.length}
+                </p>
               </div>
               <div className="text-2xl">⚠️</div>
             </div>
@@ -226,7 +247,9 @@ const InvoicesPage: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Pagas</p>
-                <p className="text-2xl font-bold text-green-600">{paidInvoices.length}</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {paidInvoices.length}
+                </p>
               </div>
               <div className="text-2xl">✅</div>
             </div>
@@ -242,8 +265,12 @@ const InvoicesPage: React.FC = () => {
                   Status
                 </label>
                 <select
-                  value={filters.status || ''}
-                  onChange={(e) => handleFilterChange({ status: e.target.value as InvoiceStatus || undefined })}
+                  value={filters.status || ""}
+                  onChange={(e) =>
+                    handleFilterChange({
+                      status: (e.target.value as InvoiceStatus) || undefined,
+                    })
+                  }
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 >
                   {statusOptions.map((option) => (
@@ -259,8 +286,12 @@ const InvoicesPage: React.FC = () => {
                 </label>
                 <input
                   type="date"
-                  value={filters.start_date || ''}
-                  onChange={(e) => handleFilterChange({ start_date: e.target.value || undefined })}
+                  value={filters.start_date || ""}
+                  onChange={(e) =>
+                    handleFilterChange({
+                      start_date: e.target.value || undefined,
+                    })
+                  }
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
@@ -270,8 +301,12 @@ const InvoicesPage: React.FC = () => {
                 </label>
                 <input
                   type="date"
-                  value={filters.end_date || ''}
-                  onChange={(e) => handleFilterChange({ end_date: e.target.value || undefined })}
+                  value={filters.end_date || ""}
+                  onChange={(e) =>
+                    handleFilterChange({
+                      end_date: e.target.value || undefined,
+                    })
+                  }
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
@@ -280,10 +315,16 @@ const InvoicesPage: React.FC = () => {
                   <input
                     type="checkbox"
                     checked={filters.overdue_only || false}
-                    onChange={(e) => handleFilterChange({ overdue_only: e.target.checked || undefined })}
+                    onChange={(e) =>
+                      handleFilterChange({
+                        overdue_only: e.target.checked || undefined,
+                      })
+                    }
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
-                  <span className="ml-2 text-sm text-gray-700">Apenas em atraso</span>
+                  <span className="ml-2 text-sm text-gray-700">
+                    Apenas em atraso
+                  </span>
                 </label>
               </div>
             </div>
@@ -313,19 +354,19 @@ const InvoicesPage: React.FC = () => {
               </span>
               <div className="flex space-x-2">
                 <button
-                  onClick={() => handleBulkAction('mark_paid')}
+                  onClick={() => handleBulkAction("mark_paid")}
                   className="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
                 >
                   Marcar como Paga
                 </button>
                 <button
-                  onClick={() => handleBulkAction('mark_sent')}
+                  onClick={() => handleBulkAction("mark_sent")}
                   className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
                 >
                   Marcar como Enviada
                 </button>
                 <button
-                  onClick={() => handleBulkAction('export')}
+                  onClick={() => handleBulkAction("export")}
                   className="text-sm bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700"
                 >
                   Exportar
@@ -366,9 +407,12 @@ const InvoicesPage: React.FC = () => {
             <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm text-gray-700">
-                  Mostrando <span className="font-medium">{(page - 1) * size + 1}</span> a{' '}
-                  <span className="font-medium">{Math.min(page * size, total)}</span> de{' '}
-                  <span className="font-medium">{total}</span> resultados
+                  Mostrando{" "}
+                  <span className="font-medium">{(page - 1) * size + 1}</span> a{" "}
+                  <span className="font-medium">
+                    {Math.min(page * size, total)}
+                  </span>{" "}
+                  de <span className="font-medium">{total}</span> resultados
                 </p>
               </div>
               <div>
@@ -388,8 +432,8 @@ const InvoicesPage: React.FC = () => {
                         onClick={() => setPage(pageNum)}
                         className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
                           page === pageNum
-                            ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                            ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                            : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
                         }`}
                       >
                         {pageNum}

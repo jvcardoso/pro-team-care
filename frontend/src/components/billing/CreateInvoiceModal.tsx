@@ -42,7 +42,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
   const [billingPeriodStart, setBillingPeriodStart] = useState<string>("");
   const [billingPeriodEnd, setBillingPeriodEnd] = useState<string>("");
   const [dueDate, setDueDate] = useState<string>("");
-  const [amount, setAmount] = useState<number>(subscription?.plan?.monthly_price || 0);
+  const [amount, setAmount] = useState<number>(
+    subscription?.plan?.monthly_price || 0
+  );
   const [notes, setNotes] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
@@ -53,39 +55,40 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
       const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
       const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-      setBillingPeriodStart(firstDay.toISOString().split('T')[0]);
-      setBillingPeriodEnd(lastDay.toISOString().split('T')[0]);
+      setBillingPeriodStart(firstDay.toISOString().split("T")[0]);
+      setBillingPeriodEnd(lastDay.toISOString().split("T")[0]);
 
       // Data de vencimento: 30 dias a partir de hoje
       const dueDateDefault = new Date(today);
       dueDateDefault.setDate(today.getDate() + 30);
-      setDueDate(dueDateDefault.toISOString().split('T')[0]);
+      setDueDate(dueDateDefault.toISOString().split("T")[0]);
 
       // Valor padrão do plano
       setAmount(subscription.plan?.monthly_price || 0);
-
     }
   }, [isOpen, subscription]);
 
   const handleSave = async () => {
     // Validações
     if (!billingPeriodStart || !billingPeriodEnd || !dueDate || !amount) {
-      notify.error('Todos os campos obrigatórios devem ser preenchidos');
+      notify.error("Todos os campos obrigatórios devem ser preenchidos");
       return;
     }
 
     if (new Date(billingPeriodStart) >= new Date(billingPeriodEnd)) {
-      notify.error('A data de início deve ser anterior à data de fim do período');
+      notify.error(
+        "A data de início deve ser anterior à data de fim do período"
+      );
       return;
     }
 
     if (new Date(dueDate) <= new Date()) {
-      notify.error('A data de vencimento deve ser futura');
+      notify.error("A data de vencimento deve ser futura");
       return;
     }
 
     if (amount <= 0) {
-      notify.error('O valor deve ser maior que zero');
+      notify.error("O valor deve ser maior que zero");
       return;
     }
 
@@ -103,14 +106,14 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
       };
 
       await B2BBillingService.createManualInvoice(createData);
-      notify.success('Fatura criada com sucesso!');
+      notify.success("Fatura criada com sucesso!");
 
       // Fechar modal após sucesso
       setTimeout(() => {
         onSuccess();
       }, 1000);
     } catch (err: any) {
-      notify.error('Erro ao criar fatura: ' + err.message);
+      notify.error("Erro ao criar fatura: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -135,8 +138,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
     const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-    setBillingPeriodStart(firstDay.toISOString().split('T')[0]);
-    setBillingPeriodEnd(lastDay.toISOString().split('T')[0]);
+    setBillingPeriodStart(firstDay.toISOString().split("T")[0]);
+    setBillingPeriodEnd(lastDay.toISOString().split("T")[0]);
   };
 
   const suggestNextMonth = () => {
@@ -144,8 +147,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
     const firstDay = new Date(today.getFullYear(), today.getMonth() + 1, 1);
     const lastDay = new Date(today.getFullYear(), today.getMonth() + 2, 0);
 
-    setBillingPeriodStart(firstDay.toISOString().split('T')[0]);
-    setBillingPeriodEnd(lastDay.toISOString().split('T')[0]);
+    setBillingPeriodStart(firstDay.toISOString().split("T")[0]);
+    setBillingPeriodEnd(lastDay.toISOString().split("T")[0]);
   };
 
   if (!isOpen) return null;
@@ -158,7 +161,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
           <div className="flex items-center gap-3">
             <FileText className="h-5 w-5 text-primary" />
             <div>
-              <h2 className="text-xl font-semibold text-foreground">Criar Nova Fatura</h2>
+              <h2 className="text-xl font-semibold text-foreground">
+                Criar Nova Fatura
+              </h2>
               <p className="text-sm text-muted-foreground">{companyName}</p>
             </div>
           </div>
@@ -173,35 +178,56 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
 
         {/* Content */}
         <div className="p-6 space-y-6">
-
           {/* Informações da Assinatura */}
-          <Card title="Informações da Assinatura" icon={<Building className="h-5 w-5" />}>
+          <Card
+            title="Informações da Assinatura"
+            icon={<Building className="h-5 w-5" />}
+          >
             <div className="grid grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
               <div>
                 <span className="text-sm text-muted-foreground">Plano</span>
-                <p className="font-medium">{subscription?.plan?.name || 'N/A'}</p>
+                <p className="font-medium">
+                  {subscription?.plan?.name || "N/A"}
+                </p>
               </div>
               <div>
-                <span className="text-sm text-muted-foreground">Valor Mensal</span>
+                <span className="text-sm text-muted-foreground">
+                  Valor Mensal
+                </span>
                 <p className="font-medium text-green-600 dark:text-green-400">
-                  {subscription?.plan ? B2BBillingService.formatCurrency(subscription.plan.monthly_price) : 'N/A'}
+                  {subscription?.plan
+                    ? B2BBillingService.formatCurrency(
+                        subscription.plan.monthly_price
+                      )
+                    : "N/A"}
                 </p>
               </div>
               <div>
                 <span className="text-sm text-muted-foreground">Status</span>
-                <p className="font-medium">{B2BBillingService.getStatusLabel(subscription?.status || 'active')}</p>
+                <p className="font-medium">
+                  {B2BBillingService.getStatusLabel(
+                    subscription?.status || "active"
+                  )}
+                </p>
               </div>
               <div>
-                <span className="text-sm text-muted-foreground">Método de Pagamento</span>
+                <span className="text-sm text-muted-foreground">
+                  Método de Pagamento
+                </span>
                 <p className="font-medium">
-                  {subscription?.payment_method === 'recurrent' ? 'Automático' : 'Manual'}
+                  {subscription?.payment_method === "recurrent"
+                    ? "Automático"
+                    : "Manual"}
                 </p>
               </div>
             </div>
           </Card>
 
           {/* Período de Cobrança */}
-          <Card title="Período de Cobrança" icon={<Calendar className="h-5 w-5" />}>
+          <Card
+            title="Período de Cobrança"
+            icon={<Calendar className="h-5 w-5" />}
+          >
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -254,10 +280,14 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
                 <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
                   <div className="flex items-center gap-2">
                     <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                    <span className="text-sm font-medium text-blue-900 dark:text-blue-100">Período selecionado</span>
+                    <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                      Período selecionado
+                    </span>
                   </div>
                   <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                    {calculatePeriodDays()} dias ({B2BBillingService.formatDate(billingPeriodStart)} até {B2BBillingService.formatDate(billingPeriodEnd)})
+                    {calculatePeriodDays()} dias (
+                    {B2BBillingService.formatDate(billingPeriodStart)} até{" "}
+                    {B2BBillingService.formatDate(billingPeriodEnd)})
                   </p>
                 </div>
               )}
@@ -265,7 +295,10 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
           </Card>
 
           {/* Valor e Vencimento */}
-          <Card title="Valor e Vencimento" icon={<DollarSign className="h-5 w-5" />}>
+          <Card
+            title="Valor e Vencimento"
+            icon={<DollarSign className="h-5 w-5" />}
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-muted-foreground mb-2">
@@ -314,7 +347,10 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
           </Card>
 
           {/* Observações */}
-          <Card title="Observações (Opcional)" icon={<FileText className="h-5 w-5" />}>
+          <Card
+            title="Observações (Opcional)"
+            icon={<FileText className="h-5 w-5" />}
+          >
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -332,24 +368,32 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
             <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
                 <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                <span className="text-sm font-medium text-green-900 dark:text-green-100">Resumo da Fatura</span>
+                <span className="text-sm font-medium text-green-900 dark:text-green-100">
+                  Resumo da Fatura
+                </span>
               </div>
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-green-700 dark:text-green-300">Valor:</span>
+                  <span className="text-green-700 dark:text-green-300">
+                    Valor:
+                  </span>
                   <span className="text-green-900 dark:text-green-100 font-bold text-lg">
                     {B2BBillingService.formatCurrency(amount)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-green-700 dark:text-green-300">Vencimento:</span>
+                  <span className="text-green-700 dark:text-green-300">
+                    Vencimento:
+                  </span>
                   <span className="text-green-900 dark:text-green-100 font-medium">
                     {B2BBillingService.formatDate(dueDate)}
                   </span>
                 </div>
                 {billingPeriodStart && billingPeriodEnd && (
                   <div className="flex justify-between">
-                    <span className="text-green-700 dark:text-green-300">Período:</span>
+                    <span className="text-green-700 dark:text-green-300">
+                      Período:
+                    </span>
                     <span className="text-green-900 dark:text-green-100 font-medium">
                       {calculatePeriodDays()} dias
                     </span>
@@ -362,16 +406,18 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
 
         {/* Footer */}
         <div className="flex items-center justify-end gap-3 p-6 border-t border-border">
-          <Button
-            variant="secondary"
-            onClick={onClose}
-            disabled={loading}
-          >
+          <Button variant="secondary" onClick={onClose} disabled={loading}>
             Cancelar
           </Button>
           <Button
             onClick={handleSave}
-            disabled={loading || !billingPeriodStart || !billingPeriodEnd || !dueDate || !amount}
+            disabled={
+              loading ||
+              !billingPeriodStart ||
+              !billingPeriodEnd ||
+              !dueDate ||
+              !amount
+            }
             loading={loading}
           >
             Criar Fatura

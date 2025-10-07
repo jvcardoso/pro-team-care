@@ -177,9 +177,9 @@ const Header = ({
                   <h1 className="text-sm font-semibold text-gray-900 dark:text-white">
                     Pro Team Care
                   </h1>
-                   <p className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                     Cuidados de Saúde e Bem Estar da Pessoa
-                   </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                    Cuidados de Saúde e Bem Estar da Pessoa
+                  </p>
                 </div>
               </div>
             </div>
@@ -187,7 +187,7 @@ const Header = ({
 
           {/* Right Section */}
           <div className="flex items-center space-x-2">
-             {/* Theme Toggle */}
+            {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
               className="p-2 rounded-lg text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"

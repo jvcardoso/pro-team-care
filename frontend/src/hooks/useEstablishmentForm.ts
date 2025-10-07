@@ -72,7 +72,10 @@ interface UseEstablishmentFormProps {
   establishmentId?: number;
   companyId?: number;
   onSave?: () => void;
-  onNavigateToClients?: (establishmentId: number, establishmentCode: string) => void;
+  onNavigateToClients?: (
+    establishmentId: number,
+    establishmentCode: string
+  ) => void;
 }
 
 export const useEstablishmentForm = ({
@@ -263,15 +266,23 @@ export const useEstablishmentForm = ({
         );
 
         // Sugerir código automaticamente se o campo estiver vazio
-        if (!formData.establishment.code || formData.establishment.code.trim() === "") {
+        if (
+          !formData.establishment.code ||
+          formData.establishment.code.trim() === ""
+        ) {
           try {
-            const response = await establishmentsService.getEstablishmentsByCompany(companyId);
-            const existingEstablishments = response?.establishments || response || [];
-            const suggestedCode = suggestEstablishmentCode(company, existingEstablishments);
+            const response =
+              await establishmentsService.getEstablishmentsByCompany(companyId);
+            const existingEstablishments =
+              response?.establishments || response || [];
+            const suggestedCode = suggestEstablishmentCode(
+              company,
+              existingEstablishments
+            );
 
             setFormData((prev) => ({
               ...prev,
-              establishment: { ...prev.establishment, code: suggestedCode }
+              establishment: { ...prev.establishment, code: suggestedCode },
             }));
 
             console.log(`✨ Código sugerido automaticamente: ${suggestedCode}`);
@@ -665,12 +676,15 @@ export const useEstablishmentForm = ({
         );
         notify.success("Estabelecimento atualizado com sucesso!");
       } else {
-        savedEstablishment = await establishmentsService.createEstablishment(cleanedData);
+        savedEstablishment = await establishmentsService.createEstablishment(
+          cleanedData
+        );
         notify.success("Estabelecimento criado com sucesso!");
 
         // Pergunta se deseja adicionar clientes apenas para novo estabelecimento
         if (onNavigateToClients && savedEstablishment) {
-          const establishmentId = savedEstablishment.id || savedEstablishment.data?.id;
+          const establishmentId =
+            savedEstablishment.id || savedEstablishment.data?.id;
           const establishmentCode = cleanedData.code;
 
           notify.confirm(

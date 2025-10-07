@@ -549,7 +549,11 @@ async def list_contract_lives(
         )
 
 
-@router.post("/{contract_id}/lives", response_model=dict, status_code=http_status.HTTP_201_CREATED)
+@router.post(
+    "/{contract_id}/lives",
+    response_model=dict,
+    status_code=http_status.HTTP_201_CREATED,
+)
 @require_permission("contracts.lives.manage")
 async def add_contract_life(
     contract_id: int,
@@ -602,11 +606,15 @@ async def add_contract_life(
         if not person:
             # Criar nova pessoa (PF)
             # Obter company_id do contexto de tenant ou do usuário atual
-            company_id = current_user.company_id if hasattr(current_user, 'company_id') else tenant_context.current_company_id
+            company_id = (
+                current_user.company_id
+                if hasattr(current_user, "company_id")
+                else tenant_context.current_company_id
+            )
             if not company_id:
                 raise HTTPException(
                     status_code=http_status.HTTP_400_BAD_REQUEST,
-                    detail="User must be associated with a company to create contract lives"
+                    detail="User must be associated with a company to create contract lives",
                 )
 
             person = People(
@@ -614,7 +622,9 @@ async def add_contract_life(
                 person_type="PF",
                 status="active",
                 company_id=company_id,
-                tax_id=datetime.utcnow().strftime('%Y%m%d%H%M%S')[2:],  # CPF temporário (12 dígitos)
+                tax_id=datetime.utcnow().strftime("%Y%m%d%H%M%S")[
+                    2:
+                ],  # CPF temporário (12 dígitos)
             )
             db.add(person)
             await db.flush()
@@ -868,7 +878,9 @@ async def remove_contract_life(
         )
 
 
-@router.get("/{contract_id}/lives/{life_id}/history", response_model=ContractLifeHistoryResponse)
+@router.get(
+    "/{contract_id}/lives/{life_id}/history", response_model=ContractLifeHistoryResponse
+)
 @require_permission("contracts.view")
 async def get_contract_life_history(
     contract_id: int,
@@ -897,11 +909,10 @@ async def get_contract_life_history(
         )
 
         # Validar que vida existe e pertence ao contrato
-        query = select(ContractLive, People.name.label("person_name")).join(
-            People, ContractLive.person_id == People.id
-        ).where(
-            ContractLive.id == life_id,
-            ContractLive.contract_id == contract_id
+        query = (
+            select(ContractLive, People.name.label("person_name"))
+            .join(People, ContractLive.person_id == People.id)
+            .where(ContractLive.id == life_id, ContractLive.contract_id == contract_id)
         )
         result = await db.execute(query)
         row = result.one_or_none()
@@ -915,7 +926,8 @@ async def get_contract_life_history(
         contract_life, person_name = row
 
         # Buscar histórico de auditoria
-        history_query = text("""
+        history_query = text(
+            """
             SELECT
                 h.id,
                 h.contract_life_id,
@@ -930,7 +942,8 @@ async def get_contract_life_history(
             LEFT JOIN master.users u ON h.changed_by = u.id
             WHERE h.contract_life_id = :life_id
             ORDER BY h.changed_at DESC
-        """)
+        """
+        )
 
         history_result = await db.execute(history_query, {"life_id": life_id})
         history_rows = history_result.fetchall()

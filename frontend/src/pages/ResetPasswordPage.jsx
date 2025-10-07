@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Lock, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
-import { notify } from '../utils/notifications';
-import api from '../services/api';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Lock, CheckCircle, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { notify } from "../utils/notifications";
+import api from "../services/api";
 
 const ResetPasswordPage = () => {
   const { token } = useParams();
   const navigate = useNavigate();
 
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -37,11 +37,11 @@ const ResetPasswordPage = () => {
   const validateToken = async () => {
     try {
       setValidatingToken(true);
-      await api.post('/api/v1/auth/validate-reset-token', { token });
+      await api.post("/api/v1/auth/validate-reset-token", { token });
       setTokenValid(true);
     } catch (error) {
       setTokenValid(false);
-      notify.error('Link inválido ou expirado');
+      notify.error("Link inválido ou expirado");
     } finally {
       setValidatingToken(false);
     }
@@ -65,32 +65,32 @@ const ResetPasswordPage = () => {
     e.preventDefault();
 
     if (!isPasswordValid()) {
-      notify.error('A senha não atende aos requisitos mínimos');
+      notify.error("A senha não atende aos requisitos mínimos");
       return;
     }
 
     if (password !== confirmPassword) {
-      notify.error('As senhas não coincidem');
+      notify.error("As senhas não coincidem");
       return;
     }
 
     setIsLoading(true);
 
     try {
-      await api.post('/api/v1/auth/reset-password', {
+      await api.post("/api/v1/auth/reset-password", {
         token,
         new_password: password,
       });
 
       setPasswordReset(true);
-      notify.success('Senha redefinida com sucesso!');
+      notify.success("Senha redefinida com sucesso!");
 
       // Redirecionar após 3 segundos
       setTimeout(() => {
-        navigate('/login');
+        navigate("/login");
       }, 3000);
     } catch (error) {
-      notify.error(error.response?.data?.detail || 'Erro ao redefinir senha');
+      notify.error(error.response?.data?.detail || "Erro ao redefinir senha");
     } finally {
       setIsLoading(false);
     }
@@ -121,7 +121,7 @@ const ResetPasswordPage = () => {
                 Este link de recuperação é inválido ou já expirou.
               </p>
               <button
-                onClick={() => navigate('/forgot-password')}
+                onClick={() => navigate("/forgot-password")}
                 className="btn-primary"
               >
                 Solicitar Novo Link
@@ -144,7 +144,8 @@ const ResetPasswordPage = () => {
                 Senha Redefinida!
               </h2>
               <p className="text-gray-600 dark:text-gray-300 mb-6">
-                Sua senha foi alterada com sucesso. Você será redirecionado para o login...
+                Sua senha foi alterada com sucesso. Você será redirecionado para
+                o login...
               </p>
             </div>
           </div>
@@ -160,7 +161,9 @@ const ResetPasswordPage = () => {
           {/* Cabeçalho */}
           <div className="px-4 py-6 sm:px-10 text-center border-b border-gray-200 dark:border-gray-700">
             <Lock className="mx-auto h-12 w-12 text-blue-600 dark:text-blue-400 mb-3" />
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Redefinir Senha</h2>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Redefinir Senha
+            </h2>
             <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               Digite sua nova senha
             </p>
@@ -181,7 +184,7 @@ const ResetPasswordPage = () => {
                   <input
                     id="password"
                     name="password"
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -214,7 +217,7 @@ const ResetPasswordPage = () => {
                   <input
                     id="confirmPassword"
                     name="confirmPassword"
-                    type={showConfirmPassword ? 'text' : 'password'}
+                    type={showConfirmPassword ? "text" : "password"}
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -241,20 +244,54 @@ const ResetPasswordPage = () => {
                   Requisitos da senha:
                 </p>
                 <ul className="space-y-1 text-sm">
-                  <li className={passwordStrength.minLength ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}>
-                    {passwordStrength.minLength ? '✓' : '○'} Mínimo de 8 caracteres
+                  <li
+                    className={
+                      passwordStrength.minLength
+                        ? "text-green-600 dark:text-green-400"
+                        : "text-gray-500 dark:text-gray-400"
+                    }
+                  >
+                    {passwordStrength.minLength ? "✓" : "○"} Mínimo de 8
+                    caracteres
                   </li>
-                  <li className={passwordStrength.hasUpperCase ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}>
-                    {passwordStrength.hasUpperCase ? '✓' : '○'} Uma letra maiúscula
+                  <li
+                    className={
+                      passwordStrength.hasUpperCase
+                        ? "text-green-600 dark:text-green-400"
+                        : "text-gray-500 dark:text-gray-400"
+                    }
+                  >
+                    {passwordStrength.hasUpperCase ? "✓" : "○"} Uma letra
+                    maiúscula
                   </li>
-                  <li className={passwordStrength.hasLowerCase ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}>
-                    {passwordStrength.hasLowerCase ? '✓' : '○'} Uma letra minúscula
+                  <li
+                    className={
+                      passwordStrength.hasLowerCase
+                        ? "text-green-600 dark:text-green-400"
+                        : "text-gray-500 dark:text-gray-400"
+                    }
+                  >
+                    {passwordStrength.hasLowerCase ? "✓" : "○"} Uma letra
+                    minúscula
                   </li>
-                  <li className={passwordStrength.hasNumber ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}>
-                    {passwordStrength.hasNumber ? '✓' : '○'} Um número
+                  <li
+                    className={
+                      passwordStrength.hasNumber
+                        ? "text-green-600 dark:text-green-400"
+                        : "text-gray-500 dark:text-gray-400"
+                    }
+                  >
+                    {passwordStrength.hasNumber ? "✓" : "○"} Um número
                   </li>
-                  <li className={passwordStrength.hasSpecialChar ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}>
-                    {passwordStrength.hasSpecialChar ? '✓' : '○'} Um caractere especial (!@#$%^&*...)
+                  <li
+                    className={
+                      passwordStrength.hasSpecialChar
+                        ? "text-green-600 dark:text-green-400"
+                        : "text-gray-500 dark:text-gray-400"
+                    }
+                  >
+                    {passwordStrength.hasSpecialChar ? "✓" : "○"} Um caractere
+                    especial (!@#$%^&*...)
                   </li>
                 </ul>
               </div>
@@ -271,7 +308,7 @@ const ResetPasswordPage = () => {
                       Redefinindo...
                     </>
                   ) : (
-                    'Redefinir Senha'
+                    "Redefinir Senha"
                   )}
                 </button>
               </div>

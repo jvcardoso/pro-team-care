@@ -1,5 +1,5 @@
-import React from 'react';
-import Card from '../ui/Card';
+import React from "react";
+import Card from "../ui/Card";
 import {
   X,
   CreditCard,
@@ -11,8 +11,8 @@ import {
   DollarSign,
   Check,
   X as XIcon,
-} from 'lucide-react';
-import type { SubscriptionPlan } from '../../types/b2b-billing.types';
+} from "lucide-react";
+import type { SubscriptionPlan } from "../../types/b2b-billing.types";
 
 interface SubscriptionPlanViewModalProps {
   isOpen: boolean;
@@ -28,61 +28,63 @@ const SubscriptionPlanViewModal: React.FC<SubscriptionPlanViewModalProps> = ({
   if (!isOpen || !plan) return null;
 
   const formatCurrency = (value: number | string): string => {
-    const numValue = typeof value === 'string' ? parseFloat(value) : value;
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
+    const numValue = typeof value === "string" ? parseFloat(value) : value;
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
     }).format(numValue);
   };
 
   const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
+    return new Date(dateString).toLocaleDateString("pt-BR");
   };
 
   const getFeatureLabel = (key: string, value: unknown): string => {
     const labels: Record<string, string> = {
-      reports: 'Relatórios',
-      support: 'Suporte',
-      integrations: 'Integrações',
-      analytics: 'Analytics Avançado',
-      custom_features: 'Recursos Customizados',
+      reports: "Relatórios",
+      support: "Suporte",
+      integrations: "Integrações",
+      analytics: "Analytics Avançado",
+      custom_features: "Recursos Customizados",
     };
 
-    if (key === 'reports') {
+    if (key === "reports") {
       const reportLabels: Record<string, string> = {
-        basic: 'Básico',
-        advanced: 'Avançado',
-        premium: 'Premium',
+        basic: "Básico",
+        advanced: "Avançado",
+        premium: "Premium",
       };
       return `${labels[key]}: ${reportLabels[value] || value}`;
     }
 
-    if (key === 'support') {
+    if (key === "support") {
       const supportLabels: Record<string, string> = {
-        email: 'Email',
-        priority: 'Prioritário',
-        dedicated: 'Dedicado',
+        email: "Email",
+        priority: "Prioritário",
+        dedicated: "Dedicado",
       };
       return `${labels[key]}: ${supportLabels[value] || value}`;
     }
 
-    if (key === 'integrations') {
+    if (key === "integrations") {
       const integrationLabels: Record<string, string> = {
-        limited: 'Limitadas',
-        full: 'Completas',
-        unlimited: 'Ilimitadas',
+        limited: "Limitadas",
+        full: "Completas",
+        unlimited: "Ilimitadas",
       };
       return `${labels[key]}: ${integrationLabels[value] || value}`;
     }
 
-    if (typeof value === 'boolean' && value) {
+    if (typeof value === "boolean" && value) {
       return labels[key] || key;
     }
 
     return `${labels[key] || key}: ${value}`;
   };
 
-  const featuresList = plan.features ? Object.entries(plan.features).filter(([, value]) => value) : [];
+  const featuresList = plan.features
+    ? Object.entries(plan.features).filter(([, value]) => value)
+    : [];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -105,11 +107,13 @@ const SubscriptionPlanViewModal: React.FC<SubscriptionPlanViewModalProps> = ({
         <div className="p-6 space-y-6 overflow-y-auto max-h-[calc(90vh-140px)]">
           {/* Status */}
           <div className="flex items-center justify-between">
-            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-              plan.is_active
-                ? 'bg-green-100 text-green-800'
-                : 'bg-gray-100 text-gray-800'
-            }`}>
+            <span
+              className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                plan.is_active
+                  ? "bg-green-100 text-green-800"
+                  : "bg-gray-100 text-gray-800"
+              }`}
+            >
               {plan.is_active ? (
                 <>
                   <Check className="w-4 h-4 mr-1" />
@@ -132,24 +136,24 @@ const SubscriptionPlanViewModal: React.FC<SubscriptionPlanViewModalProps> = ({
           <Card title="Informações Básicas" icon={<Info className="h-5 w-5" />}>
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 <div>
-                   <div className="block text-sm font-medium text-muted-foreground mb-1">
-                     Nome do Plano
-                   </div>
-                   <p className="text-sm text-foreground bg-muted px-3 py-2 rounded-md">
-                     {plan.name}
-                   </p>
-                 </div>
+                <div>
+                  <div className="block text-sm font-medium text-muted-foreground mb-1">
+                    Nome do Plano
+                  </div>
+                  <p className="text-sm text-foreground bg-muted px-3 py-2 rounded-md">
+                    {plan.name}
+                  </p>
+                </div>
 
-                 <div>
-                   <div className="block text-sm font-medium text-muted-foreground mb-1">
-                     Preço Mensal
-                   </div>
-                   <p className="text-sm text-foreground bg-muted px-3 py-2 rounded-md flex items-center gap-1">
-                     <DollarSign className="w-4 h-4 text-green-600 dark:text-green-400" />
-                     {formatCurrency(plan.monthly_price)}
-                   </p>
-                 </div>
+                <div>
+                  <div className="block text-sm font-medium text-muted-foreground mb-1">
+                    Preço Mensal
+                  </div>
+                  <p className="text-sm text-foreground bg-muted px-3 py-2 rounded-md flex items-center gap-1">
+                    <DollarSign className="w-4 h-4 text-green-600 dark:text-green-400" />
+                    {formatCurrency(plan.monthly_price)}
+                  </p>
+                </div>
               </div>
 
               {plan.description && (
@@ -167,31 +171,36 @@ const SubscriptionPlanViewModal: React.FC<SubscriptionPlanViewModalProps> = ({
 
           {/* Limites */}
           <Card title="Limites de Uso" icon={<Users className="h-5 w-5" />}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <div className="block text-sm font-medium text-muted-foreground mb-1">
-                    Máximo de Usuários
-                  </div>
-                  <p className="text-sm text-foreground bg-muted px-3 py-2 rounded-md flex items-center gap-1">
-                    <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                    {plan.max_users ? plan.max_users : 'Ilimitado'}
-                  </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <div className="block text-sm font-medium text-muted-foreground mb-1">
+                  Máximo de Usuários
                 </div>
+                <p className="text-sm text-foreground bg-muted px-3 py-2 rounded-md flex items-center gap-1">
+                  <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  {plan.max_users ? plan.max_users : "Ilimitado"}
+                </p>
+              </div>
 
-                <div>
-                  <div className="block text-sm font-medium text-muted-foreground mb-1">
-                    Máximo de Estabelecimentos
-                  </div>
-                  <p className="text-sm text-foreground bg-muted px-3 py-2 rounded-md flex items-center gap-1">
-                    <Building className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                    {plan.max_establishments ? plan.max_establishments : 'Ilimitado'}
-                  </p>
+              <div>
+                <div className="block text-sm font-medium text-muted-foreground mb-1">
+                  Máximo de Estabelecimentos
+                </div>
+                <p className="text-sm text-foreground bg-muted px-3 py-2 rounded-md flex items-center gap-1">
+                  <Building className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                  {plan.max_establishments
+                    ? plan.max_establishments
+                    : "Ilimitado"}
+                </p>
               </div>
             </div>
           </Card>
 
           {/* Features */}
-          <Card title="Recursos e Funcionalidades" icon={<Settings className="h-5 w-5" />}>
+          <Card
+            title="Recursos e Funcionalidades"
+            icon={<Settings className="h-5 w-5" />}
+          >
             {featuresList.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {featuresList.map(([key, value]) => (

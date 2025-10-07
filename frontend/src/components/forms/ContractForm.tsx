@@ -34,11 +34,15 @@ const contractSchema = z.object({
   lives_minimum: z.number().optional(),
   lives_maximum: z.number().optional(),
   allows_substitution: z.boolean(),
-  control_period: z.enum(["DAILY", "WEEKLY", "MONTHLY", "QUARTERLY"]).optional(),
+  control_period: z
+    .enum(["DAILY", "WEEKLY", "MONTHLY", "QUARTERLY"])
+    .optional(),
   start_date: z.string().min(1, "Data de início é obrigatória"),
   end_date: z.string().optional(),
   service_address_type: z.enum(["PATIENT", "CLINIC"]).optional(),
-  status: z.enum(["active", "inactive", "suspended", "cancelled", "expired"]).optional(),
+  status: z
+    .enum(["active", "inactive", "suspended", "cancelled", "expired"])
+    .optional(),
   notes: z.string().optional(), // Campo para observações do contrato
 });
 
@@ -112,7 +116,11 @@ const ContractForm: React.FC<ContractFormProps> = ({
     if (Array.isArray(addresses) && addresses.length > 0) {
       processedAddresses = addresses;
       addressType = "CLINIC";
-    } else if (addresses && typeof addresses === "object" && Object.keys(addresses).length > 0) {
+    } else if (
+      addresses &&
+      typeof addresses === "object" &&
+      Object.keys(addresses).length > 0
+    ) {
       processedAddresses = Object.values(addresses);
       addressType = "CLINIC";
     }
@@ -269,9 +277,11 @@ const ContractForm: React.FC<ContractFormProps> = ({
               </label>
               {contract?.id ? (
                 <div className="w-full px-3 py-2 border border-border rounded-md bg-muted text-muted-foreground">
-                  {clients.find((client) => client.id === watch("client_id"))?.person?.name ||
-                   clients.find((client) => client.id === watch("client_id"))?.name ||
-                   `Cliente ${watch("client_id")}`}
+                  {clients.find((client) => client.id === watch("client_id"))
+                    ?.person?.name ||
+                    clients.find((client) => client.id === watch("client_id"))
+                      ?.name ||
+                    `Cliente ${watch("client_id")}`}
                 </div>
               ) : (
                 <select
@@ -369,10 +379,7 @@ const ContractForm: React.FC<ContractFormProps> = ({
         </Card>
 
         {/* Seção 2: Período e Vidas */}
-        <Card
-          title="Período e Vidas"
-          icon={<Calendar className="h-5 w-5" />}
-        >
+        <Card title="Período e Vidas" icon={<Calendar className="h-5 w-5" />}>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
@@ -475,7 +482,7 @@ const ContractForm: React.FC<ContractFormProps> = ({
                       // 🔧 CORREÇÃO: Usar função utilitária robusta existente
                       const numericValue = parseCurrencyRobust(value);
                       return numericValue || null;
-                    }
+                    },
                   })}
                   type="text"
                   inputMode="decimal"
@@ -484,19 +491,36 @@ const ContractForm: React.FC<ContractFormProps> = ({
                     const value = e.target.value;
                     if (value && value !== "") {
                       const numericValue = parseFloat(
-                        value.replace(/[^\d.,]/g, '').replace(/\./g, '').replace(',', '.')
+                        value
+                          .replace(/[^\d.,]/g, "")
+                          .replace(/\./g, "")
+                          .replace(",", ".")
                       );
                       if (!isNaN(numericValue)) {
-                        e.target.value = numericValue.toLocaleString('pt-BR', {
+                        e.target.value = numericValue.toLocaleString("pt-BR", {
                           minimumFractionDigits: 2,
-                          maximumFractionDigits: 2
+                          maximumFractionDigits: 2,
                         });
                       }
                     }
                   }}
                   onKeyDown={(e) => {
                     // Permitir teclas especiais
-                    if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'Home', 'End', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+                    if (
+                      [
+                        "Backspace",
+                        "Delete",
+                        "Tab",
+                        "Escape",
+                        "Enter",
+                        "Home",
+                        "End",
+                        "ArrowLeft",
+                        "ArrowRight",
+                        "ArrowUp",
+                        "ArrowDown",
+                      ].includes(e.key)
+                    ) {
                       return;
                     }
                     // Permitir Ctrl+A, Ctrl+C, Ctrl+V, etc.
@@ -610,10 +634,7 @@ const ContractForm: React.FC<ContractFormProps> = ({
         </Card>
 
         {/* Seção 5: Observações */}
-        <Card
-          title="Observações"
-          icon={<FileText className="h-5 w-5" />}
-        >
+        <Card title="Observações" icon={<FileText className="h-5 w-5" />}>
           <div>
             <label className="block text-sm font-medium text-foreground mb-1">
               Observações sobre o contrato

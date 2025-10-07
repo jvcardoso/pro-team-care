@@ -104,7 +104,8 @@ class ContractLivesValidator:
             # 2. Termina após o novo período iniciar
             overlap_condition = or_(
                 ContractLive.end_date.is_(None),  # Período existente também sem fim
-                ContractLive.end_date >= start_date,  # Período existente termina após novo iniciar
+                ContractLive.end_date
+                >= start_date,  # Período existente termina após novo iniciar
             )
         else:
             # Novo período com fim definido

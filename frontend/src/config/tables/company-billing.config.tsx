@@ -67,7 +67,10 @@ export const createCompanyBillingConfig = (
       label: "Método",
       type: "text",
       render: (value) => (
-        <div className="text-xs truncate max-w-[90px]" title={value || "Não informado"}>
+        <div
+          className="text-xs truncate max-w-[90px]"
+          title={value || "Não informado"}
+        >
           {getPaymentMethodLabel(value)}
         </div>
       ),
@@ -158,16 +161,16 @@ export const createCompanyBillingConfig = (
 
 function formatDate(dateString: string): string {
   try {
-    return new Date(dateString).toLocaleDateString('pt-BR');
+    return new Date(dateString).toLocaleDateString("pt-BR");
   } catch {
     return dateString;
   }
 }
 
 function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
   }).format(value);
 }
 
@@ -175,34 +178,39 @@ function getPaymentMethodLabel(method: string | undefined): string {
   if (!method) return "N/I";
 
   const labels: Record<string, string> = {
-    "manual": "Manual",
-    "recurrent": "Recorrente",
-    "credit_card": "Cartão",
-    "boleto": "Boleto",
-    "pix": "PIX",
+    manual: "Manual",
+    recurrent: "Recorrente",
+    credit_card: "Cartão",
+    boleto: "Boleto",
+    pix: "PIX",
   };
 
   return labels[method.toLowerCase()] || method.substring(0, 8);
 }
 
 function getStatusBadge(status: string): JSX.Element {
-  const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
-    "Ativo": {
+  const statusConfig: Record<
+    string,
+    { bg: string; text: string; label: string }
+  > = {
+    Ativo: {
       bg: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
       text: "✅ Ativo",
-      label: "Ativo"
+      label: "Ativo",
     },
     "Sem plano": {
       bg: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
       text: "⏸️ Sem plano",
-      label: "Sem plano"
+      label: "Sem plano",
     },
   };
 
   const config = statusConfig[status] || statusConfig["Sem plano"];
 
   return (
-    <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${config.bg}`}>
+    <span
+      className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${config.bg}`}
+    >
       {config.label}
     </span>
   );

@@ -35,35 +35,40 @@ export function DataTableTemplate<T extends BaseEntity = any>({
   const themeClasses = getThemeClasses(config.theme);
 
   // Mapeamento de entidades para português
-  const getEntityLabel = (entity: string): { singular: string; gender: "M" | "F" } => {
+  const getEntityLabel = (
+    entity: string
+  ): { singular: string; gender: "M" | "F" } => {
     const entityMap: Record<string, { singular: string; gender: "M" | "F" }> = {
-        empresa: { singular: "Empresa", gender: "F" },
-        clients: { singular: "Cliente", gender: "M" },
-        clientes: { singular: "Cliente", gender: "M" },
-        "establishment-clients": { singular: "Cliente", gender: "M" },
-        estabelecimentos: { singular: "Estabelecimento", gender: "M" },
-        profissionais: { singular: "Profissional", gender: "M" },
-        usuarios: { singular: "Usuário", gender: "M" },
-        pacientes: { singular: "Paciente", gender: "M" },
-        contratos: { singular: "Contrato", gender: "M" },
-        contracts: { singular: "Contrato", gender: "M" },
-        users: { singular: "Usuário", gender: "M" },
-        roles: { singular: "Perfil", gender: "M" },
-        menus: { singular: "Menu", gender: "M" },
-        services: { singular: "Serviço", gender: "M" },
-        authorizations: { singular: "Autorização", gender: "F" },
-        "medical-authorizations": { singular: "Autorização", gender: "F" },
-        companies: { singular: "Empresa", gender: "F" },
-        establishments: { singular: "Estabelecimento", gender: "M" },
-        patients: { singular: "Paciente", gender: "M" },
-        professionals: { singular: "Profissional", gender: "M" },
-      };
+      empresa: { singular: "Empresa", gender: "F" },
+      clients: { singular: "Cliente", gender: "M" },
+      clientes: { singular: "Cliente", gender: "M" },
+      "establishment-clients": { singular: "Cliente", gender: "M" },
+      estabelecimentos: { singular: "Estabelecimento", gender: "M" },
+      profissionais: { singular: "Profissional", gender: "M" },
+      usuarios: { singular: "Usuário", gender: "M" },
+      pacientes: { singular: "Paciente", gender: "M" },
+      contratos: { singular: "Contrato", gender: "M" },
+      contracts: { singular: "Contrato", gender: "M" },
+      users: { singular: "Usuário", gender: "M" },
+      roles: { singular: "Perfil", gender: "M" },
+      menus: { singular: "Menu", gender: "M" },
+      services: { singular: "Serviço", gender: "M" },
+      authorizations: { singular: "Autorização", gender: "F" },
+      "medical-authorizations": { singular: "Autorização", gender: "F" },
+      companies: { singular: "Empresa", gender: "F" },
+      establishments: { singular: "Estabelecimento", gender: "M" },
+      patients: { singular: "Paciente", gender: "M" },
+      professionals: { singular: "Profissional", gender: "M" },
+    };
 
     return entityMap[entity.toLowerCase()] || { singular: entity, gender: "M" };
   };
 
   const entityInfo = getEntityLabel(config.entity);
-  const addButtonText = entityInfo.gender === "F" ? `Nova ${entityInfo.singular}` : `Novo ${entityInfo.singular}`;
+  const addButtonText =
+    entityInfo.gender === "F"
+      ? `Nova ${entityInfo.singular}`
+      : `Novo ${entityInfo.singular}`;
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -215,8 +220,10 @@ export function DataTableTemplate<T extends BaseEntity = any>({
         onToggle={callbacks.onToggleDetailedMetrics}
       />
 
-        {/* Main Table Container */}
-        <div className={`${themeClasses.container} ${themeClasses.tableContainer}`}>
+      {/* Main Table Container */}
+      <div
+        className={`${themeClasses.container} ${themeClasses.tableContainer}`}
+      >
         {/* Table Header - Search and Filters */}
         <div className="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4">
           {/* Search */}
@@ -569,10 +576,7 @@ export function DataTableTemplate<T extends BaseEntity = any>({
                         : item[config.columns[0].key]}
                     </span>
                   </div>
-                  <ActionDropdown
-                    actions={config.actions}
-                    item={item}
-                  />
+                  <ActionDropdown actions={config.actions} item={item} />
                 </div>
                 <div className="space-y-2">
                   {config.columns.slice(1).map((column) => (
@@ -605,7 +609,11 @@ export function DataTableTemplate<T extends BaseEntity = any>({
             >
               <thead className={themeClasses.thead}>
                 <tr role="row">
-                   <th scope="col" className={`${themeClasses.headerCell} w-12`} role="columnheader">
+                  <th
+                    scope="col"
+                    className={`${themeClasses.headerCell} w-12`}
+                    role="columnheader"
+                  >
                     <div className="flex items-center">
                       <input
                         id="checkbox-all-desktop"
@@ -643,32 +651,32 @@ export function DataTableTemplate<T extends BaseEntity = any>({
                       scope="col"
                       role="columnheader"
                       aria-sort={column.sortable ? "none" : undefined}
-                       className={`${themeClasses.headerCell} ${
-                         index === 0
-                           ? "w-32" // Contrato
-                           : index === 1
-                           ? "w-40" // Cliente
-                           : index === 2
-                           ? "w-24" // Tipo
-                           : index === 3
-                           ? "w-20" // Vidas
-                           : index === 4
-                           ? "w-32" // Valor
-                           : index === 5
-                           ? "w-36" // Período
-                           : index === 6
-                           ? "w-24" // Status
-                           : "w-24"
-                       }`}
+                      className={`${themeClasses.headerCell} ${
+                        index === 0
+                          ? "w-32" // Contrato
+                          : index === 1
+                          ? "w-40" // Cliente
+                          : index === 2
+                          ? "w-24" // Tipo
+                          : index === 3
+                          ? "w-20" // Vidas
+                          : index === 4
+                          ? "w-32" // Valor
+                          : index === 5
+                          ? "w-36" // Período
+                          : index === 6
+                          ? "w-24" // Status
+                          : "w-24"
+                      }`}
                     >
                       {column.label}
                     </th>
                   ))}
-                   <th
-                     scope="col"
-                     role="columnheader"
-                     className={`${themeClasses.headerCell} w-16`}
-                   >
+                  <th
+                    scope="col"
+                    role="columnheader"
+                    className={`${themeClasses.headerCell} w-16`}
+                  >
                     <span className="sr-only">
                       Ações disponíveis para cada item
                     </span>
@@ -678,11 +686,11 @@ export function DataTableTemplate<T extends BaseEntity = any>({
               </thead>
               <tbody className={themeClasses.tbody}>
                 {state.data.map((item: any) => (
-                   <tr
-                     key={item.id}
-                     className={`${themeClasses.bodyRow} ${themeClasses.hover}`}
-                   >
-                     <td className={`${themeClasses.cell} w-4`}>
+                  <tr
+                    key={item.id}
+                    className={`${themeClasses.bodyRow} ${themeClasses.hover}`}
+                  >
+                    <td className={`${themeClasses.cell} w-4`}>
                       <div className="flex items-center">
                         <input
                           id={`checkbox-table-desktop-${item.id}`}
@@ -702,36 +710,33 @@ export function DataTableTemplate<T extends BaseEntity = any>({
                       </div>
                     </td>
                     {config.columns.map((column, index) => (
-                       <td
-                         key={String(column.key)}
-                         className={`${themeClasses.cell} ${
-                           index === 0
-                             ? "w-32" // Contrato
-                             : index === 1
-                             ? "w-40" // Cliente
-                             : index === 2
-                             ? "w-24" // Tipo
-                             : index === 3
-                             ? "w-20" // Vidas
-                             : index === 4
-                             ? "w-32" // Valor
-                             : index === 5
-                             ? "w-36" // Período
-                             : index === 6
-                             ? "w-24" // Status
-                             : "w-24"
-                         }`}
-                       >
+                      <td
+                        key={String(column.key)}
+                        className={`${themeClasses.cell} ${
+                          index === 0
+                            ? "w-32" // Contrato
+                            : index === 1
+                            ? "w-40" // Cliente
+                            : index === 2
+                            ? "w-24" // Tipo
+                            : index === 3
+                            ? "w-20" // Vidas
+                            : index === 4
+                            ? "w-32" // Valor
+                            : index === 5
+                            ? "w-36" // Período
+                            : index === 6
+                            ? "w-24" // Status
+                            : "w-24"
+                        }`}
+                      >
                         {column.render
                           ? column.render(item[column.key], item)
                           : item[column.key]}
                       </td>
                     ))}
-                     <td className={`${themeClasses.cell} w-16`}>
-                      <ActionDropdown
-                        actions={config.actions}
-                        item={item}
-                      />
+                    <td className={`${themeClasses.cell} w-16`}>
+                      <ActionDropdown actions={config.actions} item={item} />
                     </td>
                   </tr>
                 ))}
@@ -757,11 +762,15 @@ export function DataTableTemplate<T extends BaseEntity = any>({
                   </svg>
                 </div>
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                  Nenhum{entityInfo.gender === "F" ? "a" : ""} {entityInfo.singular} encontrad{entityInfo.gender === "F" ? "a" : "o"}
+                  Nenhum{entityInfo.gender === "F" ? "a" : ""}{" "}
+                  {entityInfo.singular} encontrad
+                  {entityInfo.gender === "F" ? "a" : "o"}
                 </h3>
                 <p className="text-gray-500 dark:text-gray-400 mb-4">
                   {(state as any).hasActiveFilters
-                    ? `Nenhum${entityInfo.gender === "F" ? "a" : ""} ${entityInfo.singular.toLowerCase()} corresponde aos filtros aplicados.`
+                    ? `Nenhum${
+                        entityInfo.gender === "F" ? "a" : ""
+                      } ${entityInfo.singular.toLowerCase()} corresponde aos filtros aplicados.`
                     : `Não há ${entityInfo.singular.toLowerCase()}s cadastrados no sistema.`}
                 </p>
                 {(state as any).hasActiveFilters && (
@@ -817,7 +826,10 @@ export function DataTableTemplate<T extends BaseEntity = any>({
                     className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-1.5 pr-8 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     title="Selecionar quantidade de itens por página"
                   >
-                     {(config.pageSizeOptions || config.pagination?.pageSizeOptions || [10, 25, 50, 100]).map((size) => (
+                    {(
+                      config.pageSizeOptions ||
+                      config.pagination?.pageSizeOptions || [10, 25, 50, 100]
+                    ).map((size) => (
                       <option key={size} value={size}>
                         {size} itens
                       </option>
@@ -896,7 +908,6 @@ export function DataTableTemplate<T extends BaseEntity = any>({
           )}
         </div>
       </div>
-
 
       {/* Filters Modal */}
       <FiltersModal

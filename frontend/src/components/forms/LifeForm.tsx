@@ -2,7 +2,16 @@ import React, { useState } from "react";
 import Card from "../ui/Card";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
-import { Save, X, User, Calendar, FileText, MapPin, Mail, Phone } from "lucide-react";
+import {
+  Save,
+  X,
+  User,
+  Calendar,
+  FileText,
+  MapPin,
+  Mail,
+  Phone,
+} from "lucide-react";
 import {
   PhoneInputGroup,
   EmailInputGroup,
@@ -100,7 +109,9 @@ const LifeForm: React.FC<LifeFormProps> = ({
             {title}
           </h3>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Uma vida representa uma pessoa vinculada ao contrato. Preencha os dados pessoais obrigatórios e, opcionalmente, os contatos e endereço.
+            Uma vida representa uma pessoa vinculada ao contrato. Preencha os
+            dados pessoais obrigatórios e, opcionalmente, os contatos e
+            endereço.
           </p>
         </div>
       </Card>
@@ -140,7 +151,9 @@ const LifeForm: React.FC<LifeFormProps> = ({
             </label>
             <Input
               value={formData.person.secondary_tax_id}
-              onChange={(e) => handlePersonChange("secondary_tax_id", e.target.value)}
+              onChange={(e) =>
+                handlePersonChange("secondary_tax_id", e.target.value)
+              }
               placeholder="00.000.000-0"
               disabled={isLoading}
             />
@@ -165,7 +178,9 @@ const LifeForm: React.FC<LifeFormProps> = ({
             </label>
             <select
               value={formData.person.gender || ""}
-              onChange={(e) => handlePersonChange("gender", e.target.value as Gender)}
+              onChange={(e) =>
+                handlePersonChange("gender", e.target.value as Gender)
+              }
               className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               disabled={isLoading}
             >
@@ -179,7 +194,10 @@ const LifeForm: React.FC<LifeFormProps> = ({
       </Card>
 
       {/* Dados do Contrato */}
-      <Card title="Vínculo com o Contrato" icon={<Calendar className="h-5 w-5" />}>
+      <Card
+        title="Vínculo com o Contrato"
+        icon={<Calendar className="h-5 w-5" />}
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-muted-foreground mb-2">
@@ -212,7 +230,9 @@ const LifeForm: React.FC<LifeFormProps> = ({
             </label>
             <select
               value={formData.life.relationship_type}
-              onChange={(e) => handleLifeChange("relationship_type", e.target.value)}
+              onChange={(e) =>
+                handleLifeChange("relationship_type", e.target.value)
+              }
               className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               disabled={isLoading}
             >
@@ -243,7 +263,10 @@ const LifeForm: React.FC<LifeFormProps> = ({
           phones={formData.phones}
           onChange={(phones) => setFormData((prev) => ({ ...prev, phones }))}
           onAdd={(phone) =>
-            setFormData((prev) => ({ ...prev, phones: [...prev.phones, phone] }))
+            setFormData((prev) => ({
+              ...prev,
+              phones: [...prev.phones, phone],
+            }))
           }
           onRemove={(index) =>
             setFormData((prev) => ({
@@ -265,7 +288,10 @@ const LifeForm: React.FC<LifeFormProps> = ({
           emails={formData.emails}
           onChange={(emails) => setFormData((prev) => ({ ...prev, emails }))}
           onAdd={(email) =>
-            setFormData((prev) => ({ ...prev, emails: [...prev.emails, email] }))
+            setFormData((prev) => ({
+              ...prev,
+              emails: [...prev.emails, email],
+            }))
           }
           onRemove={(index) =>
             setFormData((prev) => ({
@@ -285,7 +311,9 @@ const LifeForm: React.FC<LifeFormProps> = ({
       <Card title="Endereços (Opcionais)" icon={<MapPin className="h-5 w-5" />}>
         <AddressInputGroup
           addresses={formData.addresses}
-          onChange={(addresses) => setFormData((prev) => ({ ...prev, addresses }))}
+          onChange={(addresses) =>
+            setFormData((prev) => ({ ...prev, addresses }))
+          }
           onAdd={(address) =>
             setFormData((prev) => ({
               ...prev,
@@ -309,13 +337,22 @@ const LifeForm: React.FC<LifeFormProps> = ({
       {/* Botões de Ação */}
       <Card>
         <div className="flex justify-end space-x-3 p-4">
-          <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isLoading}
+          >
             <X className="w-4 h-4 mr-2" />
             Cancelar
           </Button>
           <Button type="submit" disabled={isLoading}>
             <Save className="w-4 h-4 mr-2" />
-            {isLoading ? "Salvando..." : mode === "edit" ? "Salvar Alterações" : "Adicionar Vida"}
+            {isLoading
+              ? "Salvando..."
+              : mode === "edit"
+              ? "Salvar Alterações"
+              : "Adicionar Vida"}
           </Button>
         </div>
       </Card>

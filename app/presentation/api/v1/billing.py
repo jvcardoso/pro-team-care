@@ -777,6 +777,3 @@ async def pagbank_webhook_handler(
             error=f"Webhook processing failed: {str(e)}",
             notification_type=request.type,
         )
-
-
-

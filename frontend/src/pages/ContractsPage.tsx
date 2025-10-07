@@ -35,7 +35,9 @@ const ContractsPageContent: React.FC = () => {
   const [editingContract, setEditingContract] = useState<Contract | null>(null);
   const [viewingContract, setViewingContract] = useState<Contract | null>(null);
   const [showingDetails, setShowingDetails] = useState(false);
-  const [prefilledClientId, setPrefilledClientId] = useState<number | null>(null);
+  const [prefilledClientId, setPrefilledClientId] = useState<number | null>(
+    null
+  );
 
   const handleCreateContract = () => {
     setEditingContract(null);
@@ -164,7 +166,9 @@ const ContractsPageContent: React.FC = () => {
       const contractsWithNames: ContractWithClientName[] = contractsList.map(
         (contract) => ({
           ...contract,
-          client_name: clientsMap.get(contract.client_id) || `Cliente #${contract.client_id}`,
+          client_name:
+            clientsMap.get(contract.client_id) ||
+            `Cliente #${contract.client_id}`,
         })
       );
 
@@ -176,7 +180,6 @@ const ContractsPageContent: React.FC = () => {
       setLoading(false);
     }
   };
-
 
   const loadContractForEditing = async (contractId: number) => {
     try {
@@ -191,13 +194,13 @@ const ContractsPageContent: React.FC = () => {
     }
   };
 
-
-
-
   if (showForm || isEditing) {
     return (
       <ContractForm
-        contract={editingContract || (prefilledClientId ? { client_id: prefilledClientId } : undefined)}
+        contract={
+          editingContract ||
+          (prefilledClientId ? { client_id: prefilledClientId } : undefined)
+        }
         onSave={() => {
           // Sempre recarregar dados após salvar
           loadContracts();

@@ -259,7 +259,7 @@ const ClientsPageContent: React.FC = () => {
     if (establishmentIdFromUrl && actionFromUrl === "create") {
       console.log("🏥 Estabelecimento pré-selecionado na URL:", {
         establishmentId: establishmentIdFromUrl,
-        establishmentCode: establishmentCodeFromUrl
+        establishmentCode: establishmentCodeFromUrl,
       });
       setCurrentView("create");
     }
@@ -295,7 +295,9 @@ const ClientsPageContent: React.FC = () => {
         onCancel={handleBackToList}
         onSave={handleBackToList} // Será chamado após sucesso
         mode={currentView as "create" | "edit"}
-        establishmentId={establishmentIdFromUrl ? parseInt(establishmentIdFromUrl) : undefined}
+        establishmentId={
+          establishmentIdFromUrl ? parseInt(establishmentIdFromUrl) : undefined
+        }
         establishmentCode={establishmentCodeFromUrl || undefined}
       />
     );

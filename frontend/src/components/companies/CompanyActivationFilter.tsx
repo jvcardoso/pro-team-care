@@ -2,8 +2,8 @@
  * Filtro de status de ativação para lista de empresas
  */
 
-import React from 'react';
-import { Filter } from 'lucide-react';
+import React from "react";
+import { Filter } from "lucide-react";
 
 interface CompanyActivationFilterProps {
   value: string;
@@ -44,29 +44,27 @@ const CompanyActivationFilter: React.FC<CompanyActivationFilterProps> = ({
           min-w-[200px]
         "
       >
-        <option value="all">
-          Todas {stats ? `(${stats.total})` : ''}
-        </option>
+        <option value="all">Todas {stats ? `(${stats.total})` : ""}</option>
         <option value="pending_contract">
-          ⏳ Aguardando Contrato {stats ? `(${stats.pending_contract})` : ''}
+          ⏳ Aguardando Contrato {stats ? `(${stats.pending_contract})` : ""}
         </option>
         <option value="contract_signed">
-          ✅ Contrato Assinado {stats ? `(${stats.contract_signed})` : ''}
+          ✅ Contrato Assinado {stats ? `(${stats.contract_signed})` : ""}
         </option>
         <option value="pending_user">
-          👤 Aguardando Usuário {stats ? `(${stats.pending_user})` : ''}
+          👤 Aguardando Usuário {stats ? `(${stats.pending_user})` : ""}
         </option>
         <option value="active">
-          🟢 Ativas {stats ? `(${stats.active})` : ''}
+          🟢 Ativas {stats ? `(${stats.active})` : ""}
         </option>
         <option value="suspended">
-          🔴 Suspensas {stats ? `(${stats.suspended})` : ''}
+          🔴 Suspensas {stats ? `(${stats.suspended})` : ""}
         </option>
       </select>
 
-      {value !== 'all' && (
+      {value !== "all" && (
         <button
-          onClick={() => onChange('all')}
+          onClick={() => onChange("all")}
           className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
         >
           Limpar filtro

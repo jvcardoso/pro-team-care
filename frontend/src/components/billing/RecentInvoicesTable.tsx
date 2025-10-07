@@ -3,12 +3,16 @@
  * Displays recent invoices for a specific contract
  */
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import billingService from '../../services/billingService';
-import { Invoice, InvoiceStatus, PaymentMethod } from '../../types/billing.types';
-import InvoiceStatusBadge from './InvoiceStatusBadge';
-import PaymentMethodBadge from './PaymentMethodBadge';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import billingService from "../../services/billingService";
+import {
+  Invoice,
+  InvoiceStatus,
+  PaymentMethod,
+} from "../../types/billing.types";
+import InvoiceStatusBadge from "./InvoiceStatusBadge";
+import PaymentMethodBadge from "./PaymentMethodBadge";
 
 interface RecentInvoicesTableProps {
   contractId: number;
@@ -19,7 +23,7 @@ interface RecentInvoicesTableProps {
 const RecentInvoicesTable: React.FC<RecentInvoicesTableProps> = ({
   contractId,
   limit = 5,
-  className = '',
+  className = "",
 }) => {
   const navigate = useNavigate();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -43,17 +47,17 @@ const RecentInvoicesTable: React.FC<RecentInvoicesTableProps> = ({
 
       setInvoices(response.invoices || []);
     } catch (err: any) {
-      console.error('Error loading recent invoices:', err);
-      setError('Erro ao carregar faturas');
+      console.error("Error loading recent invoices:", err);
+      setError("Erro ao carregar faturas");
 
       // Mock data for demonstration
       const mockInvoices: Invoice[] = [
         {
           id: 1,
           contract_id: contractId,
-          invoice_number: 'INV-202509-001',
-          billing_period_start: '2025-09-01',
-          billing_period_end: '2025-09-30',
+          invoice_number: "INV-202509-001",
+          billing_period_start: "2025-09-01",
+          billing_period_end: "2025-09-30",
           lives_count: 10,
           base_amount: 15000,
           additional_services_amount: 0,
@@ -61,19 +65,19 @@ const RecentInvoicesTable: React.FC<RecentInvoicesTableProps> = ({
           taxes: 0,
           total_amount: 15000,
           status: InvoiceStatus.PAGA,
-          due_date: '2025-09-10',
-          issued_date: '2025-09-01',
-          paid_date: '2025-09-08',
+          due_date: "2025-09-10",
+          issued_date: "2025-09-01",
+          paid_date: "2025-09-08",
           payment_method: PaymentMethod.PIX,
-          created_at: '2025-09-01T00:00:00Z',
-          updated_at: '2025-09-08T00:00:00Z',
+          created_at: "2025-09-01T00:00:00Z",
+          updated_at: "2025-09-08T00:00:00Z",
         },
         {
           id: 2,
           contract_id: contractId,
-          invoice_number: 'INV-202510-001',
-          billing_period_start: '2025-10-01',
-          billing_period_end: '2025-10-31',
+          invoice_number: "INV-202510-001",
+          billing_period_start: "2025-10-01",
+          billing_period_end: "2025-10-31",
           lives_count: 10,
           base_amount: 15000,
           additional_services_amount: 0,
@@ -81,10 +85,10 @@ const RecentInvoicesTable: React.FC<RecentInvoicesTableProps> = ({
           taxes: 0,
           total_amount: 15000,
           status: InvoiceStatus.PENDENTE,
-          due_date: '2025-10-10',
-          issued_date: '2025-10-01',
-          created_at: '2025-10-01T00:00:00Z',
-          updated_at: '2025-10-01T00:00:00Z',
+          due_date: "2025-10-10",
+          issued_date: "2025-10-01",
+          created_at: "2025-10-01T00:00:00Z",
+          updated_at: "2025-10-01T00:00:00Z",
         },
       ];
       setInvoices(mockInvoices);
@@ -103,12 +107,17 @@ const RecentInvoicesTable: React.FC<RecentInvoicesTableProps> = ({
 
   if (loading) {
     return (
-      <div className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 ${className}`}>
+      <div
+        className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 ${className}`}
+      >
         <div className="p-4">
           <div className="animate-pulse">
             <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-4"></div>
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-12 bg-gray-100 dark:bg-gray-700 rounded mb-2"></div>
+              <div
+                key={i}
+                className="h-12 bg-gray-100 dark:bg-gray-700 rounded mb-2"
+              ></div>
             ))}
           </div>
         </div>
@@ -118,7 +127,9 @@ const RecentInvoicesTable: React.FC<RecentInvoicesTableProps> = ({
 
   if (error && invoices.length === 0) {
     return (
-      <div className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 ${className}`}>
+      <div
+        className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 ${className}`}
+      >
         <div className="p-4 text-center text-gray-500 dark:text-gray-400">
           <div className="text-2xl mb-2">📄</div>
           <p className="text-sm">Erro ao carregar faturas</p>
@@ -134,7 +145,9 @@ const RecentInvoicesTable: React.FC<RecentInvoicesTableProps> = ({
   }
 
   return (
-    <div className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 ${className}`}>
+    <div
+      className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 ${className}`}
+    >
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between">
@@ -177,8 +190,11 @@ const RecentInvoicesTable: React.FC<RecentInvoicesTableProps> = ({
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {invoices.map((invoice) => {
-                const isOverdue = new Date(invoice.due_date) < new Date() &&
-                                ![InvoiceStatus.PAGA, InvoiceStatus.CANCELADA].includes(invoice.status);
+                const isOverdue =
+                  new Date(invoice.due_date) < new Date() &&
+                  ![InvoiceStatus.PAGA, InvoiceStatus.CANCELADA].includes(
+                    invoice.status
+                  );
 
                 return (
                   <tr
@@ -193,10 +209,13 @@ const RecentInvoicesTable: React.FC<RecentInvoicesTableProps> = ({
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="text-sm text-gray-900 dark:text-gray-100">
-                        {billingService.formatDate(invoice.billing_period_start)}
+                        {billingService.formatDate(
+                          invoice.billing_period_start
+                        )}
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400">
-                        até {billingService.formatDate(invoice.billing_period_end)}
+                        até{" "}
+                        {billingService.formatDate(invoice.billing_period_end)}
                       </div>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
@@ -216,12 +235,19 @@ const RecentInvoicesTable: React.FC<RecentInvoicesTableProps> = ({
                       />
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <div className={`text-sm ${isOverdue ? 'text-red-600 dark:text-red-400 font-medium' : 'text-gray-900 dark:text-gray-100'}`}>
+                      <div
+                        className={`text-sm ${
+                          isOverdue
+                            ? "text-red-600 dark:text-red-400 font-medium"
+                            : "text-gray-900 dark:text-gray-100"
+                        }`}
+                      >
                         {billingService.formatDate(invoice.due_date)}
                       </div>
                       {isOverdue && (
                         <div className="text-xs text-red-500 dark:text-red-400">
-                          {billingService.getDaysOverdue(invoice)} dias em atraso
+                          {billingService.getDaysOverdue(invoice)} dias em
+                          atraso
                         </div>
                       )}
                     </td>
@@ -241,7 +267,7 @@ const RecentInvoicesTable: React.FC<RecentInvoicesTableProps> = ({
             Este contrato ainda não possui faturas geradas.
           </p>
           <button
-            onClick={() => navigate('/admin/faturamento/dashboard')}
+            onClick={() => navigate("/admin/faturamento/dashboard")}
             className="inline-flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-xs font-medium rounded text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
           >
             Gerar Fatura Manual
@@ -259,18 +285,29 @@ const RecentInvoicesTable: React.FC<RecentInvoicesTableProps> = ({
             <div className="flex items-center space-x-4">
               <span className="flex items-center">
                 <div className="w-2 h-2 bg-green-400 rounded-full mr-1"></div>
-                Pagas: {invoices.filter(i => i.status === InvoiceStatus.PAGA).length}
+                Pagas:{" "}
+                {invoices.filter((i) => i.status === InvoiceStatus.PAGA).length}
               </span>
               <span className="flex items-center">
                 <div className="w-2 h-2 bg-yellow-400 rounded-full mr-1"></div>
-                Pendentes: {invoices.filter(i => i.status === InvoiceStatus.PENDENTE).length}
+                Pendentes:{" "}
+                {
+                  invoices.filter((i) => i.status === InvoiceStatus.PENDENTE)
+                    .length
+                }
               </span>
               <span className="flex items-center">
                 <div className="w-2 h-2 bg-red-400 rounded-full mr-1"></div>
-                Vencidas: {invoices.filter(i =>
-                  new Date(i.due_date) < new Date() &&
-                  ![InvoiceStatus.PAGA, InvoiceStatus.CANCELADA].includes(i.status)
-                ).length}
+                Vencidas:{" "}
+                {
+                  invoices.filter(
+                    (i) =>
+                      new Date(i.due_date) < new Date() &&
+                      ![InvoiceStatus.PAGA, InvoiceStatus.CANCELADA].includes(
+                        i.status
+                      )
+                  ).length
+                }
               </span>
             </div>
           </div>

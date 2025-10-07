@@ -3,9 +3,9 @@
  * Displays key billing metrics in card format
  */
 
-import React from 'react';
-import { BillingMetrics } from '../../types/billing.types';
-import billingService from '../../services/billingService';
+import React from "react";
+import { BillingMetrics } from "../../types/billing.types";
+import billingService from "../../services/billingService";
 
 interface BillingMetricsCardsProps {
   metrics: BillingMetrics;
@@ -19,7 +19,7 @@ interface MetricCardProps {
   subtitle?: string;
   icon: string;
   color: string;
-  trend?: 'up' | 'down' | 'neutral';
+  trend?: "up" | "down" | "neutral";
   percentage?: number;
   loading?: boolean;
 }
@@ -38,9 +38,9 @@ const MetricCard: React.FC<MetricCardProps> = ({
     if (!trend || !percentage) return null;
 
     switch (trend) {
-      case 'up':
+      case "up":
         return <span className="text-green-600">↗️ {percentage}%</span>;
-      case 'down':
+      case "down":
         return <span className="text-red-600">↘️ {percentage}%</span>;
       default:
         return <span className="text-gray-600">→ {percentage}%</span>;
@@ -49,18 +49,18 @@ const MetricCard: React.FC<MetricCardProps> = ({
 
   const getColorClasses = () => {
     switch (color) {
-      case 'blue':
-        return 'bg-blue-50 border-blue-200';
-      case 'green':
-        return 'bg-green-50 border-green-200';
-      case 'yellow':
-        return 'bg-yellow-50 border-yellow-200';
-      case 'red':
-        return 'bg-red-50 border-red-200';
-      case 'purple':
-        return 'bg-purple-50 border-purple-200';
+      case "blue":
+        return "bg-blue-50 border-blue-200";
+      case "green":
+        return "bg-green-50 border-green-200";
+      case "yellow":
+        return "bg-yellow-50 border-yellow-200";
+      case "red":
+        return "bg-red-50 border-red-200";
+      case "purple":
+        return "bg-purple-50 border-purple-200";
       default:
-        return 'bg-gray-50 border-gray-200';
+        return "bg-gray-50 border-gray-200";
     }
   };
 
@@ -88,14 +88,10 @@ const MetricCard: React.FC<MetricCardProps> = ({
       <div className="flex items-baseline justify-between">
         <div>
           <p className="text-2xl font-semibold text-gray-900">{value}</p>
-          {subtitle && (
-            <p className="text-sm text-gray-600">{subtitle}</p>
-          )}
+          {subtitle && <p className="text-sm text-gray-600">{subtitle}</p>}
         </div>
         {getTrendIcon() && (
-          <div className="text-sm font-medium">
-            {getTrendIcon()}
-          </div>
+          <div className="text-sm font-medium">{getTrendIcon()}</div>
         )}
       </div>
     </div>
@@ -105,56 +101,64 @@ const MetricCard: React.FC<MetricCardProps> = ({
 const BillingMetricsCards: React.FC<BillingMetricsCardsProps> = ({
   metrics,
   loading = false,
-  className = '',
+  className = "",
 }) => {
   const cards = [
     {
-      title: 'Faturas Pendentes',
+      title: "Faturas Pendentes",
       value: metrics.total_pending_invoices,
       subtitle: billingService.formatCurrency(metrics.total_pending_amount),
-      icon: '📄',
-      color: 'yellow',
+      icon: "📄",
+      color: "yellow",
     },
     {
-      title: 'Faturas Vencidas',
+      title: "Faturas Vencidas",
       value: metrics.total_overdue_invoices,
       subtitle: billingService.formatCurrency(metrics.total_overdue_amount),
-      icon: '⚠️',
-      color: 'red',
+      icon: "⚠️",
+      color: "red",
     },
     {
-      title: 'Recebido este Mês',
+      title: "Recebido este Mês",
       value: billingService.formatCurrency(metrics.total_paid_this_month),
-      subtitle: 'Pagamentos confirmados',
-      icon: '💰',
-      color: 'green',
+      subtitle: "Pagamentos confirmados",
+      icon: "💰",
+      color: "green",
     },
     {
-      title: 'Faturado este Mês',
+      title: "Faturado este Mês",
       value: billingService.formatCurrency(metrics.total_expected_this_month),
-      subtitle: 'Total esperado',
-      icon: '📊',
-      color: 'blue',
+      subtitle: "Total esperado",
+      icon: "📊",
+      color: "blue",
     },
     {
-      title: 'Taxa de Cobrança',
+      title: "Taxa de Cobrança",
       value: `${metrics.collection_rate_percentage.toFixed(1)}%`,
-      subtitle: 'Eficiência de cobrança',
-      icon: '🎯',
-      color: metrics.collection_rate_percentage >= 80 ? 'green' :
-             metrics.collection_rate_percentage >= 60 ? 'yellow' : 'red',
+      subtitle: "Eficiência de cobrança",
+      icon: "🎯",
+      color:
+        metrics.collection_rate_percentage >= 80
+          ? "green"
+          : metrics.collection_rate_percentage >= 60
+          ? "yellow"
+          : "red",
     },
     {
-      title: 'Prazo Médio',
-      value: metrics.average_payment_delay_days ? `${metrics.average_payment_delay_days} dias` : 'N/A',
-      subtitle: 'Atraso no pagamento',
-      icon: '⏱️',
-      color: 'purple',
+      title: "Prazo Médio",
+      value: metrics.average_payment_delay_days
+        ? `${metrics.average_payment_delay_days} dias`
+        : "N/A",
+      subtitle: "Atraso no pagamento",
+      icon: "⏱️",
+      color: "purple",
     },
   ];
 
   return (
-    <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${className}`}>
+    <div
+      className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${className}`}
+    >
       {cards.map((card, index) => (
         <MetricCard
           key={index}

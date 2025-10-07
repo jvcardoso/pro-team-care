@@ -25,7 +25,9 @@ export function useDataTable<T extends BaseEntity = any>({
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(config.defaultPageSize || config.pagination?.pageSize || 10);
+  const [pageSize, setPageSize] = useState(
+    config.defaultPageSize || config.pagination?.pageSize || 10
+  );
 
   // Filter State
   const [searchTerm, setSearchTerm] = useState("");
@@ -116,16 +118,10 @@ export function useDataTable<T extends BaseEntity = any>({
 
           // Handle ({percentage}%) format
           if (subtitle.includes("({percentage}%)")) {
-            subtitle = subtitle.replace(
-              "({percentage}%)",
-              `(${percentage}%)`
-            );
+            subtitle = subtitle.replace("({percentage}%)", `(${percentage}%)`);
           } else {
             // Handle {percentage} format
-            subtitle = subtitle.replace(
-              "{percentage}",
-              percentage.toString()
-            );
+            subtitle = subtitle.replace("{percentage}", percentage.toString());
           }
         }
 

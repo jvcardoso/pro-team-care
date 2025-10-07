@@ -3,7 +3,7 @@
  * Handles all billing-related API calls
  */
 
-import api from './api.js';
+import api from "./api.js";
 import {
   BillingSchedule,
   BillingScheduleCreate,
@@ -32,7 +32,7 @@ import {
   AutoBillingRequest,
   AutoBillingResult,
   ApiResponse,
-} from '../types/billing.types';
+} from "../types/billing.types";
 import {
   BillingMethodStatus,
   BillingMethodUpdate,
@@ -45,42 +45,59 @@ import {
   AutomaticBillingRequest,
   AutomaticBillingResponse,
   TransactionsListResponse,
-} from '../types/pagbank.types';
+} from "../types/pagbank.types";
 
-const BASE_URL = '/api/v1/billing';
+const BASE_URL = "/api/v1/billing";
 
 class BillingService {
-
   // ==========================================
   // BILLING SCHEDULES
   // ==========================================
 
-  async listBillingSchedules(params: BillingScheduleListParams = {}): Promise<BillingScheduleListResponse> {
-    const response = await api.get<BillingScheduleListResponse>(`${BASE_URL}/schedules`, {
-      params: {
-        contract_id: params.contract_id,
-        billing_cycle: params.billing_cycle,
-        is_active: params.is_active,
-        next_billing_before: params.next_billing_before,
-        page: params.page || 1,
-        size: params.size || 50,
+  async listBillingSchedules(
+    params: BillingScheduleListParams = {}
+  ): Promise<BillingScheduleListResponse> {
+    const response = await api.get<BillingScheduleListResponse>(
+      `${BASE_URL}/schedules`,
+      {
+        params: {
+          contract_id: params.contract_id,
+          billing_cycle: params.billing_cycle,
+          is_active: params.is_active,
+          next_billing_before: params.next_billing_before,
+          page: params.page || 1,
+          size: params.size || 50,
+        },
       }
-    });
+    );
     return response.data;
   }
 
   async getBillingSchedule(id: number): Promise<BillingSchedule> {
-    const response = await api.get<BillingSchedule>(`${BASE_URL}/schedules/${id}`);
+    const response = await api.get<BillingSchedule>(
+      `${BASE_URL}/schedules/${id}`
+    );
     return response.data;
   }
 
-  async createBillingSchedule(data: BillingScheduleCreate): Promise<BillingSchedule> {
-    const response = await api.post<BillingSchedule>(`${BASE_URL}/schedules`, data);
+  async createBillingSchedule(
+    data: BillingScheduleCreate
+  ): Promise<BillingSchedule> {
+    const response = await api.post<BillingSchedule>(
+      `${BASE_URL}/schedules`,
+      data
+    );
     return response.data;
   }
 
-  async updateBillingSchedule(id: number, data: BillingScheduleUpdate): Promise<BillingSchedule> {
-    const response = await api.put<BillingSchedule>(`${BASE_URL}/schedules/${id}`, data);
+  async updateBillingSchedule(
+    id: number,
+    data: BillingScheduleUpdate
+  ): Promise<BillingSchedule> {
+    const response = await api.put<BillingSchedule>(
+      `${BASE_URL}/schedules/${id}`,
+      data
+    );
     return response.data;
   }
 
@@ -88,23 +105,30 @@ class BillingService {
   // INVOICES
   // ==========================================
 
-  async listInvoices(params: InvoiceListParams = {}): Promise<InvoiceListResponse> {
-    const response = await api.get<InvoiceListResponse>(`${BASE_URL}/invoices`, {
-      params: {
-        contract_id: params.contract_id,
-        status: params.status,
-        start_date: params.start_date,
-        end_date: params.end_date,
-        overdue_only: params.overdue_only,
-        page: params.page || 1,
-        size: params.size || 50,
+  async listInvoices(
+    params: InvoiceListParams = {}
+  ): Promise<InvoiceListResponse> {
+    const response = await api.get<InvoiceListResponse>(
+      `${BASE_URL}/invoices`,
+      {
+        params: {
+          contract_id: params.contract_id,
+          status: params.status,
+          start_date: params.start_date,
+          end_date: params.end_date,
+          overdue_only: params.overdue_only,
+          page: params.page || 1,
+          size: params.size || 50,
+        },
       }
-    });
+    );
     return response.data;
   }
 
   async getInvoice(id: number): Promise<InvoiceDetailed> {
-    const response = await api.get<InvoiceDetailed>(`${BASE_URL}/invoices/${id}`);
+    const response = await api.get<InvoiceDetailed>(
+      `${BASE_URL}/invoices/${id}`
+    );
     return response.data;
   }
 
@@ -126,12 +150,20 @@ class BillingService {
     const params = new URLSearchParams({
       status: status.toString(),
       ...(paymentDetails?.paid_date && { paid_date: paymentDetails.paid_date }),
-      ...(paymentDetails?.payment_method && { payment_method: paymentDetails.payment_method }),
-      ...(paymentDetails?.payment_reference && { payment_reference: paymentDetails.payment_reference }),
-      ...(paymentDetails?.payment_notes && { payment_notes: paymentDetails.payment_notes }),
+      ...(paymentDetails?.payment_method && {
+        payment_method: paymentDetails.payment_method,
+      }),
+      ...(paymentDetails?.payment_reference && {
+        payment_reference: paymentDetails.payment_reference,
+      }),
+      ...(paymentDetails?.payment_notes && {
+        payment_notes: paymentDetails.payment_notes,
+      }),
     });
 
-    const response = await api.patch<Invoice>(`${BASE_URL}/invoices/${id}/status?${params}`);
+    const response = await api.patch<Invoice>(
+      `${BASE_URL}/invoices/${id}/status?${params}`
+    );
     return response.data;
   }
 
@@ -139,23 +171,30 @@ class BillingService {
   // PAYMENT RECEIPTS
   // ==========================================
 
-  async listPaymentReceipts(params: ReceiptListParams = {}): Promise<ReceiptListResponse> {
-    const response = await api.get<ReceiptListResponse>(`${BASE_URL}/receipts`, {
-      params: {
-        invoice_id: params.invoice_id,
-        verification_status: params.verification_status,
-        uploaded_by: params.uploaded_by,
-        start_date: params.start_date,
-        end_date: params.end_date,
-        page: params.page || 1,
-        size: params.size || 50,
+  async listPaymentReceipts(
+    params: ReceiptListParams = {}
+  ): Promise<ReceiptListResponse> {
+    const response = await api.get<ReceiptListResponse>(
+      `${BASE_URL}/receipts`,
+      {
+        params: {
+          invoice_id: params.invoice_id,
+          verification_status: params.verification_status,
+          uploaded_by: params.uploaded_by,
+          start_date: params.start_date,
+          end_date: params.end_date,
+          page: params.page || 1,
+          size: params.size || 50,
+        },
       }
-    });
+    );
     return response.data;
   }
 
   async getPaymentReceipt(id: number): Promise<PaymentReceipt> {
-    const response = await api.get<PaymentReceipt>(`${BASE_URL}/receipts/${id}`);
+    const response = await api.get<PaymentReceipt>(
+      `${BASE_URL}/receipts/${id}`
+    );
     return response.data;
   }
 
@@ -165,17 +204,21 @@ class BillingService {
     notes?: string
   ): Promise<PaymentReceipt> {
     const formData = new FormData();
-    formData.append('invoice_id', invoiceId.toString());
-    formData.append('file', file);
+    formData.append("invoice_id", invoiceId.toString());
+    formData.append("file", file);
     if (notes) {
-      formData.append('notes', notes);
+      formData.append("notes", notes);
     }
 
-    const response = await api.post<PaymentReceipt>(`${BASE_URL}/receipts/upload`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await api.post<PaymentReceipt>(
+      `${BASE_URL}/receipts/upload`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
     return response.data;
   }
 
@@ -189,7 +232,9 @@ class BillingService {
       ...(notes && { notes }),
     });
 
-    const response = await api.patch<PaymentReceipt>(`${BASE_URL}/receipts/${id}/verify?${params}`);
+    const response = await api.patch<PaymentReceipt>(
+      `${BASE_URL}/receipts/${id}/verify?${params}`
+    );
     return response.data;
   }
 
@@ -198,18 +243,25 @@ class BillingService {
   // ==========================================
 
   async getBillingDashboard(): Promise<BillingDashboardResponse> {
-    const response = await api.get<BillingDashboardResponse>(`${BASE_URL}/dashboard`);
+    const response = await api.get<BillingDashboardResponse>(
+      `${BASE_URL}/dashboard`
+    );
     return response.data;
   }
 
   async getBillingMetrics(companyId?: number): Promise<BillingMetrics> {
     const params = companyId ? { company_id: companyId } : {};
-    const response = await api.get<BillingMetrics>(`${BASE_URL}/analytics/metrics`, { params });
+    const response = await api.get<BillingMetrics>(
+      `${BASE_URL}/analytics/metrics`,
+      { params }
+    );
     return response.data;
   }
 
   async getContractBillingStatus(contractId: number): Promise<any> {
-    const response = await api.get(`${BASE_URL}/contracts/${contractId}/status`);
+    const response = await api.get(
+      `${BASE_URL}/contracts/${contractId}/status`
+    );
     return response.data;
   }
 
@@ -217,13 +269,23 @@ class BillingService {
   // BULK OPERATIONS
   // ==========================================
 
-  async bulkGenerateInvoices(data: BulkInvoiceGeneration): Promise<BulkInvoiceGenerationResponse> {
-    const response = await api.post<BulkInvoiceGenerationResponse>(`${BASE_URL}/invoices/bulk-generate`, data);
+  async bulkGenerateInvoices(
+    data: BulkInvoiceGeneration
+  ): Promise<BulkInvoiceGenerationResponse> {
+    const response = await api.post<BulkInvoiceGenerationResponse>(
+      `${BASE_URL}/invoices/bulk-generate`,
+      data
+    );
     return response.data;
   }
 
-  async bulkUpdateInvoiceStatus(data: BulkStatusUpdate): Promise<BulkStatusUpdateResponse> {
-    const response = await api.patch<BulkStatusUpdateResponse>(`${BASE_URL}/invoices/bulk-status`, data);
+  async bulkUpdateInvoiceStatus(
+    data: BulkStatusUpdate
+  ): Promise<BulkStatusUpdateResponse> {
+    const response = await api.patch<BulkStatusUpdateResponse>(
+      `${BASE_URL}/invoices/bulk-status`,
+      data
+    );
     return response.data;
   }
 
@@ -231,19 +293,25 @@ class BillingService {
   // AUTOMATIC BILLING
   // ==========================================
 
-  async runAutomaticBilling(data: AutoBillingRequest = {}): Promise<AutoBillingResult> {
+  async runAutomaticBilling(
+    data: AutoBillingRequest = {}
+  ): Promise<AutoBillingResult> {
     const params = new URLSearchParams({
       ...(data.billing_date && { billing_date: data.billing_date }),
-      ...(data.force_regenerate !== undefined && { force_regenerate: data.force_regenerate.toString() }),
+      ...(data.force_regenerate !== undefined && {
+        force_regenerate: data.force_regenerate.toString(),
+      }),
     });
 
-    const response = await api.post<AutoBillingResult>(`${BASE_URL}/auto-billing/run?${params}`);
+    const response = await api.post<AutoBillingResult>(
+      `${BASE_URL}/auto-billing/run?${params}`
+    );
     return response.data;
   }
 
   async getUpcomingBillings(daysAhead: number = 30): Promise<any> {
     const response = await api.get(`${BASE_URL}/auto-billing/upcoming`, {
-      params: { days_ahead: daysAhead }
+      params: { days_ahead: daysAhead },
     });
     return response.data;
   }
@@ -270,7 +338,7 @@ class BillingService {
   isInvoiceOverdue(invoice: Invoice): boolean {
     const today = new Date();
     const dueDate = new Date(invoice.due_date);
-    return dueDate < today && !['paga', 'cancelada'].includes(invoice.status);
+    return dueDate < today && !["paga", "cancelada"].includes(invoice.status);
   }
 
   /**
@@ -289,9 +357,9 @@ class BillingService {
    * Format currency for display
    */
   formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
     }).format(amount);
   }
 
@@ -299,7 +367,7 @@ class BillingService {
    * Format date for display
    */
   formatDate(dateString: string): string {
-    return new Intl.DateTimeFormat('pt-BR').format(new Date(dateString));
+    return new Intl.DateTimeFormat("pt-BR").format(new Date(dateString));
   }
 
   /**
@@ -307,14 +375,14 @@ class BillingService {
    */
   getInvoiceStatusColor(status: InvoiceStatus): string {
     const colors = {
-      [InvoiceStatus.PENDENTE]: 'yellow',
-      [InvoiceStatus.ENVIADA]: 'blue',
-      [InvoiceStatus.PAGA]: 'green',
-      [InvoiceStatus.VENCIDA]: 'red',
-      [InvoiceStatus.CANCELADA]: 'gray',
-      [InvoiceStatus.EM_ATRASO]: 'red',
+      [InvoiceStatus.PENDENTE]: "yellow",
+      [InvoiceStatus.ENVIADA]: "blue",
+      [InvoiceStatus.PAGA]: "green",
+      [InvoiceStatus.VENCIDA]: "red",
+      [InvoiceStatus.CANCELADA]: "gray",
+      [InvoiceStatus.EM_ATRASO]: "red",
     };
-    return colors[status] || 'gray';
+    return colors[status] || "gray";
   }
 
   /**
@@ -322,30 +390,40 @@ class BillingService {
    */
   getVerificationStatusColor(status: VerificationStatus): string {
     const colors = {
-      [VerificationStatus.PENDENTE]: 'yellow',
-      [VerificationStatus.APROVADO]: 'green',
-      [VerificationStatus.REJEITADO]: 'red',
+      [VerificationStatus.PENDENTE]: "yellow",
+      [VerificationStatus.APROVADO]: "green",
+      [VerificationStatus.REJEITADO]: "red",
     };
-    return colors[status] || 'gray';
+    return colors[status] || "gray";
   }
 
   /**
    * Validate file for receipt upload
    */
-  validateReceiptFile(file: File, maxSize: number = 10 * 1024 * 1024): { valid: boolean; error?: string } {
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+  validateReceiptFile(
+    file: File,
+    maxSize: number = 10 * 1024 * 1024
+  ): { valid: boolean; error?: string } {
+    const allowedTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "application/pdf",
+    ];
 
     if (!allowedTypes.includes(file.type)) {
       return {
         valid: false,
-        error: 'Tipo de arquivo não permitido. Use JPG, PNG ou PDF.'
+        error: "Tipo de arquivo não permitido. Use JPG, PNG ou PDF.",
       };
     }
 
     if (file.size > maxSize) {
       return {
         valid: false,
-        error: `Arquivo muito grande. Tamanho máximo: ${Math.round(maxSize / 1024 / 1024)}MB`
+        error: `Arquivo muito grande. Tamanho máximo: ${Math.round(
+          maxSize / 1024 / 1024
+        )}MB`,
       };
     }
 
@@ -357,8 +435,8 @@ class BillingService {
    */
   generateInvoiceNumberPreview(contractId: number): string {
     const now = new Date();
-    const yearMonth = now.toISOString().slice(0, 7).replace('-', '');
-    return `INV-${yearMonth}-${contractId.toString().padStart(6, '0')}-001`;
+    const yearMonth = now.toISOString().slice(0, 7).replace("-", "");
+    return `INV-${yearMonth}-${contractId.toString().padStart(6, "0")}-001`;
   }
 
   /**
@@ -376,7 +454,9 @@ class BillingService {
   /**
    * Get billing method status for a contract
    */
-  async getBillingMethodStatus(contractId: number): Promise<BillingMethodStatus> {
+  async getBillingMethodStatus(
+    contractId: number
+  ): Promise<BillingMethodStatus> {
     const response = await api.get<BillingMethodStatus>(
       `${BASE_URL}/pagbank/billing-method/${contractId}`
     );
@@ -386,7 +466,9 @@ class BillingService {
   /**
    * Setup recurrent billing with PagBank
    */
-  async setupRecurrentBilling(request: RecurrentBillingSetupRequest): Promise<RecurrentBillingSetupResponse> {
+  async setupRecurrentBilling(
+    request: RecurrentBillingSetupRequest
+  ): Promise<RecurrentBillingSetupResponse> {
     const response = await api.post<RecurrentBillingSetupResponse>(
       `${BASE_URL}/pagbank/setup-recurrent`,
       request
@@ -407,7 +489,9 @@ class BillingService {
   /**
    * Create checkout session for an invoice
    */
-  async createCheckoutSession(request: CheckoutSessionRequest): Promise<CheckoutSessionResponse> {
+  async createCheckoutSession(
+    request: CheckoutSessionRequest
+  ): Promise<CheckoutSessionResponse> {
     const response = await api.post<CheckoutSessionResponse>(
       `${BASE_URL}/pagbank/create-checkout`,
       request
@@ -418,7 +502,9 @@ class BillingService {
   /**
    * Cancel recurrent subscription
    */
-  async cancelRecurrentSubscription(request: SubscriptionCancelRequest): Promise<SubscriptionCancelResponse> {
+  async cancelRecurrentSubscription(
+    request: SubscriptionCancelRequest
+  ): Promise<SubscriptionCancelResponse> {
     const response = await api.post<SubscriptionCancelResponse>(
       `${BASE_URL}/pagbank/cancel-subscription`,
       request
@@ -439,14 +525,14 @@ class BillingService {
   /**
    * Get PagBank transactions for an invoice
    */
-  async getInvoicePagBankTransactions(invoiceId: number): Promise<TransactionsListResponse> {
+  async getInvoicePagBankTransactions(
+    invoiceId: number
+  ): Promise<TransactionsListResponse> {
     const response = await api.get<TransactionsListResponse>(
       `${BASE_URL}/pagbank/transactions/${invoiceId}`
     );
     return response.data;
   }
-
-
 
   // ==========================================
   // PAGBANK UTILITY METHODS
@@ -455,10 +541,10 @@ class BillingService {
   /**
    * Format payment method for display
    */
-  formatPaymentMethod(method: 'recurrent' | 'manual'): string {
+  formatPaymentMethod(method: "recurrent" | "manual"): string {
     const methods = {
-      recurrent: 'Cobrança Recorrente',
-      manual: 'Cobrança Manual',
+      recurrent: "Cobrança Recorrente",
+      manual: "Cobrança Manual",
     };
     return methods[method] || method;
   }
@@ -468,14 +554,19 @@ class BillingService {
    */
   formatTransactionStatus(status: string): { label: string; color: string } {
     const statusMap = {
-      pending: { label: 'Pendente', color: 'yellow' },
-      approved: { label: 'Aprovado', color: 'green' },
-      declined: { label: 'Recusado', color: 'red' },
-      failed: { label: 'Falhou', color: 'red' },
-      cancelled: { label: 'Cancelado', color: 'gray' },
+      pending: { label: "Pendente", color: "yellow" },
+      approved: { label: "Aprovado", color: "green" },
+      declined: { label: "Recusado", color: "red" },
+      failed: { label: "Falhou", color: "red" },
+      cancelled: { label: "Cancelado", color: "gray" },
     } as const;
 
-    return statusMap[status as keyof typeof statusMap] || { label: status, color: 'gray' };
+    return (
+      statusMap[status as keyof typeof statusMap] || {
+        label: status,
+        color: "gray",
+      }
+    );
   }
 
   /**
@@ -483,14 +574,17 @@ class BillingService {
    */
   calculateBillingMethodStats(schedules: BillingSchedule[]) {
     const total = schedules.length;
-    const recurrent = schedules.filter(s => (s as any).billing_method === 'recurrent').length;
+    const recurrent = schedules.filter(
+      (s) => (s as any).billing_method === "recurrent"
+    ).length;
     const manual = total - recurrent;
 
     return {
       total,
       recurrent,
       manual,
-      recurrentPercentage: total > 0 ? Math.round((recurrent / total) * 100) : 0,
+      recurrentPercentage:
+        total > 0 ? Math.round((recurrent / total) * 100) : 0,
       manualPercentage: total > 0 ? Math.round((manual / total) * 100) : 0,
     };
   }
@@ -510,7 +604,7 @@ class BillingService {
     const expiry = new Date(expiresAt).getTime();
     const diff = expiry - now;
 
-    if (diff <= 0) return 'Expirado';
+    if (diff <= 0) return "Expirado";
 
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -538,4 +632,4 @@ export type {
   PaymentReceipt,
   BillingDashboardResponse,
   BillingMetrics,
-} from '../types/billing.types';
+} from "../types/billing.types";

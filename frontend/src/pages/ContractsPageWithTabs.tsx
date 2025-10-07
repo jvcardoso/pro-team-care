@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { PageErrorBoundary } from '../components/error';
-import ContractDashboard from '../components/views/ContractDashboard';
-import ContractsPage from './ContractsPage';
+import React, { useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { PageErrorBoundary } from "../components/error";
+import ContractDashboard from "../components/views/ContractDashboard";
+import ContractsPage from "./ContractsPage";
 
 const ContractsPageWithTabs: React.FC = () => {
   return (
@@ -14,7 +14,7 @@ const ContractsPageWithTabs: React.FC = () => {
 
 const ContractsPageContent: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const currentTab = searchParams.get('tab') || 'dashboard';
+  const currentTab = searchParams.get("tab") || "dashboard";
 
   const handleTabChange = (tab: string) => {
     setSearchParams({ tab });
@@ -36,26 +36,26 @@ const ContractsPageContent: React.FC = () => {
       <div className="border-b border-gray-200 dark:border-gray-700">
         <nav className="-mb-px flex space-x-8" aria-label="Tabs">
           <button
-            onClick={() => handleTabChange('dashboard')}
+            onClick={() => handleTabChange("dashboard")}
             className={`
               whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm
               ${
-                currentTab === 'dashboard'
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                currentTab === "dashboard"
+                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
               }
             `}
           >
             📊 Dashboard
           </button>
           <button
-            onClick={() => handleTabChange('lista')}
+            onClick={() => handleTabChange("lista")}
             className={`
               whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm
               ${
-                currentTab === 'lista'
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                currentTab === "lista"
+                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
               }
             `}
           >
@@ -66,8 +66,8 @@ const ContractsPageContent: React.FC = () => {
 
       {/* Tab Content */}
       <div className="mt-6">
-        {currentTab === 'dashboard' && <ContractDashboard />}
-        {currentTab === 'lista' && <ContractsPage />}
+        {currentTab === "dashboard" && <ContractDashboard />}
+        {currentTab === "lista" && <ContractsPage />}
       </div>
     </div>
   );

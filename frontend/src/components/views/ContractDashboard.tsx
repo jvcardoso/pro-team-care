@@ -95,13 +95,10 @@ const ContractDashboard: React.FC = () => {
         (sum, c) => sum + (Number(c.lives_contracted) || 0),
         0
       );
-      const monthlyRevenue = contractsList.reduce(
-        (sum, c) => {
-          const value = Number(c.monthly_value);
-          return sum + (isNaN(value) ? 0 : value);
-        },
-        0
-      );
+      const monthlyRevenue = contractsList.reduce((sum, c) => {
+        const value = Number(c.monthly_value);
+        return sum + (isNaN(value) ? 0 : value);
+      }, 0);
 
       // Calculate expiring contracts (next 30 days)
       const thirtyDaysFromNow = new Date();
@@ -284,7 +281,10 @@ const ContractDashboard: React.FC = () => {
                 </p>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                   {metrics.totalContracts > 0
-                    ? ((metrics.activeContracts / metrics.totalContracts) * 100).toFixed(1)
+                    ? (
+                        (metrics.activeContracts / metrics.totalContracts) *
+                        100
+                      ).toFixed(1)
                     : "0.0"}
                   % do total
                 </p>
@@ -376,7 +376,9 @@ const ContractDashboard: React.FC = () => {
                   <p className="text-lg font-bold text-green-900 dark:text-green-200">
                     {metrics.newContractsThisMonth}
                   </p>
-                  <p className="text-xs text-green-700 dark:text-green-400 mt-1">Este mês</p>
+                  <p className="text-xs text-green-700 dark:text-green-400 mt-1">
+                    Este mês
+                  </p>
                 </div>
               </div>
             </div>
@@ -414,7 +416,12 @@ const ContractDashboard: React.FC = () => {
                     />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border)' }} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "var(--color-bg-card)",
+                    borderColor: "var(--color-border)",
+                  }}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -429,10 +436,18 @@ const ContractDashboard: React.FC = () => {
             </h3>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="var(--color-border)"
+                />
                 <XAxis dataKey="name" stroke="var(--color-text-secondary)" />
                 <YAxis stroke="var(--color-text-secondary)" />
-                <Tooltip contentStyle={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border)' }} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "var(--color-bg-card)",
+                    borderColor: "var(--color-border)",
+                  }}
+                />
                 <Bar dataKey="value" fill="#8884d8" />
               </BarChart>
             </ResponsiveContainer>
@@ -448,7 +463,10 @@ const ContractDashboard: React.FC = () => {
             </h3>
             <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={revenueData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="var(--color-border)"
+                />
                 <XAxis dataKey="name" stroke="var(--color-text-secondary)" />
                 <YAxis
                   tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
@@ -459,7 +477,10 @@ const ContractDashboard: React.FC = () => {
                     formatCurrency(value as number),
                     "Receita",
                   ]}
-                  contentStyle={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border)' }}
+                  contentStyle={{
+                    backgroundColor: "var(--color-bg-card)",
+                    borderColor: "var(--color-border)",
+                  }}
                 />
                 <Area
                   type="monotone"

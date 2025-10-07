@@ -231,7 +231,11 @@ const CompanyDetailsNew: React.FC = () => {
 
   const tabs = [
     { key: "informacoes", label: "Informações", shortLabel: "Info" },
-    { key: "estabelecimentos", label: "Estabelecimentos", shortLabel: "Estab." },
+    {
+      key: "estabelecimentos",
+      label: "Estabelecimentos",
+      shortLabel: "Estab.",
+    },
     { key: "clientes", label: "Clientes", shortLabel: "Client." },
     { key: "profissionais", label: "Profissionais", shortLabel: "Profis." },
     { key: "pacientes", label: "Pacientes", shortLabel: "Pacient." },
@@ -449,7 +453,9 @@ const CompanyDetailsNew: React.FC = () => {
         return (
           <div className="text-center py-12">
             <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">Clientes</h3>
+            <h3 className="text-lg font-medium text-foreground mb-2">
+              Clientes
+            </h3>
             <p className="text-muted-foreground">
               Em breve: Gerencie os clientes desta empresa
             </p>
@@ -486,7 +492,9 @@ const CompanyDetailsNew: React.FC = () => {
         return (
           <div className="text-center py-12">
             <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">Usuários</h3>
+            <h3 className="text-lg font-medium text-foreground mb-2">
+              Usuários
+            </h3>
             <p className="text-muted-foreground">
               Em breve: Gerencie os usuários desta empresa
             </p>
@@ -512,7 +520,11 @@ const CompanyDetailsNew: React.FC = () => {
   return (
     <EntityDetailsLayout
       title={company.name}
-      subtitle={company.trade_name && company.trade_name !== company.name ? company.trade_name : undefined}
+      subtitle={
+        company.trade_name && company.trade_name !== company.name
+          ? company.trade_name
+          : undefined
+      }
       icon={<Building className="h-6 w-6" />}
       statusBadge={statusBadge}
       backButton={{ onClick: handleBack }}

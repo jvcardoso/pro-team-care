@@ -3,9 +3,9 @@
  * File upload component for payment receipts
  */
 
-import React, { useState, useRef } from 'react';
-import billingService from '../../services/billingService';
-import { PaymentReceipt } from '../../types/billing.types';
+import React, { useState, useRef } from "react";
+import billingService from "../../services/billingService";
+import { PaymentReceipt } from "../../types/billing.types";
 
 interface ReceiptUploadProps {
   invoiceId: number;
@@ -20,18 +20,18 @@ const ReceiptUpload: React.FC<ReceiptUploadProps> = ({
   onUploadSuccess,
   onUploadError,
   maxFileSize = 10 * 1024 * 1024, // 10MB
-  className = '',
+  className = "",
 }) => {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
-  const [notes, setNotes] = useState('');
+  const [notes, setNotes] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (file: File) => {
     const validation = billingService.validateReceiptFile(file, maxFileSize);
 
     if (!validation.valid) {
-      onUploadError?.(validation.error || 'Arquivo inválido');
+      onUploadError?.(validation.error || "Arquivo inválido");
       return;
     }
 
@@ -49,15 +49,15 @@ const ReceiptUpload: React.FC<ReceiptUploadProps> = ({
       );
 
       onUploadSuccess?.(receipt);
-      setNotes('');
+      setNotes("");
 
       // Reset file input
       if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        fileInputRef.current.value = "";
       }
-
     } catch (error: any) {
-      const errorMessage = error.response?.data?.detail || 'Erro ao enviar comprovante';
+      const errorMessage =
+        error.response?.data?.detail || "Erro ao enviar comprovante";
       onUploadError?.(errorMessage);
     } finally {
       setUploading(false);
@@ -101,8 +101,12 @@ const ReceiptUpload: React.FC<ReceiptUploadProps> = ({
       <div
         className={`
           border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors
-          ${dragOver ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
-          ${uploading ? 'opacity-50 cursor-not-allowed' : ''}
+          ${
+            dragOver
+              ? "border-blue-400 bg-blue-50"
+              : "border-gray-300 hover:border-gray-400"
+          }
+          ${uploading ? "opacity-50 cursor-not-allowed" : ""}
         `}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
@@ -140,7 +144,10 @@ const ReceiptUpload: React.FC<ReceiptUploadProps> = ({
 
       {/* Notes input */}
       <div>
-        <label htmlFor="receipt-notes" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="receipt-notes"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Observações (opcional)
         </label>
         <textarea
@@ -160,7 +167,9 @@ const ReceiptUpload: React.FC<ReceiptUploadProps> = ({
         <ul className="text-xs text-gray-600 space-y-1">
           <li>• Envie comprovantes de pagamento em formato JPG, PNG ou PDF</li>
           <li>• Certifique-se de que o documento está legível</li>
-          <li>• Inclua observações se necessário (número de referência, etc.)</li>
+          <li>
+            • Inclua observações se necessário (número de referência, etc.)
+          </li>
           <li>• Arquivos serão analisados pela equipe financeira</li>
         </ul>
       </div>

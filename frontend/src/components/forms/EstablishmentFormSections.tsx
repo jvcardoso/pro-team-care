@@ -76,7 +76,8 @@ export const EstablishmentBasicDataSection: React.FC<
 }) => {
   // Estado para controlar o modal de cópia de dados
   const [showDataCopyModal, setShowDataCopyModal] = useState(false);
-  const [pendingCompanyForCopy, setPendingCompanyForCopy] = useState<Company | null>(null);
+  const [pendingCompanyForCopy, setPendingCompanyForCopy] =
+    useState<Company | null>(null);
 
   // Encontrar a empresa selecionada para exibir no componente
   const selectedCompany = companies.find(
@@ -251,317 +252,324 @@ export const EstablishmentBasicDataSection: React.FC<
 
   return (
     <>
-    <Card
-      title="Dados do Estabelecimento"
-      icon={<Building className="h-5 w-5" />}
-    >
-      <div className="space-y-6">
-        {/* Dados Básicos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {isEditing || isCompanyPreselected ? (
-            // Modo edição ou empresa pré-selecionada: mostrar empresa como read-only
+      <Card
+        title="Dados do Estabelecimento"
+        icon={<Building className="h-5 w-5" />}
+      >
+        <div className="space-y-6">
+          {/* Dados Básicos */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {isEditing || isCompanyPreselected ? (
+              // Modo edição ou empresa pré-selecionada: mostrar empresa como read-only
+              <div>
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
+                  Empresa *
+                </label>
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <Input
+                      value={
+                        selectedCompany?.people?.name ||
+                        selectedCompany?.person?.name ||
+                        selectedCompany?.name ||
+                        selectedCompany?.person_name ||
+                        `Empresa ID ${formData.establishment.company_id}` ||
+                        "Carregando empresa..."
+                      }
+                      disabled={true}
+                      readOnly={true}
+                      placeholder="Empresa vinculada"
+                      icon={<Building className="h-4 w-4" />}
+                    />
+                  </div>
+                  {isCompanyPreselected && selectedCompany && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      outline
+                      onClick={() =>
+                        handleCompanyDataCopyRequest(selectedCompany)
+                      }
+                      disabled={loading}
+                      icon={<Wand2 className="h-4 w-4" />}
+                      className="shrink-0"
+                      title="Copiar dados da empresa para o estabelecimento"
+                    >
+                      <span className="hidden sm:inline">Copiar Dados</span>
+                      <span className="sm:hidden">Copiar</span>
+                    </Button>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {isEditing
+                    ? "A empresa não pode ser alterada após a criação do estabelecimento"
+                    : isCompanyPreselected
+                    ? "Empresa selecionada automaticamente. Use 'Copiar Dados' para preencher o formulário."
+                    : "Empresa selecionada automaticamente"}
+                </p>
+              </div>
+            ) : (
+              // Modo criação: permitir seleção de empresa
+              <CompanySearchInput
+                value=""
+                selectedCompany={selectedCompany}
+                onChange={() => {}} // Não usado pois o valor vem da seleção
+                onCompanySelect={async (company) => {
+                  // Definir a empresa
+                  onUpdateEstablishment("company_id", company.id);
+
+                  // Verificar se a empresa já tem estabelecimento principal
+                  const hasPrincipal =
+                    await checkCompanyHasPrincipalEstablishment(company.id);
+
+                  // Ajustar automaticamente o checkbox "is_principal"
+                  // Se NÃO tem principal -> marcar como principal
+                  // Se JÁ tem principal -> desmarcar
+                  onUpdateEstablishment("is_principal", !hasPrincipal);
+
+                  console.log(
+                    `🎯 Checkbox "Estabelecimento principal" ${
+                      !hasPrincipal ? "MARCADO" : "DESMARCADO"
+                    } automaticamente`
+                  );
+
+                  // Sugerir código automaticamente se o campo estiver vazio
+                  if (
+                    !formData.establishment.code ||
+                    formData.establishment.code.trim() === ""
+                  ) {
+                    try {
+                      const response =
+                        await establishmentsService.getEstablishmentsByCompany(
+                          company.id
+                        );
+                      const existingEstablishments =
+                        response?.establishments || response || [];
+                      const suggestedCode = suggestEstablishmentCode(
+                        company,
+                        existingEstablishments
+                      );
+
+                      onUpdateEstablishment("code", suggestedCode);
+                      console.log(
+                        `✨ Código sugerido automaticamente: ${suggestedCode}`
+                      );
+                    } catch (error) {
+                      console.warn(
+                        "⚠️ Erro ao sugerir código automaticamente:",
+                        error
+                      );
+                    }
+                  }
+                }}
+                placeholder="Selecione uma empresa"
+                disabled={loading}
+                required={true}
+                enableDataCopy={true}
+                onDataCopyConfirm={handleCompanyDataCopy}
+              />
+            )}
+
             <div>
               <label className="block text-sm font-medium text-muted-foreground mb-2">
-                Empresa *
+                Código do Estabelecimento *
               </label>
               <div className="flex gap-2">
                 <div className="flex-1">
                   <Input
-                    value={
-                      selectedCompany?.people?.name ||
-                      selectedCompany?.person?.name ||
-                      selectedCompany?.name ||
-                      selectedCompany?.person_name ||
-                      `Empresa ID ${formData.establishment.company_id}` ||
-                      "Carregando empresa..."
+                    value={formData.establishment.code}
+                    onChange={(e) =>
+                      onUpdateEstablishment(
+                        "code",
+                        e.target.value.toUpperCase()
+                      )
                     }
-                    disabled={true}
-                    readOnly={true}
-                    placeholder="Empresa vinculada"
+                    placeholder="Ex: EST-057-001, EST-012-002"
+                    required
+                    disabled={loading}
                     icon={<Building className="h-4 w-4" />}
                   />
                 </div>
-                {isCompanyPreselected && selectedCompany && (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    outline
-                    onClick={() => handleCompanyDataCopyRequest(selectedCompany)}
-                    disabled={loading}
-                    icon={<Wand2 className="h-4 w-4" />}
-                    className="shrink-0"
-                    title="Copiar dados da empresa para o estabelecimento"
-                  >
-                    <span className="hidden sm:inline">Copiar Dados</span>
-                    <span className="sm:hidden">Copiar</span>
-                  </Button>
-                )}
+                <Button
+                  type="button"
+                  variant="secondary"
+                  outline
+                  onClick={handleSuggestCode}
+                  disabled={loading || !selectedCompany}
+                  icon={<Wand2 className="h-4 w-4" />}
+                  className="shrink-0"
+                  title={
+                    selectedCompany
+                      ? `Sugerir código baseado em "${
+                          selectedCompany.name || selectedCompany.people?.name
+                        }"`
+                      : "Selecione uma empresa primeiro"
+                  }
+                >
+                  <span className="hidden sm:inline">Sugerir</span>
+                </Button>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {isEditing
-                  ? "A empresa não pode ser alterada após a criação do estabelecimento"
-                  : isCompanyPreselected
-                  ? "Empresa selecionada automaticamente. Use 'Copiar Dados' para preencher o formulário."
-                  : "Empresa selecionada automaticamente"}
-              </p>
+              {selectedCompany && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  💡 Formato: EST-
+                  {String(selectedCompany.id || 0).padStart(3, "0")}-XXX (Ex:
+                  EST-{String(selectedCompany.id || 0).padStart(3, "0")}-001)
+                </p>
+              )}
             </div>
-          ) : (
-            // Modo criação: permitir seleção de empresa
-            <CompanySearchInput
-              value=""
-              selectedCompany={selectedCompany}
-              onChange={() => {}} // Não usado pois o valor vem da seleção
-              onCompanySelect={async (company) => {
-                // Definir a empresa
-                onUpdateEstablishment("company_id", company.id);
 
-                // Verificar se a empresa já tem estabelecimento principal
-                const hasPrincipal =
-                  await checkCompanyHasPrincipalEstablishment(company.id);
-
-                // Ajustar automaticamente o checkbox "is_principal"
-                // Se NÃO tem principal -> marcar como principal
-                // Se JÁ tem principal -> desmarcar
-                onUpdateEstablishment("is_principal", !hasPrincipal);
-
-                console.log(
-                  `🎯 Checkbox "Estabelecimento principal" ${
-                    !hasPrincipal ? "MARCADO" : "DESMARCADO"
-                  } automaticamente`
-                );
-
-                // Sugerir código automaticamente se o campo estiver vazio
-                if (
-                  !formData.establishment.code ||
-                  formData.establishment.code.trim() === ""
-                ) {
-                  try {
-                    const response =
-                      await establishmentsService.getEstablishmentsByCompany(
-                        company.id
-                      );
-                    const existingEstablishments =
-                      response?.establishments || response || [];
-                    const suggestedCode = suggestEstablishmentCode(
-                      company,
-                      existingEstablishments
-                    );
-
-                    onUpdateEstablishment("code", suggestedCode);
-                    console.log(
-                      `✨ Código sugerido automaticamente: ${suggestedCode}`
-                    );
-                  } catch (error) {
-                    console.warn(
-                      "⚠️ Erro ao sugerir código automaticamente:",
-                      error
-                    );
-                  }
-                }
-              }}
-              placeholder="Selecione uma empresa"
-              disabled={loading}
-              required={true}
-              enableDataCopy={true}
-              onDataCopyConfirm={handleCompanyDataCopy}
-            />
-          )}
-
-          <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-2">
-              Código do Estabelecimento *
-            </label>
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <Input
-                  value={formData.establishment.code}
-                  onChange={(e) =>
-                    onUpdateEstablishment("code", e.target.value.toUpperCase())
-                  }
-                  placeholder="Ex: EST-057-001, EST-012-002"
-                  required
-                  disabled={loading}
-                  icon={<Building className="h-4 w-4" />}
-                />
-              </div>
-              <Button
-                type="button"
-                variant="secondary"
-                outline
-                onClick={handleSuggestCode}
-                disabled={loading || !selectedCompany}
-                icon={<Wand2 className="h-4 w-4" />}
-                className="shrink-0"
-                title={
-                  selectedCompany
-                    ? `Sugerir código baseado em "${
-                        selectedCompany.name || selectedCompany.people?.name
-                      }"`
-                    : "Selecione uma empresa primeiro"
-                }
+            <div>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">
+                Tipo *
+              </label>
+              <select
+                value={formData.establishment.type}
+                onChange={(e) => onUpdateEstablishment("type", e.target.value)}
+                className="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
+                required
+                disabled={loading}
               >
-                <span className="hidden sm:inline">Sugerir</span>
-              </Button>
+                {typeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
-            {selectedCompany && (
-              <p className="text-xs text-muted-foreground mt-1">
-                💡 Formato: EST-{String(selectedCompany.id || 0).padStart(3, "0")}-XXX (Ex: EST-{String(selectedCompany.id || 0).padStart(3, "0")}-001)
-              </p>
-            )}
+
+            <div>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">
+                Categoria *
+              </label>
+              <select
+                value={formData.establishment.category}
+                onChange={(e) =>
+                  onUpdateEstablishment("category", e.target.value)
+                }
+                className="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
+                required
+                disabled={loading}
+              >
+                {categoryOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
+          {/* Dados da Pessoa Jurídica */}
           <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-2">
-              Tipo *
-            </label>
-            <select
-              value={formData.establishment.type}
-              onChange={(e) => onUpdateEstablishment("type", e.target.value)}
-              className="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
-              required
-              disabled={loading}
-            >
-              {typeOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            <h3 className="text-lg font-medium text-foreground mb-4 flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Dados da Pessoa Jurídica
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="Nome do Estabelecimento *"
+                value={formData.person.name}
+                onChange={(e) => onUpdatePerson("name", e.target.value)}
+                placeholder="Nome completo do estabelecimento"
+                required
+                disabled={loading}
+                icon={<Building className="h-4 w-4" />}
+              />
+
+              <Input
+                label="CNPJ *"
+                value={formatTaxId(formData.person.tax_id)}
+                onChange={(e) =>
+                  onUpdatePerson("tax_id", e.target.value.replace(/\D/g, ""))
+                }
+                placeholder="00.000.000/0000-00"
+                required
+                disabled={loading || isEditing}
+                readOnly={isEditing}
+                icon={<User className="h-4 w-4" />}
+                maxLength={18}
+                helper={
+                  isEditing
+                    ? "O CNPJ não pode ser alterado após a criação do estabelecimento"
+                    : undefined
+                }
+              />
+            </div>
+
+            <div className="mt-4">
+              <Input
+                label="Observações"
+                value={formData.person.description || ""}
+                onChange={(e) => onUpdatePerson("description", e.target.value)}
+                placeholder="Informações adicionais sobre o estabelecimento (opcional)"
+                disabled={loading}
+                multiline
+                rows={3}
+              />
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-2">
-              Categoria *
-            </label>
-            <select
-              value={formData.establishment.category}
-              onChange={(e) =>
-                onUpdateEstablishment("category", e.target.value)
-              }
-              className="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
-              required
-              disabled={loading}
-            >
-              {categoryOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+          {/* Configurações */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-border">
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="is_active"
+                checked={formData.establishment.is_active}
+                onChange={(e) =>
+                  onUpdateEstablishment("is_active", e.target.checked)
+                }
+                className="w-4 h-4 text-primary bg-input border-border rounded focus:ring-ring focus:ring-2"
+                disabled={loading}
+              />
+              <label
+                htmlFor="is_active"
+                className="text-sm font-medium text-foreground"
+              >
+                Estabelecimento ativo
+              </label>
+            </div>
 
-        {/* Dados da Pessoa Jurídica */}
-        <div>
-          <h3 className="text-lg font-medium text-foreground mb-4 flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Dados da Pessoa Jurídica
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Nome do Estabelecimento *"
-              value={formData.person.name}
-              onChange={(e) => onUpdatePerson("name", e.target.value)}
-              placeholder="Nome completo do estabelecimento"
-              required
-              disabled={loading}
-              icon={<Building className="h-4 w-4" />}
-            />
-
-            <Input
-              label="CNPJ *"
-              value={formatTaxId(formData.person.tax_id)}
-              onChange={(e) =>
-                onUpdatePerson("tax_id", e.target.value.replace(/\D/g, ""))
-              }
-              placeholder="00.000.000/0000-00"
-              required
-              disabled={loading || isEditing}
-              readOnly={isEditing}
-              icon={<User className="h-4 w-4" />}
-              maxLength={18}
-              helper={
-                isEditing
-                  ? "O CNPJ não pode ser alterado após a criação do estabelecimento"
-                  : undefined
-              }
-            />
-          </div>
-
-          <div className="mt-4">
-            <Input
-              label="Observações"
-              value={formData.person.description || ""}
-              onChange={(e) => onUpdatePerson("description", e.target.value)}
-              placeholder="Informações adicionais sobre o estabelecimento (opcional)"
-              disabled={loading}
-              multiline
-              rows={3}
-            />
-          </div>
-        </div>
-
-        {/* Configurações */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-border">
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="is_active"
-              checked={formData.establishment.is_active}
-              onChange={(e) =>
-                onUpdateEstablishment("is_active", e.target.checked)
-              }
-              className="w-4 h-4 text-primary bg-input border-border rounded focus:ring-ring focus:ring-2"
-              disabled={loading}
-            />
-            <label
-              htmlFor="is_active"
-              className="text-sm font-medium text-foreground"
-            >
-              Estabelecimento ativo
-            </label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="is_principal"
-              checked={formData.establishment.is_principal}
-              onChange={(e) =>
-                onUpdateEstablishment("is_principal", e.target.checked)
-              }
-              className="w-4 h-4 text-primary bg-input border-border rounded focus:ring-ring focus:ring-2"
-              disabled={loading}
-            />
-            <label
-              htmlFor="is_principal"
-              className="text-sm font-medium text-foreground"
-            >
-              Estabelecimento principal da empresa
-            </label>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="is_principal"
+                checked={formData.establishment.is_principal}
+                onChange={(e) =>
+                  onUpdateEstablishment("is_principal", e.target.checked)
+                }
+                className="w-4 h-4 text-primary bg-input border-border rounded focus:ring-ring focus:ring-2"
+                disabled={loading}
+              />
+              <label
+                htmlFor="is_principal"
+                className="text-sm font-medium text-foreground"
+              >
+                Estabelecimento principal da empresa
+              </label>
+            </div>
           </div>
         </div>
-      </div>
-    </Card>
+      </Card>
 
-    {/* Modal de confirmação de cópia de dados */}
-    {showDataCopyModal && pendingCompanyForCopy && (
-      <CompanyDataCopyModal
-        isOpen={showDataCopyModal}
-        company={pendingCompanyForCopy}
-        onConfirm={(shouldCopy) => {
-          if (shouldCopy) {
-            handleCompanyDataCopy(pendingCompanyForCopy);
-          }
-          setShowDataCopyModal(false);
-          setPendingCompanyForCopy(null);
-        }}
-        onCancel={() => {
-          setShowDataCopyModal(false);
-          setPendingCompanyForCopy(null);
-        }}
-      />
-    )}
+      {/* Modal de confirmação de cópia de dados */}
+      {showDataCopyModal && pendingCompanyForCopy && (
+        <CompanyDataCopyModal
+          isOpen={showDataCopyModal}
+          company={pendingCompanyForCopy}
+          onConfirm={(shouldCopy) => {
+            if (shouldCopy) {
+              handleCompanyDataCopy(pendingCompanyForCopy);
+            }
+            setShowDataCopyModal(false);
+            setPendingCompanyForCopy(null);
+          }}
+          onCancel={() => {
+            setShowDataCopyModal(false);
+            setPendingCompanyForCopy(null);
+          }}
+        />
+      )}
     </>
   );
 };

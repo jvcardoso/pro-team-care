@@ -70,6 +70,3 @@ async def get_menu_tree():
             icon="users",
         ),
     ]
-
-
-

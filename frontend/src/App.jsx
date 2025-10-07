@@ -52,10 +52,19 @@ function App() {
               {/* Public routes */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-              <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+              <Route
+                path="/reset-password/:token"
+                element={<ResetPasswordPage />}
+              />
               <Route path="/activate/:token" element={<ActivationPage />} />
-              <Route path="/contract-acceptance/:token" element={<ContractAcceptancePage />} />
-              <Route path="/create-manager/:token" element={<CreateManagerPage />} />
+              <Route
+                path="/contract-acceptance/:token"
+                element={<ContractAcceptancePage />}
+              />
+              <Route
+                path="/create-manager/:token"
+                element={<CreateManagerPage />}
+              />
 
               {/* Redirect root to admin */}
               <Route path="/" element={<Navigate to="/admin" replace />} />
@@ -105,10 +114,7 @@ function App() {
                   element={<ContractsPage />}
                 />
                 <Route path="contratos/:id" element={<ContractsPage />} />
-                <Route
-                  path="vidas"
-                  element={<ContractLivesManager />}
-                />
+                <Route path="vidas" element={<ContractLivesManager />} />
 
                 {/* Rota principal com abas */}
                 <Route path="contratos" element={<ContractsPageWithTabs />} />
@@ -131,10 +137,7 @@ function App() {
                   element={<BillingDashboardPage />}
                 />
                 <Route path="faturamento/faturas" element={<InvoicesPage />} />
-                <Route
-                  path="faturamento/b2b"
-                  element={<B2BBillingPage />}
-                />
+                <Route path="faturamento/b2b" element={<B2BBillingPage />} />
                 <Route
                   path="faturamento/planos"
                   element={<SubscriptionPlansPage />}

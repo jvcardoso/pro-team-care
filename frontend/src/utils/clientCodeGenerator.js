@@ -141,7 +141,11 @@ export const suggestClientCode = (establishment, existingClients = []) => {
   const companyCode = companyCodeMatch ? companyCodeMatch[1] : "000";
   const prefix = `CLI-${companyCode}-`;
 
-  console.log(`🔍 Gerando código para estabelecimento: ${establishment.name || establishment.person?.name}`);
+  console.log(
+    `🔍 Gerando código para estabelecimento: ${
+      establishment.name || establishment.person?.name
+    }`
+  );
   console.log(`📋 Código do estabelecimento: ${establishmentCode}`);
   console.log(`📋 Código da empresa extraído: ${companyCode}`);
   console.log(`📋 Prefixo: ${prefix}`);

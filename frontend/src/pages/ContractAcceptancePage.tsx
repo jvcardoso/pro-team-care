@@ -5,16 +5,22 @@
  * após receber o email de ativação.
  */
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { CheckCircle, AlertCircle, FileText, Shield, Clock } from 'lucide-react';
-import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  CheckCircle,
+  AlertCircle,
+  FileText,
+  Shield,
+  Clock,
+} from "lucide-react";
+import Button from "../components/ui/Button";
+import Card from "../components/ui/Card";
 import companyActivationService, {
   getClientIpAddress,
-} from '../services/companyActivationService';
-import { notify } from '../utils/notifications';
-import { validateCPF, formatCPF } from '../utils/validators';
+} from "../services/companyActivationService";
+import { notify } from "../utils/notifications";
+import { validateCPF, formatCPF } from "../utils/validators";
 
 const ContractAcceptancePage: React.FC = () => {
   const { token } = useParams<{ token: string }>();
@@ -23,14 +29,14 @@ const ContractAcceptancePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [accepting, setAccepting] = useState(false);
   const [tokenValid, setTokenValid] = useState(false);
-  const [companyName, setCompanyName] = useState('');
+  const [companyName, setCompanyName] = useState("");
   const [accepted, setAccepted] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
-  const [acceptorName, setAcceptorName] = useState('');
-  const [acceptorEmail, setAcceptorEmail] = useState('');
-  const [acceptorCpf, setAcceptorCpf] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [acceptorName, setAcceptorName] = useState("");
+  const [acceptorEmail, setAcceptorEmail] = useState("");
+  const [acceptorCpf, setAcceptorCpf] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     if (token) {
@@ -45,9 +51,9 @@ const ContractAcceptancePage: React.FC = () => {
       // Como não temos endpoint específico, vamos apenas assumir válido
       // e deixar a API backend validar no aceite
       setTokenValid(true);
-      setCompanyName('Empresa'); // Placeholder
+      setCompanyName("Empresa"); // Placeholder
     } catch (error: any) {
-      setErrorMessage('Token inválido ou expirado');
+      setErrorMessage("Token inválido ou expirado");
       setTokenValid(false);
     } finally {
       setLoading(false);
@@ -62,18 +68,20 @@ const ContractAcceptancePage: React.FC = () => {
 
   const handleAccept = async () => {
     if (!termsAccepted || !privacyAccepted) {
-      notify.error('Você precisa aceitar os termos de uso e política de privacidade');
+      notify.error(
+        "Você precisa aceitar os termos de uso e política de privacidade"
+      );
       return;
     }
 
     if (!acceptorName || !acceptorEmail || !acceptorCpf) {
-      notify.error('Preencha seu nome, email e CPF');
+      notify.error("Preencha seu nome, email e CPF");
       return;
     }
 
     // Validar CPF usando função do sistema
     if (!validateCPF(acceptorCpf)) {
-      notify.error('CPF inválido. Verifique os dígitos digitados.');
+      notify.error("CPF inválido. Verifique os dígitos digitados.");
       return;
     }
 
@@ -85,7 +93,7 @@ const ContractAcceptancePage: React.FC = () => {
 
       // Aceitar contrato
       // Remover formatação do CPF antes de enviar
-      const cpfNumbers = acceptorCpf.replace(/\D/g, '');
+      const cpfNumbers = acceptorCpf.replace(/\D/g, "");
 
       const response = await companyActivationService.acceptContract({
         contract_token: token!,
@@ -93,19 +101,21 @@ const ContractAcceptancePage: React.FC = () => {
         accepted_by_email: acceptorEmail,
         accepted_by_cpf: cpfNumbers,
         ip_address: ipAddress,
-        terms_version: '1.0',
+        terms_version: "1.0",
       });
 
       setAccepted(true);
-      notify.success('Contrato aceito com sucesso!');
+      notify.success("Contrato aceito com sucesso!");
 
       // Redirecionar após 3 segundos
       setTimeout(() => {
         // Não redirecionar, apenas mostrar mensagem de sucesso
       }, 3000);
     } catch (error: any) {
-      notify.error(error.response?.data?.detail || 'Erro ao aceitar contrato');
-      setErrorMessage(error.response?.data?.detail || 'Erro ao aceitar contrato');
+      notify.error(error.response?.data?.detail || "Erro ao aceitar contrato");
+      setErrorMessage(
+        error.response?.data?.detail || "Erro ao aceitar contrato"
+      );
     } finally {
       setAccepting(false);
     }
@@ -131,7 +141,7 @@ const ContractAcceptancePage: React.FC = () => {
               Token Inválido
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              {errorMessage || 'O link de ativação é inválido ou expirou.'}
+              {errorMessage || "O link de ativação é inválido ou expirou."}
             </p>
             <p className="text-sm text-gray-500">
               Entre em contato com o suporte para solicitar um novo link.
@@ -279,48 +289,52 @@ const ContractAcceptancePage: React.FC = () => {
                 <section>
                   <h4 className="font-semibold">1. Aceitação dos Termos</h4>
                   <p>
-                    Ao utilizar o ProTeamCare, você concorda com estes termos de uso. Se você não
-                    concordar com qualquer parte destes termos, não deve utilizar o sistema.
+                    Ao utilizar o ProTeamCare, você concorda com estes termos de
+                    uso. Se você não concordar com qualquer parte destes termos,
+                    não deve utilizar o sistema.
                   </p>
                 </section>
 
                 <section>
                   <h4 className="font-semibold">2. Uso do Sistema</h4>
                   <p>
-                    O ProTeamCare é um sistema de gestão destinado a empresas de home care. Você
-                    se compromete a utilizar o sistema de forma legal e ética.
+                    O ProTeamCare é um sistema de gestão destinado a empresas de
+                    home care. Você se compromete a utilizar o sistema de forma
+                    legal e ética.
                   </p>
                 </section>
 
                 <section>
                   <h4 className="font-semibold">3. Dados e Privacidade</h4>
                   <p>
-                    Seus dados serão tratados conforme nossa Política de Privacidade e a Lei Geral
-                    de Proteção de Dados (LGPD - Lei 13.709/2018).
+                    Seus dados serão tratados conforme nossa Política de
+                    Privacidade e a Lei Geral de Proteção de Dados (LGPD - Lei
+                    13.709/2018).
                   </p>
                 </section>
 
                 <section>
                   <h4 className="font-semibold">4. Responsabilidades</h4>
                   <p>
-                    Você é responsável pela segurança de suas credenciais de acesso e por todas as
-                    atividades realizadas em sua conta.
+                    Você é responsável pela segurança de suas credenciais de
+                    acesso e por todas as atividades realizadas em sua conta.
                   </p>
                 </section>
 
                 <section>
                   <h4 className="font-semibold">5. Propriedade Intelectual</h4>
                   <p>
-                    Todo o conteúdo do ProTeamCare, incluindo software, design e documentação, é
-                    propriedade exclusiva da ProTeamCare.
+                    Todo o conteúdo do ProTeamCare, incluindo software, design e
+                    documentação, é propriedade exclusiva da ProTeamCare.
                   </p>
                 </section>
 
                 <section>
                   <h4 className="font-semibold">6. Modificações</h4>
                   <p>
-                    Reservamo-nos o direito de modificar estes termos a qualquer momento. As
-                    alterações entrarão em vigor imediatamente após a publicação.
+                    Reservamo-nos o direito de modificar estes termos a qualquer
+                    momento. As alterações entrarão em vigor imediatamente após
+                    a publicação.
                   </p>
                 </section>
               </div>
@@ -348,8 +362,8 @@ const ContractAcceptancePage: React.FC = () => {
                   className="mt-1 h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">
-                  Li e aceito a <strong>Política de Privacidade</strong> e concordo com o
-                  tratamento de meus dados conforme a LGPD
+                  Li e aceito a <strong>Política de Privacidade</strong> e
+                  concordo com o tratamento de meus dados conforme a LGPD
                 </span>
               </label>
             </div>
@@ -360,10 +374,16 @@ const ContractAcceptancePage: React.FC = () => {
               variant="primary"
               className="w-full"
               size="lg"
-              disabled={!termsAccepted || !privacyAccepted || !acceptorName || !acceptorEmail || !acceptorCpf}
+              disabled={
+                !termsAccepted ||
+                !privacyAccepted ||
+                !acceptorName ||
+                !acceptorEmail ||
+                !acceptorCpf
+              }
               loading={accepting}
             >
-              {accepting ? 'Processando...' : '✅ Aceitar Termos e Continuar'}
+              {accepting ? "Processando..." : "✅ Aceitar Termos e Continuar"}
             </Button>
 
             {/* Avisos */}
@@ -371,13 +391,16 @@ const ContractAcceptancePage: React.FC = () => {
               <div className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <Shield className="h-5 w-5 flex-shrink-0 text-green-500" />
                 <span>
-                  Seus dados são protegidos e utilizados apenas conforme nossa política de
-                  privacidade
+                  Seus dados são protegidos e utilizados apenas conforme nossa
+                  política de privacidade
                 </span>
               </div>
               <div className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <Clock className="h-5 w-5 flex-shrink-0 text-blue-500" />
-                <span>Este aceite é registrado com data, hora e IP para fins de auditoria</span>
+                <span>
+                  Este aceite é registrado com data, hora e IP para fins de
+                  auditoria
+                </span>
               </div>
             </div>
           </div>
@@ -387,8 +410,11 @@ const ContractAcceptancePage: React.FC = () => {
         <div className="text-center text-sm text-gray-500 dark:text-gray-400">
           <p>© 2025 ProTeamCare. Todos os direitos reservados.</p>
           <p className="mt-1">
-            Precisa de ajuda? Entre em contato:{' '}
-            <a href="mailto:suporte@proteamcare.com" className="text-primary-600 hover:underline">
+            Precisa de ajuda? Entre em contato:{" "}
+            <a
+              href="mailto:suporte@proteamcare.com"
+              className="text-primary-600 hover:underline"
+            >
               suporte@proteamcare.com
             </a>
           </p>

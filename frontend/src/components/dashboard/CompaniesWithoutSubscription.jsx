@@ -1,5 +1,5 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const CompaniesWithoutSubscription = ({ companies }) => {
   const navigate = useNavigate();
@@ -12,7 +12,9 @@ const CompaniesWithoutSubscription = ({ companies }) => {
         </div>
         <div className="card-content">
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            <p className="text-lg">🎉 Todas as empresas possuem assinatura ativa!</p>
+            <p className="text-lg">
+              🎉 Todas as empresas possuem assinatura ativa!
+            </p>
           </div>
         </div>
       </div>
@@ -22,7 +24,9 @@ const CompaniesWithoutSubscription = ({ companies }) => {
   return (
     <div className="card">
       <div className="card-header flex items-center justify-between">
-        <h3 className="card-title">⚠️ Empresas Sem Assinatura ({companies.length})</h3>
+        <h3 className="card-title">
+          ⚠️ Empresas Sem Assinatura ({companies.length})
+        </h3>
         <span className="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 px-2 py-1 rounded-full">
           Oportunidades de Venda
         </span>
@@ -36,9 +40,12 @@ const CompaniesWithoutSubscription = ({ companies }) => {
               onClick={() => navigate(`/admin/empresas/${company.id}`)}
             >
               <div className="flex-1">
-                <p className="font-medium text-gray-900 dark:text-white">{company.name}</p>
+                <p className="font-medium text-gray-900 dark:text-white">
+                  {company.name}
+                </p>
                 <p className="text-xs text-gray-600 dark:text-gray-400">
-                  ID: {company.id} • Criada há {company.days_without_subscription} dias
+                  ID: {company.id} • Criada há{" "}
+                  {company.days_without_subscription} dias
                 </p>
               </div>
               <button

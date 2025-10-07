@@ -26,7 +26,10 @@ import {
   ArrowRightLeft,
 } from "lucide-react";
 import { DataTableConfig } from "../../types/dataTable.types";
-import type { ContractLife, ContractLivesTableCallbacks } from "../../types/contract-lives.types";
+import type {
+  ContractLife,
+  ContractLivesTableCallbacks,
+} from "../../types/contract-lives.types";
 
 // Re-export do tipo para compatibilidade
 export type { ContractLife };
@@ -42,7 +45,8 @@ export const createContractLivesConfig = (actions?: {
   // Basic Info
   entity: "vida",
   title: "👥 Gestão de Vidas dos Contratos",
-  description: "Visualização e gerenciamento de todas as vidas cadastradas nos contratos",
+  description:
+    "Visualização e gerenciamento de todas as vidas cadastradas nos contratos",
 
   // Data Structure
   columns: [
@@ -58,7 +62,9 @@ export const createContractLivesConfig = (actions?: {
             {value}
           </div>
           {item.person_cpf && (
-            <div className="font-normal text-gray-500 text-sm">CPF: {item.person_cpf}</div>
+            <div className="font-normal text-gray-500 text-sm">
+              CPF: {item.person_cpf}
+            </div>
           )}
         </div>
       ),
@@ -72,7 +78,9 @@ export const createContractLivesConfig = (actions?: {
         <div>
           <div className="text-base font-semibold">{value}</div>
           {item.client_name && (
-            <div className="font-normal text-gray-500 text-sm">{item.client_name}</div>
+            <div className="font-normal text-gray-500 text-sm">
+              {item.client_name}
+            </div>
           )}
         </div>
       ),
@@ -108,14 +116,18 @@ export const createContractLivesConfig = (actions?: {
       label: "Observações",
       type: "text",
       render: (value) => (
-        <div className="max-w-xs truncate text-sm">
-          {value || "-"}
-        </div>
+        <div className="max-w-xs truncate text-sm">{value || "-"}</div>
       ),
     },
   ],
 
-  searchFields: ["person_name", "person_cpf", "contract_number", "client_name", "notes"],
+  searchFields: [
+    "person_name",
+    "person_cpf",
+    "contract_number",
+    "client_name",
+    "notes",
+  ],
   sortField: "created_at",
   sortDirection: "desc",
 
@@ -135,7 +147,9 @@ export const createContractLivesConfig = (actions?: {
         title: "Vidas Ativas",
         value: 0,
         subtitle: "Em contratos ativos",
-        icon: <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-300" />,
+        icon: (
+          <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-300" />
+        ),
         color: "green",
       },
       {
@@ -151,7 +165,9 @@ export const createContractLivesConfig = (actions?: {
         title: "Novas Esta Semana",
         value: 0,
         subtitle: "Adicionadas recentemente",
-        icon: <Calendar className="h-6 w-6 text-purple-600 dark:text-purple-300" />,
+        icon: (
+          <Calendar className="h-6 w-6 text-purple-600 dark:text-purple-300" />
+        ),
         color: "purple",
       },
     ],
@@ -271,15 +287,26 @@ export const createContractLivesConfig = (actions?: {
       id: "substitute",
       label: "Substituir",
       icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+          />
         </svg>
       ),
       color: "purple",
       onClick: (life) => {
         actions?.onSubstitute?.(life);
       },
-      condition: (life) => life.status === "active" && life.substitution_allowed,
+      condition: (life) =>
+        life.status === "active" && life.substitution_allowed,
     },
     {
       id: "edit",
@@ -343,7 +370,8 @@ function getStatusBadge(status: string): JSX.Element {
   const statusConfig = {
     active: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
     inactive: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
-    substituted: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
+    substituted:
+      "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
     cancelled: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
   };
 
@@ -357,7 +385,8 @@ function getStatusBadge(status: string): JSX.Element {
   return (
     <span
       className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-        statusConfig[status as keyof typeof statusConfig] || statusConfig.inactive
+        statusConfig[status as keyof typeof statusConfig] ||
+        statusConfig.inactive
       }`}
     >
       {statusLabels[status as keyof typeof statusLabels] || status}

@@ -3,7 +3,7 @@ import { DollarSign, Check, AlertCircle } from "lucide-react";
 import {
   formatCurrencyDisplay,
   parseCurrencyRobust,
-  validateCurrency
+  validateCurrency,
 } from "../../utils/formatters";
 
 interface CurrencyInputProps {
@@ -66,7 +66,8 @@ const CurrencyInput: React.FC<CurrencyInputProps> = ({
   // Sincronizar valor externo com estado interno
   useEffect(() => {
     if (value !== null && value !== undefined && value !== "") {
-      const numValue = typeof value === "string" ? parseCurrencyRobust(value) : value;
+      const numValue =
+        typeof value === "string" ? parseCurrencyRobust(value) : value;
       setDisplayValue(formatCurrencyDisplay(numValue));
     } else {
       setDisplayValue("");
@@ -178,8 +179,17 @@ const CurrencyInput: React.FC<CurrencyInputProps> = ({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     // Permitir teclas de controle
     const controlKeys = [
-      "Backspace", "Delete", "Tab", "Escape", "Enter",
-      "Home", "End", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"
+      "Backspace",
+      "Delete",
+      "Tab",
+      "Escape",
+      "Enter",
+      "Home",
+      "End",
+      "ArrowLeft",
+      "ArrowRight",
+      "ArrowUp",
+      "ArrowDown",
     ];
 
     if (controlKeys.includes(e.key)) {
@@ -199,10 +209,12 @@ const CurrencyInput: React.FC<CurrencyInputProps> = ({
 
   // Classes CSS
   const getInputClasses = () => {
-    const baseClasses = "w-full py-2 border rounded-md bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none transition-colors";
+    const baseClasses =
+      "w-full py-2 border rounded-md bg-input text-foreground focus:ring-2 focus:ring-ring focus:outline-none transition-colors";
 
     // Padding baseado na presença de ícones
-    const iconToShow = leftIcon || (showIcon ? <DollarSign className="h-4 w-4" /> : null);
+    const iconToShow =
+      leftIcon || (showIcon ? <DollarSign className="h-4 w-4" /> : null);
     const paddingClasses = iconToShow ? "pl-10 pr-3" : "px-3";
 
     // Cores da borda baseadas no estado
@@ -216,12 +228,15 @@ const CurrencyInput: React.FC<CurrencyInputProps> = ({
       borderColor = "border-ring";
     }
 
-    const disabledClasses = disabled ? "opacity-50 cursor-not-allowed bg-muted" : "";
+    const disabledClasses = disabled
+      ? "opacity-50 cursor-not-allowed bg-muted"
+      : "";
 
     return `${baseClasses} ${paddingClasses} ${borderColor} ${disabledClasses} ${className}`;
   };
 
-  const displayError = error || (showValidation && !isValid && isDirty ? internalError : "");
+  const displayError =
+    error || (showValidation && !isValid && isDirty ? internalError : "");
   const hasIcon = leftIcon || showIcon;
 
   return (
@@ -279,9 +294,7 @@ const CurrencyInput: React.FC<CurrencyInputProps> = ({
       </div>
 
       {/* Mensagem de erro */}
-      {displayError && (
-        <p className="text-sm text-red-600">{displayError}</p>
-      )}
+      {displayError && <p className="text-sm text-red-600">{displayError}</p>}
 
       {/* Dicas de ajuda */}
       {!displayError && (
@@ -304,7 +317,9 @@ const CurrencyInput: React.FC<CurrencyInputProps> = ({
           {!isFocused && !displayValue && (min !== null || max !== null) && (
             <p className="text-xs text-muted-foreground">
               {min !== null && max !== null
-                ? `Valor entre ${formatCurrencyDisplay(min)} e ${formatCurrencyDisplay(max)}`
+                ? `Valor entre ${formatCurrencyDisplay(
+                    min
+                  )} e ${formatCurrencyDisplay(max)}`
                 : min !== null
                 ? `Valor mínimo: ${formatCurrencyDisplay(min)}`
                 : `Valor máximo: ${formatCurrencyDisplay(max)}`}

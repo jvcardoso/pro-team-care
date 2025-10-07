@@ -3,7 +3,7 @@
  * Mirrors backend schemas with frontend-specific additions
  */
 
-import { BaseEntity } from './dataTable.types';
+import { BaseEntity } from "./dataTable.types";
 
 // ==========================================
 // ENUMS
@@ -15,7 +15,7 @@ export enum BillingCycle {
   MONTHLY = "MONTHLY",
   QUARTERLY = "QUARTERLY",
   SEMI_ANNUAL = "SEMI_ANNUAL",
-  ANNUAL = "ANNUAL"
+  ANNUAL = "ANNUAL",
 }
 
 export enum InvoiceStatus {
@@ -24,13 +24,13 @@ export enum InvoiceStatus {
   PAGA = "paga",
   VENCIDA = "vencida",
   CANCELADA = "cancelada",
-  EM_ATRASO = "em_atraso"
+  EM_ATRASO = "em_atraso",
 }
 
 export enum VerificationStatus {
   PENDENTE = "pendente",
   APROVADO = "aprovado",
-  REJEITADO = "rejeitado"
+  REJEITADO = "rejeitado",
 }
 
 export enum PaymentMethod {
@@ -40,7 +40,7 @@ export enum PaymentMethod {
   BOLETO = "BOLETO",
   CARTAO = "CARTAO",
   DINHEIRO = "DINHEIRO",
-  DEPOSITO = "DEPOSITO"
+  DEPOSITO = "DEPOSITO",
 }
 
 // ==========================================

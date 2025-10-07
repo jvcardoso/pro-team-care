@@ -19,11 +19,11 @@ export interface CompanySubscription {
   id: number;
   company_id: number;
   plan_id: number;
-  status: 'active' | 'cancelled' | 'suspended' | 'expired';
+  status: "active" | "cancelled" | "suspended" | "expired";
   start_date: string;
   end_date?: string;
   billing_day: number;
-  payment_method: 'manual' | 'recurrent';
+  payment_method: "manual" | "recurrent";
   pagbank_subscription_id?: string;
   auto_renew: boolean;
   created_at: string;
@@ -40,8 +40,8 @@ export interface ProTeamCareInvoice {
   billing_period_start: string;
   billing_period_end: string;
   due_date: string;
-  status: 'pending' | 'paid' | 'overdue' | 'cancelled';
-  payment_method: 'manual' | 'recurrent';
+  status: "pending" | "paid" | "overdue" | "cancelled";
+  payment_method: "manual" | "recurrent";
   paid_at?: string;
   pagbank_checkout_url?: string;
   pagbank_session_id?: string;
@@ -85,7 +85,7 @@ export interface CreateSubscriptionRequest {
   plan_id: number;
   start_date: string;
   billing_day?: number;
-  payment_method?: 'manual' | 'recurrent';
+  payment_method?: "manual" | "recurrent";
   auto_renew?: boolean;
 }
 
@@ -152,7 +152,10 @@ export interface CompanyBillingCardProps {
   subscription?: CompanySubscription;
   onCreateSubscription?: (companyId: number) => void;
   onManageSubscription?: (subscription: CompanySubscription) => void;
-  onCreateInvoice?: (companyId: number, subscription?: CompanySubscription) => void;
+  onCreateInvoice?: (
+    companyId: number,
+    subscription?: CompanySubscription
+  ) => void;
 }
 
 export interface InvoiceListProps {

@@ -71,18 +71,18 @@ SELECT
     m.parent_id,
     m.level,
     m.sort_order,
+    m.slug,
+    m.url,
+    m.icon,
+    m.is_active,
+    m.visible_in_menu,
     CASE
         WHEN m.level = 0 THEN m.name
         WHEN m.level = 1 THEN '  └─ ' || m.name
         WHEN m.level = 2 THEN '    └─ ' || m.name
         ELSE '      └─ ' || m.name
-    END AS hierarchy_name,
-    m.slug,
-    m.url,
-    m.icon,
-    m.is_active,
-    m.visible_in_menu
-FROM master.menus m
+    END AS hierarchy_name
+FROM master.menus AS m
 WHERE
     m.id = 20
     OR m.parent_id = 20

@@ -1,17 +1,31 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import Card from '../ui/Card';
-import { CreditCard, Calendar, CheckCircle, AlertTriangle, Clock } from 'lucide-react';
-import { B2BBillingService } from '../../services/b2bBillingService';
-import type { CompanySubscription, ProTeamCareInvoice } from '../../types/b2b-billing.types';
+import React, { useState, useEffect, useCallback } from "react";
+import Card from "../ui/Card";
+import {
+  CreditCard,
+  Calendar,
+  CheckCircle,
+  AlertTriangle,
+  Clock,
+} from "lucide-react";
+import { B2BBillingService } from "../../services/b2bBillingService";
+import type {
+  CompanySubscription,
+  ProTeamCareInvoice,
+} from "../../types/b2b-billing.types";
 
 interface BillingInfoCardProps {
   companyId: number;
 }
 
 const BillingInfoCard: React.FC<BillingInfoCardProps> = ({ companyId }) => {
-  const [subscription, setSubscription] = useState<CompanySubscription | null>(null);
-  const [lastInvoice, setLastInvoice] = useState<ProTeamCareInvoice | null>(null);
-  const [lastPaidInvoice, setLastPaidInvoice] = useState<ProTeamCareInvoice | null>(null);
+  const [subscription, setSubscription] = useState<CompanySubscription | null>(
+    null
+  );
+  const [lastInvoice, setLastInvoice] = useState<ProTeamCareInvoice | null>(
+    null
+  );
+  const [lastPaidInvoice, setLastPaidInvoice] =
+    useState<ProTeamCareInvoice | null>(null);
   const [loading, setLoading] = useState(true);
 
   const loadBillingData = useCallback(async () => {
@@ -19,22 +33,32 @@ const BillingInfoCard: React.FC<BillingInfoCardProps> = ({ companyId }) => {
       setLoading(true);
 
       // Carregar subscription
-      const subscriptionData = await B2BBillingService.getCompanySubscription(companyId);
+      const subscriptionData = await B2BBillingService.getCompanySubscription(
+        companyId
+      );
       setSubscription(subscriptionData);
 
       // Carregar última fatura (qualquer status)
-      const allInvoices = await B2BBillingService.getCompanyInvoices(companyId, undefined, 1);
+      const allInvoices = await B2BBillingService.getCompanyInvoices(
+        companyId,
+        undefined,
+        1
+      );
       if (allInvoices.length > 0) {
         setLastInvoice(allInvoices[0]);
       }
 
       // Carregar última fatura paga
-      const paidInvoices = await B2BBillingService.getCompanyInvoices(companyId, 'paid', 1);
+      const paidInvoices = await B2BBillingService.getCompanyInvoices(
+        companyId,
+        "paid",
+        1
+      );
       if (paidInvoices.length > 0) {
         setLastPaidInvoice(paidInvoices[0]);
       }
     } catch (err) {
-      console.error('Erro ao carregar dados de faturamento:', err);
+      console.error("Erro ao carregar dados de faturamento:", err);
     } finally {
       setLoading(false);
     }
@@ -46,7 +70,7 @@ const BillingInfoCard: React.FC<BillingInfoCardProps> = ({ companyId }) => {
 
   // Calcular próxima data de faturamento
   const getNextBillingDate = (): string => {
-    if (!subscription) return 'N/A';
+    if (!subscription) return "N/A";
     const nextDate = B2BBillingService.calculateNextBillingDate(subscription);
     return nextDate.toLocaleDateString("pt-BR");
   };
@@ -59,18 +83,19 @@ const BillingInfoCard: React.FC<BillingInfoCardProps> = ({ companyId }) => {
     if (lastInvoice?.created_at) {
       return new Date(lastInvoice.created_at).toLocaleDateString("pt-BR");
     }
-    return 'N/A';
+    return "N/A";
   };
 
   // Status da última fatura
   const getLastInvoiceStatus = () => {
-    if (!lastInvoice) return { label: 'N/A', color: 'text-gray-500', icon: Clock };
+    if (!lastInvoice)
+      return { label: "N/A", color: "text-gray-500", icon: Clock };
 
     const statusMap = {
-      paid: { label: 'Pago', color: 'text-green-600', icon: CheckCircle },
-      pending: { label: 'Pendente', color: 'text-yellow-600', icon: Clock },
-      overdue: { label: 'Vencido', color: 'text-red-600', icon: AlertTriangle },
-      cancelled: { label: 'Cancelado', color: 'text-gray-600', icon: Clock },
+      paid: { label: "Pago", color: "text-green-600", icon: CheckCircle },
+      pending: { label: "Pendente", color: "text-yellow-600", icon: Clock },
+      overdue: { label: "Vencido", color: "text-red-600", icon: AlertTriangle },
+      cancelled: { label: "Cancelado", color: "text-gray-600", icon: Clock },
     };
 
     return statusMap[lastInvoice.status] || statusMap.pending;
@@ -107,19 +132,23 @@ const BillingInfoCard: React.FC<BillingInfoCardProps> = ({ companyId }) => {
         <div>
           <div className="block text-muted-foreground mb-1">Plano Atual</div>
           <p className="text-foreground font-medium">
-            {subscription.plan?.name || 'N/A'}
+            {subscription.plan?.name || "N/A"}
           </p>
         </div>
 
         {/* Dia do Faturamento */}
         <div>
-          <div className="block text-muted-foreground mb-1">Dia do Faturamento</div>
+          <div className="block text-muted-foreground mb-1">
+            Dia do Faturamento
+          </div>
           <p className="text-foreground">Dia {subscription.billing_day}</p>
         </div>
 
         {/* Data do Último Faturamento */}
         <div>
-          <div className="block text-muted-foreground mb-1">Último Faturamento</div>
+          <div className="block text-muted-foreground mb-1">
+            Último Faturamento
+          </div>
           <p className="text-foreground flex items-center gap-1">
             <Calendar className="h-4 w-4" />
             {getLastBillingDate()}
@@ -129,7 +158,9 @@ const BillingInfoCard: React.FC<BillingInfoCardProps> = ({ companyId }) => {
         {/* Status do Último Faturamento */}
         <div>
           <div className="block text-muted-foreground mb-1">Status</div>
-          <p className={`flex items-center gap-1 font-medium ${statusInfo.color}`}>
+          <p
+            className={`flex items-center gap-1 font-medium ${statusInfo.color}`}
+          >
             <StatusIcon className="h-4 w-4" />
             {statusInfo.label}
           </p>
@@ -137,7 +168,9 @@ const BillingInfoCard: React.FC<BillingInfoCardProps> = ({ companyId }) => {
 
         {/* Próxima Cobrança */}
         <div>
-          <div className="block text-muted-foreground mb-1">Próxima Cobrança</div>
+          <div className="block text-muted-foreground mb-1">
+            Próxima Cobrança
+          </div>
           <p className="text-foreground flex items-center gap-1">
             <Calendar className="h-4 w-4" />
             {getNextBillingDate()}

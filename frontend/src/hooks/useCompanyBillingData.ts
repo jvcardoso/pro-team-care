@@ -6,7 +6,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { companiesService } from "../services/api";
 import { B2BBillingService } from "../services/b2bBillingService";
-import { UseDataTableReturn, DataTableState, DataTableCallbacks } from "../types/dataTable.types";
+import {
+  UseDataTableReturn,
+  DataTableState,
+  DataTableCallbacks,
+} from "../types/dataTable.types";
 
 export interface CompanyBillingData {
   id: number;
@@ -23,14 +27,20 @@ export interface CompanyBillingData {
   created_at: string;
 }
 
-export function useCompanyBillingData(): UseDataTableReturn<CompanyBillingData> & { loading: boolean; error: string | null; refetch: () => void } {
+export function useCompanyBillingData(): UseDataTableReturn<CompanyBillingData> & {
+  loading: boolean;
+  error: string | null;
+  refetch: () => void;
+} {
   const [data, setData] = useState<CompanyBillingData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Table state
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeFilters, setActiveFilters] = useState<Record<string, unknown>>({});
+  const [activeFilters, setActiveFilters] = useState<Record<string, unknown>>(
+    {}
+  );
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -44,17 +54,20 @@ export function useCompanyBillingData(): UseDataTableReturn<CompanyBillingData> 
       // Fetch companies and plans in parallel
       const [companiesResponse, plans] = await Promise.all([
         companiesService.getCompanies(),
-        B2BBillingService.getSubscriptionPlans(true)
+        B2BBillingService.getSubscriptionPlans(true),
       ]);
 
-      const companies = Array.isArray(companiesResponse) ? companiesResponse : [];
+      const companies = Array.isArray(companiesResponse)
+        ? companiesResponse
+        : [];
 
       // Create a map of plans for quick lookup
-      const plansMap = new Map(plans.map(plan => [plan.id, plan]));
+      const plansMap = new Map(plans.map((plan) => [plan.id, plan]));
 
       // 🚀 OTIMIZAÇÃO: Buscar subscriptions em batch (1 requisição em vez de N)
       const companyIds = companies.map((company: any) => company.id);
-      const subscriptions = await B2BBillingService.getCompanySubscriptionsBatch(companyIds);
+      const subscriptions =
+        await B2BBillingService.getCompanySubscriptionsBatch(companyIds);
 
       // Criar mapa company_id -> subscription
       const subscriptionsMap = new Map(
@@ -64,42 +77,50 @@ export function useCompanyBillingData(): UseDataTableReturn<CompanyBillingData> 
       );
 
       // Build company billing data with subscriptions
-      const companyBillingData: CompanyBillingData[] = companies.map((company: any) => {
-        const subscription = subscriptionsMap.get(company.id);
-        let activePlan = undefined;
-        let nextBillingDate = undefined;
-        let monthlyValue = 0;
-        let paymentMethod = undefined;
+      const companyBillingData: CompanyBillingData[] = companies.map(
+        (company: any) => {
+          const subscription = subscriptionsMap.get(company.id);
+          let activePlan = undefined;
+          let nextBillingDate = undefined;
+          let monthlyValue = 0;
+          let paymentMethod = undefined;
 
-        if (subscription) {
-          const plan = plansMap.get(subscription.plan_id);
-          if (plan) {
-            activePlan = {
-              name: plan.name,
-              monthly_price: plan.monthly_price
-            };
-            monthlyValue = Number(plan.monthly_price) || 0;
-            nextBillingDate = subscription.next_billing_date;
-            paymentMethod = subscription.payment_method || 'Não informado';
+          if (subscription) {
+            const plan = plansMap.get(subscription.plan_id);
+            if (plan) {
+              activePlan = {
+                name: plan.name,
+                monthly_price: plan.monthly_price,
+              };
+              monthlyValue = Number(plan.monthly_price) || 0;
+              nextBillingDate = subscription.next_billing_date;
+              paymentMethod = subscription.payment_method || "Não informado";
+            }
           }
-        }
 
-        return {
-          id: company.id,
-          name: company.name || company.company_name || 'Nome não informado',
-          cnpj: company.tax_id || company.cnpj || company.document || 'CNPJ não informado',
-          status: subscription ? 'Ativo' : 'Sem plano',
-          active_plan: activePlan,
-          next_billing_date: nextBillingDate,
-          monthly_value: monthlyValue,
-          payment_method: paymentMethod,
-          created_at: company.created_at || new Date().toISOString(),
-        };
-      });
+          return {
+            id: company.id,
+            name: company.name || company.company_name || "Nome não informado",
+            cnpj:
+              company.tax_id ||
+              company.cnpj ||
+              company.document ||
+              "CNPJ não informado",
+            status: subscription ? "Ativo" : "Sem plano",
+            active_plan: activePlan,
+            next_billing_date: nextBillingDate,
+            monthly_value: monthlyValue,
+            payment_method: paymentMethod,
+            created_at: company.created_at || new Date().toISOString(),
+          };
+        }
+      );
 
       setData(companyBillingData);
     } catch (err: unknown) {
-      const errorMessage = 'Erro ao carregar dados de cobrança: ' + (err instanceof Error ? err.message : String(err));
+      const errorMessage =
+        "Erro ao carregar dados de cobrança: " +
+        (err instanceof Error ? err.message : String(err));
       setError(errorMessage);
       // console.error('Error loading company billing data:', err);
     } finally {
@@ -115,7 +136,7 @@ export function useCompanyBillingData(): UseDataTableReturn<CompanyBillingData> 
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter((company) =>
-        ['name', 'cnpj', 'status'].some((field) => {
+        ["name", "cnpj", "status"].some((field) => {
           const value = company[field as keyof CompanyBillingData];
           return value?.toString().toLowerCase().includes(searchLower);
         })
@@ -127,7 +148,12 @@ export function useCompanyBillingData(): UseDataTableReturn<CompanyBillingData> 
       if (value && value !== "all") {
         filtered = filtered.filter((company) => {
           const companyValue = company[key as keyof CompanyBillingData];
-          if (key === "monthly_value" && typeof value === "object" && value.min !== undefined && value.max !== undefined) {
+          if (
+            key === "monthly_value" &&
+            typeof value === "object" &&
+            value.min !== undefined &&
+            value.max !== undefined
+          ) {
             return companyValue >= value.min && companyValue <= value.max;
           }
           return companyValue === value;
@@ -167,7 +193,9 @@ export function useCompanyBillingData(): UseDataTableReturn<CompanyBillingData> 
     showExportDropdown: false,
     selectedItemForModal: null,
     isModalOpen: false,
-    hasActiveFilters: searchTerm !== "" || Object.values(activeFilters).some((value) => value && value !== "all"),
+    hasActiveFilters:
+      searchTerm !== "" ||
+      Object.values(activeFilters).some((value) => value && value !== "all"),
   };
 
   // Callbacks
@@ -256,17 +284,19 @@ function exportToCSV(data: CompanyBillingData[], filename: string) {
 
   const csvContent = [
     headers.join(","),
-    ...data.map((company) => [
-      company.id,
-      `"${company.name}"`,
-      `"${company.cnpj}"`,
-      `"${company.status}"`,
-      company.active_plan ? `"${company.active_plan.name}"` : "",
-      company.next_billing_date || "",
-      company.monthly_value,
-      company.payment_method || "",
-      company.created_at,
-    ].join(",")),
+    ...data.map((company) =>
+      [
+        company.id,
+        `"${company.name}"`,
+        `"${company.cnpj}"`,
+        `"${company.status}"`,
+        company.active_plan ? `"${company.active_plan.name}"` : "",
+        company.next_billing_date || "",
+        company.monthly_value,
+        company.payment_method || "",
+        company.created_at,
+      ].join(",")
+    ),
   ].join("\n");
 
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -317,17 +347,21 @@ function printData(data: CompanyBillingData[]) {
             </tr>
           </thead>
           <tbody>
-            ${data.map(company => `
+            ${data
+              .map(
+                (company) => `
               <tr>
                 <td>${company.id}</td>
                 <td>${company.name}</td>
                 <td>${company.cnpj}</td>
                 <td class="status">${company.status}</td>
-                <td>${company.active_plan?.name || 'Nenhum'}</td>
+                <td>${company.active_plan?.name || "Nenhum"}</td>
                 <td class="currency">R$ ${company.monthly_value.toFixed(2)}</td>
-                <td>${company.payment_method || 'Não informado'}</td>
+                <td>${company.payment_method || "Não informado"}</td>
               </tr>
-            `).join("")}
+            `
+              )
+              .join("")}
           </tbody>
         </table>
       </body>

@@ -1,17 +1,23 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Alert, AlertDescription } from '../ui/alert';
-import { Separator } from '../ui/separator';
-import { Loader2, CreditCard, Shield, AlertCircle, CheckCircle } from 'lucide-react';
+import React, { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Alert, AlertDescription } from "../ui/alert";
+import { Separator } from "../ui/separator";
+import {
+  Loader2,
+  CreditCard,
+  Shield,
+  AlertCircle,
+  CheckCircle,
+} from "lucide-react";
 import {
   RecurrentBillingSetupRequest,
   RecurrentBillingSetupResponse,
   CreditCardFormData,
-  AddressData
-} from '../../types/pagbank.types';
+  AddressData,
+} from "../../types/pagbank.types";
 
 interface RecurrentBillingSetupProps {
   contractId: number;
@@ -35,112 +41,117 @@ const RecurrentBillingSetup: React.FC<RecurrentBillingSetupProps> = ({
   loading = false,
 }) => {
   const [formData, setFormData] = useState<CreditCardFormData>({
-    cardNumber: '',
-    expiryMonth: '',
-    expiryYear: '',
-    cvv: '',
-    holderName: clientData?.name || '',
+    cardNumber: "",
+    expiryMonth: "",
+    expiryYear: "",
+    cvv: "",
+    holderName: clientData?.name || "",
   });
 
   const [addressData, setAddressData] = useState<AddressData>({
-    street: clientData?.address?.street || '',
-    number: clientData?.address?.number || '',
-    details: clientData?.address?.details || '',
-    neighborhood: clientData?.address?.neighborhood || '',
-    city: clientData?.address?.city || '',
-    state: clientData?.address?.state || '',
-    zip_code: clientData?.address?.zip_code || '',
+    street: clientData?.address?.street || "",
+    number: clientData?.address?.number || "",
+    details: clientData?.address?.details || "",
+    neighborhood: clientData?.address?.neighborhood || "",
+    city: clientData?.address?.city || "",
+    state: clientData?.address?.state || "",
+    zip_code: clientData?.address?.zip_code || "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string>('');
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [error, setError] = useState<string>("");
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, string>
+  >({});
 
-  const handleInputChange = (field: keyof CreditCardFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (
+    field: keyof CreditCardFormData,
+    value: string
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear validation error when user starts typing
     if (validationErrors[field]) {
-      setValidationErrors(prev => ({ ...prev, [field]: '' }));
+      setValidationErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
   const handleAddressChange = (field: keyof AddressData, value: string) => {
-    setAddressData(prev => ({ ...prev, [field]: value }));
+    setAddressData((prev) => ({ ...prev, [field]: value }));
     if (validationErrors[field]) {
-      setValidationErrors(prev => ({ ...prev, [field]: '' }));
+      setValidationErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
   const formatCardNumber = (value: string) => {
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    const v = value.replace(/\s+/g, "").replace(/[^0-9]/gi, "");
     const matches = v.match(/\d{4,16}/g);
-    const match = matches && matches[0] || '';
+    const match = (matches && matches[0]) || "";
     const parts = [];
     for (let i = 0, len = match.length; i < len; i += 4) {
       parts.push(match.substring(i, i + 4));
     }
     if (parts.length) {
-      return parts.join(' ');
+      return parts.join(" ");
     } else {
       return v;
     }
   };
 
   const formatZipCode = (value: string) => {
-    const v = value.replace(/\D/g, '');
-    return v.replace(/(\d{5})(\d{3})/, '$1-$2');
+    const v = value.replace(/\D/g, "");
+    return v.replace(/(\d{5})(\d{3})/, "$1-$2");
   };
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
 
     // Card validation
-    if (!formData.cardNumber.replace(/\s/g, '')) {
-      errors.cardNumber = 'Número do cartão é obrigatório';
-    } else if (formData.cardNumber.replace(/\s/g, '').length < 13) {
-      errors.cardNumber = 'Número do cartão inválido';
+    if (!formData.cardNumber.replace(/\s/g, "")) {
+      errors.cardNumber = "Número do cartão é obrigatório";
+    } else if (formData.cardNumber.replace(/\s/g, "").length < 13) {
+      errors.cardNumber = "Número do cartão inválido";
     }
 
     if (!formData.expiryMonth) {
-      errors.expiryMonth = 'Mês é obrigatório';
+      errors.expiryMonth = "Mês é obrigatório";
     } else if (!/^(0[1-9]|1[0-2])$/.test(formData.expiryMonth)) {
-      errors.expiryMonth = 'Mês inválido';
+      errors.expiryMonth = "Mês inválido";
     }
 
     if (!formData.expiryYear) {
-      errors.expiryYear = 'Ano é obrigatório';
+      errors.expiryYear = "Ano é obrigatório";
     } else if (!/^\d{4}$/.test(formData.expiryYear)) {
-      errors.expiryYear = 'Ano inválido';
+      errors.expiryYear = "Ano inválido";
     }
 
     if (!formData.cvv) {
-      errors.cvv = 'CVV é obrigatório';
+      errors.cvv = "CVV é obrigatório";
     } else if (!/^\d{3,4}$/.test(formData.cvv)) {
-      errors.cvv = 'CVV inválido';
+      errors.cvv = "CVV inválido";
     }
 
     if (!formData.holderName.trim()) {
-      errors.holderName = 'Nome do portador é obrigatório';
+      errors.holderName = "Nome do portador é obrigatório";
     }
 
     // Address validation
     if (!addressData.street.trim()) {
-      errors.street = 'Rua é obrigatória';
+      errors.street = "Rua é obrigatória";
     }
     if (!addressData.number.trim()) {
-      errors.number = 'Número é obrigatório';
+      errors.number = "Número é obrigatório";
     }
     if (!addressData.neighborhood.trim()) {
-      errors.neighborhood = 'Bairro é obrigatório';
+      errors.neighborhood = "Bairro é obrigatório";
     }
     if (!addressData.city.trim()) {
-      errors.city = 'Cidade é obrigatória';
+      errors.city = "Cidade é obrigatória";
     }
     if (!addressData.state.trim()) {
-      errors.state = 'Estado é obrigatório';
+      errors.state = "Estado é obrigatório";
     }
     if (!addressData.zip_code.trim()) {
-      errors.zip_code = 'CEP é obrigatório';
+      errors.zip_code = "CEP é obrigatório";
     }
 
     setValidationErrors(errors);
@@ -155,16 +166,16 @@ const RecurrentBillingSetup: React.FC<RecurrentBillingSetupProps> = ({
     }
 
     if (!clientData) {
-      setError('Dados do cliente não informados');
+      setError("Dados do cliente não informados");
       return;
     }
 
     setIsSubmitting(true);
-    setError('');
+    setError("");
 
     try {
       // Parse phone number
-      const phoneClean = clientData.phone.replace(/\D/g, '');
+      const phoneClean = clientData.phone.replace(/\D/g, "");
       const phoneArea = phoneClean.slice(0, 2);
       const phoneNumber = phoneClean.slice(2);
 
@@ -179,7 +190,7 @@ const RecurrentBillingSetup: React.FC<RecurrentBillingSetupProps> = ({
           phone_number: phoneNumber,
           address: addressData,
           card_data: {
-            card_number: formData.cardNumber.replace(/\s/g, ''),
+            card_number: formData.cardNumber.replace(/\s/g, ""),
             card_expiry_month: formData.expiryMonth,
             card_expiry_year: formData.expiryYear,
             card_cvv: formData.cvv,
@@ -195,16 +206,18 @@ const RecurrentBillingSetup: React.FC<RecurrentBillingSetupProps> = ({
       const mockResponse: RecurrentBillingSetupResponse = {
         success: true,
         contract_id: contractId,
-        billing_method: 'recurrent',
-        pagbank_subscription_id: 'SUB_' + Date.now(),
-        pagbank_customer_id: 'CUST_' + Date.now(),
-        next_billing_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        message: 'Cobrança recorrente configurada com sucesso!',
+        billing_method: "recurrent",
+        pagbank_subscription_id: "SUB_" + Date.now(),
+        pagbank_customer_id: "CUST_" + Date.now(),
+        next_billing_date: new Date(
+          Date.now() + 30 * 24 * 60 * 60 * 1000
+        ).toISOString(),
+        message: "Cobrança recorrente configurada com sucesso!",
       };
 
       onSetupComplete?.(mockResponse);
     } catch (err: any) {
-      setError(err.message || 'Erro ao configurar cobrança recorrente');
+      setError(err.message || "Erro ao configurar cobrança recorrente");
     } finally {
       setIsSubmitting(false);
     }
@@ -241,13 +254,22 @@ const RecurrentBillingSetup: React.FC<RecurrentBillingSetupProps> = ({
                   type="text"
                   placeholder="0000 0000 0000 0000"
                   value={formData.cardNumber}
-                  onChange={(e) => handleInputChange('cardNumber', formatCardNumber(e.target.value))}
+                  onChange={(e) =>
+                    handleInputChange(
+                      "cardNumber",
+                      formatCardNumber(e.target.value)
+                    )
+                  }
                   maxLength={19}
-                  className={validationErrors.cardNumber ? 'border-red-500' : ''}
+                  className={
+                    validationErrors.cardNumber ? "border-red-500" : ""
+                  }
                   disabled={isSubmitting}
                 />
                 {validationErrors.cardNumber && (
-                  <p className="text-sm text-red-500 mt-1">{validationErrors.cardNumber}</p>
+                  <p className="text-sm text-red-500 mt-1">
+                    {validationErrors.cardNumber}
+                  </p>
                 )}
               </div>
 
@@ -259,13 +281,22 @@ const RecurrentBillingSetup: React.FC<RecurrentBillingSetupProps> = ({
                     type="text"
                     placeholder="MM"
                     value={formData.expiryMonth}
-                    onChange={(e) => handleInputChange('expiryMonth', e.target.value.replace(/\D/g, '').slice(0, 2))}
+                    onChange={(e) =>
+                      handleInputChange(
+                        "expiryMonth",
+                        e.target.value.replace(/\D/g, "").slice(0, 2)
+                      )
+                    }
                     maxLength={2}
-                    className={validationErrors.expiryMonth ? 'border-red-500' : ''}
+                    className={
+                      validationErrors.expiryMonth ? "border-red-500" : ""
+                    }
                     disabled={isSubmitting}
                   />
                   {validationErrors.expiryMonth && (
-                    <p className="text-sm text-red-500 mt-1">{validationErrors.expiryMonth}</p>
+                    <p className="text-sm text-red-500 mt-1">
+                      {validationErrors.expiryMonth}
+                    </p>
                   )}
                 </div>
 
@@ -276,13 +307,22 @@ const RecurrentBillingSetup: React.FC<RecurrentBillingSetupProps> = ({
                     type="text"
                     placeholder="YYYY"
                     value={formData.expiryYear}
-                    onChange={(e) => handleInputChange('expiryYear', e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    onChange={(e) =>
+                      handleInputChange(
+                        "expiryYear",
+                        e.target.value.replace(/\D/g, "").slice(0, 4)
+                      )
+                    }
                     maxLength={4}
-                    className={validationErrors.expiryYear ? 'border-red-500' : ''}
+                    className={
+                      validationErrors.expiryYear ? "border-red-500" : ""
+                    }
                     disabled={isSubmitting}
                   />
                   {validationErrors.expiryYear && (
-                    <p className="text-sm text-red-500 mt-1">{validationErrors.expiryYear}</p>
+                    <p className="text-sm text-red-500 mt-1">
+                      {validationErrors.expiryYear}
+                    </p>
                   )}
                 </div>
 
@@ -293,13 +333,20 @@ const RecurrentBillingSetup: React.FC<RecurrentBillingSetupProps> = ({
                     type="text"
                     placeholder="123"
                     value={formData.cvv}
-                    onChange={(e) => handleInputChange('cvv', e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    onChange={(e) =>
+                      handleInputChange(
+                        "cvv",
+                        e.target.value.replace(/\D/g, "").slice(0, 4)
+                      )
+                    }
                     maxLength={4}
-                    className={validationErrors.cvv ? 'border-red-500' : ''}
+                    className={validationErrors.cvv ? "border-red-500" : ""}
                     disabled={isSubmitting}
                   />
                   {validationErrors.cvv && (
-                    <p className="text-sm text-red-500 mt-1">{validationErrors.cvv}</p>
+                    <p className="text-sm text-red-500 mt-1">
+                      {validationErrors.cvv}
+                    </p>
                   )}
                 </div>
               </div>
@@ -311,12 +358,18 @@ const RecurrentBillingSetup: React.FC<RecurrentBillingSetupProps> = ({
                   type="text"
                   placeholder="Nome conforme impresso no cartão"
                   value={formData.holderName}
-                  onChange={(e) => handleInputChange('holderName', e.target.value)}
-                  className={validationErrors.holderName ? 'border-red-500' : ''}
+                  onChange={(e) =>
+                    handleInputChange("holderName", e.target.value)
+                  }
+                  className={
+                    validationErrors.holderName ? "border-red-500" : ""
+                  }
                   disabled={isSubmitting}
                 />
                 {validationErrors.holderName && (
-                  <p className="text-sm text-red-500 mt-1">{validationErrors.holderName}</p>
+                  <p className="text-sm text-red-500 mt-1">
+                    {validationErrors.holderName}
+                  </p>
                 )}
               </div>
             </div>
@@ -336,12 +389,16 @@ const RecurrentBillingSetup: React.FC<RecurrentBillingSetupProps> = ({
                     id="street"
                     type="text"
                     value={addressData.street}
-                    onChange={(e) => handleAddressChange('street', e.target.value)}
-                    className={validationErrors.street ? 'border-red-500' : ''}
+                    onChange={(e) =>
+                      handleAddressChange("street", e.target.value)
+                    }
+                    className={validationErrors.street ? "border-red-500" : ""}
                     disabled={isSubmitting}
                   />
                   {validationErrors.street && (
-                    <p className="text-sm text-red-500 mt-1">{validationErrors.street}</p>
+                    <p className="text-sm text-red-500 mt-1">
+                      {validationErrors.street}
+                    </p>
                   )}
                 </div>
 
@@ -351,12 +408,16 @@ const RecurrentBillingSetup: React.FC<RecurrentBillingSetupProps> = ({
                     id="number"
                     type="text"
                     value={addressData.number}
-                    onChange={(e) => handleAddressChange('number', e.target.value)}
-                    className={validationErrors.number ? 'border-red-500' : ''}
+                    onChange={(e) =>
+                      handleAddressChange("number", e.target.value)
+                    }
+                    className={validationErrors.number ? "border-red-500" : ""}
                     disabled={isSubmitting}
                   />
                   {validationErrors.number && (
-                    <p className="text-sm text-red-500 mt-1">{validationErrors.number}</p>
+                    <p className="text-sm text-red-500 mt-1">
+                      {validationErrors.number}
+                    </p>
                   )}
                 </div>
               </div>
@@ -368,7 +429,9 @@ const RecurrentBillingSetup: React.FC<RecurrentBillingSetupProps> = ({
                   type="text"
                   placeholder="Apartamento, casa, etc."
                   value={addressData.details}
-                  onChange={(e) => handleAddressChange('details', e.target.value)}
+                  onChange={(e) =>
+                    handleAddressChange("details", e.target.value)
+                  }
                   disabled={isSubmitting}
                 />
               </div>
@@ -380,12 +443,18 @@ const RecurrentBillingSetup: React.FC<RecurrentBillingSetupProps> = ({
                     id="neighborhood"
                     type="text"
                     value={addressData.neighborhood}
-                    onChange={(e) => handleAddressChange('neighborhood', e.target.value)}
-                    className={validationErrors.neighborhood ? 'border-red-500' : ''}
+                    onChange={(e) =>
+                      handleAddressChange("neighborhood", e.target.value)
+                    }
+                    className={
+                      validationErrors.neighborhood ? "border-red-500" : ""
+                    }
                     disabled={isSubmitting}
                   />
                   {validationErrors.neighborhood && (
-                    <p className="text-sm text-red-500 mt-1">{validationErrors.neighborhood}</p>
+                    <p className="text-sm text-red-500 mt-1">
+                      {validationErrors.neighborhood}
+                    </p>
                   )}
                 </div>
 
@@ -395,12 +464,16 @@ const RecurrentBillingSetup: React.FC<RecurrentBillingSetupProps> = ({
                     id="city"
                     type="text"
                     value={addressData.city}
-                    onChange={(e) => handleAddressChange('city', e.target.value)}
-                    className={validationErrors.city ? 'border-red-500' : ''}
+                    onChange={(e) =>
+                      handleAddressChange("city", e.target.value)
+                    }
+                    className={validationErrors.city ? "border-red-500" : ""}
                     disabled={isSubmitting}
                   />
                   {validationErrors.city && (
-                    <p className="text-sm text-red-500 mt-1">{validationErrors.city}</p>
+                    <p className="text-sm text-red-500 mt-1">
+                      {validationErrors.city}
+                    </p>
                   )}
                 </div>
               </div>
@@ -413,13 +486,20 @@ const RecurrentBillingSetup: React.FC<RecurrentBillingSetupProps> = ({
                     type="text"
                     placeholder="SP"
                     value={addressData.state}
-                    onChange={(e) => handleAddressChange('state', e.target.value.toUpperCase().slice(0, 2))}
+                    onChange={(e) =>
+                      handleAddressChange(
+                        "state",
+                        e.target.value.toUpperCase().slice(0, 2)
+                      )
+                    }
                     maxLength={2}
-                    className={validationErrors.state ? 'border-red-500' : ''}
+                    className={validationErrors.state ? "border-red-500" : ""}
                     disabled={isSubmitting}
                   />
                   {validationErrors.state && (
-                    <p className="text-sm text-red-500 mt-1">{validationErrors.state}</p>
+                    <p className="text-sm text-red-500 mt-1">
+                      {validationErrors.state}
+                    </p>
                   )}
                 </div>
 
@@ -430,13 +510,22 @@ const RecurrentBillingSetup: React.FC<RecurrentBillingSetupProps> = ({
                     type="text"
                     placeholder="00000-000"
                     value={addressData.zip_code}
-                    onChange={(e) => handleAddressChange('zip_code', formatZipCode(e.target.value))}
+                    onChange={(e) =>
+                      handleAddressChange(
+                        "zip_code",
+                        formatZipCode(e.target.value)
+                      )
+                    }
                     maxLength={9}
-                    className={validationErrors.zip_code ? 'border-red-500' : ''}
+                    className={
+                      validationErrors.zip_code ? "border-red-500" : ""
+                    }
                     disabled={isSubmitting}
                   />
                   {validationErrors.zip_code && (
-                    <p className="text-sm text-red-500 mt-1">{validationErrors.zip_code}</p>
+                    <p className="text-sm text-red-500 mt-1">
+                      {validationErrors.zip_code}
+                    </p>
                   )}
                 </div>
               </div>
@@ -447,7 +536,9 @@ const RecurrentBillingSetup: React.FC<RecurrentBillingSetupProps> = ({
           {error && (
             <Alert className="border-red-200 bg-red-50">
               <AlertCircle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-700">{error}</AlertDescription>
+              <AlertDescription className="text-red-700">
+                {error}
+              </AlertDescription>
             </Alert>
           )}
 

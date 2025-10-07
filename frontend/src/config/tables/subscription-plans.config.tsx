@@ -4,14 +4,7 @@
  */
 
 import React from "react";
-import {
-  Users,
-  Building,
-  Check,
-  Eye,
-  Edit,
-  Trash2,
-} from "lucide-react";
+import { Users, Building, Check, Eye, Edit, Trash2 } from "lucide-react";
 import { DataTableConfig } from "../../types/dataTable.types";
 import { SubscriptionPlan } from "../../types/b2b-billing.types";
 
@@ -50,7 +43,8 @@ export const createSubscriptionPlansConfig = (
       type: "currency",
       sortable: true,
       render: (value) => {
-        const numValue = typeof value === 'number' ? value : parseFloat(value) || 0;
+        const numValue =
+          typeof value === "number" ? value : parseFloat(value) || 0;
         return (
           <div className="font-semibold text-green-600 dark:text-green-400 text-sm whitespace-nowrap">
             R$ {numValue.toFixed(2)}
@@ -102,12 +96,14 @@ export const createSubscriptionPlansConfig = (
       label: "Status",
       type: "badge",
       render: (value) => (
-        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
-          value
-            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-            : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
-        }`}>
-          {value ? 'Ativo' : 'Inativo'}
+        <span
+          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
+            value
+              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+              : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+          }`}
+        >
+          {value ? "Ativo" : "Inativo"}
         </span>
       ),
     },

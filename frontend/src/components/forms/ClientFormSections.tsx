@@ -151,7 +151,8 @@ export const ClientBasicDataSection: React.FC<ClientBasicDataSectionProps> = ({
             </div>
             {isEstablishmentPreselected && (
               <p className="text-xs text-muted-foreground mt-1">
-                Estabelecimento selecionado automaticamente. O campo não pode ser alterado.
+                Estabelecimento selecionado automaticamente. O campo não pode
+                ser alterado.
               </p>
             )}
           </div>
@@ -198,11 +199,19 @@ export const ClientBasicDataSection: React.FC<ClientBasicDataSectionProps> = ({
             </div>
             {selectedEstablishment && (
               <p className="text-xs text-muted-foreground mt-1">
-                💡 Formato: CLI-{selectedEstablishment.code
-                  ? selectedEstablishment.code.match(/EST-(\d{3})-\d{3}/)?.[1] || "000"
-                  : "000"}-XXX (Ex: CLI-{selectedEstablishment.code
-                  ? selectedEstablishment.code.match(/EST-(\d{3})-\d{3}/)?.[1] || "000"
-                  : "000"}-001)
+                💡 Formato: CLI-
+                {selectedEstablishment.code
+                  ? selectedEstablishment.code.match(
+                      /EST-(\d{3})-\d{3}/
+                    )?.[1] || "000"
+                  : "000"}
+                -XXX (Ex: CLI-
+                {selectedEstablishment.code
+                  ? selectedEstablishment.code.match(
+                      /EST-(\d{3})-\d{3}/
+                    )?.[1] || "000"
+                  : "000"}
+                -001)
               </p>
             )}
           </div>
@@ -306,7 +315,8 @@ export const ClientBasicDataSection: React.FC<ClientBasicDataSectionProps> = ({
                 <div className="mt-1">
                   {isEditing && (
                     <p className="text-xs text-muted-foreground mb-1">
-                      🔒 CPF/CNPJ não pode ser alterado após cadastro por questões de segurança
+                      🔒 CPF/CNPJ não pode ser alterado após cadastro por
+                      questões de segurança
                     </p>
                   )}
                   {(() => {

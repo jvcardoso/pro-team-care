@@ -5,7 +5,7 @@
  * processo de ativação de empresas no sistema.
  */
 
-import api from './api';
+import api from "./api";
 
 export interface SendContractEmailRequest {
   company_id: number;
@@ -63,7 +63,12 @@ export interface ValidateTokenResponse {
 export interface CompanyActivationStatus {
   company_id: number;
   company_name: string;
-  access_status: 'pending_contract' | 'contract_signed' | 'pending_user' | 'active' | 'suspended';
+  access_status:
+    | "pending_contract"
+    | "contract_signed"
+    | "pending_user"
+    | "active"
+    | "suspended";
   contract_sent: boolean;
   contract_sent_at?: string;
   contract_sent_to?: string;
@@ -96,7 +101,10 @@ export interface PendingCompaniesResponse {
 export const sendContractEmail = async (
   data: SendContractEmailRequest
 ): Promise<SendEmailResponse> => {
-  const response = await api.post('/company-activation/send-contract-email', data);
+  const response = await api.post(
+    "/company-activation/send-contract-email",
+    data
+  );
   return response.data;
 };
 
@@ -106,7 +114,10 @@ export const sendContractEmail = async (
 export const acceptContract = async (
   data: AcceptContractRequest
 ): Promise<AcceptContractResponse> => {
-  const response = await api.post('/api/v1/company-activation/accept-contract', data);
+  const response = await api.post(
+    "/api/v1/company-activation/accept-contract",
+    data
+  );
   return response.data;
 };
 
@@ -116,9 +127,12 @@ export const acceptContract = async (
 export const validateUserCreationToken = async (
   token: string
 ): Promise<ValidateTokenResponse> => {
-  const response = await api.post('/api/v1/company-activation/validate-user-token', {
-    token,
-  });
+  const response = await api.post(
+    "/api/v1/company-activation/validate-user-token",
+    {
+      token,
+    }
+  );
   return response.data;
 };
 
@@ -128,9 +142,13 @@ export const validateUserCreationToken = async (
 export const createManagerUser = async (
   data: CreateManagerUserRequest
 ): Promise<any> => {
-  const response = await api.post('/api/v1/company-activation/create-manager-user', null, {
-    params: data,
-  });
+  const response = await api.post(
+    "/api/v1/company-activation/create-manager-user",
+    null,
+    {
+      params: data,
+    }
+  );
   return response.data;
 };
 
@@ -140,7 +158,9 @@ export const createManagerUser = async (
 export const getCompanyActivationStatus = async (
   companyId: number
 ): Promise<CompanyActivationStatus> => {
-  const response = await api.get(`/api/v1/company-activation/status/${companyId}`);
+  const response = await api.get(
+    `/api/v1/company-activation/status/${companyId}`
+  );
   return response.data;
 };
 
@@ -150,30 +170,36 @@ export const getCompanyActivationStatus = async (
 export const resendContractEmail = async (
   companyId: number
 ): Promise<SendEmailResponse> => {
-  const response = await api.post('/api/v1/company-activation/resend-contract-email', {
-    company_id: companyId,
-  });
+  const response = await api.post(
+    "/api/v1/company-activation/resend-contract-email",
+    {
+      company_id: companyId,
+    }
+  );
   return response.data;
 };
 
 /**
  * Lista empresas pendentes de ativação
  */
-export const getPendingCompanies = async (): Promise<PendingCompaniesResponse> => {
-  const response = await api.get('/api/v1/company-activation/pending-companies');
-  return response.data;
-};
+export const getPendingCompanies =
+  async (): Promise<PendingCompaniesResponse> => {
+    const response = await api.get(
+      "/api/v1/company-activation/pending-companies"
+    );
+    return response.data;
+  };
 
 /**
  * Helper: Retorna label do status em português
  */
 export const getStatusLabel = (status: string): string => {
   const labels: Record<string, string> = {
-    pending_contract: 'Aguardando Contrato',
-    contract_signed: 'Contrato Assinado',
-    pending_user: 'Aguardando Usuário',
-    active: 'Ativa',
-    suspended: 'Suspensa',
+    pending_contract: "Aguardando Contrato",
+    contract_signed: "Contrato Assinado",
+    pending_user: "Aguardando Usuário",
+    active: "Ativa",
+    suspended: "Suspensa",
   };
   return labels[status] || status;
 };
@@ -183,13 +209,17 @@ export const getStatusLabel = (status: string): string => {
  */
 export const getStatusBadgeClasses = (status: string): string => {
   const classes: Record<string, string> = {
-    pending_contract: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-    contract_signed: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-    pending_user: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
-    active: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-    suspended: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+    pending_contract:
+      "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
+    contract_signed:
+      "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+    pending_user:
+      "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
+    active:
+      "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+    suspended: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
   };
-  return classes[status] || 'bg-gray-100 text-gray-800';
+  return classes[status] || "bg-gray-100 text-gray-800";
 };
 
 /**
@@ -197,27 +227,27 @@ export const getStatusBadgeClasses = (status: string): string => {
  */
 export const getStatusIcon = (status: string): string => {
   const icons: Record<string, string> = {
-    pending_contract: '⏳',
-    contract_signed: '✅',
-    pending_user: '👤',
-    active: '🟢',
-    suspended: '🔴',
+    pending_contract: "⏳",
+    contract_signed: "✅",
+    pending_user: "👤",
+    active: "🟢",
+    suspended: "🔴",
   };
-  return icons[status] || '❓';
+  return icons[status] || "❓";
 };
 
 /**
  * Helper: Verifica se empresa pode receber email de contrato
  */
 export const canSendContractEmail = (status: string): boolean => {
-  return status === 'pending_contract';
+  return status === "pending_contract";
 };
 
 /**
  * Helper: Verifica se empresa pode receber reenvio
  */
 export const canResendEmail = (status: string): boolean => {
-  return status === 'pending_contract' || status === 'contract_signed';
+  return status === "pending_contract" || status === "contract_signed";
 };
 
 /**
@@ -226,12 +256,12 @@ export const canResendEmail = (status: string): boolean => {
 export const getClientIpAddress = async (): Promise<string> => {
   try {
     // Tenta obter IP via serviço externo
-    const response = await fetch('https://api.ipify.org?format=json');
+    const response = await fetch("https://api.ipify.org?format=json");
     const data = await response.json();
     return data.ip;
   } catch (error) {
     // Fallback: retorna localhost
-    return '127.0.0.1';
+    return "127.0.0.1";
   }
 };
 

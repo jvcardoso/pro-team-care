@@ -281,7 +281,9 @@ const EstablishmentsPageContent = () => {
         onCancel={handleCancel}
         onNavigateToClients={(establishmentId, establishmentCode) => {
           // Navegar para página de clientes com estabelecimento pré-selecionado
-          navigate(`/admin/clientes?establishmentId=${establishmentId}&establishmentCode=${establishmentCode}&action=create`);
+          navigate(
+            `/admin/clientes?establishmentId=${establishmentId}&establishmentCode=${establishmentCode}&action=create`
+          );
         }}
       />
     );

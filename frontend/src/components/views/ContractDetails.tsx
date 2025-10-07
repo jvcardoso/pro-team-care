@@ -168,7 +168,9 @@ const ContractDetails: React.FC<ContractDetailsProps> = ({
       icon: <Calendar className="h-5 w-5 text-orange-600" />,
       label: "Vigência",
       value: contract.end_date
-        ? `${formatDate(contract.start_date)} - ${formatDate(contract.end_date)}`
+        ? `${formatDate(contract.start_date)} - ${formatDate(
+            contract.end_date
+          )}`
         : formatDate(contract.start_date),
     },
   ];

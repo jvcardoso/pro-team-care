@@ -63,8 +63,6 @@ const LoginPage = () => {
     }
   };
 
-
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -85,13 +83,18 @@ const LoginPage = () => {
 
         // Verificar se há uma URL para redirecionar
         const redirectUrl = sessionStorage.getItem("redirectAfterLogin");
-        console.log("🔄 Verificando redirectAfterLogin após login:", redirectUrl);
+        console.log(
+          "🔄 Verificando redirectAfterLogin após login:",
+          redirectUrl
+        );
         if (redirectUrl) {
           sessionStorage.removeItem("redirectAfterLogin");
           console.log("✅ Redirecionando para:", redirectUrl);
           navigate(redirectUrl, { replace: true });
         } else {
-          console.log("⚠️ Nenhum redirectAfterLogin encontrado, redirecionando para /admin");
+          console.log(
+            "⚠️ Nenhum redirectAfterLogin encontrado, redirecionando para /admin"
+          );
           navigate("/admin", { replace: true });
         }
       }
