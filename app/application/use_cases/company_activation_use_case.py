@@ -71,11 +71,15 @@ class CompanyActivationUseCase:
 
         # Verificar se já está ativa
         if company.access_status == "active":
-            raise ValueError("Empresa já está ativa. Não é necessário enviar email de ativação.")
+            raise ValueError(
+                "Empresa já está ativa. Não é necessário enviar email de ativação."
+            )
 
         # Verificar se contrato já foi aceito
         if company.access_status == "contract_signed":
-            raise ValueError("Contrato já foi aceito. Empresa aguardando criação de usuário.")
+            raise ValueError(
+                "Contrato já foi aceito. Empresa aguardando criação de usuário."
+            )
 
         # Gerar token de aceite de contrato (expira em 7 dias)
         contract_token = EmailService.generate_token()
@@ -163,7 +167,9 @@ class CompanyActivationUseCase:
         if token_expires_at_str:
             token_expires_at = datetime.fromisoformat(token_expires_at_str)
             if datetime.utcnow() > token_expires_at:
-                raise ValueError("Token de contrato expirado. Entre em contato com o suporte.")
+                raise ValueError(
+                    "Token de contrato expirado. Entre em contato com o suporte."
+                )
 
         # Verificar se já foi aceito
         if company.access_status == "contract_signed":
@@ -227,7 +233,9 @@ class CompanyActivationUseCase:
 
         if not email_sent:
             # Não falhar aqui, apenas registrar
-            print(f"AVISO: Email de criação de usuário não foi enviado para {accepted_by_email}")
+            print(
+                f"AVISO: Email de criação de usuário não foi enviado para {accepted_by_email}"
+            )
 
         return AcceptContractResponse(
             success=True,
@@ -484,11 +492,15 @@ class CompanyActivationUseCase:
             raise ValueError("Empresa já está ativa")
 
         if company.access_status == "contract_signed":
-            raise ValueError("Contrato já foi aceito. Empresa aguardando criação de usuário.")
+            raise ValueError(
+                "Contrato já foi aceito. Empresa aguardando criação de usuário."
+            )
 
         # Usar email anterior ou solicitar novo
         if not company.activation_sent_to:
-            raise ValueError("Nenhum email de ativação foi enviado anteriormente. Use o endpoint de envio inicial.")
+            raise ValueError(
+                "Nenhum email de ativação foi enviado anteriormente. Use o endpoint de envio inicial."
+            )
 
         # Reenviar para o mesmo email
         return await self.send_contract_email(

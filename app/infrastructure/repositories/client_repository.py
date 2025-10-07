@@ -955,9 +955,15 @@ class ClientRepository:
             status=client_entity.status,
             created_at=self._to_naive_datetime(client_entity.created_at),
             updated_at=self._to_naive_datetime(client_entity.updated_at),
-            name=client_entity.person.name if client_entity.person else f"Cliente {client_entity.id}",
+            name=(
+                client_entity.person.name
+                if client_entity.person
+                else f"Cliente {client_entity.id}"
+            ),
             tax_id=client_entity.person.tax_id if client_entity.person else "",
-            person_type=client_entity.person.person_type if client_entity.person else "PF",
+            person_type=(
+                client_entity.person.person_type if client_entity.person else "PF"
+            ),
             person=person_data,
             establishment_name=establishment_name or "",
             establishment_code=establishment_code or "",

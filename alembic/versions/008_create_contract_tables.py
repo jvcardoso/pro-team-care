@@ -5,9 +5,11 @@ Revises: f6c3a4d2e4dc
 Create Date: 2025-01-18 20:35:00.000000
 
 """
-from alembic import op
+
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "008_create_contract_tables"
@@ -62,10 +64,27 @@ def upgrade():
     )
 
     # Create indexes for services_catalog
-    op.create_index("services_catalog_category_idx", "services_catalog", ["service_category"], schema="master")
-    op.create_index("services_catalog_type_idx", "services_catalog", ["service_type"], schema="master")
-    op.create_index("services_catalog_status_idx", "services_catalog", ["status"], schema="master")
-    op.create_index("services_catalog_code_idx", "services_catalog", ["service_code"], schema="master")
+    op.create_index(
+        "services_catalog_category_idx",
+        "services_catalog",
+        ["service_category"],
+        schema="master",
+    )
+    op.create_index(
+        "services_catalog_type_idx",
+        "services_catalog",
+        ["service_type"],
+        schema="master",
+    )
+    op.create_index(
+        "services_catalog_status_idx", "services_catalog", ["status"], schema="master"
+    )
+    op.create_index(
+        "services_catalog_code_idx",
+        "services_catalog",
+        ["service_code"],
+        schema="master",
+    )
 
     # Create contracts table
     op.create_table(
@@ -110,10 +129,16 @@ def upgrade():
     )
 
     # Create indexes for contracts
-    op.create_index("contracts_client_id_idx", "contracts", ["client_id"], schema="master")
+    op.create_index(
+        "contracts_client_id_idx", "contracts", ["client_id"], schema="master"
+    )
     op.create_index("contracts_status_idx", "contracts", ["status"], schema="master")
-    op.create_index("contracts_start_date_idx", "contracts", ["start_date"], schema="master")
-    op.create_index("contracts_number_idx", "contracts", ["contract_number"], schema="master")
+    op.create_index(
+        "contracts_start_date_idx", "contracts", ["start_date"], schema="master"
+    )
+    op.create_index(
+        "contracts_number_idx", "contracts", ["contract_number"], schema="master"
+    )
 
     # Create contract_lives table
     op.create_table(
@@ -142,15 +167,34 @@ def upgrade():
         sa.ForeignKeyConstraint(["person_id"], ["master.people.id"]),
         sa.ForeignKeyConstraint(["created_by"], ["master.users.id"]),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("contract_id", "person_id", "start_date", name="contract_lives_unique_period"),
+        sa.UniqueConstraint(
+            "contract_id",
+            "person_id",
+            "start_date",
+            name="contract_lives_unique_period",
+        ),
         schema="master",
     )
 
     # Create indexes for contract_lives
-    op.create_index("contract_lives_contract_id_idx", "contract_lives", ["contract_id"], schema="master")
-    op.create_index("contract_lives_person_id_idx", "contract_lives", ["person_id"], schema="master")
-    op.create_index("contract_lives_status_idx", "contract_lives", ["status"], schema="master")
-    op.create_index("contract_lives_date_range_idx", "contract_lives", ["start_date", "end_date"], schema="master")
+    op.create_index(
+        "contract_lives_contract_id_idx",
+        "contract_lives",
+        ["contract_id"],
+        schema="master",
+    )
+    op.create_index(
+        "contract_lives_person_id_idx", "contract_lives", ["person_id"], schema="master"
+    )
+    op.create_index(
+        "contract_lives_status_idx", "contract_lives", ["status"], schema="master"
+    )
+    op.create_index(
+        "contract_lives_date_range_idx",
+        "contract_lives",
+        ["start_date", "end_date"],
+        schema="master",
+    )
 
     # Create contract_services table
     op.create_table(
@@ -176,15 +220,37 @@ def upgrade():
         sa.ForeignKeyConstraint(["service_id"], ["master.services_catalog.id"]),
         sa.ForeignKeyConstraint(["updated_by"], ["master.users.id"]),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("contract_id", "service_id", "start_date", name="contract_services_unique_period"),
+        sa.UniqueConstraint(
+            "contract_id",
+            "service_id",
+            "start_date",
+            name="contract_services_unique_period",
+        ),
         schema="master",
     )
 
     # Create indexes for contract_services
-    op.create_index("contract_services_contract_id_idx", "contract_services", ["contract_id"], schema="master")
-    op.create_index("contract_services_service_id_idx", "contract_services", ["service_id"], schema="master")
-    op.create_index("contract_services_status_idx", "contract_services", ["status"], schema="master")
-    op.create_index("contract_services_date_range_idx", "contract_services", ["start_date", "end_date"], schema="master")
+    op.create_index(
+        "contract_services_contract_id_idx",
+        "contract_services",
+        ["contract_id"],
+        schema="master",
+    )
+    op.create_index(
+        "contract_services_service_id_idx",
+        "contract_services",
+        ["service_id"],
+        schema="master",
+    )
+    op.create_index(
+        "contract_services_status_idx", "contract_services", ["status"], schema="master"
+    )
+    op.create_index(
+        "contract_services_date_range_idx",
+        "contract_services",
+        ["start_date", "end_date"],
+        schema="master",
+    )
 
     # Create contract_life_services table
     op.create_table(
@@ -221,15 +287,40 @@ def upgrade():
         sa.ForeignKeyConstraint(["authorized_by"], ["master.users.id"]),
         sa.ForeignKeyConstraint(["created_by"], ["master.users.id"]),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("contract_life_id", "service_id", "start_date", name="contract_life_services_unique_period"),
+        sa.UniqueConstraint(
+            "contract_life_id",
+            "service_id",
+            "start_date",
+            name="contract_life_services_unique_period",
+        ),
         schema="master",
     )
 
     # Create indexes for contract_life_services
-    op.create_index("contract_life_services_contract_life_id_idx", "contract_life_services", ["contract_life_id"], schema="master")
-    op.create_index("contract_life_services_service_id_idx", "contract_life_services", ["service_id"], schema="master")
-    op.create_index("contract_life_services_status_idx", "contract_life_services", ["status"], schema="master")
-    op.create_index("contract_life_services_authorized_idx", "contract_life_services", ["is_authorized"], schema="master")
+    op.create_index(
+        "contract_life_services_contract_life_id_idx",
+        "contract_life_services",
+        ["contract_life_id"],
+        schema="master",
+    )
+    op.create_index(
+        "contract_life_services_service_id_idx",
+        "contract_life_services",
+        ["service_id"],
+        schema="master",
+    )
+    op.create_index(
+        "contract_life_services_status_idx",
+        "contract_life_services",
+        ["status"],
+        schema="master",
+    )
+    op.create_index(
+        "contract_life_services_authorized_idx",
+        "contract_life_services",
+        ["is_authorized"],
+        schema="master",
+    )
 
     # Create service_executions table
     op.create_table(
@@ -277,14 +368,40 @@ def upgrade():
     )
 
     # Create indexes for service_executions
-    op.create_index("service_executions_contract_life_id_idx", "service_executions", ["contract_life_id"], schema="master")
-    op.create_index("service_executions_service_id_idx", "service_executions", ["service_id"], schema="master")
-    op.create_index("service_executions_professional_id_idx", "service_executions", ["professional_id"], schema="master")
-    op.create_index("service_executions_execution_date_idx", "service_executions", ["execution_date"], schema="master")
-    op.create_index("service_executions_status_idx", "service_executions", ["status"], schema="master")
+    op.create_index(
+        "service_executions_contract_life_id_idx",
+        "service_executions",
+        ["contract_life_id"],
+        schema="master",
+    )
+    op.create_index(
+        "service_executions_service_id_idx",
+        "service_executions",
+        ["service_id"],
+        schema="master",
+    )
+    op.create_index(
+        "service_executions_professional_id_idx",
+        "service_executions",
+        ["professional_id"],
+        schema="master",
+    )
+    op.create_index(
+        "service_executions_execution_date_idx",
+        "service_executions",
+        ["execution_date"],
+        schema="master",
+    )
+    op.create_index(
+        "service_executions_status_idx",
+        "service_executions",
+        ["status"],
+        schema="master",
+    )
 
     # Insert some example services in the catalog
-    op.execute("""
+    op.execute(
+        """
         INSERT INTO master.services_catalog (service_code, service_name, service_category, service_type, requires_prescription, home_visit_required, default_unit_value, description, created_at, updated_at) VALUES
         ('ENF001', 'Aplicação de Medicação EV', 'ENFERMAGEM', 'PROCEDIMENTO', true, true, 80.00, 'Aplicação de medicação endovenosa domiciliar', now(), now()),
         ('ENF002', 'Curativo Simples', 'ENFERMAGEM', 'PROCEDIMENTO', false, true, 45.00, 'Realização de curativo simples em domicílio', now(), now()),
@@ -294,7 +411,8 @@ def upgrade():
         ('EQP001', 'Locação Cama Hospitalar', 'EQUIPAMENTO', 'LOCAÇÃO', false, false, 300.00, 'Locação mensal de cama hospitalar', now(), now()),
         ('NUT001', 'Consulta Nutricional', 'NUTRIÇÃO', 'CONSULTA', false, true, 150.00, 'Consulta nutricional domiciliar', now(), now()),
         ('PSI001', 'Atendimento Psicológico', 'PSICOLOGIA', 'CONSULTA', false, true, 120.00, 'Sessão de psicoterapia domiciliar', now(), now());
-    """)
+    """
+    )
 
 
 def downgrade():

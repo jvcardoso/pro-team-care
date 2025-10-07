@@ -1,23 +1,24 @@
 """
 Serviço para Dashboard Administrativo com dados reais do sistema
 """
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
-from decimal import Decimal
 
-from sqlalchemy import func, select, and_, or_, desc, case
+from datetime import datetime, timedelta
+from decimal import Decimal
+from typing import Any, Dict, List, Optional
+
+from sqlalchemy import and_, case, desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.infrastructure.orm.models import (
-    Company,
-    Establishments,
     Client,
-    User,
+    Company,
     CompanySubscription,
-    SubscriptionPlan,
-    ProTeamCareInvoice,
+    Establishments,
     People,
+    ProTeamCareInvoice,
+    SubscriptionPlan,
+    User,
 )
 
 
@@ -37,7 +38,9 @@ class AdminDashboardService:
         revenue = await self._get_revenue_metrics()
 
         # 3. Empresas sem assinatura
-        companies_without_subscription = await self._get_companies_without_subscription()
+        companies_without_subscription = (
+            await self._get_companies_without_subscription()
+        )
 
         # 4. Faturas vencidas
         overdue_invoices = await self._get_overdue_invoices()
@@ -76,9 +79,7 @@ class AdminDashboardService:
         total_establishments = result.scalar() or 0
 
         # Total de clientes ativos
-        query_clients = select(func.count(Client.id)).where(
-            Client.deleted_at.is_(None)
-        )
+        query_clients = select(func.count(Client.id)).where(Client.deleted_at.is_(None))
         result = await self.db.execute(query_clients)
         total_clients = result.scalar() or 0
 
@@ -125,14 +126,11 @@ class AdminDashboardService:
         )
 
         # Faturas por status
-        query_invoices = (
-            select(
-                ProTeamCareInvoice.status,
-                func.count(ProTeamCareInvoice.id).label("count"),
-                func.sum(ProTeamCareInvoice.amount).label("total"),
-            )
-            .group_by(ProTeamCareInvoice.status)
-        )
+        query_invoices = select(
+            ProTeamCareInvoice.status,
+            func.count(ProTeamCareInvoice.id).label("count"),
+            func.sum(ProTeamCareInvoice.amount).label("total"),
+        ).group_by(ProTeamCareInvoice.status)
         result = await self.db.execute(query_invoices)
         invoices_by_status = {}
 
@@ -147,7 +145,9 @@ class AdminDashboardService:
             "active_subscriptions": active_subscriptions,
             "total_companies": total_companies,
             "conversion_rate": round(conversion_rate, 1),
-            "pending_invoices": invoices_by_status.get("pending", {"count": 0, "total": 0.0}),
+            "pending_invoices": invoices_by_status.get(
+                "pending", {"count": 0, "total": 0.0}
+            ),
             "paid_invoices": invoices_by_status.get("paid", {"count": 0, "total": 0.0}),
         }
 
@@ -172,11 +172,7 @@ class AdminDashboardService:
                     CompanySubscription.status == "active",
                 ),
             )
-            .where(
-                and_(
-                    CompanySubscription.id.is_(None), Company.deleted_at.is_(None)
-                )
-            )
+            .where(and_(CompanySubscription.id.is_(None), Company.deleted_at.is_(None)))
             .order_by(desc(Company.created_at))
             .limit(10)
         )
@@ -189,8 +185,12 @@ class AdminDashboardService:
                 {
                     "id": row.id,
                     "name": row.company_name,
-                    "created_at": row.created_at.isoformat() if row.created_at else None,
-                    "days_without_subscription": int(row.days_without_subscription or 0),
+                    "created_at": (
+                        row.created_at.isoformat() if row.created_at else None
+                    ),
+                    "days_without_subscription": int(
+                        row.days_without_subscription or 0
+                    ),
                 }
             )
 
@@ -296,9 +296,7 @@ class AdminDashboardService:
                     "icon": "📋",
                     "title": f"Assinatura criada para '{row.company_name}'",
                     "description": f"Company ID: {row.company_id}",
-                    "timestamp": row.created_at.isoformat()
-                    if row.created_at
-                    else None,
+                    "timestamp": row.created_at.isoformat() if row.created_at else None,
                 }
             )
 
@@ -323,9 +321,9 @@ class AdminDashboardService:
         new_companies_month = result.scalar() or 0
 
         # Novas assinaturas no mês
-        query_new_subscriptions = select(
-            func.count(CompanySubscription.id)
-        ).where(CompanySubscription.created_at >= thirty_days_ago)
+        query_new_subscriptions = select(func.count(CompanySubscription.id)).where(
+            CompanySubscription.created_at >= thirty_days_ago
+        )
         result = await self.db.execute(query_new_subscriptions)
         new_subscriptions_month = result.scalar() or 0
 

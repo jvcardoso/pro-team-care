@@ -2,23 +2,24 @@
 Repository para gestão de controle de limites automático
 """
 
-from typing import List, Optional, Dict, Any
-from datetime import datetime, date
-from sqlalchemy import select, and_, or_, func, text
-from sqlalchemy.orm import joinedload
+from datetime import date, datetime
+from typing import Any, Dict, List, Optional
+
+from sqlalchemy import and_, func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from app.infrastructure.orm.models import (
-    LimitsConfiguration,
-    ServiceUsageTracking,
-    LimitsViolation,
     AlertsConfiguration,
     AlertsLog,
-    MedicalAuthorization,
     Contract,
+    LimitsConfiguration,
+    LimitsViolation,
+    MedicalAuthorization,
+    People,
     ServicesCatalog,
+    ServiceUsageTracking,
     User,
-    People
 )
 
 
@@ -49,7 +50,7 @@ class LimitsRepository:
         entity_id: Optional[int] = None,
         is_active: Optional[bool] = None,
         page: int = 1,
-        size: int = 50
+        size: int = 50,
     ) -> tuple[List[LimitsConfiguration], int]:
         """Listar configurações de limite com filtros"""
         query = select(LimitsConfiguration)
@@ -82,7 +83,9 @@ class LimitsRepository:
 
         return configs, total
 
-    async def update_limits_config(self, config_id: int, **kwargs) -> Optional[LimitsConfiguration]:
+    async def update_limits_config(
+        self, config_id: int, **kwargs
+    ) -> Optional[LimitsConfiguration]:
         """Atualizar configuração de limite"""
         config = await self.get_limits_config(config_id)
         if not config:
@@ -105,7 +108,7 @@ class LimitsRepository:
         sessions_used: int,
         execution_date: date,
         executed_by: int,
-        notes: Optional[str] = None
+        notes: Optional[str] = None,
     ) -> ServiceUsageTracking:
         """Registrar uso de serviço"""
         usage = ServiceUsageTracking(
@@ -114,7 +117,7 @@ class LimitsRepository:
             execution_date=execution_date,
             executed_by=executed_by,
             notes=notes,
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
         )
         self.db_session.add(usage)
         await self.db_session.commit()
@@ -126,14 +129,16 @@ class LimitsRepository:
         authorization_id: Optional[int] = None,
         contract_id: Optional[int] = None,
         start_date: Optional[date] = None,
-        end_date: Optional[date] = None
+        end_date: Optional[date] = None,
     ) -> Dict[str, Any]:
         """Obter estatísticas de uso"""
         # Base query
         query = select(
-            func.count(ServiceUsageTracking.id).label('total_executions'),
-            func.sum(ServiceUsageTracking.sessions_used).label('total_sessions'),
-            func.avg(ServiceUsageTracking.sessions_used).label('avg_sessions_per_execution')
+            func.count(ServiceUsageTracking.id).label("total_executions"),
+            func.sum(ServiceUsageTracking.sessions_used).label("total_sessions"),
+            func.avg(ServiceUsageTracking.sessions_used).label(
+                "avg_sessions_per_execution"
+            ),
         )
 
         conditions = []
@@ -142,8 +147,13 @@ class LimitsRepository:
 
         if contract_id:
             # Join with authorization to filter by contract
-            query = query.join(MedicalAuthorization, ServiceUsageTracking.authorization_id == MedicalAuthorization.id)
-            query = query.join(Contract, MedicalAuthorization.contract_life_id == Contract.id)
+            query = query.join(
+                MedicalAuthorization,
+                ServiceUsageTracking.authorization_id == MedicalAuthorization.id,
+            )
+            query = query.join(
+                Contract, MedicalAuthorization.contract_life_id == Contract.id
+            )
             conditions.append(Contract.id == contract_id)
 
         if start_date:
@@ -158,9 +168,9 @@ class LimitsRepository:
         stats = result.first()
 
         return {
-            'total_executions': stats.total_executions or 0,
-            'total_sessions': stats.total_sessions or 0,
-            'avg_sessions_per_execution': float(stats.avg_sessions_per_execution or 0)
+            "total_executions": stats.total_executions or 0,
+            "total_sessions": stats.total_sessions or 0,
+            "avg_sessions_per_execution": float(stats.avg_sessions_per_execution or 0),
         }
 
     # === LIMITS VIOLATIONS ===
@@ -172,7 +182,7 @@ class LimitsRepository:
         attempted_value: float,
         limit_value: float,
         description: str,
-        detected_by: int
+        detected_by: int,
     ) -> LimitsViolation:
         """Registrar violação de limite"""
         violation = LimitsViolation(
@@ -182,7 +192,7 @@ class LimitsRepository:
             limit_value=limit_value,
             description=description,
             detected_by=detected_by,
-            detected_at=datetime.utcnow()
+            detected_at=datetime.utcnow(),
         )
         self.db_session.add(violation)
         await self.db_session.commit()
@@ -196,12 +206,12 @@ class LimitsRepository:
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
         page: int = 1,
-        size: int = 50
+        size: int = 50,
     ) -> tuple[List[LimitsViolation], int]:
         """Listar violações de limite"""
         query = select(LimitsViolation).options(
             joinedload(LimitsViolation.authorization),
-            joinedload(LimitsViolation.detected_by_user)
+            joinedload(LimitsViolation.detected_by_user),
         )
         count_query = select(func.count(LimitsViolation.id))
 
@@ -241,9 +251,7 @@ class LimitsRepository:
         return config
 
     async def get_active_alert_configs(
-        self,
-        alert_type: Optional[str] = None,
-        entity_type: Optional[str] = None
+        self, alert_type: Optional[str] = None, entity_type: Optional[str] = None
     ) -> List[AlertsConfiguration]:
         """Buscar configurações de alerta ativas"""
         query = select(AlertsConfiguration).where(AlertsConfiguration.is_active == True)
@@ -263,8 +271,8 @@ class LimitsRepository:
         alert_config_id: int,
         entity_id: int,
         message: str,
-        severity: str = 'medium',
-        data: Optional[Dict] = None
+        severity: str = "medium",
+        data: Optional[Dict] = None,
     ) -> AlertsLog:
         """Registrar log de alerta"""
         alert_log = AlertsLog(
@@ -273,7 +281,7 @@ class LimitsRepository:
             message=message,
             severity=severity,
             data=data,
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
         )
         self.db_session.add(alert_log)
         await self.db_session.commit()
@@ -287,12 +295,10 @@ class LimitsRepository:
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
         page: int = 1,
-        size: int = 50
+        size: int = 50,
     ) -> tuple[List[AlertsLog], int]:
         """Listar logs de alerta"""
-        query = select(AlertsLog).options(
-            joinedload(AlertsLog.alert_config)
-        )
+        query = select(AlertsLog).options(joinedload(AlertsLog.alert_config))
         count_query = select(func.count(AlertsLog.id))
 
         conditions = []
@@ -326,58 +332,55 @@ class LimitsRepository:
         self,
         authorization_id: int,
         sessions_to_use: int = 1,
-        execution_date: Optional[date] = None
+        execution_date: Optional[date] = None,
     ) -> Dict[str, Any]:
         """Verificar limites de autorização usando função PostgreSQL"""
         if execution_date is None:
             execution_date = date.today()
 
         # Usar função PostgreSQL para verificação completa
-        query = text("""
+        query = text(
+            """
             SELECT master.check_authorization_limits(:auth_id, :sessions, :exec_date)
-        """)
+        """
+        )
 
         result = await self.db_session.execute(
             query,
             {
                 "auth_id": authorization_id,
                 "sessions": sessions_to_use,
-                "exec_date": execution_date
-            }
+                "exec_date": execution_date,
+            },
         )
 
         return result.scalar()
 
     async def check_contract_limits(
-        self,
-        contract_id: int,
-        current_month: Optional[date] = None
+        self, contract_id: int, current_month: Optional[date] = None
     ) -> Dict[str, Any]:
         """Verificar limites de contrato usando função PostgreSQL"""
         if current_month is None:
             current_month = date.today().replace(day=1)
 
-        query = text("""
+        query = text(
+            """
             SELECT master.check_contract_limits(:contract_id, :month)
-        """)
+        """
+        )
 
         result = await self.db_session.execute(
-            query,
-            {
-                "contract_id": contract_id,
-                "month": current_month
-            }
+            query, {"contract_id": contract_id, "month": current_month}
         )
 
         return result.scalar()
 
     async def get_expiring_authorizations(
-        self,
-        days_ahead: int = 7,
-        company_id: Optional[int] = None
+        self, days_ahead: int = 7, company_id: Optional[int] = None
     ) -> List[Dict[str, Any]]:
         """Buscar autorizações que vencem em breve"""
-        query = text("""
+        query = text(
+            """
             SELECT
                 ma.id,
                 ma.authorization_code,
@@ -397,24 +400,23 @@ class LimitsRepository:
             AND ma.valid_until BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '%s days'
             %s
             ORDER BY ma.valid_until ASC
-        """ % (
-            days_ahead,
-            f"AND c.company_id = {company_id}" if company_id else ""
-        ))
+        """
+            % (days_ahead, f"AND c.company_id = {company_id}" if company_id else "")
+        )
 
         result = await self.db_session.execute(query)
         rows = result.fetchall()
 
         return [
             {
-                'authorization_id': row.id,
-                'authorization_code': row.authorization_code,
-                'valid_until': row.valid_until,
-                'sessions_remaining': row.sessions_remaining,
-                'service_name': row.service_name,
-                'patient_name': row.patient_name,
-                'contract_number': row.contract_number,
-                'days_until_expiry': row.days_until_expiry
+                "authorization_id": row.id,
+                "authorization_code": row.authorization_code,
+                "valid_until": row.valid_until,
+                "sessions_remaining": row.sessions_remaining,
+                "service_name": row.service_name,
+                "patient_name": row.patient_name,
+                "contract_number": row.contract_number,
+                "days_until_expiry": row.days_until_expiry,
             }
             for row in rows
         ]
@@ -423,7 +425,7 @@ class LimitsRepository:
         self,
         company_id: Optional[int] = None,
         start_date: Optional[date] = None,
-        end_date: Optional[date] = None
+        end_date: Optional[date] = None,
     ) -> Dict[str, Any]:
         """Obter dados para dashboard de limites"""
         if start_date is None:
@@ -435,25 +437,22 @@ class LimitsRepository:
         violations_query = select(func.count(LimitsViolation.id)).where(
             and_(
                 LimitsViolation.detected_at >= start_date,
-                LimitsViolation.detected_at <= end_date
+                LimitsViolation.detected_at <= end_date,
             )
         )
 
         usage_query = select(
             func.count(ServiceUsageTracking.id),
-            func.sum(ServiceUsageTracking.sessions_used)
+            func.sum(ServiceUsageTracking.sessions_used),
         ).where(
             and_(
                 ServiceUsageTracking.execution_date >= start_date,
-                ServiceUsageTracking.execution_date <= end_date
+                ServiceUsageTracking.execution_date <= end_date,
             )
         )
 
         alerts_query = select(func.count(AlertsLog.id)).where(
-            and_(
-                AlertsLog.created_at >= start_date,
-                AlertsLog.created_at <= end_date
-            )
+            and_(AlertsLog.created_at >= start_date, AlertsLog.created_at <= end_date)
         )
 
         violations_result = await self.db_session.execute(violations_query)
@@ -465,18 +464,11 @@ class LimitsRepository:
         alerts_count = alerts_result.scalar()
 
         return {
-            'period': {
-                'start_date': start_date,
-                'end_date': end_date
+            "period": {"start_date": start_date, "end_date": end_date},
+            "violations": {"total": violations_count or 0},
+            "usage": {
+                "total_executions": usage_stats[0] or 0,
+                "total_sessions": usage_stats[1] or 0,
             },
-            'violations': {
-                'total': violations_count or 0
-            },
-            'usage': {
-                'total_executions': usage_stats[0] or 0,
-                'total_sessions': usage_stats[1] or 0
-            },
-            'alerts': {
-                'total': alerts_count or 0
-            }
+            "alerts": {"total": alerts_count or 0},
         }

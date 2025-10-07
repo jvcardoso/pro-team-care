@@ -578,7 +578,7 @@ async def add_contract_life(
             ContractLivesValidator,
         )
         from app.infrastructure.orm.models import ContractLive, People
-        from app.infrastructure.services.tenant_context_service import TenantContext
+        from app.infrastructure.services.tenant_context_service import tenant_context
 
         # Inicializar validador
         validator = ContractLivesValidator(db)
@@ -601,16 +601,20 @@ async def add_contract_life(
 
         if not person:
             # Criar nova pessoa (PF)
-            # Obter company_id do contexto de tenant
-            tenant_context = TenantContext.get_context()
-            company_id = tenant_context.get("company_id", 1)  # Fallback para company_id=1
+            # Obter company_id do contexto de tenant ou do usuário atual
+            company_id = current_user.company_id if hasattr(current_user, 'company_id') else tenant_context.current_company_id
+            if not company_id:
+                raise HTTPException(
+                    status_code=http_status.HTTP_400_BAD_REQUEST,
+                    detail="User must be associated with a company to create contract lives"
+                )
 
             person = People(
                 name=life_data.person_name,
                 person_type="PF",
                 status="active",
                 company_id=company_id,
-                tax_id=f"TEMP{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",  # CPF temporário
+                tax_id=datetime.utcnow().strftime('%Y%m%d%H%M%S')[2:],  # CPF temporário (12 dígitos)
             )
             db.add(person)
             await db.flush()

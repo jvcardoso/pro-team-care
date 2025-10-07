@@ -32,7 +32,7 @@ async def create_contract_menus_simple():
                     "sort_order": 10,
                     "permission_name": "contracts_view",
                     "icon": "FileText",
-                    "description": "Gerenciar contratos home care"
+                    "description": "Gerenciar contratos home care",
                 },
                 {
                     "name": "Autorizações Médicas",
@@ -43,7 +43,7 @@ async def create_contract_menus_simple():
                     "sort_order": 20,
                     "permission_name": "medical_authorizations_view",
                     "icon": "ClipboardCheck",
-                    "description": "Gerenciar autorizações médicas"
+                    "description": "Gerenciar autorizações médicas",
                 },
                 {
                     "name": "Execuções de Serviço",
@@ -54,7 +54,7 @@ async def create_contract_menus_simple():
                     "sort_order": 30,
                     "permission_name": "service_executions_view",
                     "icon": "Activity",
-                    "description": "Registrar e acompanhar execuções de serviços"
+                    "description": "Registrar e acompanhar execuções de serviços",
                 },
                 {
                     "name": "Catálogo de Serviços",
@@ -65,7 +65,7 @@ async def create_contract_menus_simple():
                     "sort_order": 40,
                     "permission_name": "services_catalog_view",
                     "icon": "Package",
-                    "description": "Catálogo de serviços disponíveis"
+                    "description": "Catálogo de serviços disponíveis",
                 },
                 {
                     "name": "Relatórios de Contratos",
@@ -76,8 +76,8 @@ async def create_contract_menus_simple():
                     "sort_order": 50,
                     "permission_name": "contract_reports_view",
                     "icon": "BarChart3",
-                    "description": "Relatórios e análises de contratos"
-                }
+                    "description": "Relatórios e análises de contratos",
+                },
             ]
 
             added_count = 0
@@ -116,6 +116,7 @@ async def create_contract_menus_simple():
     except Exception as e:
         print(f"❌ Erro: {e}")
         import traceback
+
         traceback.print_exc()
 
 

@@ -5,13 +5,14 @@ Revises: 008_create_contract_tables
 Create Date: 2025-09-18 21:10:00.000000
 
 """
-from alembic import op
+
 import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '009_expand_services_catalog'
-down_revision = '008_create_contract_tables'
+revision = "009_expand_services_catalog"
+down_revision = "008_create_contract_tables"
 branch_labels = None
 depends_on = None
 
@@ -20,12 +21,15 @@ def upgrade():
     """Add comprehensive home care services catalog"""
 
     # First, update the check constraint to allow new categories
-    op.execute("""
+    op.execute(
+        """
         ALTER TABLE master.services_catalog
         DROP CONSTRAINT IF EXISTS services_catalog_category_check;
-    """)
+    """
+    )
 
-    op.execute("""
+    op.execute(
+        """
         ALTER TABLE master.services_catalog
         ADD CONSTRAINT services_catalog_category_check
         CHECK (service_category IN (
@@ -33,25 +37,31 @@ def upgrade():
             'NUTRIÇÃO', 'PSICOLOGIA', 'TERAPIA_OCUPACIONAL',
             'FONOAUDIOLOGIA', 'TERAPIA_RESPIRATORIA', 'CUIDADOS'
         ));
-    """)
+    """
+    )
 
     # Also update service_type constraint
-    op.execute("""
+    op.execute(
+        """
         ALTER TABLE master.services_catalog
         DROP CONSTRAINT IF EXISTS services_catalog_type_check;
-    """)
+    """
+    )
 
-    op.execute("""
+    op.execute(
+        """
         ALTER TABLE master.services_catalog
         ADD CONSTRAINT services_catalog_type_check
         CHECK (service_type IN (
             'PROCEDIMENTO', 'CONSULTA', 'EXAME', 'TERAPIA',
             'LOCAÇÃO', 'ASSISTENCIA'
         ));
-    """)
+    """
+    )
 
     # Add more specialized services to the catalog
-    op.execute("""
+    op.execute(
+        """
         INSERT INTO master.services_catalog (service_code, service_name, service_category, service_type, requires_prescription, home_visit_required, default_unit_value, description, created_at, updated_at) VALUES
         -- ENFERMAGEM ESPECIALIZADA
         ('ENF004', 'Sondagem Vesical', 'ENFERMAGEM', 'PROCEDIMENTO', true, true, 95.00, 'Passagem e manutenção de sonda vesical de demora', now(), now()),
@@ -115,14 +125,16 @@ def upgrade():
         ('APO001', 'Cuidador Técnico', 'CUIDADOS', 'ASSISTENCIA', false, true, 25.00, 'Hora de cuidador técnico em enfermagem', now(), now()),
         ('APO002', 'Cuidador Social', 'CUIDADOS', 'ASSISTENCIA', false, true, 20.00, 'Hora de cuidador social/acompanhante', now(), now()),
         ('APO003', 'Auxiliar de Enfermagem', 'ENFERMAGEM', 'ASSISTENCIA', false, true, 30.00, 'Hora de auxiliar de enfermagem', now(), now());
-    """)
+    """
+    )
 
 
 def downgrade():
     """Remove expanded services from catalog"""
 
     # Remove the expanded services
-    op.execute("""
+    op.execute(
+        """
         DELETE FROM master.services_catalog
         WHERE service_code IN (
             'ENF004', 'ENF005', 'ENF006', 'ENF007', 'ENF008', 'ENF009', 'ENF010',
@@ -136,4 +148,5 @@ def downgrade():
             'PAL001', 'PAL002', 'PAL003',
             'APO001', 'APO002', 'APO003'
         );
-    """)
+    """
+    )

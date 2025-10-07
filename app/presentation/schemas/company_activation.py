@@ -13,7 +13,6 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
-
 # =====================================================
 # REQUEST SCHEMAS
 # =====================================================
@@ -24,14 +23,16 @@ class SendContractEmailRequest(BaseModel):
 
     company_id: int = Field(..., description="ID da empresa")
     recipient_email: EmailStr = Field(..., description="Email do destinatário")
-    recipient_name: str = Field(..., min_length=3, max_length=200, description="Nome do destinatário")
+    recipient_name: str = Field(
+        ..., min_length=3, max_length=200, description="Nome do destinatário"
+    )
 
     class Config:
         json_schema_extra = {
             "example": {
                 "company_id": 1,
                 "recipient_email": "gestor@homecarebrasil.com.br",
-                "recipient_name": "João Silva"
+                "recipient_name": "João Silva",
             }
         }
 
@@ -39,10 +40,19 @@ class SendContractEmailRequest(BaseModel):
 class AcceptContractRequest(BaseModel):
     """Request para aceitar contrato de uso"""
 
-    contract_token: str = Field(..., min_length=32, description="Token de aceite do contrato")
-    accepted_by_name: str = Field(..., min_length=3, max_length=200, description="Nome de quem aceita")
+    contract_token: str = Field(
+        ..., min_length=32, description="Token de aceite do contrato"
+    )
+    accepted_by_name: str = Field(
+        ..., min_length=3, max_length=200, description="Nome de quem aceita"
+    )
     accepted_by_email: EmailStr = Field(..., description="Email de quem aceita")
-    accepted_by_cpf: Optional[str] = Field(None, min_length=11, max_length=11, description="CPF de quem aceita (apenas números)")
+    accepted_by_cpf: Optional[str] = Field(
+        None,
+        min_length=11,
+        max_length=11,
+        description="CPF de quem aceita (apenas números)",
+    )
     ip_address: str = Field(..., max_length=45, description="IP de origem (compliance)")
     terms_version: str = Field(default="1.0", description="Versão dos termos aceitos")
 
@@ -51,6 +61,7 @@ class AcceptContractRequest(BaseModel):
     def validate_ip(cls, v: str) -> str:
         """Valida formato básico de IP"""
         import ipaddress
+
         try:
             ipaddress.ip_address(v)
             return v
@@ -64,7 +75,7 @@ class AcceptContractRequest(BaseModel):
                 "accepted_by_name": "João Silva",
                 "accepted_by_email": "joao@homecarebrasil.com.br",
                 "ip_address": "192.168.1.100",
-                "terms_version": "1.0"
+                "terms_version": "1.0",
             }
         }
 
@@ -77,10 +88,7 @@ class SendUserCreationEmailRequest(BaseModel):
 
     class Config:
         json_schema_extra = {
-            "example": {
-                "company_id": 1,
-                "email": "gestor@homecarebrasil.com.br"
-            }
+            "example": {"company_id": 1, "email": "gestor@homecarebrasil.com.br"}
         }
 
 
@@ -90,11 +98,7 @@ class ResendActivationEmailRequest(BaseModel):
     company_id: int = Field(..., description="ID da empresa")
 
     class Config:
-        json_schema_extra = {
-            "example": {
-                "company_id": 1
-            }
-        }
+        json_schema_extra = {"example": {"company_id": 1}}
 
 
 class ValidateActivationTokenRequest(BaseModel):
@@ -103,11 +107,7 @@ class ValidateActivationTokenRequest(BaseModel):
     token: str = Field(..., min_length=32, description="Token de ativação")
 
     class Config:
-        json_schema_extra = {
-            "example": {
-                "token": "abc123def456ghi789jkl012mno345pq"
-            }
-        }
+        json_schema_extra = {"example": {"token": "abc123def456ghi789jkl012mno345pq"}}
 
 
 # =====================================================
@@ -121,11 +121,7 @@ class CompanyActivationStatus(BaseModel):
     company_id: int
     company_name: str
     access_status: Literal[
-        "pending_contract",
-        "contract_signed",
-        "pending_user",
-        "active",
-        "suspended"
+        "pending_contract", "contract_signed", "pending_user", "active", "suspended"
     ]
 
     # Contract info
@@ -166,7 +162,7 @@ class CompanyActivationStatus(BaseModel):
                 "activated_by_user_id": None,
                 "days_since_creation": 5,
                 "days_since_contract_sent": None,
-                "is_overdue": False
+                "is_overdue": False,
             }
         }
 
@@ -187,7 +183,7 @@ class SendEmailResponse(BaseModel):
                 "message": "Email de aceite de contrato enviado com sucesso",
                 "company_id": 1,
                 "sent_to": "gestor@homecarebrasil.com.br",
-                "sent_at": "2025-10-02T14:30:00"
+                "sent_at": "2025-10-02T14:30:00",
             }
         }
 
@@ -210,7 +206,7 @@ class AcceptContractResponse(BaseModel):
                 "company_id": 1,
                 "access_status": "contract_signed",
                 "contract_accepted_at": "2025-10-02T14:30:00",
-                "next_step": "Email de criação de usuário enviado. Verifique sua caixa de entrada."
+                "next_step": "Email de criação de usuário enviado. Verifique sua caixa de entrada.",
             }
         }
 
@@ -235,7 +231,7 @@ class ValidateTokenResponse(BaseModel):
                 "token_type": "contract",
                 "expires_at": "2025-10-09T14:30:00",
                 "expired": False,
-                "error_message": None
+                "error_message": None,
             }
         }
 
@@ -260,7 +256,7 @@ class CompanyActivationListResponse(BaseModel):
                 "pending_user": 1,
                 "active": 4,
                 "suspended": 0,
-                "companies": []
+                "companies": [],
             }
         }
 

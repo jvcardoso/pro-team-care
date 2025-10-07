@@ -2,14 +2,21 @@
 Serviço especializado para dashboard executivo de contratos home care
 """
 
-from datetime import datetime, date, timedelta
-from typing import Dict, List, Optional, Any
-from sqlalchemy import text, select, func
+from datetime import date, datetime, timedelta
+from typing import Any, Dict, List, Optional
+
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.infrastructure.orm.models import (
-    Contract, ServicesCatalog, MedicalAuthorization, ServiceExecution,
-    LimitsViolation, AlertsLog, ServiceUsageTracking, ContractLive
+    AlertsLog,
+    Contract,
+    ContractLive,
+    LimitsViolation,
+    MedicalAuthorization,
+    ServiceExecution,
+    ServicesCatalog,
+    ServiceUsageTracking,
 )
 
 
@@ -23,7 +30,7 @@ class ContractDashboardService:
         self,
         contract_id: int,
         start_date: Optional[date] = None,
-        end_date: Optional[date] = None
+        end_date: Optional[date] = None,
     ) -> Dict[str, Any]:
         """
         Dashboard executivo completo para um contrato específico
@@ -35,31 +42,37 @@ class ContractDashboardService:
 
         # Executar queries em paralelo
         contract_info = await self._get_contract_overview(contract_id)
-        financial_metrics = await self._get_financial_metrics(contract_id, start_date, end_date)
-        service_metrics = await self._get_service_metrics(contract_id, start_date, end_date)
-        quality_metrics = await self._get_quality_metrics(contract_id, start_date, end_date)
+        financial_metrics = await self._get_financial_metrics(
+            contract_id, start_date, end_date
+        )
+        service_metrics = await self._get_service_metrics(
+            contract_id, start_date, end_date
+        )
+        quality_metrics = await self._get_quality_metrics(
+            contract_id, start_date, end_date
+        )
         limits_status = await self._get_limits_status(contract_id)
-        alerts_summary = await self._get_alerts_summary(contract_id, start_date, end_date)
+        alerts_summary = await self._get_alerts_summary(
+            contract_id, start_date, end_date
+        )
         trends = await self._get_usage_trends(contract_id, start_date, end_date)
 
         return {
             "contract_info": contract_info,
-            "period": {
-                "start_date": start_date,
-                "end_date": end_date
-            },
+            "period": {"start_date": start_date, "end_date": end_date},
             "financial_metrics": financial_metrics,
             "service_metrics": service_metrics,
             "quality_metrics": quality_metrics,
             "limits_status": limits_status,
             "alerts_summary": alerts_summary,
             "usage_trends": trends,
-            "generated_at": datetime.utcnow()
+            "generated_at": datetime.utcnow(),
         }
 
     async def _get_contract_overview(self, contract_id: int) -> Dict[str, Any]:
         """Informações básicas do contrato"""
-        query = text("""
+        query = text(
+            """
             SELECT
                 c.id,
                 c.contract_number,
@@ -87,7 +100,8 @@ class ContractDashboardService:
                 AND se.status = 'completed'
             WHERE c.id = :contract_id
             GROUP BY c.id, cl.name, cl.trade_name
-        """)
+        """
+        )
 
         result = await self.db_session.execute(query, {"contract_id": contract_id})
         row = result.fetchone()
@@ -111,17 +125,15 @@ class ContractDashboardService:
             "monthly_value": float(row.monthly_value) if row.monthly_value else 0,
             "payment_frequency": row.payment_frequency,
             "authorizations_active": row.authorizations_count,
-            "executions_completed": row.executions_count
+            "executions_completed": row.executions_count,
         }
 
     async def _get_financial_metrics(
-        self,
-        contract_id: int,
-        start_date: date,
-        end_date: date
+        self, contract_id: int, start_date: date, end_date: date
     ) -> Dict[str, Any]:
         """Métricas financeiras do período"""
-        query = text("""
+        query = text(
+            """
             SELECT
                 COUNT(se.id) as total_executions,
                 SUM(se.billing_amount) as total_billed,
@@ -136,22 +148,32 @@ class ContractDashboardService:
             WHERE cl.contract_id = :contract_id
             AND se.execution_date BETWEEN :start_date AND :end_date
             AND se.status = 'completed'
-        """)
+        """
+        )
 
-        result = await self.db_session.execute(query, {
-            "contract_id": contract_id,
-            "start_date": start_date,
-            "end_date": end_date
-        })
+        result = await self.db_session.execute(
+            query,
+            {
+                "contract_id": contract_id,
+                "start_date": start_date,
+                "end_date": end_date,
+            },
+        )
         row = result.fetchone()
 
         # Calcular margem e eficiência
-        contract_query = text("""
+        contract_query = text(
+            """
             SELECT monthly_value FROM master.contracts WHERE id = :contract_id
-        """)
-        contract_result = await self.db_session.execute(contract_query, {"contract_id": contract_id})
+        """
+        )
+        contract_result = await self.db_session.execute(
+            contract_query, {"contract_id": contract_id}
+        )
         contract_row = contract_result.fetchone()
-        monthly_value = float(contract_row.monthly_value) if contract_row.monthly_value else 0
+        monthly_value = (
+            float(contract_row.monthly_value) if contract_row.monthly_value else 0
+        )
 
         total_billed = float(row.total_billed) if row.total_billed else 0
         approved_amount = float(row.approved_amount) if row.approved_amount else 0
@@ -162,23 +184,29 @@ class ContractDashboardService:
             "total_billed": total_billed,
             "approved_amount": approved_amount,
             "paid_amount": paid_amount,
-            "avg_execution_value": float(row.avg_execution_value) if row.avg_execution_value else 0,
+            "avg_execution_value": (
+                float(row.avg_execution_value) if row.avg_execution_value else 0
+            ),
             "pending_approvals": row.pending_approvals or 0,
             "rejected_billings": row.rejected_billings or 0,
             "contract_monthly_value": monthly_value,
-            "utilization_rate": (total_billed / monthly_value * 100) if monthly_value > 0 else 0,
-            "approval_rate": (approved_amount / total_billed * 100) if total_billed > 0 else 0,
-            "payment_rate": (paid_amount / approved_amount * 100) if approved_amount > 0 else 0
+            "utilization_rate": (
+                (total_billed / monthly_value * 100) if monthly_value > 0 else 0
+            ),
+            "approval_rate": (
+                (approved_amount / total_billed * 100) if total_billed > 0 else 0
+            ),
+            "payment_rate": (
+                (paid_amount / approved_amount * 100) if approved_amount > 0 else 0
+            ),
         }
 
     async def _get_service_metrics(
-        self,
-        contract_id: int,
-        start_date: date,
-        end_date: date
+        self, contract_id: int, start_date: date, end_date: date
     ) -> Dict[str, Any]:
         """Métricas de execução de serviços"""
-        query = text("""
+        query = text(
+            """
             SELECT
                 sc.service_category,
                 sc.service_name,
@@ -196,13 +224,17 @@ class ContractDashboardService:
             AND se.execution_date BETWEEN :start_date AND :end_date
             GROUP BY sc.service_category, sc.service_name
             ORDER BY executions_count DESC
-        """)
+        """
+        )
 
-        result = await self.db_session.execute(query, {
-            "contract_id": contract_id,
-            "start_date": start_date,
-            "end_date": end_date
-        })
+        result = await self.db_session.execute(
+            query,
+            {
+                "contract_id": contract_id,
+                "start_date": start_date,
+                "end_date": end_date,
+            },
+        )
 
         services = []
         total_executions = 0
@@ -216,10 +248,14 @@ class ContractDashboardService:
                 "service_name": row.service_name,
                 "executions_count": row.executions_count,
                 "total_sessions": row.total_sessions,
-                "avg_satisfaction": float(row.avg_satisfaction) if row.avg_satisfaction else 0,
+                "avg_satisfaction": (
+                    float(row.avg_satisfaction) if row.avg_satisfaction else 0
+                ),
                 "no_shows": row.no_shows,
                 "complications_count": row.complications_count,
-                "avg_duration_minutes": float(row.avg_duration_minutes) if row.avg_duration_minutes else 0
+                "avg_duration_minutes": (
+                    float(row.avg_duration_minutes) if row.avg_duration_minutes else 0
+                ),
             }
             services.append(service_data)
 
@@ -235,19 +271,25 @@ class ContractDashboardService:
                 "total_sessions": total_sessions,
                 "total_no_shows": total_no_shows,
                 "total_complications": total_complications,
-                "no_show_rate": (total_no_shows / total_executions * 100) if total_executions > 0 else 0,
-                "complication_rate": (total_complications / total_executions * 100) if total_executions > 0 else 0
-            }
+                "no_show_rate": (
+                    (total_no_shows / total_executions * 100)
+                    if total_executions > 0
+                    else 0
+                ),
+                "complication_rate": (
+                    (total_complications / total_executions * 100)
+                    if total_executions > 0
+                    else 0
+                ),
+            },
         }
 
     async def _get_quality_metrics(
-        self,
-        contract_id: int,
-        start_date: date,
-        end_date: date
+        self, contract_id: int, start_date: date, end_date: date
     ) -> Dict[str, Any]:
         """Métricas de qualidade e satisfação"""
-        query = text("""
+        query = text(
+            """
             SELECT
                 AVG(se.satisfaction_rating) as avg_satisfaction,
                 COUNT(CASE WHEN se.satisfaction_rating >= 4 THEN 1 END) as high_satisfaction,
@@ -280,13 +322,17 @@ class ContractDashboardService:
             WHERE cl.contract_id = :contract_id
             AND se.execution_date BETWEEN :start_date AND :end_date
             AND se.status = 'completed'
-        """)
+        """
+        )
 
-        result = await self.db_session.execute(query, {
-            "contract_id": contract_id,
-            "start_date": start_date,
-            "end_date": end_date
-        })
+        result = await self.db_session.execute(
+            query,
+            {
+                "contract_id": contract_id,
+                "start_date": start_date,
+                "end_date": end_date,
+            },
+        )
         row = result.fetchone()
 
         if not row:
@@ -303,18 +349,31 @@ class ContractDashboardService:
                 "total_ratings": total_ratings,
                 "high_satisfaction_count": high_satisfaction,
                 "low_satisfaction_count": low_satisfaction,
-                "high_satisfaction_rate": (high_satisfaction / total_ratings * 100) if total_ratings > 0 else 0,
-                "low_satisfaction_rate": (low_satisfaction / total_ratings * 100) if total_ratings > 0 else 0
+                "high_satisfaction_rate": (
+                    (high_satisfaction / total_ratings * 100)
+                    if total_ratings > 0
+                    else 0
+                ),
+                "low_satisfaction_rate": (
+                    (low_satisfaction / total_ratings * 100) if total_ratings > 0 else 0
+                ),
             },
             "operational": {
-                "avg_delay_minutes": float(row.avg_delay_minutes) if row.avg_delay_minutes else 0,
-                "avg_checklist_completion": float(row.avg_checklist_completion) if row.avg_checklist_completion else 0
-            }
+                "avg_delay_minutes": (
+                    float(row.avg_delay_minutes) if row.avg_delay_minutes else 0
+                ),
+                "avg_checklist_completion": (
+                    float(row.avg_checklist_completion)
+                    if row.avg_checklist_completion
+                    else 0
+                ),
+            },
         }
 
     async def _get_limits_status(self, contract_id: int) -> Dict[str, Any]:
         """Status atual dos limites do contrato"""
-        query = text("""
+        query = text(
+            """
             SELECT
                 COUNT(CASE WHEN lv.violation_type = 'sessions_exceeded' THEN 1 END) as sessions_violations,
                 COUNT(CASE WHEN lv.violation_type = 'financial_exceeded' THEN 1 END) as financial_violations,
@@ -325,7 +384,8 @@ class ContractDashboardService:
             JOIN master.contract_lives cl ON ma.contract_life_id = cl.id
             WHERE cl.contract_id = :contract_id
             AND lv.detected_at >= CURRENT_DATE - INTERVAL '30 days'
-        """)
+        """
+        )
 
         result = await self.db_session.execute(query, {"contract_id": contract_id})
         row = result.fetchone()
@@ -335,17 +395,19 @@ class ContractDashboardService:
             "financial_violations": row.financial_violations or 0,
             "frequency_violations": row.frequency_violations or 0,
             "total_violations": row.total_violations or 0,
-            "status": "healthy" if (row.total_violations or 0) == 0 else "warning" if (row.total_violations or 0) < 5 else "critical"
+            "status": (
+                "healthy"
+                if (row.total_violations or 0) == 0
+                else "warning" if (row.total_violations or 0) < 5 else "critical"
+            ),
         }
 
     async def _get_alerts_summary(
-        self,
-        contract_id: int,
-        start_date: date,
-        end_date: date
+        self, contract_id: int, start_date: date, end_date: date
     ) -> Dict[str, Any]:
         """Resumo de alertas do período"""
-        query = text("""
+        query = text(
+            """
             SELECT
                 al.severity,
                 COUNT(*) as count
@@ -353,31 +415,30 @@ class ContractDashboardService:
             WHERE al.entity_id = :contract_id
             AND al.created_at BETWEEN :start_date AND :end_date
             GROUP BY al.severity
-        """)
+        """
+        )
 
-        result = await self.db_session.execute(query, {
-            "contract_id": contract_id,
-            "start_date": start_date,
-            "end_date": end_date
-        })
+        result = await self.db_session.execute(
+            query,
+            {
+                "contract_id": contract_id,
+                "start_date": start_date,
+                "end_date": end_date,
+            },
+        )
 
         alerts = {"low": 0, "medium": 0, "high": 0, "critical": 0}
         for row in result.fetchall():
             alerts[row.severity] = row.count
 
-        return {
-            "by_severity": alerts,
-            "total": sum(alerts.values())
-        }
+        return {"by_severity": alerts, "total": sum(alerts.values())}
 
     async def _get_usage_trends(
-        self,
-        contract_id: int,
-        start_date: date,
-        end_date: date
+        self, contract_id: int, start_date: date, end_date: date
     ) -> Dict[str, Any]:
         """Tendências de uso ao longo do tempo"""
-        query = text("""
+        query = text(
+            """
             SELECT
                 DATE(se.execution_date) as execution_day,
                 COUNT(se.id) as executions_count,
@@ -391,26 +452,32 @@ class ContractDashboardService:
             AND se.status = 'completed'
             GROUP BY DATE(se.execution_date)
             ORDER BY execution_day
-        """)
+        """
+        )
 
-        result = await self.db_session.execute(query, {
-            "contract_id": contract_id,
-            "start_date": start_date,
-            "end_date": end_date
-        })
+        result = await self.db_session.execute(
+            query,
+            {
+                "contract_id": contract_id,
+                "start_date": start_date,
+                "end_date": end_date,
+            },
+        )
 
         daily_data = []
         for row in result.fetchall():
-            daily_data.append({
-                "date": row.execution_day,
-                "executions": row.executions_count,
-                "sessions": row.sessions_count,
-                "billing": float(row.daily_billing) if row.daily_billing else 0
-            })
+            daily_data.append(
+                {
+                    "date": row.execution_day,
+                    "executions": row.executions_count,
+                    "sessions": row.sessions_count,
+                    "billing": float(row.daily_billing) if row.daily_billing else 0,
+                }
+            )
 
         return {
             "daily_data": daily_data,
-            "trend_analysis": self._calculate_trends(daily_data)
+            "trend_analysis": self._calculate_trends(daily_data),
         }
 
     def _calculate_trends(self, daily_data: List[Dict]) -> Dict[str, Any]:
@@ -419,17 +486,33 @@ class ContractDashboardService:
             return {"trend": "insufficient_data"}
 
         # Calcular tendência simples para execuções
-        first_half = daily_data[:len(daily_data)//2]
-        second_half = daily_data[len(daily_data)//2:]
+        first_half = daily_data[: len(daily_data) // 2]
+        second_half = daily_data[len(daily_data) // 2 :]
 
-        avg_first_executions = sum(d['executions'] for d in first_half) / len(first_half)
-        avg_second_executions = sum(d['executions'] for d in second_half) / len(second_half)
+        avg_first_executions = sum(d["executions"] for d in first_half) / len(
+            first_half
+        )
+        avg_second_executions = sum(d["executions"] for d in second_half) / len(
+            second_half
+        )
 
-        execution_trend = "increasing" if avg_second_executions > avg_first_executions else "decreasing"
+        execution_trend = (
+            "increasing"
+            if avg_second_executions > avg_first_executions
+            else "decreasing"
+        )
 
         return {
             "execution_trend": execution_trend,
             "avg_daily_executions_first_half": avg_first_executions,
             "avg_daily_executions_second_half": avg_second_executions,
-            "trend_percentage": ((avg_second_executions - avg_first_executions) / avg_first_executions * 100) if avg_first_executions > 0 else 0
+            "trend_percentage": (
+                (
+                    (avg_second_executions - avg_first_executions)
+                    / avg_first_executions
+                    * 100
+                )
+                if avg_first_executions > 0
+                else 0
+            ),
         }

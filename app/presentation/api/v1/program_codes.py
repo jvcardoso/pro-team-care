@@ -8,19 +8,19 @@ import time
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select, func, or_, text
+from sqlalchemy import func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.infrastructure.auth import get_current_user
 from app.infrastructure.database import get_db
 from app.infrastructure.orm.models import User
 from app.presentation.schemas.program_codes import (
+    ProgramCodeResponse,
+    ProgramCodeStatsResponse,
+    ProgramCodeUsageRequest,
     QuickSearchRequest,
     QuickSearchResponse,
     QuickSearchResult,
-    ProgramCodeUsageRequest,
-    ProgramCodeStatsResponse,
-    ProgramCodeResponse,
 )
 
 router = APIRouter(prefix="/program-codes", tags=["Program Codes"])
@@ -200,7 +200,11 @@ async def quick_search(
     elapsed_ms = (time.time() - start_time) * 1000
 
     # Se encontrou apenas 1 resultado com score alto, pode executar direto
-    execution_type = "direct" if len(results) == 1 and results[0].relevance_score >= 0.9 else "select"
+    execution_type = (
+        "direct"
+        if len(results) == 1 and results[0].relevance_score >= 0.9
+        else "select"
+    )
 
     return QuickSearchResponse(
         query=request.query,

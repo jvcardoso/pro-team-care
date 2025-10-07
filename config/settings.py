@@ -215,9 +215,7 @@ class Settings(BaseSettings):
     # =================================
 
     # PagBank API Configuration
-    PAGBANK_TOKEN: str = Field(
-        default_factory=lambda: os.getenv("PAGBANK_TOKEN", "")
-    )
+    PAGBANK_TOKEN: str = Field(default_factory=lambda: os.getenv("PAGBANK_TOKEN", ""))
     PAGBANK_WEBHOOK_SECRET: str = Field(
         default_factory=lambda: os.getenv("PAGBANK_WEBHOOK_SECRET", "")
     )
@@ -238,7 +236,9 @@ class Settings(BaseSettings):
         """Valida ambiente PagBank"""
         valid_environments = ["sandbox", "production"]
         if v.lower() not in valid_environments:
-            raise ValueError(f"PAGBANK_ENVIRONMENT deve ser um de: {valid_environments}")
+            raise ValueError(
+                f"PAGBANK_ENVIRONMENT deve ser um de: {valid_environments}"
+            )
         return v.lower()
 
     # =================================

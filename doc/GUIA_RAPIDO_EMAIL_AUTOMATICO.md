@@ -97,22 +97,22 @@ Depois pode enviar manualmente:
 
 ## ❓ FAQ
 
-**P: E se eu esquecer de cadastrar email na empresa?**  
+**P: E se eu esquecer de cadastrar email na empresa?**
 R: Sem problemas! Ao criar a assinatura, você pode informar o email manualmente.
 
-**P: Posso desabilitar o envio automático?**  
+**P: Posso desabilitar o envio automático?**
 R: Sim! Desmarque "Enviar email de ativação" ao criar assinatura.
 
-**P: O que acontece se o email falhar?**  
+**P: O que acontece se o email falhar?**
 R: A assinatura é criada normalmente. Você recebe um aviso e pode reenviar depois.
 
-**P: Posso enviar para mais de um email?**  
+**P: Posso enviar para mais de um email?**
 R: Atualmente envia para 1 email. Para enviar para outros, use a aba "Ativação" depois.
 
-**P: Como sei se o email foi enviado?**  
+**P: Como sei se o email foi enviado?**
 R: Sistema mostra notificação "✅ Email enviado para X". Também fica registrado nos logs.
 
 ---
 
-**Data**: 02/10/2025  
+**Data**: 02/10/2025
 **Versão**: 1.0

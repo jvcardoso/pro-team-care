@@ -32,11 +32,15 @@ async def check_menu_structure():
 
             print("📋 Estrutura da tabela master.menus:")
             for col in columns:
-                print(f"   - {col.column_name}: {col.data_type} (Nullable: {col.is_nullable})")
+                print(
+                    f"   - {col.column_name}: {col.data_type} (Nullable: {col.is_nullable})"
+                )
 
             # Check if menu_type exists
-            menu_type_exists = any(col.column_name == 'menu_type' for col in columns)
-            print(f"\n🔍 Campo 'menu_type' existe: {'✅ SIM' if menu_type_exists else '❌ NÃO'}")
+            menu_type_exists = any(col.column_name == "menu_type" for col in columns)
+            print(
+                f"\n🔍 Campo 'menu_type' existe: {'✅ SIM' if menu_type_exists else '❌ NÃO'}"
+            )
 
             # Show some existing menus
             print("\n📝 Alguns menus existentes:")
@@ -47,13 +51,16 @@ async def check_menu_structure():
             sample_menus = sample_result.fetchall()
 
             for menu in sample_menus:
-                print(f"   - ID {menu.id}: {menu.name} (slug: {menu.slug}, level: {menu.level})")
+                print(
+                    f"   - ID {menu.id}: {menu.name} (slug: {menu.slug}, level: {menu.level})"
+                )
 
             break
 
     except Exception as e:
         print(f"❌ Erro: {e}")
         import traceback
+
         traceback.print_exc()
 
 

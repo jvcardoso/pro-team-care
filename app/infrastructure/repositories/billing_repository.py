@@ -1,19 +1,19 @@
-from typing import Any, Dict, List, Optional
 from datetime import date, datetime, timedelta
 from decimal import Decimal
+from typing import Any, Dict, List, Optional
 
 import structlog
-from sqlalchemy import Integer, and_, func, or_, select, text, update, desc
+from sqlalchemy import Integer, and_, desc, func, or_, select, text, update
 from sqlalchemy.orm import joinedload, selectinload
 
 from app.infrastructure.orm.models import (
+    BillingAuditLog,
+    Client,
     Contract,
     ContractBillingSchedule,
     ContractInvoice,
-    PaymentReceipt,
-    BillingAuditLog,
     PagBankTransaction,
-    Client,
+    PaymentReceipt,
     People,
 )
 from app.infrastructure.services.tenant_context_service import get_tenant_context
@@ -37,7 +37,9 @@ class BillingRepository:
     # BILLING SCHEDULE METHODS
     # ==========================================
 
-    async def create_billing_schedule(self, schedule_data: Dict[str, Any]) -> ContractBillingSchedule:
+    async def create_billing_schedule(
+        self, schedule_data: Dict[str, Any]
+    ) -> ContractBillingSchedule:
         """Create a new billing schedule"""
         try:
             schedule = ContractBillingSchedule(
@@ -63,10 +65,16 @@ class BillingRepository:
             return schedule
 
         except Exception as e:
-            logger.error("Error creating billing schedule", error=str(e), schedule_data=schedule_data)
+            logger.error(
+                "Error creating billing schedule",
+                error=str(e),
+                schedule_data=schedule_data,
+            )
             raise
 
-    async def get_billing_schedule_by_id(self, schedule_id: int) -> Optional[ContractBillingSchedule]:
+    async def get_billing_schedule_by_id(
+        self, schedule_id: int
+    ) -> Optional[ContractBillingSchedule]:
         """Get billing schedule by ID"""
         try:
             query = (
@@ -79,17 +87,25 @@ class BillingRepository:
             schedule = result.unique().scalar_one_or_none()
 
             if schedule:
-                logger.info("Billing schedule retrieved successfully", schedule_id=schedule_id)
+                logger.info(
+                    "Billing schedule retrieved successfully", schedule_id=schedule_id
+                )
             else:
                 logger.warning("Billing schedule not found", schedule_id=schedule_id)
 
             return schedule
 
         except Exception as e:
-            logger.error("Error retrieving billing schedule", error=str(e), schedule_id=schedule_id)
+            logger.error(
+                "Error retrieving billing schedule",
+                error=str(e),
+                schedule_id=schedule_id,
+            )
             raise
 
-    async def get_billing_schedule_by_contract(self, contract_id: int) -> Optional[ContractBillingSchedule]:
+    async def get_billing_schedule_by_contract(
+        self, contract_id: int
+    ) -> Optional[ContractBillingSchedule]:
         """Get billing schedule by contract ID"""
         try:
             query = (
@@ -104,7 +120,11 @@ class BillingRepository:
             return schedule
 
         except Exception as e:
-            logger.error("Error retrieving billing schedule by contract", error=str(e), contract_id=contract_id)
+            logger.error(
+                "Error retrieving billing schedule by contract",
+                error=str(e),
+                contract_id=contract_id,
+            )
             raise
 
     async def list_billing_schedules(
@@ -134,7 +154,9 @@ class BillingRepository:
             if is_active is not None:
                 filters.append(ContractBillingSchedule.is_active == is_active)
             if next_billing_before:
-                filters.append(ContractBillingSchedule.next_billing_date <= next_billing_before)
+                filters.append(
+                    ContractBillingSchedule.next_billing_date <= next_billing_before
+                )
 
             if filters:
                 base_query = base_query.where(and_(*filters))
@@ -148,7 +170,11 @@ class BillingRepository:
             total = count_result.scalar()
 
             # Get paginated results
-            query = base_query.order_by(ContractBillingSchedule.next_billing_date).offset(offset).limit(size)
+            query = (
+                base_query.order_by(ContractBillingSchedule.next_billing_date)
+                .offset(offset)
+                .limit(size)
+            )
             result = await self.db.execute(query)
             schedules = result.unique().scalars().all()
 
@@ -171,7 +197,9 @@ class BillingRepository:
             logger.error("Error listing billing schedules", error=str(e))
             raise
 
-    async def update_billing_schedule(self, schedule_id: int, update_data: Dict[str, Any]) -> Optional[ContractBillingSchedule]:
+    async def update_billing_schedule(
+        self, schedule_id: int, update_data: Dict[str, Any]
+    ) -> Optional[ContractBillingSchedule]:
         """Update billing schedule"""
         try:
             update_data_with_timestamp = update_data.copy()
@@ -189,11 +217,15 @@ class BillingRepository:
             # Get updated schedule
             schedule = await self.get_billing_schedule_by_id(schedule_id)
 
-            logger.info("Billing schedule updated successfully", schedule_id=schedule_id)
+            logger.info(
+                "Billing schedule updated successfully", schedule_id=schedule_id
+            )
             return schedule
 
         except Exception as e:
-            logger.error("Error updating billing schedule", error=str(e), schedule_id=schedule_id)
+            logger.error(
+                "Error updating billing schedule", error=str(e), schedule_id=schedule_id
+            )
             raise
 
     # ==========================================
@@ -210,8 +242,8 @@ class BillingRepository:
             query = select(func.count(ContractInvoice.id)).where(
                 and_(
                     ContractInvoice.contract_id == contract_id,
-                    func.extract('year', ContractInvoice.created_at) == now.year,
-                    func.extract('month', ContractInvoice.created_at) == now.month
+                    func.extract("year", ContractInvoice.created_at) == now.year,
+                    func.extract("month", ContractInvoice.created_at) == now.month,
                 )
             )
             result = await self.db.execute(query)
@@ -230,7 +262,9 @@ class BillingRepository:
             return invoice_number
 
         except Exception as e:
-            logger.error("Error generating invoice number", error=str(e), contract_id=contract_id)
+            logger.error(
+                "Error generating invoice number", error=str(e), contract_id=contract_id
+            )
             raise
 
     async def create_invoice(self, invoice_data: Dict[str, Any]) -> ContractInvoice:
@@ -239,13 +273,17 @@ class BillingRepository:
             # Generate invoice number if not provided
             invoice_number = invoice_data.get("invoice_number")
             if not invoice_number:
-                invoice_number = await self._generate_invoice_number(invoice_data["contract_id"])
+                invoice_number = await self._generate_invoice_number(
+                    invoice_data["contract_id"]
+                )
 
             # Calculate total amount if not provided
             total_amount = invoice_data.get("total_amount")
             if not total_amount:
                 base_amount = invoice_data.get("base_amount", Decimal("0"))
-                additional_services = invoice_data.get("additional_services_amount", Decimal("0"))
+                additional_services = invoice_data.get(
+                    "additional_services_amount", Decimal("0")
+                )
                 discounts = invoice_data.get("discounts", Decimal("0"))
                 taxes = invoice_data.get("taxes", Decimal("0"))
                 total_amount = base_amount + additional_services + taxes - discounts
@@ -257,7 +295,9 @@ class BillingRepository:
                 billing_period_end=invoice_data["billing_period_end"],
                 lives_count=invoice_data["lives_count"],
                 base_amount=invoice_data["base_amount"],
-                additional_services_amount=invoice_data.get("additional_services_amount", Decimal("0")),
+                additional_services_amount=invoice_data.get(
+                    "additional_services_amount", Decimal("0")
+                ),
                 discounts=invoice_data.get("discounts", Decimal("0")),
                 taxes=invoice_data.get("taxes", Decimal("0")),
                 total_amount=total_amount,
@@ -286,7 +326,9 @@ class BillingRepository:
             return invoice
 
         except Exception as e:
-            logger.error("Error creating invoice", error=str(e), invoice_data=invoice_data)
+            logger.error(
+                "Error creating invoice", error=str(e), invoice_data=invoice_data
+            )
             raise
 
     async def get_invoice_by_id(self, invoice_id: int) -> Optional[ContractInvoice]:
@@ -295,7 +337,9 @@ class BillingRepository:
             query = (
                 select(ContractInvoice)
                 .options(
-                    joinedload(ContractInvoice.contract).joinedload(Contract.client).joinedload(Client.person),
+                    joinedload(ContractInvoice.contract)
+                    .joinedload(Contract.client)
+                    .joinedload(Client.person),
                     selectinload(ContractInvoice.receipts),
                 )
                 .where(ContractInvoice.id == invoice_id)
@@ -312,7 +356,9 @@ class BillingRepository:
             return invoice
 
         except Exception as e:
-            logger.error("Error retrieving invoice", error=str(e), invoice_id=invoice_id)
+            logger.error(
+                "Error retrieving invoice", error=str(e), invoice_id=invoice_id
+            )
             raise
 
     async def list_invoices(
@@ -331,7 +377,9 @@ class BillingRepository:
 
             # Base query
             base_query = select(ContractInvoice).options(
-                joinedload(ContractInvoice.contract).joinedload(Contract.client).joinedload(Client.person)
+                joinedload(ContractInvoice.contract)
+                .joinedload(Contract.client)
+                .joinedload(Client.person)
             )
 
             # Apply filters
@@ -348,7 +396,7 @@ class BillingRepository:
                 filters.append(
                     and_(
                         ContractInvoice.due_date < date.today(),
-                        ContractInvoice.status.in_(["pendente", "enviada"])
+                        ContractInvoice.status.in_(["pendente", "enviada"]),
                     )
                 )
 
@@ -364,7 +412,11 @@ class BillingRepository:
             total = count_result.scalar()
 
             # Get paginated results
-            query = base_query.order_by(desc(ContractInvoice.created_at)).offset(offset).limit(size)
+            query = (
+                base_query.order_by(desc(ContractInvoice.created_at))
+                .offset(offset)
+                .limit(size)
+            )
             result = await self.db.execute(query)
             invoices = result.unique().scalars().all()
 
@@ -387,7 +439,9 @@ class BillingRepository:
             logger.error("Error listing invoices", error=str(e))
             raise
 
-    async def update_invoice(self, invoice_id: int, update_data: Dict[str, Any]) -> Optional[ContractInvoice]:
+    async def update_invoice(
+        self, invoice_id: int, update_data: Dict[str, Any]
+    ) -> Optional[ContractInvoice]:
         """Update invoice"""
         try:
             update_data_with_timestamp = update_data.copy()
@@ -412,7 +466,9 @@ class BillingRepository:
             logger.error("Error updating invoice", error=str(e), invoice_id=invoice_id)
             raise
 
-    async def update_invoice_status(self, invoice_id: int, status: str, **kwargs) -> Optional[ContractInvoice]:
+    async def update_invoice_status(
+        self, invoice_id: int, status: str, **kwargs
+    ) -> Optional[ContractInvoice]:
         """Update invoice status with optional payment details"""
         try:
             update_data = {"status": status, "updated_at": datetime.utcnow()}
@@ -439,18 +495,26 @@ class BillingRepository:
             # Get updated invoice
             invoice = await self.get_invoice_by_id(invoice_id)
 
-            logger.info("Invoice status updated successfully", invoice_id=invoice_id, status=status)
+            logger.info(
+                "Invoice status updated successfully",
+                invoice_id=invoice_id,
+                status=status,
+            )
             return invoice
 
         except Exception as e:
-            logger.error("Error updating invoice status", error=str(e), invoice_id=invoice_id)
+            logger.error(
+                "Error updating invoice status", error=str(e), invoice_id=invoice_id
+            )
             raise
 
     # ==========================================
     # PAYMENT RECEIPT METHODS
     # ==========================================
 
-    async def create_payment_receipt(self, receipt_data: Dict[str, Any]) -> PaymentReceipt:
+    async def create_payment_receipt(
+        self, receipt_data: Dict[str, Any]
+    ) -> PaymentReceipt:
         """Create a new payment receipt"""
         try:
             receipt = PaymentReceipt(
@@ -477,7 +541,11 @@ class BillingRepository:
             return receipt
 
         except Exception as e:
-            logger.error("Error creating payment receipt", error=str(e), receipt_data=receipt_data)
+            logger.error(
+                "Error creating payment receipt",
+                error=str(e),
+                receipt_data=receipt_data,
+            )
             raise
 
     async def get_receipt_by_id(self, receipt_id: int) -> Optional[PaymentReceipt]:
@@ -493,14 +561,18 @@ class BillingRepository:
             receipt = result.unique().scalar_one_or_none()
 
             if receipt:
-                logger.info("Payment receipt retrieved successfully", receipt_id=receipt_id)
+                logger.info(
+                    "Payment receipt retrieved successfully", receipt_id=receipt_id
+                )
             else:
                 logger.warning("Payment receipt not found", receipt_id=receipt_id)
 
             return receipt
 
         except Exception as e:
-            logger.error("Error retrieving payment receipt", error=str(e), receipt_id=receipt_id)
+            logger.error(
+                "Error retrieving payment receipt", error=str(e), receipt_id=receipt_id
+            )
             raise
 
     async def list_payment_receipts(
@@ -527,7 +599,9 @@ class BillingRepository:
             if invoice_id:
                 filters.append(PaymentReceipt.invoice_id == invoice_id)
             if verification_status:
-                filters.append(PaymentReceipt.verification_status == verification_status)
+                filters.append(
+                    PaymentReceipt.verification_status == verification_status
+                )
             if uploaded_by:
                 filters.append(PaymentReceipt.uploaded_by == uploaded_by)
             if start_date:
@@ -547,7 +621,11 @@ class BillingRepository:
             total = count_result.scalar()
 
             # Get paginated results
-            query = base_query.order_by(desc(PaymentReceipt.upload_date)).offset(offset).limit(size)
+            query = (
+                base_query.order_by(desc(PaymentReceipt.upload_date))
+                .offset(offset)
+                .limit(size)
+            )
             result = await self.db.execute(query)
             receipts = result.unique().scalars().all()
 
@@ -575,7 +653,7 @@ class BillingRepository:
         receipt_id: int,
         verification_status: str,
         verified_by: int,
-        notes: Optional[str] = None
+        notes: Optional[str] = None,
     ) -> Optional[PaymentReceipt]:
         """Update receipt verification status"""
         try:
@@ -600,31 +678,47 @@ class BillingRepository:
             # Get updated receipt
             receipt = await self.get_receipt_by_id(receipt_id)
 
-            logger.info("Receipt verification updated successfully", receipt_id=receipt_id, status=verification_status)
+            logger.info(
+                "Receipt verification updated successfully",
+                receipt_id=receipt_id,
+                status=verification_status,
+            )
             return receipt
 
         except Exception as e:
-            logger.error("Error updating receipt verification", error=str(e), receipt_id=receipt_id)
+            logger.error(
+                "Error updating receipt verification",
+                error=str(e),
+                receipt_id=receipt_id,
+            )
             raise
 
     # ==========================================
     # DASHBOARD AND ANALYTICS METHODS
     # ==========================================
 
-    async def get_billing_dashboard_metrics(self, company_id: Optional[int] = None) -> Dict[str, Any]:
+    async def get_billing_dashboard_metrics(
+        self, company_id: Optional[int] = None
+    ) -> Dict[str, Any]:
         """Get billing dashboard metrics"""
         try:
             base_query = select(ContractInvoice)
 
             if company_id:
-                base_query = base_query.join(Contract).join(Client).where(Client.company_id == company_id)
+                base_query = (
+                    base_query.join(Contract)
+                    .join(Client)
+                    .where(Client.company_id == company_id)
+                )
 
             # Total pending invoices
-            pending_query = base_query.where(ContractInvoice.status.in_(["pendente", "enviada"]))
+            pending_query = base_query.where(
+                ContractInvoice.status.in_(["pendente", "enviada"])
+            )
             pending_result = await self.db.execute(
                 select(
                     func.count(ContractInvoice.id),
-                    func.coalesce(func.sum(ContractInvoice.total_amount), 0)
+                    func.coalesce(func.sum(ContractInvoice.total_amount), 0),
                 ).select_from(pending_query.subquery())
             )
             pending_count, pending_amount = pending_result.first() or (0, Decimal("0"))
@@ -633,34 +727,39 @@ class BillingRepository:
             overdue_query = base_query.where(
                 and_(
                     ContractInvoice.due_date < date.today(),
-                    ContractInvoice.status.in_(["pendente", "enviada"])
+                    ContractInvoice.status.in_(["pendente", "enviada"]),
                 )
             )
             overdue_result = await self.db.execute(
                 select(
                     func.count(ContractInvoice.id),
-                    func.coalesce(func.sum(ContractInvoice.total_amount), 0)
+                    func.coalesce(func.sum(ContractInvoice.total_amount), 0),
                 ).select_from(overdue_query.subquery())
             )
             overdue_count, overdue_amount = overdue_result.first() or (0, Decimal("0"))
 
             # Current month metrics
             current_month_start = date.today().replace(day=1)
-            next_month = (current_month_start.replace(month=current_month_start.month + 1)
-                         if current_month_start.month < 12
-                         else current_month_start.replace(year=current_month_start.year + 1, month=1))
+            next_month = (
+                current_month_start.replace(month=current_month_start.month + 1)
+                if current_month_start.month < 12
+                else current_month_start.replace(
+                    year=current_month_start.year + 1, month=1
+                )
+            )
 
             # Paid this month
             paid_this_month_query = base_query.where(
                 and_(
                     ContractInvoice.status == "paga",
                     ContractInvoice.paid_date >= current_month_start,
-                    ContractInvoice.paid_date < next_month
+                    ContractInvoice.paid_date < next_month,
                 )
             )
             paid_this_month_result = await self.db.execute(
-                select(func.coalesce(func.sum(ContractInvoice.total_amount), 0))
-                .select_from(paid_this_month_query.subquery())
+                select(
+                    func.coalesce(func.sum(ContractInvoice.total_amount), 0)
+                ).select_from(paid_this_month_query.subquery())
             )
             paid_this_month = paid_this_month_result.scalar() or Decimal("0")
 
@@ -668,12 +767,13 @@ class BillingRepository:
             expected_this_month_query = base_query.where(
                 and_(
                     ContractInvoice.issued_date >= current_month_start,
-                    ContractInvoice.issued_date < next_month
+                    ContractInvoice.issued_date < next_month,
                 )
             )
             expected_this_month_result = await self.db.execute(
-                select(func.coalesce(func.sum(ContractInvoice.total_amount), 0))
-                .select_from(expected_this_month_query.subquery())
+                select(
+                    func.coalesce(func.sum(ContractInvoice.total_amount), 0)
+                ).select_from(expected_this_month_query.subquery())
             )
             expected_this_month = expected_this_month_result.scalar() or Decimal("0")
 
@@ -698,7 +798,9 @@ class BillingRepository:
             logger.error("Error getting billing dashboard metrics", error=str(e))
             raise
 
-    async def get_contracts_billing_status(self, company_id: Optional[int] = None) -> List[Dict[str, Any]]:
+    async def get_contracts_billing_status(
+        self, company_id: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
         """Get billing status for all contracts"""
         try:
             # Get contracts with their billing information
@@ -708,31 +810,35 @@ class BillingRepository:
                     Contract.contract_number,
                     People.name.label("client_name"),
                     Contract.monthly_value,
-                    func.count(ContractInvoice.id).filter(
-                        ContractInvoice.status.in_(["pendente", "enviada"])
-                    ).label("pending_invoices"),
+                    func.count(ContractInvoice.id)
+                    .filter(ContractInvoice.status.in_(["pendente", "enviada"]))
+                    .label("pending_invoices"),
                     func.coalesce(
                         func.sum(ContractInvoice.total_amount).filter(
                             ContractInvoice.status.in_(["pendente", "enviada"])
-                        ), 0
+                        ),
+                        0,
                     ).label("pending_amount"),
-                    func.count(ContractInvoice.id).filter(
+                    func.count(ContractInvoice.id)
+                    .filter(
                         and_(
                             ContractInvoice.due_date < func.current_date(),
-                            ContractInvoice.status.in_(["pendente", "enviada"])
+                            ContractInvoice.status.in_(["pendente", "enviada"]),
                         )
-                    ).label("overdue_invoices"),
+                    )
+                    .label("overdue_invoices"),
                     func.coalesce(
                         func.sum(ContractInvoice.total_amount).filter(
                             and_(
                                 ContractInvoice.due_date < func.current_date(),
-                                ContractInvoice.status.in_(["pendente", "enviada"])
+                                ContractInvoice.status.in_(["pendente", "enviada"]),
                             )
-                        ), 0
+                        ),
+                        0,
                     ).label("overdue_amount"),
-                    func.max(ContractInvoice.paid_date).filter(
-                        ContractInvoice.status == "paga"
-                    ).label("last_payment_date"),
+                    func.max(ContractInvoice.paid_date)
+                    .filter(ContractInvoice.status == "paga")
+                    .label("last_payment_date"),
                     ContractBillingSchedule.next_billing_date,
                     Contract.status,
                 )
@@ -740,7 +846,10 @@ class BillingRepository:
                 .join(Client, Contract.client_id == Client.id)
                 .join(People, Client.person_id == People.id)
                 .outerjoin(ContractInvoice, Contract.id == ContractInvoice.contract_id)
-                .outerjoin(ContractBillingSchedule, Contract.id == ContractBillingSchedule.contract_id)
+                .outerjoin(
+                    ContractBillingSchedule,
+                    Contract.id == ContractBillingSchedule.contract_id,
+                )
                 .where(Contract.status == "active")
                 .group_by(
                     Contract.id,
@@ -761,19 +870,21 @@ class BillingRepository:
 
             contracts_status = []
             for row in contracts_data:
-                contracts_status.append({
-                    "contract_id": row.id,
-                    "contract_number": row.contract_number,
-                    "client_name": row.client_name,
-                    "monthly_value": row.monthly_value or Decimal("0"),
-                    "pending_invoices": row.pending_invoices,
-                    "pending_amount": row.pending_amount,
-                    "overdue_invoices": row.overdue_invoices,
-                    "overdue_amount": row.overdue_amount,
-                    "last_payment_date": row.last_payment_date,
-                    "next_billing_date": row.next_billing_date,
-                    "status": row.status,
-                })
+                contracts_status.append(
+                    {
+                        "contract_id": row.id,
+                        "contract_number": row.contract_number,
+                        "client_name": row.client_name,
+                        "monthly_value": row.monthly_value or Decimal("0"),
+                        "pending_invoices": row.pending_invoices,
+                        "pending_amount": row.pending_amount,
+                        "overdue_invoices": row.overdue_invoices,
+                        "overdue_amount": row.overdue_amount,
+                        "last_payment_date": row.last_payment_date,
+                        "next_billing_date": row.next_billing_date,
+                        "status": row.status,
+                    }
+                )
 
             return contracts_status
 
@@ -781,7 +892,9 @@ class BillingRepository:
             logger.error("Error getting contracts billing status", error=str(e))
             raise
 
-    async def get_upcoming_billings(self, days_ahead: int = 30, company_id: Optional[int] = None) -> List[ContractBillingSchedule]:
+    async def get_upcoming_billings(
+        self, days_ahead: int = 30, company_id: Optional[int] = None
+    ) -> List[ContractBillingSchedule]:
         """Get upcoming billing schedules"""
         try:
             cutoff_date = date.today() + timedelta(days=days_ahead)
@@ -792,14 +905,18 @@ class BillingRepository:
                 .where(
                     and_(
                         ContractBillingSchedule.is_active == True,
-                        ContractBillingSchedule.next_billing_date <= cutoff_date
+                        ContractBillingSchedule.next_billing_date <= cutoff_date,
                     )
                 )
                 .order_by(ContractBillingSchedule.next_billing_date)
             )
 
             if company_id:
-                query = query.join(Contract).join(Client).where(Client.company_id == company_id)
+                query = (
+                    query.join(Contract)
+                    .join(Client)
+                    .where(Client.company_id == company_id)
+                )
 
             result = await self.db.execute(query)
             upcoming_billings = result.unique().scalars().all()
@@ -818,7 +935,7 @@ class BillingRepository:
         self,
         contract_ids: Optional[List[int]] = None,
         billing_date: Optional[date] = None,
-        force_regenerate: bool = False
+        force_regenerate: bool = False,
     ) -> Dict[str, Any]:
         """Generate invoices for multiple contracts"""
         try:
@@ -832,13 +949,15 @@ class BillingRepository:
                 .where(
                     and_(
                         ContractBillingSchedule.is_active == True,
-                        ContractBillingSchedule.next_billing_date <= billing_date
+                        ContractBillingSchedule.next_billing_date <= billing_date,
                     )
                 )
             )
 
             if contract_ids:
-                query = query.where(ContractBillingSchedule.contract_id.in_(contract_ids))
+                query = query.where(
+                    ContractBillingSchedule.contract_id.in_(contract_ids)
+                )
 
             result = await self.db.execute(query)
             schedules = result.unique().scalars().all()
@@ -851,38 +970,51 @@ class BillingRepository:
                 try:
                     # Check if invoice already exists for this period (unless force regenerate)
                     if not force_regenerate:
-                        existing_query = (
-                            select(ContractInvoice)
-                            .where(
-                                and_(
-                                    ContractInvoice.contract_id == schedule.contract_id,
-                                    ContractInvoice.billing_period_start <= billing_date,
-                                    ContractInvoice.billing_period_end >= billing_date
-                                )
+                        existing_query = select(ContractInvoice).where(
+                            and_(
+                                ContractInvoice.contract_id == schedule.contract_id,
+                                ContractInvoice.billing_period_start <= billing_date,
+                                ContractInvoice.billing_period_end >= billing_date,
                             )
                         )
                         existing_result = await self.db.execute(existing_query)
                         existing_invoice = existing_result.scalar_one_or_none()
 
                         if existing_invoice:
-                            errors.append(f"Invoice already exists for contract {schedule.contract_id}")
+                            errors.append(
+                                f"Invoice already exists for contract {schedule.contract_id}"
+                            )
                             continue
 
                     # Calculate billing period
                     if schedule.billing_cycle == "MONTHLY":
                         billing_period_start = billing_date.replace(day=1)
-                        next_month = billing_period_start.replace(month=billing_period_start.month + 1) if billing_period_start.month < 12 else billing_period_start.replace(year=billing_period_start.year + 1, month=1)
+                        next_month = (
+                            billing_period_start.replace(
+                                month=billing_period_start.month + 1
+                            )
+                            if billing_period_start.month < 12
+                            else billing_period_start.replace(
+                                year=billing_period_start.year + 1, month=1
+                            )
+                        )
                         billing_period_end = next_month - timedelta(days=1)
                         due_date = billing_date + timedelta(days=30)
                     elif schedule.billing_cycle == "QUARTERLY":
                         # Calculate quarter start
                         quarter_start_month = ((billing_date.month - 1) // 3) * 3 + 1
-                        billing_period_start = billing_date.replace(month=quarter_start_month, day=1)
-                        billing_period_end = (billing_period_start + timedelta(days=90)).replace(day=1) - timedelta(days=1)
+                        billing_period_start = billing_date.replace(
+                            month=quarter_start_month, day=1
+                        )
+                        billing_period_end = (
+                            billing_period_start + timedelta(days=90)
+                        ).replace(day=1) - timedelta(days=1)
                         due_date = billing_date + timedelta(days=30)
                     else:
                         billing_period_start = billing_date.replace(day=1)
-                        billing_period_end = billing_period_start.replace(day=28)  # Safe day for any month
+                        billing_period_end = billing_period_start.replace(
+                            day=28
+                        )  # Safe day for any month
                         due_date = billing_date + timedelta(days=30)
 
                     # Count active lives for the contract
@@ -895,14 +1027,16 @@ class BillingRepository:
                                 Contract.id == schedule.contract_id,
                                 or_(
                                     schedule.contract.lives.c.end_date == None,
-                                    schedule.contract.lives.c.end_date >= billing_date
-                                )
+                                    schedule.contract.lives.c.end_date >= billing_date,
+                                ),
                             )
                         )
                         .subquery()
                     )
                     lives_result = await self.db.execute(lives_query)
-                    lives_count = lives_result.scalar() or schedule.contract.lives_contracted
+                    lives_count = (
+                        lives_result.scalar() or schedule.contract.lives_contracted
+                    )
 
                     # Create invoice
                     invoice_data = {
@@ -942,26 +1076,29 @@ class BillingRepository:
     # ==========================================
 
     async def update_billing_method(
-        self,
-        schedule_id: int,
-        billing_method: str,
-        pagbank_data: Optional[Dict] = None
+        self, schedule_id: int, billing_method: str, pagbank_data: Optional[Dict] = None
     ) -> Optional[ContractBillingSchedule]:
         """Update billing method and PagBank data for a schedule"""
         try:
             update_data = {
                 "billing_method": billing_method,
-                "updated_at": datetime.utcnow()
+                "updated_at": datetime.utcnow(),
             }
 
             # Add PagBank specific fields if provided
             if pagbank_data:
                 if "pagbank_subscription_id" in pagbank_data:
-                    update_data["pagbank_subscription_id"] = pagbank_data["pagbank_subscription_id"]
+                    update_data["pagbank_subscription_id"] = pagbank_data[
+                        "pagbank_subscription_id"
+                    ]
                 if "pagbank_customer_id" in pagbank_data:
-                    update_data["pagbank_customer_id"] = pagbank_data["pagbank_customer_id"]
+                    update_data["pagbank_customer_id"] = pagbank_data[
+                        "pagbank_customer_id"
+                    ]
                 if "auto_fallback_enabled" in pagbank_data:
-                    update_data["auto_fallback_enabled"] = pagbank_data["auto_fallback_enabled"]
+                    update_data["auto_fallback_enabled"] = pagbank_data[
+                        "auto_fallback_enabled"
+                    ]
 
             # Reset attempt count when switching to recurrent
             if billing_method == "recurrent":
@@ -983,7 +1120,7 @@ class BillingRepository:
             logger.info(
                 "Billing method updated successfully",
                 schedule_id=schedule_id,
-                billing_method=billing_method
+                billing_method=billing_method,
             )
 
             return schedule
@@ -993,11 +1130,13 @@ class BillingRepository:
                 "Error updating billing method",
                 error=str(e),
                 schedule_id=schedule_id,
-                billing_method=billing_method
+                billing_method=billing_method,
             )
             raise
 
-    async def create_pagbank_transaction(self, transaction_data: Dict[str, Any]) -> PagBankTransaction:
+    async def create_pagbank_transaction(
+        self, transaction_data: Dict[str, Any]
+    ) -> PagBankTransaction:
         """Create PagBank transaction record"""
         try:
             transaction = PagBankTransaction(
@@ -1020,7 +1159,7 @@ class BillingRepository:
                 "PagBank transaction created successfully",
                 transaction_id=transaction.id,
                 invoice_id=transaction.invoice_id,
-                type=transaction.transaction_type
+                type=transaction.transaction_type,
             )
 
             return transaction
@@ -1029,22 +1168,16 @@ class BillingRepository:
             logger.error(
                 "Error creating PagBank transaction",
                 error=str(e),
-                transaction_data=transaction_data
+                transaction_data=transaction_data,
             )
             raise
 
     async def update_pagbank_transaction_status(
-        self,
-        transaction_id: int,
-        status: str,
-        webhook_data: Optional[Dict] = None
+        self, transaction_id: int, status: str, webhook_data: Optional[Dict] = None
     ) -> Optional[PagBankTransaction]:
         """Update PagBank transaction status"""
         try:
-            update_data = {
-                "status": status,
-                "updated_at": datetime.utcnow()
-            }
+            update_data = {"status": status, "updated_at": datetime.utcnow()}
 
             if webhook_data:
                 update_data["webhook_data"] = webhook_data
@@ -1065,14 +1198,16 @@ class BillingRepository:
             await self.db.flush()
 
             # Get updated transaction
-            query = select(PagBankTransaction).where(PagBankTransaction.id == transaction_id)
+            query = select(PagBankTransaction).where(
+                PagBankTransaction.id == transaction_id
+            )
             result = await self.db.execute(query)
             transaction = result.scalar_one_or_none()
 
             logger.info(
                 "PagBank transaction status updated",
                 transaction_id=transaction_id,
-                status=status
+                status=status,
             )
 
             return transaction
@@ -1081,11 +1216,13 @@ class BillingRepository:
             logger.error(
                 "Error updating PagBank transaction status",
                 error=str(e),
-                transaction_id=transaction_id
+                transaction_id=transaction_id,
             )
             raise
 
-    async def get_failed_recurrent_billings(self, days_back: int = 7) -> List[ContractBillingSchedule]:
+    async def get_failed_recurrent_billings(
+        self, days_back: int = 7
+    ) -> List[ContractBillingSchedule]:
         """Get billing schedules with failed recurrent payments for fallback processing"""
         try:
             cutoff_date = date.today() - timedelta(days=days_back)
@@ -1100,7 +1237,7 @@ class BillingRepository:
                         ContractBillingSchedule.auto_fallback_enabled == True,
                         ContractBillingSchedule.attempt_count >= max_attempts,
                         ContractBillingSchedule.last_attempt_date >= cutoff_date,
-                        ContractBillingSchedule.is_active == True
+                        ContractBillingSchedule.is_active == True,
                     )
                 )
                 .order_by(ContractBillingSchedule.last_attempt_date.desc())
@@ -1112,7 +1249,7 @@ class BillingRepository:
             logger.info(
                 "Retrieved failed recurrent billings",
                 count=len(failed_schedules),
-                days_back=days_back
+                days_back=days_back,
             )
 
             return failed_schedules
@@ -1121,7 +1258,9 @@ class BillingRepository:
             logger.error("Error getting failed recurrent billings", error=str(e))
             raise
 
-    async def get_pagbank_transactions_by_invoice(self, invoice_id: int) -> List[PagBankTransaction]:
+    async def get_pagbank_transactions_by_invoice(
+        self, invoice_id: int
+    ) -> List[PagBankTransaction]:
         """Get all PagBank transactions for an invoice"""
         try:
             query = (
@@ -1139,14 +1278,12 @@ class BillingRepository:
             logger.error(
                 "Error getting PagBank transactions by invoice",
                 error=str(e),
-                invoice_id=invoice_id
+                invoice_id=invoice_id,
             )
             raise
 
     async def get_recurrent_billing_schedules(
-        self,
-        company_id: Optional[int] = None,
-        include_inactive: bool = False
+        self, company_id: Optional[int] = None, include_inactive: bool = False
     ) -> List[ContractBillingSchedule]:
         """Get all recurrent billing schedules"""
         try:
@@ -1166,7 +1303,11 @@ class BillingRepository:
             )
 
             if company_id:
-                query = query.join(Contract).join(Client).where(Client.company_id == company_id)
+                query = (
+                    query.join(Contract)
+                    .join(Client)
+                    .where(Client.company_id == company_id)
+                )
 
             result = await self.db.execute(query)
             schedules = result.unique().scalars().all()
@@ -1174,7 +1315,7 @@ class BillingRepository:
             logger.info(
                 "Retrieved recurrent billing schedules",
                 count=len(schedules),
-                company_id=company_id
+                company_id=company_id,
             )
 
             return schedules
@@ -1184,15 +1325,16 @@ class BillingRepository:
             raise
 
     async def get_billing_schedule_by_pagbank_subscription(
-        self,
-        subscription_id: str
+        self, subscription_id: str
     ) -> Optional[ContractBillingSchedule]:
         """Get billing schedule by PagBank subscription ID"""
         try:
             query = (
                 select(ContractBillingSchedule)
                 .options(joinedload(ContractBillingSchedule.contract))
-                .where(ContractBillingSchedule.pagbank_subscription_id == subscription_id)
+                .where(
+                    ContractBillingSchedule.pagbank_subscription_id == subscription_id
+                )
             )
 
             result = await self.db.execute(query)
@@ -1202,12 +1344,12 @@ class BillingRepository:
                 logger.info(
                     "Found billing schedule by PagBank subscription",
                     schedule_id=schedule.id,
-                    subscription_id=subscription_id
+                    subscription_id=subscription_id,
                 )
             else:
                 logger.warning(
                     "Billing schedule not found for PagBank subscription",
-                    subscription_id=subscription_id
+                    subscription_id=subscription_id,
                 )
 
             return schedule
@@ -1216,19 +1358,17 @@ class BillingRepository:
             logger.error(
                 "Error getting billing schedule by PagBank subscription",
                 error=str(e),
-                subscription_id=subscription_id
+                subscription_id=subscription_id,
             )
             raise
 
     async def get_pagbank_transaction_by_charge_id(
-        self,
-        charge_id: str
+        self, charge_id: str
     ) -> Optional[PagBankTransaction]:
         """Get PagBank transaction by charge ID"""
         try:
-            query = (
-                select(PagBankTransaction)
-                .where(PagBankTransaction.pagbank_charge_id == charge_id)
+            query = select(PagBankTransaction).where(
+                PagBankTransaction.pagbank_charge_id == charge_id
             )
 
             result = await self.db.execute(query)
@@ -1240,7 +1380,7 @@ class BillingRepository:
             logger.error(
                 "Error getting PagBank transaction by charge ID",
                 error=str(e),
-                charge_id=charge_id
+                charge_id=charge_id,
             )
             raise
 
@@ -1253,7 +1393,7 @@ class BillingRepository:
                 .values(
                     attempt_count=ContractBillingSchedule.attempt_count + 1,
                     last_attempt_date=date.today(),
-                    updated_at=datetime.utcnow()
+                    updated_at=datetime.utcnow(),
                 )
             )
 
@@ -1266,6 +1406,6 @@ class BillingRepository:
             logger.error(
                 "Error incrementing billing attempt",
                 error=str(e),
-                schedule_id=schedule_id
+                schedule_id=schedule_id,
             )
             raise

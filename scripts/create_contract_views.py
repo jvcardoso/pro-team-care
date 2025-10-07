@@ -20,7 +20,8 @@ async def create_strategic_views():
         async for db in get_db():
             # 1. CONTRACT DASHBOARD VIEW
             print("📊 Criando contract_dashboard_view...")
-            dashboard_view_sql = text("""
+            dashboard_view_sql = text(
+                """
                 CREATE OR REPLACE VIEW contract_dashboard_view AS
                 SELECT
                     c.id,
@@ -108,14 +109,16 @@ async def create_strategic_views():
 
                 WHERE c.deleted_at IS NULL
                 ORDER BY c.updated_at DESC;
-            """)
+            """
+            )
 
             await db.execute(dashboard_view_sql)
             print("✅ contract_dashboard_view criada com sucesso!")
 
             # 2. SERVICES PERFORMANCE VIEW
             print("📈 Criando services_performance_view...")
-            services_performance_sql = text("""
+            services_performance_sql = text(
+                """
                 CREATE OR REPLACE VIEW services_performance_view AS
                 SELECT
                     sc.id as service_id,
@@ -164,14 +167,16 @@ async def create_strategic_views():
                 GROUP BY sc.id, sc.service_code, sc.service_name, sc.service_category,
                          sc.service_type, sc.default_unit_value, sc.is_active, sc.created_at
                 ORDER BY total_executions DESC, total_revenue DESC;
-            """)
+            """
+            )
 
             await db.execute(services_performance_sql)
             print("✅ services_performance_view criada com sucesso!")
 
             # 3. CONTRACT LIVES SUMMARY VIEW
             print("👥 Criando contract_lives_summary_view...")
-            lives_summary_sql = text("""
+            lives_summary_sql = text(
+                """
                 CREATE OR REPLACE VIEW contract_lives_summary_view AS
                 SELECT
                     c.id as contract_id,
@@ -217,14 +222,16 @@ async def create_strategic_views():
                 WHERE c.deleted_at IS NULL
                 GROUP BY c.id, c.contract_number, c.client_id, cl.name, c.lives_contracted, c.status, c.start_date, c.end_date
                 ORDER BY c.updated_at DESC;
-            """)
+            """
+            )
 
             await db.execute(lives_summary_sql)
             print("✅ contract_lives_summary_view criada com sucesso!")
 
             # 4. FINANCIAL SUMMARY VIEW
             print("💰 Criando financial_summary_view...")
-            financial_summary_sql = text("""
+            financial_summary_sql = text(
+                """
                 CREATE OR REPLACE VIEW financial_summary_view AS
                 SELECT
                     c.id as contract_id,
@@ -331,7 +338,8 @@ async def create_strategic_views():
 
                 WHERE c.deleted_at IS NULL
                 ORDER BY c.updated_at DESC;
-            """)
+            """
+            )
 
             await db.execute(financial_summary_sql)
             print("✅ financial_summary_view criada com sucesso!")
@@ -343,10 +351,22 @@ async def create_strategic_views():
             print("\n🧪 Testando as views criadas...")
 
             test_queries = [
-                ("contract_dashboard_view", "SELECT COUNT(*) as total FROM contract_dashboard_view"),
-                ("services_performance_view", "SELECT COUNT(*) as total FROM services_performance_view"),
-                ("contract_lives_summary_view", "SELECT COUNT(*) as total FROM contract_lives_summary_view"),
-                ("financial_summary_view", "SELECT COUNT(*) as total FROM financial_summary_view")
+                (
+                    "contract_dashboard_view",
+                    "SELECT COUNT(*) as total FROM contract_dashboard_view",
+                ),
+                (
+                    "services_performance_view",
+                    "SELECT COUNT(*) as total FROM services_performance_view",
+                ),
+                (
+                    "contract_lives_summary_view",
+                    "SELECT COUNT(*) as total FROM contract_lives_summary_view",
+                ),
+                (
+                    "financial_summary_view",
+                    "SELECT COUNT(*) as total FROM financial_summary_view",
+                ),
             ]
 
             for view_name, query in test_queries:
@@ -362,6 +382,7 @@ async def create_strategic_views():
     except Exception as e:
         print(f"❌ Erro: {e}")
         import traceback
+
         traceback.print_exc()
 
 

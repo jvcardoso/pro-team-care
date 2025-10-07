@@ -4,16 +4,19 @@ Script to add test contract lives for debugging purposes.
 """
 
 import asyncio
-import sys
 import os
+import sys
 
 # Add the app directory to the Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from datetime import datetime
+
+from sqlalchemy import select
 
 from app.infrastructure.orm.database import get_db
-from app.infrastructure.orm.models import ContractLive, People, Contract
-from sqlalchemy import select
-from datetime import datetime
+from app.infrastructure.orm.models import Contract, ContractLive, People
+
 
 async def add_test_lives():
     """Add test lives to contracts for debugging."""
@@ -41,7 +44,7 @@ async def add_test_lives():
                     name="Pessoa Teste",
                     tax_id="12345678901",
                     created_at=datetime.now(),
-                    updated_at=datetime.now()
+                    updated_at=datetime.now(),
                 )
                 db.add(person)
                 await db.commit()
@@ -49,10 +52,14 @@ async def add_test_lives():
                 print(f"👤 Created test person: {person.name} (ID: {person.id})")
 
             # Check if life already exists
-            life_query = select(ContractLive).where(
-                ContractLive.contract_id == contract.id,
-                ContractLive.person_id == person.id
-            ).limit(1)
+            life_query = (
+                select(ContractLive)
+                .where(
+                    ContractLive.contract_id == contract.id,
+                    ContractLive.person_id == person.id,
+                )
+                .limit(1)
+            )
             life_result = await db.execute(life_query)
             existing_life = life_result.scalar_one_or_none()
 
@@ -69,20 +76,23 @@ async def add_test_lives():
                 status="active",
                 substitution_reason="Vida de teste para debug",
                 created_at=datetime.now(),
-                updated_at=datetime.now()
+                updated_at=datetime.now(),
             )
 
             db.add(test_life)
             await db.commit()
             await db.refresh(test_life)
 
-            print(f"✅ Added test life: {person.name} to contract {contract.contract_number}")
+            print(
+                f"✅ Added test life: {person.name} to contract {contract.contract_number}"
+            )
             print(f"   Life ID: {test_life.id}")
             print(f"   Status: {test_life.status}")
 
         except Exception as e:
             print(f"❌ Error adding test life: {e}")
             await db.rollback()
+
 
 if __name__ == "__main__":
     asyncio.run(add_test_lives())

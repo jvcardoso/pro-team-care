@@ -3,15 +3,21 @@
 Testes específicos para CRUD de contratos Home Care
 """
 
+from datetime import date, datetime
+from decimal import Decimal
+from typing import Any, Dict
+
 import pytest
 import pytest_asyncio
-from datetime import datetime, date
-from decimal import Decimal
-from typing import Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # Import models from ORM
-from app.infrastructure.orm.models import Contract, ContractLive, ServicesCatalog, ContractService
+from app.infrastructure.orm.models import (
+    Contract,
+    ContractLive,
+    ContractService,
+    ServicesCatalog,
+)
 
 # Import repository
 from app.infrastructure.repositories.contract_repository import ContractRepository
@@ -19,9 +25,9 @@ from app.infrastructure.repositories.contract_repository import ContractReposito
 # Import schemas
 from app.presentation.schemas.contract import (
     ContractCreate,
-    ContractUpdate,
     ContractLiveCreate,
-    ContractLiveUpdate
+    ContractLiveUpdate,
+    ContractUpdate,
 )
 
 
@@ -33,19 +39,22 @@ class TestContractsCRUD:
         """Fixture para repositório de contratos"""
         return ContractRepository(async_session)
 
-
-
     @pytest.mark.asyncio
     async def test_create_contract_success(self, contract_repo, async_session):
         """Teste: Criar contrato com sucesso"""
         # First create a client in the database
-        from app.infrastructure.orm.models import Client, People, Company, Establishments
+        from app.infrastructure.orm.models import (
+            Client,
+            Company,
+            Establishments,
+            People,
+        )
 
         # Create a company first
         company = Company(
             person_id=None,  # Will be set after creating person
             settings={},
-            metadata_={}
+            metadata_={},
         )
         async_session.add(company)
         await async_session.flush()
@@ -56,7 +65,7 @@ class TestContractsCRUD:
             person_type="PJ",
             name="Test Company",
             tax_id="12345678000190",
-            status="active"
+            status="active",
         )
         async_session.add(person)
         await async_session.flush()
@@ -74,16 +83,13 @@ class TestContractsCRUD:
             category="clinica",
             is_active=True,
             is_principal=True,
-            display_order=1
+            display_order=1,
         )
         async_session.add(establishment)
         await async_session.flush()
 
         # Create a client
-        client = Client(
-            person_id=person.id,
-            establishment_id=establishment.id
-        )
+        client = Client(person_id=person.id, establishment_id=establishment.id)
         async_session.add(client)
         await async_session.flush()
 
@@ -100,14 +106,16 @@ class TestContractsCRUD:
             plan_name="Plano Home Care Corporativo UNIMED",
             monthly_value=Decimal("15000.00"),
             start_date=date(2025, 1, 1),
-            service_addresses=[{
-                "street": "Rua da Saúde",
-                "number": "100",
-                "neighborhood": "Centro",
-                "city": "São Paulo",
-                "state": "SP",
-                "zip_code": "01234-567"
-            }]
+            service_addresses=[
+                {
+                    "street": "Rua da Saúde",
+                    "number": "100",
+                    "neighborhood": "Centro",
+                    "city": "São Paulo",
+                    "state": "SP",
+                    "zip_code": "01234-567",
+                }
+            ],
         )
 
         # Act
@@ -127,17 +135,20 @@ class TestContractsCRUD:
         assert contract.status == "active"
 
     @pytest.mark.asyncio
-    async def test_create_contract_individual_person(self, contract_repo, async_session):
+    async def test_create_contract_individual_person(
+        self, contract_repo, async_session
+    ):
         """Teste: Criar contrato para pessoa física"""
         # Arrange - Create test data
-        from app.infrastructure.orm.models import Client, People, Company, Establishments
+        from app.infrastructure.orm.models import (
+            Client,
+            Company,
+            Establishments,
+            People,
+        )
 
         # Create a company first
-        company = Company(
-            person_id=None,
-            settings={},
-            metadata_={}
-        )
+        company = Company(person_id=None, settings={}, metadata_={})
         async_session.add(company)
         await async_session.flush()
 
@@ -147,7 +158,7 @@ class TestContractsCRUD:
             person_type="PF",
             name="João Silva",
             tax_id="12345678901",
-            status="active"
+            status="active",
         )
         async_session.add(person)
         await async_session.flush()
@@ -165,16 +176,13 @@ class TestContractsCRUD:
             category="clinica",
             is_active=True,
             is_principal=True,
-            display_order=1
+            display_order=1,
         )
         async_session.add(establishment)
         await async_session.flush()
 
         # Create a client
-        client = Client(
-            person_id=person.id,
-            establishment_id=establishment.id
-        )
+        client = Client(person_id=person.id, establishment_id=establishment.id)
         async_session.add(client)
         await async_session.flush()
 
@@ -187,7 +195,7 @@ class TestContractsCRUD:
             payment_frequency="MONTHLY",
             plan_name="Plano Familiar Básico",
             monthly_value=Decimal("2500.00"),
-            start_date=date(2025, 1, 1)
+            start_date=date(2025, 1, 1),
         )
 
         # Act
@@ -204,14 +212,15 @@ class TestContractsCRUD:
     async def test_create_contract_business_person(self, contract_repo, async_session):
         """Teste: Criar contrato para empresário"""
         # Arrange - Create test data
-        from app.infrastructure.orm.models import Client, People, Company, Establishments
+        from app.infrastructure.orm.models import (
+            Client,
+            Company,
+            Establishments,
+            People,
+        )
 
         # Create a company first
-        company = Company(
-            person_id=None,
-            settings={},
-            metadata_={}
-        )
+        company = Company(person_id=None, settings={}, metadata_={})
         async_session.add(company)
         await async_session.flush()
 
@@ -221,7 +230,7 @@ class TestContractsCRUD:
             person_type="PJ",
             name="Clínica Saúde Ltda",
             tax_id="98765432000190",
-            status="active"
+            status="active",
         )
         async_session.add(person)
         await async_session.flush()
@@ -239,16 +248,13 @@ class TestContractsCRUD:
             category="clinica",
             is_active=True,
             is_principal=True,
-            display_order=1
+            display_order=1,
         )
         async_session.add(establishment)
         await async_session.flush()
 
         # Create a client
-        client = Client(
-            person_id=person.id,
-            establishment_id=establishment.id
-        )
+        client = Client(person_id=person.id, establishment_id=establishment.id)
         async_session.add(client)
         await async_session.flush()
 
@@ -261,7 +267,7 @@ class TestContractsCRUD:
             payment_frequency="MONTHLY",
             plan_name="Plano Empresarial Saúde",
             monthly_value=Decimal("7500.00"),
-            start_date=date(2025, 1, 1)
+            start_date=date(2025, 1, 1),
         )
 
         # Act
@@ -277,14 +283,15 @@ class TestContractsCRUD:
     async def test_get_contract_by_id(self, contract_repo, async_session):
         """Teste: Buscar contrato por ID"""
         # Arrange - Create test data first
-        from app.infrastructure.orm.models import Client, People, Company, Establishments
+        from app.infrastructure.orm.models import (
+            Client,
+            Company,
+            Establishments,
+            People,
+        )
 
         # Create a company first
-        company = Company(
-            person_id=None,
-            settings={},
-            metadata_={}
-        )
+        company = Company(person_id=None, settings={}, metadata_={})
         async_session.add(company)
         await async_session.flush()
 
@@ -294,7 +301,7 @@ class TestContractsCRUD:
             person_type="PJ",
             name="Test Company Get",
             tax_id="11111111000111",
-            status="active"
+            status="active",
         )
         async_session.add(person)
         await async_session.flush()
@@ -312,16 +319,13 @@ class TestContractsCRUD:
             category="clinica",
             is_active=True,
             is_principal=True,
-            display_order=1
+            display_order=1,
         )
         async_session.add(establishment)
         await async_session.flush()
 
         # Create a client
-        client = Client(
-            person_id=person.id,
-            establishment_id=establishment.id
-        )
+        client = Client(person_id=person.id, establishment_id=establishment.id)
         async_session.add(client)
         await async_session.flush()
 
@@ -334,10 +338,12 @@ class TestContractsCRUD:
             payment_frequency="MONTHLY",
             plan_name="Plano Test Get",
             monthly_value=Decimal("15000.00"),
-            start_date=date(2025, 1, 1)
+            start_date=date(2025, 1, 1),
         )
 
-        created_contract = await contract_repo.create_contract(sample_contract_data.model_dump())
+        created_contract = await contract_repo.create_contract(
+            sample_contract_data.model_dump()
+        )
 
         # Act
         contract = await contract_repo.get_contract_by_id(created_contract.id)
@@ -351,14 +357,15 @@ class TestContractsCRUD:
     async def test_update_contract(self, contract_repo, async_session):
         """Teste: Atualizar contrato"""
         # Arrange - Create test data first
-        from app.infrastructure.orm.models import Client, People, Company, Establishments
+        from app.infrastructure.orm.models import (
+            Client,
+            Company,
+            Establishments,
+            People,
+        )
 
         # Create a company first
-        company = Company(
-            person_id=None,
-            settings={},
-            metadata_={}
-        )
+        company = Company(person_id=None, settings={}, metadata_={})
         async_session.add(company)
         await async_session.flush()
 
@@ -368,7 +375,7 @@ class TestContractsCRUD:
             person_type="PJ",
             name="Test Company Update",
             tax_id="22222222000122",
-            status="active"
+            status="active",
         )
         async_session.add(person)
         await async_session.flush()
@@ -386,16 +393,13 @@ class TestContractsCRUD:
             category="clinica",
             is_active=True,
             is_principal=True,
-            display_order=1
+            display_order=1,
         )
         async_session.add(establishment)
         await async_session.flush()
 
         # Create a client
-        client = Client(
-            person_id=person.id,
-            establishment_id=establishment.id
-        )
+        client = Client(person_id=person.id, establishment_id=establishment.id)
         async_session.add(client)
         await async_session.flush()
 
@@ -408,23 +412,30 @@ class TestContractsCRUD:
             payment_frequency="MONTHLY",
             plan_name="Plano Original",
             monthly_value=Decimal("15000.00"),
-            start_date=date(2025, 1, 1)
+            start_date=date(2025, 1, 1),
         )
 
-        created_contract = await contract_repo.create_contract(sample_contract_data.model_dump())
+        created_contract = await contract_repo.create_contract(
+            sample_contract_data.model_dump()
+        )
 
         update_data = ContractUpdate(
             plan_name="Plano Home Care Corporativo UNIMED - Atualizado",
             monthly_value=Decimal("16000.00"),
-            lives_contracted=12
+            lives_contracted=12,
         )
 
         # Act
         update_dict = update_data.model_dump()
-        updated_contract = await contract_repo.update_contract(created_contract.id, update_dict)
+        updated_contract = await contract_repo.update_contract(
+            created_contract.id, update_dict
+        )
 
         # Assert
-        assert updated_contract.plan_name == "Plano Home Care Corporativo UNIMED - Atualizado"
+        assert (
+            updated_contract.plan_name
+            == "Plano Home Care Corporativo UNIMED - Atualizado"
+        )
         assert updated_contract.monthly_value == Decimal("16000.00")
         assert updated_contract.lives_contracted == 12
 
@@ -432,14 +443,15 @@ class TestContractsCRUD:
     async def test_list_contracts_with_filters(self, contract_repo, async_session):
         """Teste: Listar contratos com filtros"""
         # Arrange - Create test data first
-        from app.infrastructure.orm.models import Client, People, Company, Establishments
+        from app.infrastructure.orm.models import (
+            Client,
+            Company,
+            Establishments,
+            People,
+        )
 
         # Create a company first
-        company = Company(
-            person_id=None,
-            settings={},
-            metadata_={}
-        )
+        company = Company(person_id=None, settings={}, metadata_={})
         async_session.add(company)
         await async_session.flush()
 
@@ -449,7 +461,7 @@ class TestContractsCRUD:
             person_type="PJ",
             name="Test Company List",
             tax_id="33333333000133",
-            status="active"
+            status="active",
         )
         async_session.add(person)
         await async_session.flush()
@@ -467,16 +479,13 @@ class TestContractsCRUD:
             category="clinica",
             is_active=True,
             is_principal=True,
-            display_order=1
+            display_order=1,
         )
         async_session.add(establishment)
         await async_session.flush()
 
         # Create a client
-        client = Client(
-            person_id=person.id,
-            establishment_id=establishment.id
-        )
+        client = Client(person_id=person.id, establishment_id=establishment.id)
         async_session.add(client)
         await async_session.flush()
 
@@ -489,13 +498,15 @@ class TestContractsCRUD:
             payment_frequency="MONTHLY",
             plan_name="Plano Test List",
             monthly_value=Decimal("15000.00"),
-            start_date=date(2025, 1, 1)
+            start_date=date(2025, 1, 1),
         )
 
         await contract_repo.create_contract(sample_contract_data.model_dump())
 
         # Act - Filtrar por tipo
-        contracts_result = await contract_repo.list_contracts(contract_type="CORPORATIVO")
+        contracts_result = await contract_repo.list_contracts(
+            contract_type="CORPORATIVO"
+        )
         contracts = contracts_result["contracts"]
 
         # Assert
@@ -506,14 +517,15 @@ class TestContractsCRUD:
     async def test_contract_validation_rules(self, contract_repo, async_session):
         """Teste: Validações de regras de negócio"""
         # Arrange - Create valid test data first
-        from app.infrastructure.orm.models import Client, People, Company, Establishments
+        from app.infrastructure.orm.models import (
+            Client,
+            Company,
+            Establishments,
+            People,
+        )
 
         # Create a company first
-        company = Company(
-            person_id=None,
-            settings={},
-            metadata_={}
-        )
+        company = Company(person_id=None, settings={}, metadata_={})
         async_session.add(company)
         await async_session.flush()
 
@@ -523,7 +535,7 @@ class TestContractsCRUD:
             person_type="PJ",
             name="Test Company Validation",
             tax_id="44444444000144",
-            status="active"
+            status="active",
         )
         async_session.add(person)
         await async_session.flush()
@@ -541,16 +553,13 @@ class TestContractsCRUD:
             category="clinica",
             is_active=True,
             is_principal=True,
-            display_order=1
+            display_order=1,
         )
         async_session.add(establishment)
         await async_session.flush()
 
         # Create a client
-        client = Client(
-            person_id=person.id,
-            establishment_id=establishment.id
-        )
+        client = Client(person_id=person.id, establishment_id=establishment.id)
         async_session.add(client)
         await async_session.flush()
 
@@ -563,7 +572,7 @@ class TestContractsCRUD:
             payment_frequency="MONTHLY",
             plan_name="Test Contract",
             monthly_value=Decimal("1000.00"),
-            start_date=date(2025, 1, 1)
+            start_date=date(2025, 1, 1),
         )
 
         # Act & Assert
@@ -574,14 +583,15 @@ class TestContractsCRUD:
     async def test_contract_status_transitions(self, contract_repo, async_session):
         """Teste: Transições de status do contrato"""
         # Arrange - Create test data first
-        from app.infrastructure.orm.models import Client, People, Company, Establishments
+        from app.infrastructure.orm.models import (
+            Client,
+            Company,
+            Establishments,
+            People,
+        )
 
         # Create a company first
-        company = Company(
-            person_id=None,
-            settings={},
-            metadata_={}
-        )
+        company = Company(person_id=None, settings={}, metadata_={})
         async_session.add(company)
         await async_session.flush()
 
@@ -591,7 +601,7 @@ class TestContractsCRUD:
             person_type="PJ",
             name="Test Company Status",
             tax_id="55555555000155",
-            status="active"
+            status="active",
         )
         async_session.add(person)
         await async_session.flush()
@@ -609,16 +619,13 @@ class TestContractsCRUD:
             category="clinica",
             is_active=True,
             is_principal=True,
-            display_order=1
+            display_order=1,
         )
         async_session.add(establishment)
         await async_session.flush()
 
         # Create a client
-        client = Client(
-            person_id=person.id,
-            establishment_id=establishment.id
-        )
+        client = Client(person_id=person.id, establishment_id=establishment.id)
         async_session.add(client)
         await async_session.flush()
 
@@ -631,10 +638,12 @@ class TestContractsCRUD:
             payment_frequency="MONTHLY",
             plan_name="Plano Test Status",
             monthly_value=Decimal("15000.00"),
-            start_date=date(2025, 1, 1)
+            start_date=date(2025, 1, 1),
         )
 
-        created_contract = await contract_repo.create_contract(sample_contract_data.model_dump())
+        created_contract = await contract_repo.create_contract(
+            sample_contract_data.model_dump()
+        )
 
         # Act - Suspender contrato
         await contract_repo.update_contract_status(created_contract.id, "SUSPENDED")
@@ -654,14 +663,15 @@ class TestContractsCRUD:
     async def test_contract_audit_trail(self, contract_repo, async_session):
         """Teste: Rastreabilidade de auditoria"""
         # Arrange - Create test data first
-        from app.infrastructure.orm.models import Client, People, Company, Establishments
+        from app.infrastructure.orm.models import (
+            Client,
+            Company,
+            Establishments,
+            People,
+        )
 
         # Create a company first
-        company = Company(
-            person_id=None,
-            settings={},
-            metadata_={}
-        )
+        company = Company(person_id=None, settings={}, metadata_={})
         async_session.add(company)
         await async_session.flush()
 
@@ -671,7 +681,7 @@ class TestContractsCRUD:
             person_type="PJ",
             name="Test Company Audit",
             tax_id="66666666000166",
-            status="active"
+            status="active",
         )
         async_session.add(person)
         await async_session.flush()
@@ -689,16 +699,13 @@ class TestContractsCRUD:
             category="clinica",
             is_active=True,
             is_principal=True,
-            display_order=1
+            display_order=1,
         )
         async_session.add(establishment)
         await async_session.flush()
 
         # Create a client
-        client = Client(
-            person_id=person.id,
-            establishment_id=establishment.id
-        )
+        client = Client(person_id=person.id, establishment_id=establishment.id)
         async_session.add(client)
         await async_session.flush()
 
@@ -711,10 +718,12 @@ class TestContractsCRUD:
             payment_frequency="MONTHLY",
             plan_name="Plano Test Audit",
             monthly_value=Decimal("15000.00"),
-            start_date=date(2025, 1, 1)
+            start_date=date(2025, 1, 1),
         )
 
-        created_contract = await contract_repo.create_contract(sample_contract_data.model_dump())
+        created_contract = await contract_repo.create_contract(
+            sample_contract_data.model_dump()
+        )
 
         # Act
         contract = await contract_repo.get_contract_by_id(created_contract.id)
@@ -723,4 +732,4 @@ class TestContractsCRUD:
         assert contract.created_at is not None
         assert contract.updated_at is not None
         # Verificar se campos de auditoria estão presentes
-        assert hasattr(contract, 'created_by') or hasattr(contract, 'updated_by')
+        assert hasattr(contract, "created_by") or hasattr(contract, "updated_by")

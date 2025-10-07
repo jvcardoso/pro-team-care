@@ -90,13 +90,20 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
       const data = response.data;
       setSearchTimeMs(data.search_time_ms);
 
-      console.log('Search response:', data); // Debug
+      console.log('🔍 DEBUG COMPLETO:');
+      console.log('  Query:', searchQuery);
+      console.log('  Execution type:', data.execution_type);
+      console.log('  Total results:', data.total_results);
+      console.log('  Results:', JSON.stringify(data.results, null, 2));
 
       // Se for execução direta (código exato), navegar imediatamente
       if (data.execution_type === 'direct' && data.results.length === 1) {
-        console.log('Navegação direta para:', data.results[0]); // Debug
+        console.log('✅ NAVEGAÇÃO DIRETA DETECTADA');
+        console.log('  Destino:', data.results[0].route);
+        console.log('  Label:', data.results[0].label);
         handleSelect(data.results[0]);
       } else {
+        console.log('📋 MODO SELEÇÃO - mostrando lista de resultados');
         setResults(data.results);
         setSelectedIndex(0);
       }

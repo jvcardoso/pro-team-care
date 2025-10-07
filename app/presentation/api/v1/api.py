@@ -2,11 +2,8 @@ from fastapi import APIRouter
 
 from . import (
     auth,
-    password_reset,
-    program_codes,
     b2b_billing,
     billing,
-    saas_billing,
     clients,
     cnpj,
     companies,
@@ -28,8 +25,11 @@ from . import (
     menus_simple,
     metrics,
     notifications,
+    password_reset,
     professionals,
+    program_codes,
     roles,
+    saas_billing,
     secure_sessions,
     system_optimization,
     user_activation,
@@ -51,7 +51,9 @@ api_router.include_router(metrics.router)
 # Core business endpoints
 api_router.include_router(companies.router, prefix="/companies")
 api_router.include_router(company_stats.router, prefix="/companies", tags=["Companies"])
-api_router.include_router(company_activation.router)  # Ativação de empresas (novo fluxo)
+api_router.include_router(
+    company_activation.router
+)  # Ativação de empresas (novo fluxo)
 api_router.include_router(users.router, prefix="/users")
 api_router.include_router(user_activation.router)  # Ativação de usuários
 api_router.include_router(establishments.router, prefix="/establishments")
@@ -70,8 +72,12 @@ api_router.include_router(limits_control.router)
 
 # Billing System
 api_router.include_router(billing.router, prefix="/billing")  # Home Care Billing (B2C)
-api_router.include_router(b2b_billing.router, prefix="/b2b-billing")  # Legacy B2B billing
-api_router.include_router(saas_billing.router, prefix="/saas-billing")  # NEW: SaaS Billing (Company Subscriptions)
+api_router.include_router(
+    b2b_billing.router, prefix="/b2b-billing"
+)  # Legacy B2B billing
+api_router.include_router(
+    saas_billing.router, prefix="/saas-billing"
+)  # NEW: SaaS Billing (Company Subscriptions)
 
 # Menu systems
 api_router.include_router(menus.router, prefix="/menus")

@@ -92,11 +92,14 @@ const ContractDashboard: React.FC = () => {
         (c) => c.status === "active"
       );
       const totalLives = contractsList.reduce(
-        (sum, c) => sum + c.lives_contracted,
+        (sum, c) => sum + (Number(c.lives_contracted) || 0),
         0
       );
       const monthlyRevenue = contractsList.reduce(
-        (sum, c) => sum + (c.monthly_value || 0),
+        (sum, c) => {
+          const value = Number(c.monthly_value);
+          return sum + (isNaN(value) ? 0 : value);
+        },
         0
       );
 
@@ -224,11 +227,11 @@ const ContractDashboard: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
             <BarChart3 className="w-6 h-6 mr-2" />
             Dashboard Executivo - Contratos Home Care
           </h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Visão geral e métricas em tempo real do sistema de contratos
           </p>
         </div>
@@ -245,19 +248,19 @@ const ContractDashboard: React.FC = () => {
         <Card>
           <div className="p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <FileText className="w-6 h-6 text-blue-600" />
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   Total Contratos
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {metrics.totalContracts}
                 </p>
                 <div className="flex items-center mt-1">
-                  <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
-                  <span className="text-sm text-green-600">
+                  <TrendingUp className="w-4 h-4 text-green-500 dark:text-green-400 mr-1" />
+                  <span className="text-sm text-green-600 dark:text-green-400">
                     +{metrics.contractGrowth}%
                   </span>
                 </div>
@@ -269,21 +272,20 @@ const ContractDashboard: React.FC = () => {
         <Card>
           <div className="p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <CheckCircle className="w-6 h-6 text-green-600" />
+              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   Contratos Ativos
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {metrics.activeContracts}
                 </p>
-                <p className="text-sm text-gray-500 mt-1">
-                  {(
-                    (metrics.activeContracts / metrics.totalContracts) *
-                    100
-                  ).toFixed(1)}
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  {metrics.totalContracts > 0
+                    ? ((metrics.activeContracts / metrics.totalContracts) * 100).toFixed(1)
+                    : "0.0"}
                   % do total
                 </p>
               </div>
@@ -294,20 +296,22 @@ const ContractDashboard: React.FC = () => {
         <Card>
           <div className="p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Users className="w-6 h-6 text-purple-600" />
+              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                <Users className="w-6 h-6 text-purple-600 dark:text-purple-400" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   Vidas Contratadas
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {metrics.totalLives}
                 </p>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                   Média:{" "}
-                  {(metrics.totalLives / metrics.totalContracts).toFixed(1)} por
-                  contrato
+                  {metrics.totalContracts > 0
+                    ? (metrics.totalLives / metrics.totalContracts).toFixed(1)
+                    : "0.0"}{" "}
+                  por contrato
                 </p>
               </div>
             </div>
@@ -317,19 +321,19 @@ const ContractDashboard: React.FC = () => {
         <Card>
           <div className="p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <DollarSign className="w-6 h-6 text-orange-600" />
+              <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                <DollarSign className="w-6 h-6 text-orange-600 dark:text-orange-400" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   Receita Mensal
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {formatCurrency(metrics.monthlyRevenue)}
                 </p>
                 <div className="flex items-center mt-1">
-                  <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
-                  <span className="text-sm text-green-600">
+                  <TrendingUp className="w-4 h-4 text-green-500 dark:text-green-400 mr-1" />
+                  <span className="text-sm text-green-600 dark:text-green-400">
                     +{metrics.revenueGrowth}%
                   </span>
                 </div>
@@ -342,18 +346,18 @@ const ContractDashboard: React.FC = () => {
       {/* Alert Cards */}
       {metrics.expiringContracts > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="border-yellow-200 bg-yellow-50">
+          <Card className="border-yellow-200 dark:border-yellow-900/50 bg-yellow-50 dark:bg-yellow-900/20">
             <div className="p-4">
               <div className="flex items-center">
-                <AlertTriangle className="w-5 h-5 text-yellow-600 mr-2" />
+                <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-500 mr-2" />
                 <div>
-                  <p className="text-sm font-medium text-yellow-800">
+                  <p className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
                     Contratos Expirando
                   </p>
-                  <p className="text-lg font-bold text-yellow-900">
+                  <p className="text-lg font-bold text-yellow-900 dark:text-yellow-200">
                     {metrics.expiringContracts} contratos
                   </p>
-                  <p className="text-xs text-yellow-700 mt-1">
+                  <p className="text-xs text-yellow-700 dark:text-yellow-400 mt-1">
                     Nos próximos 30 dias
                   </p>
                 </div>
@@ -361,18 +365,18 @@ const ContractDashboard: React.FC = () => {
             </div>
           </Card>
 
-          <Card className="border-green-200 bg-green-50">
+          <Card className="border-green-200 dark:border-green-900/50 bg-green-50 dark:bg-green-900/20">
             <div className="p-4">
               <div className="flex items-center">
-                <TrendingUp className="w-5 h-5 text-green-600 mr-2" />
+                <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-500 mr-2" />
                 <div>
-                  <p className="text-sm font-medium text-green-800">
+                  <p className="text-sm font-medium text-green-800 dark:text-green-300">
                     Novos Contratos
                   </p>
-                  <p className="text-lg font-bold text-green-900">
+                  <p className="text-lg font-bold text-green-900 dark:text-green-200">
                     {metrics.newContractsThisMonth}
                   </p>
-                  <p className="text-xs text-green-700 mt-1">Este mês</p>
+                  <p className="text-xs text-green-700 dark:text-green-400 mt-1">Este mês</p>
                 </div>
               </div>
             </div>
@@ -385,7 +389,7 @@ const ContractDashboard: React.FC = () => {
         {/* Contract Status Distribution */}
         <Card>
           <div className="p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
               <PieChartIcon className="w-5 h-5 mr-2" />
               Distribuição por Status
             </h3>
@@ -410,7 +414,7 @@ const ContractDashboard: React.FC = () => {
                     />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip contentStyle={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border)' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -419,16 +423,16 @@ const ContractDashboard: React.FC = () => {
         {/* Contract Types Distribution */}
         <Card>
           <div className="p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
               <BarChart3 className="w-5 h-5 mr-2" />
               Distribuição por Tipo
             </h3>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                <XAxis dataKey="name" stroke="var(--color-text-secondary)" />
+                <YAxis stroke="var(--color-text-secondary)" />
+                <Tooltip contentStyle={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border)' }} />
                 <Bar dataKey="value" fill="#8884d8" />
               </BarChart>
             </ResponsiveContainer>
@@ -438,22 +442,24 @@ const ContractDashboard: React.FC = () => {
         {/* Revenue Trend */}
         <Card className="lg:col-span-2">
           <div className="p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
               <TrendingUp className="w-5 h-5 mr-2" />
               Evolução da Receita Mensal
             </h3>
             <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={revenueData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                <XAxis dataKey="name" stroke="var(--color-text-secondary)" />
                 <YAxis
                   tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
+                  stroke="var(--color-text-secondary)"
                 />
                 <Tooltip
                   formatter={(value) => [
                     formatCurrency(value as number),
                     "Receita",
                   ]}
+                  contentStyle={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border)' }}
                 />
                 <Area
                   type="monotone"
@@ -471,7 +477,7 @@ const ContractDashboard: React.FC = () => {
       {/* Recent Activity */}
       <Card>
         <div className="p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
             <Activity className="w-5 h-5 mr-2" />
             Atividade Recente
           </h3>
@@ -479,25 +485,25 @@ const ContractDashboard: React.FC = () => {
             {contracts.slice(0, 5).map((contract) => (
               <div
                 key={contract.id}
-                className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0"
+                className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0"
               >
                 <div className="flex items-center">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                  <div className="w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full mr-3"></div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
                       Contrato #{contract.contract_number}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {getContractTypeLabel(contract.contract_type)} •{" "}
                       {contract.lives_contracted} vidas
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
                     {formatCurrency(contract.monthly_value || 0)}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     {new Date(contract.created_at).toLocaleDateString("pt-BR")}
                   </p>
                 </div>

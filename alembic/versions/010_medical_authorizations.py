@@ -5,13 +5,14 @@ Revises: 009_expand_services_catalog
 Create Date: 2025-09-18 21:30:00.000000
 
 """
-from alembic import op
+
 import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '010_medical_authorizations'
-down_revision = '009_expand_services_catalog'
+revision = "010_medical_authorizations"
+down_revision = "009_expand_services_catalog"
 branch_labels = None
 depends_on = None
 
@@ -25,16 +26,18 @@ def upgrade():
         sa.Column("id", sa.BigInteger(), autoincrement=True, nullable=False),
         sa.Column("contract_life_id", sa.BigInteger(), nullable=False),
         sa.Column("service_id", sa.BigInteger(), nullable=False),
-        sa.Column("doctor_id", sa.BigInteger(), nullable=False),  # User ID of the doctor
+        sa.Column(
+            "doctor_id", sa.BigInteger(), nullable=False
+        ),  # User ID of the doctor
         sa.Column("authorization_code", sa.String(length=50), nullable=False),
         sa.Column("authorization_date", sa.Date(), nullable=False),
         sa.Column("valid_from", sa.Date(), nullable=False),
         sa.Column("valid_until", sa.Date(), nullable=False),
         sa.Column("sessions_authorized", sa.Integer()),  # Total sessions authorized
-        sa.Column("sessions_remaining", sa.Integer()),   # Sessions left to use
-        sa.Column("monthly_limit", sa.Integer()),        # Max sessions per month
-        sa.Column("weekly_limit", sa.Integer()),         # Max sessions per week
-        sa.Column("daily_limit", sa.Integer()),          # Max sessions per day
+        sa.Column("sessions_remaining", sa.Integer()),  # Sessions left to use
+        sa.Column("monthly_limit", sa.Integer()),  # Max sessions per month
+        sa.Column("weekly_limit", sa.Integer()),  # Max sessions per week
+        sa.Column("daily_limit", sa.Integer()),  # Max sessions per day
         sa.Column("medical_indication", sa.Text(), nullable=False),
         sa.Column("contraindications", sa.Text()),
         sa.Column("special_instructions", sa.Text()),
@@ -78,17 +81,49 @@ def upgrade():
         sa.ForeignKeyConstraint(["created_by"], ["master.users.id"]),
         sa.ForeignKeyConstraint(["updated_by"], ["master.users.id"]),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("authorization_code", name="medical_authorizations_code_unique"),
+        sa.UniqueConstraint(
+            "authorization_code", name="medical_authorizations_code_unique"
+        ),
         schema="master",
     )
 
     # Create indexes for medical_authorizations
-    op.create_index("medical_authorizations_contract_life_id_idx", "medical_authorizations", ["contract_life_id"], schema="master")
-    op.create_index("medical_authorizations_service_id_idx", "medical_authorizations", ["service_id"], schema="master")
-    op.create_index("medical_authorizations_doctor_id_idx", "medical_authorizations", ["doctor_id"], schema="master")
-    op.create_index("medical_authorizations_status_idx", "medical_authorizations", ["status"], schema="master")
-    op.create_index("medical_authorizations_date_range_idx", "medical_authorizations", ["valid_from", "valid_until"], schema="master")
-    op.create_index("medical_authorizations_code_idx", "medical_authorizations", ["authorization_code"], schema="master")
+    op.create_index(
+        "medical_authorizations_contract_life_id_idx",
+        "medical_authorizations",
+        ["contract_life_id"],
+        schema="master",
+    )
+    op.create_index(
+        "medical_authorizations_service_id_idx",
+        "medical_authorizations",
+        ["service_id"],
+        schema="master",
+    )
+    op.create_index(
+        "medical_authorizations_doctor_id_idx",
+        "medical_authorizations",
+        ["doctor_id"],
+        schema="master",
+    )
+    op.create_index(
+        "medical_authorizations_status_idx",
+        "medical_authorizations",
+        ["status"],
+        schema="master",
+    )
+    op.create_index(
+        "medical_authorizations_date_range_idx",
+        "medical_authorizations",
+        ["valid_from", "valid_until"],
+        schema="master",
+    )
+    op.create_index(
+        "medical_authorizations_code_idx",
+        "medical_authorizations",
+        ["authorization_code"],
+        schema="master",
+    )
 
     # Create authorization_renewals table for tracking renewals
     op.create_table(
@@ -101,8 +136,12 @@ def upgrade():
         sa.Column("changes_made", sa.Text()),  # JSON string of what changed
         sa.Column("approved_by", sa.BigInteger(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=False, default=sa.func.now()),
-        sa.ForeignKeyConstraint(["original_authorization_id"], ["master.medical_authorizations.id"]),
-        sa.ForeignKeyConstraint(["new_authorization_id"], ["master.medical_authorizations.id"]),
+        sa.ForeignKeyConstraint(
+            ["original_authorization_id"], ["master.medical_authorizations.id"]
+        ),
+        sa.ForeignKeyConstraint(
+            ["new_authorization_id"], ["master.medical_authorizations.id"]
+        ),
         sa.ForeignKeyConstraint(["approved_by"], ["master.users.id"]),
         sa.PrimaryKeyConstraint("id"),
         schema="master",
@@ -113,7 +152,9 @@ def upgrade():
         "authorization_history",
         sa.Column("id", sa.BigInteger(), autoincrement=True, nullable=False),
         sa.Column("authorization_id", sa.BigInteger(), nullable=False),
-        sa.Column("action", sa.String(length=50), nullable=False),  # created, updated, cancelled, expired, etc.
+        sa.Column(
+            "action", sa.String(length=50), nullable=False
+        ),  # created, updated, cancelled, expired, etc.
         sa.Column("field_changed", sa.String(length=100)),
         sa.Column("old_value", sa.Text()),
         sa.Column("new_value", sa.Text()),
@@ -126,21 +167,49 @@ def upgrade():
             "action IN ('created', 'updated', 'cancelled', 'expired', 'suspended', 'renewed', 'sessions_updated')",
             name="authorization_history_action_check",
         ),
-        sa.ForeignKeyConstraint(["authorization_id"], ["master.medical_authorizations.id"]),
+        sa.ForeignKeyConstraint(
+            ["authorization_id"], ["master.medical_authorizations.id"]
+        ),
         sa.ForeignKeyConstraint(["performed_by"], ["master.users.id"]),
         sa.PrimaryKeyConstraint("id"),
         schema="master",
     )
 
     # Create indexes for history tables
-    op.create_index("authorization_renewals_original_idx", "authorization_renewals", ["original_authorization_id"], schema="master")
-    op.create_index("authorization_renewals_new_idx", "authorization_renewals", ["new_authorization_id"], schema="master")
-    op.create_index("authorization_history_authorization_idx", "authorization_history", ["authorization_id"], schema="master")
-    op.create_index("authorization_history_action_idx", "authorization_history", ["action"], schema="master")
-    op.create_index("authorization_history_date_idx", "authorization_history", ["performed_at"], schema="master")
+    op.create_index(
+        "authorization_renewals_original_idx",
+        "authorization_renewals",
+        ["original_authorization_id"],
+        schema="master",
+    )
+    op.create_index(
+        "authorization_renewals_new_idx",
+        "authorization_renewals",
+        ["new_authorization_id"],
+        schema="master",
+    )
+    op.create_index(
+        "authorization_history_authorization_idx",
+        "authorization_history",
+        ["authorization_id"],
+        schema="master",
+    )
+    op.create_index(
+        "authorization_history_action_idx",
+        "authorization_history",
+        ["action"],
+        schema="master",
+    )
+    op.create_index(
+        "authorization_history_date_idx",
+        "authorization_history",
+        ["performed_at"],
+        schema="master",
+    )
 
     # Create function to automatically generate authorization codes
-    op.execute("""
+    op.execute(
+        """
         CREATE OR REPLACE FUNCTION master.generate_authorization_code()
         RETURNS TEXT AS $$
         DECLARE
@@ -160,10 +229,12 @@ def upgrade():
             END LOOP;
         END;
         $$ LANGUAGE plpgsql;
-    """)
+    """
+    )
 
     # Create trigger to auto-generate authorization codes
-    op.execute("""
+    op.execute(
+        """
         CREATE OR REPLACE FUNCTION master.set_authorization_code()
         RETURNS TRIGGER AS $$
         BEGIN
@@ -173,17 +244,21 @@ def upgrade():
             RETURN NEW;
         END;
         $$ LANGUAGE plpgsql;
-    """)
+    """
+    )
 
-    op.execute("""
+    op.execute(
+        """
         CREATE TRIGGER trigger_set_authorization_code
         BEFORE INSERT ON master.medical_authorizations
         FOR EACH ROW
         EXECUTE FUNCTION master.set_authorization_code();
-    """)
+    """
+    )
 
     # Create trigger to update sessions_remaining when sessions are used
-    op.execute("""
+    op.execute(
+        """
         CREATE OR REPLACE FUNCTION master.update_authorization_sessions()
         RETURNS TRIGGER AS $$
         BEGIN
@@ -192,10 +267,12 @@ def upgrade():
             RETURN NEW;
         END;
         $$ LANGUAGE plpgsql;
-    """)
+    """
+    )
 
     # Create view for active authorizations
-    op.execute("""
+    op.execute(
+        """
         CREATE VIEW master.active_medical_authorizations AS
         SELECT
             ma.*,
@@ -216,7 +293,8 @@ def upgrade():
           AND ma.valid_from <= CURRENT_DATE
           AND ma.valid_until >= CURRENT_DATE
           AND (ma.sessions_remaining IS NULL OR ma.sessions_remaining > 0);
-    """)
+    """
+    )
 
 
 def downgrade():
@@ -226,7 +304,9 @@ def downgrade():
     op.execute("DROP VIEW IF EXISTS master.active_medical_authorizations;")
 
     # Drop triggers and functions
-    op.execute("DROP TRIGGER IF EXISTS trigger_set_authorization_code ON master.medical_authorizations;")
+    op.execute(
+        "DROP TRIGGER IF EXISTS trigger_set_authorization_code ON master.medical_authorizations;"
+    )
     op.execute("DROP FUNCTION IF EXISTS master.set_authorization_code();")
     op.execute("DROP FUNCTION IF EXISTS master.update_authorization_sessions();")
     op.execute("DROP FUNCTION IF EXISTS master.generate_authorization_code();")

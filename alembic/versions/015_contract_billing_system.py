@@ -5,9 +5,11 @@ Revises: 014_add_service_address_fields
 Create Date: 2025-01-22 15:30:00.000000
 
 """
-from alembic import op
+
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "015_contract_billing_system"
@@ -24,10 +26,14 @@ def upgrade():
         "contract_billing_schedules",
         sa.Column("id", sa.BigInteger(), autoincrement=True, nullable=False),
         sa.Column("contract_id", sa.BigInteger(), nullable=False),
-        sa.Column("billing_cycle", sa.String(length=20), nullable=False, default="MONTHLY"),
+        sa.Column(
+            "billing_cycle", sa.String(length=20), nullable=False, default="MONTHLY"
+        ),
         sa.Column("billing_day", sa.Integer(), nullable=False, default=1),
         sa.Column("next_billing_date", sa.Date(), nullable=False),
-        sa.Column("amount_per_cycle", sa.Numeric(precision=10, scale=2), nullable=False),
+        sa.Column(
+            "amount_per_cycle", sa.Numeric(precision=10, scale=2), nullable=False
+        ),
         sa.Column("is_active", sa.Boolean(), default=True),
         sa.Column("created_at", sa.DateTime(), nullable=False, default=sa.func.now()),
         sa.Column("updated_at", sa.DateTime(), nullable=False, default=sa.func.now()),
@@ -40,17 +46,36 @@ def upgrade():
             "billing_day >= 1 AND billing_day <= 31",
             name="contract_billing_schedules_day_check",
         ),
-        sa.ForeignKeyConstraint(["contract_id"], ["master.contracts.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["contract_id"], ["master.contracts.id"], ondelete="CASCADE"
+        ),
         sa.ForeignKeyConstraint(["created_by"], ["master.users.id"]),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("contract_id", name="contract_billing_schedules_contract_unique"),
+        sa.UniqueConstraint(
+            "contract_id", name="contract_billing_schedules_contract_unique"
+        ),
         schema="master",
     )
 
     # Create indexes for contract_billing_schedules
-    op.create_index("contract_billing_schedules_contract_id_idx", "contract_billing_schedules", ["contract_id"], schema="master")
-    op.create_index("contract_billing_schedules_next_billing_idx", "contract_billing_schedules", ["next_billing_date"], schema="master")
-    op.create_index("contract_billing_schedules_is_active_idx", "contract_billing_schedules", ["is_active"], schema="master")
+    op.create_index(
+        "contract_billing_schedules_contract_id_idx",
+        "contract_billing_schedules",
+        ["contract_id"],
+        schema="master",
+    )
+    op.create_index(
+        "contract_billing_schedules_next_billing_idx",
+        "contract_billing_schedules",
+        ["next_billing_date"],
+        schema="master",
+    )
+    op.create_index(
+        "contract_billing_schedules_is_active_idx",
+        "contract_billing_schedules",
+        ["is_active"],
+        schema="master",
+    )
 
     # Create contract_invoices table
     op.create_table(
@@ -62,13 +87,19 @@ def upgrade():
         sa.Column("billing_period_end", sa.Date(), nullable=False),
         sa.Column("lives_count", sa.Integer(), nullable=False),
         sa.Column("base_amount", sa.Numeric(precision=10, scale=2), nullable=False),
-        sa.Column("additional_services_amount", sa.Numeric(precision=10, scale=2), default=0.00),
+        sa.Column(
+            "additional_services_amount",
+            sa.Numeric(precision=10, scale=2),
+            default=0.00,
+        ),
         sa.Column("discounts", sa.Numeric(precision=10, scale=2), default=0.00),
         sa.Column("taxes", sa.Numeric(precision=10, scale=2), default=0.00),
         sa.Column("total_amount", sa.Numeric(precision=10, scale=2), nullable=False),
         sa.Column("status", sa.String(length=20), nullable=False, default="pendente"),
         sa.Column("due_date", sa.Date(), nullable=False),
-        sa.Column("issued_date", sa.Date(), nullable=False, default=sa.func.current_date()),
+        sa.Column(
+            "issued_date", sa.Date(), nullable=False, default=sa.func.current_date()
+        ),
         sa.Column("paid_date", sa.Date()),
         sa.Column("payment_method", sa.String(length=50)),
         sa.Column("payment_reference", sa.String(length=100)),
@@ -94,7 +125,9 @@ def upgrade():
             "total_amount >= 0",
             name="contract_invoices_total_amount_check",
         ),
-        sa.ForeignKeyConstraint(["contract_id"], ["master.contracts.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["contract_id"], ["master.contracts.id"], ondelete="CASCADE"
+        ),
         sa.ForeignKeyConstraint(["created_by"], ["master.users.id"]),
         sa.ForeignKeyConstraint(["updated_by"], ["master.users.id"]),
         sa.PrimaryKeyConstraint("id"),
@@ -103,12 +136,39 @@ def upgrade():
     )
 
     # Create indexes for contract_invoices
-    op.create_index("contract_invoices_contract_id_idx", "contract_invoices", ["contract_id"], schema="master")
-    op.create_index("contract_invoices_status_idx", "contract_invoices", ["status"], schema="master")
-    op.create_index("contract_invoices_due_date_idx", "contract_invoices", ["due_date"], schema="master")
-    op.create_index("contract_invoices_issued_date_idx", "contract_invoices", ["issued_date"], schema="master")
-    op.create_index("contract_invoices_billing_period_idx", "contract_invoices", ["billing_period_start", "billing_period_end"], schema="master")
-    op.create_index("contract_invoices_number_idx", "contract_invoices", ["invoice_number"], schema="master")
+    op.create_index(
+        "contract_invoices_contract_id_idx",
+        "contract_invoices",
+        ["contract_id"],
+        schema="master",
+    )
+    op.create_index(
+        "contract_invoices_status_idx", "contract_invoices", ["status"], schema="master"
+    )
+    op.create_index(
+        "contract_invoices_due_date_idx",
+        "contract_invoices",
+        ["due_date"],
+        schema="master",
+    )
+    op.create_index(
+        "contract_invoices_issued_date_idx",
+        "contract_invoices",
+        ["issued_date"],
+        schema="master",
+    )
+    op.create_index(
+        "contract_invoices_billing_period_idx",
+        "contract_invoices",
+        ["billing_period_start", "billing_period_end"],
+        schema="master",
+    )
+    op.create_index(
+        "contract_invoices_number_idx",
+        "contract_invoices",
+        ["invoice_number"],
+        schema="master",
+    )
 
     # Create payment_receipts table
     op.create_table(
@@ -133,7 +193,9 @@ def upgrade():
             "file_size >= 0",
             name="payment_receipts_file_size_check",
         ),
-        sa.ForeignKeyConstraint(["invoice_id"], ["master.contract_invoices.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["invoice_id"], ["master.contract_invoices.id"], ondelete="CASCADE"
+        ),
         sa.ForeignKeyConstraint(["uploaded_by"], ["master.users.id"]),
         sa.ForeignKeyConstraint(["verified_by"], ["master.users.id"]),
         sa.PrimaryKeyConstraint("id"),
@@ -141,10 +203,30 @@ def upgrade():
     )
 
     # Create indexes for payment_receipts
-    op.create_index("payment_receipts_invoice_id_idx", "payment_receipts", ["invoice_id"], schema="master")
-    op.create_index("payment_receipts_verification_status_idx", "payment_receipts", ["verification_status"], schema="master")
-    op.create_index("payment_receipts_upload_date_idx", "payment_receipts", ["upload_date"], schema="master")
-    op.create_index("payment_receipts_uploaded_by_idx", "payment_receipts", ["uploaded_by"], schema="master")
+    op.create_index(
+        "payment_receipts_invoice_id_idx",
+        "payment_receipts",
+        ["invoice_id"],
+        schema="master",
+    )
+    op.create_index(
+        "payment_receipts_verification_status_idx",
+        "payment_receipts",
+        ["verification_status"],
+        schema="master",
+    )
+    op.create_index(
+        "payment_receipts_upload_date_idx",
+        "payment_receipts",
+        ["upload_date"],
+        schema="master",
+    )
+    op.create_index(
+        "payment_receipts_uploaded_by_idx",
+        "payment_receipts",
+        ["uploaded_by"],
+        schema="master",
+    )
 
     # Create billing_audit_log table for tracking changes
     op.create_table(
@@ -173,12 +255,28 @@ def upgrade():
     )
 
     # Create indexes for billing_audit_log
-    op.create_index("billing_audit_log_entity_idx", "billing_audit_log", ["entity_type", "entity_id"], schema="master")
-    op.create_index("billing_audit_log_timestamp_idx", "billing_audit_log", ["timestamp"], schema="master")
-    op.create_index("billing_audit_log_user_id_idx", "billing_audit_log", ["user_id"], schema="master")
+    op.create_index(
+        "billing_audit_log_entity_idx",
+        "billing_audit_log",
+        ["entity_type", "entity_id"],
+        schema="master",
+    )
+    op.create_index(
+        "billing_audit_log_timestamp_idx",
+        "billing_audit_log",
+        ["timestamp"],
+        schema="master",
+    )
+    op.create_index(
+        "billing_audit_log_user_id_idx",
+        "billing_audit_log",
+        ["user_id"],
+        schema="master",
+    )
 
     # Insert initial billing schedules for existing active contracts
-    op.execute("""
+    op.execute(
+        """
         INSERT INTO master.contract_billing_schedules (
             contract_id,
             billing_cycle,
@@ -209,10 +307,12 @@ def upgrade():
         WHERE c.status = 'active'
         AND c.monthly_value IS NOT NULL
         AND c.monthly_value > 0;
-    """)
+    """
+    )
 
     # Create function to auto-update next_billing_date after invoice creation
-    op.execute("""
+    op.execute(
+        """
         CREATE OR REPLACE FUNCTION master.update_next_billing_date()
         RETURNS TRIGGER AS $$
         BEGIN
@@ -236,22 +336,27 @@ def upgrade():
             RETURN NEW;
         END;
         $$ LANGUAGE plpgsql;
-    """)
+    """
+    )
 
     # Create trigger for auto-updating next billing date
-    op.execute("""
+    op.execute(
+        """
         CREATE TRIGGER trigger_update_next_billing_date
         AFTER INSERT ON master.contract_invoices
         FOR EACH ROW
         EXECUTE FUNCTION master.update_next_billing_date();
-    """)
+    """
+    )
 
 
 def downgrade():
     """Drop contract billing system tables."""
 
     # Drop trigger and function
-    op.execute("DROP TRIGGER IF EXISTS trigger_update_next_billing_date ON master.contract_invoices;")
+    op.execute(
+        "DROP TRIGGER IF EXISTS trigger_update_next_billing_date ON master.contract_invoices;"
+    )
     op.execute("DROP FUNCTION IF EXISTS master.update_next_billing_date();")
 
     # Drop tables in reverse order due to foreign key dependencies

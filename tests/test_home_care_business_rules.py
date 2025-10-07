@@ -4,10 +4,11 @@ Testes de regras de negócio Home Care
 Testes funcionais que validam cenários específicos do negócio
 """
 
+from datetime import date, datetime, timedelta
+from decimal import Decimal
+
 import pytest
 import pytest_asyncio
-from datetime import datetime, date, timedelta
-from decimal import Decimal
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -30,6 +31,7 @@ class TestHomeCareBusinessRules:
     @pytest_asyncio.fixture
     async def client(self):
         """Cliente HTTP para testes de API"""
+
         # Simular cliente para testes - em produção seria httpx.AsyncClient
         class MockClient:
             async def post(self, url, json=None, headers=None):
@@ -56,7 +58,7 @@ class TestHomeCareBusinessRules:
             "lives_minimum": 8,
             "lives_maximum": 12,
             "allows_substitution": True,
-            "control_period": "MONTHLY"
+            "control_period": "MONTHLY",
         }
 
         # Validações do cenário UNIMED
@@ -66,10 +68,14 @@ class TestHomeCareBusinessRules:
         assert contract_config["control_period"] == "MONTHLY"
 
         # Tolerância deve ser ±2 vidas
-        tolerance = contract_config["lives_maximum"] - contract_config["lives_contracted"]
+        tolerance = (
+            contract_config["lives_maximum"] - contract_config["lives_contracted"]
+        )
         assert tolerance == 2
 
-        minimum_tolerance = contract_config["lives_contracted"] - contract_config["lives_minimum"]
+        minimum_tolerance = (
+            contract_config["lives_contracted"] - contract_config["lives_minimum"]
+        )
         assert minimum_tolerance == 2
 
     def test_individual_person_scenario_validation(self):
@@ -80,7 +86,7 @@ class TestHomeCareBusinessRules:
             "contract_type": "INDIVIDUAL",
             "lives_contracted": 3,
             "allows_substitution": False,
-            "control_period": "MONTHLY"
+            "control_period": "MONTHLY",
         }
 
         # Validações para pessoa física
@@ -99,7 +105,7 @@ class TestHomeCareBusinessRules:
             "contract_type": "EMPRESARIAL",
             "lives_contracted": 5,
             "allows_substitution": False,
-            "control_period": "MONTHLY"
+            "control_period": "MONTHLY",
         }
 
         # Validações para empresário
@@ -121,7 +127,7 @@ class TestHomeCareBusinessRules:
             {"action": "remove", "lives_after": 9, "expected": "WITHIN_LIMITS"},
             {"action": "remove", "lives_after": 7, "expected": "BELOW_MINIMUM"},
             {"action": "add", "lives_after": 13, "expected": "ABOVE_MAXIMUM"},
-            {"action": "add", "lives_after": 11, "expected": "WITHIN_LIMITS"}
+            {"action": "add", "lives_after": 11, "expected": "WITHIN_LIMITS"},
         ]
 
         for scenario in scenarios:
@@ -142,14 +148,23 @@ class TestHomeCareBusinessRules:
             "monthly_limit": 30,
             "daily_limit": 2,
             "start_date": date(2025, 1, 1),
-            "end_date": date(2025, 12, 31)
+            "end_date": date(2025, 12, 31),
         }
 
         # Cenários de uso
         usage_scenarios = [
-            {"sessions_to_use": 2, "expected": "WITHIN_LIMITS"},  # Dentro do limite diário
-            {"sessions_to_use": 3, "expected": "DAILY_LIMIT_EXCEEDED"},  # Acima do limite diário
-            {"sessions_to_use": 31, "expected": "MONTHLY_LIMIT_EXCEEDED"}  # Acima do limite mensal
+            {
+                "sessions_to_use": 2,
+                "expected": "WITHIN_LIMITS",
+            },  # Dentro do limite diário
+            {
+                "sessions_to_use": 3,
+                "expected": "DAILY_LIMIT_EXCEEDED",
+            },  # Acima do limite diário
+            {
+                "sessions_to_use": 31,
+                "expected": "MONTHLY_LIMIT_EXCEEDED",
+            },  # Acima do limite mensal
         ]
 
         for scenario in usage_scenarios:
@@ -161,7 +176,10 @@ class TestHomeCareBusinessRules:
                 assert scenario["expected"] == "MONTHLY_LIMIT_EXCEEDED"
             elif sessions_to_use > authorization["daily_limit"]:
                 assert scenario["expected"] == "DAILY_LIMIT_EXCEEDED"
-            elif sessions_to_use <= authorization["daily_limit"] and (current_used + sessions_to_use) <= authorization["monthly_limit"]:
+            elif (
+                sessions_to_use <= authorization["daily_limit"]
+                and (current_used + sessions_to_use) <= authorization["monthly_limit"]
+            ):
                 assert scenario["expected"] == "WITHIN_LIMITS"
 
     def test_service_catalog_requirements_validation(self):
@@ -174,22 +192,22 @@ class TestHomeCareBusinessRules:
                 "name": "Aplicação Medicação EV",
                 "requires_prescription": True,
                 "home_visit_required": True,
-                "default_unit_value": Decimal("80.00")
+                "default_unit_value": Decimal("80.00"),
             },
             {
                 "code": "ENF002",
                 "name": "Curativo Simples",
                 "requires_prescription": False,
                 "home_visit_required": True,
-                "default_unit_value": Decimal("45.00")
+                "default_unit_value": Decimal("45.00"),
             },
             {
                 "code": "MED001",
                 "name": "Consulta Médica Domiciliar",
                 "requires_prescription": False,
                 "home_visit_required": True,
-                "default_unit_value": Decimal("250.00")
-            }
+                "default_unit_value": Decimal("250.00"),
+            },
         ]
 
         # Validações dos serviços
@@ -208,10 +226,26 @@ class TestHomeCareBusinessRules:
 
         # Exemplo de contrato UNIMED com serviços
         contract_services = [
-            {"service_code": "ENF001", "monthly_limit": 4, "unit_value": Decimal("80.00")},
-            {"service_code": "ENF002", "monthly_limit": 8, "unit_value": Decimal("45.00")},
-            {"service_code": "FIS001", "monthly_limit": 8, "unit_value": Decimal("120.00")},
-            {"service_code": "MED001", "monthly_limit": 1, "unit_value": Decimal("250.00")}
+            {
+                "service_code": "ENF001",
+                "monthly_limit": 4,
+                "unit_value": Decimal("80.00"),
+            },
+            {
+                "service_code": "ENF002",
+                "monthly_limit": 8,
+                "unit_value": Decimal("45.00"),
+            },
+            {
+                "service_code": "FIS001",
+                "monthly_limit": 8,
+                "unit_value": Decimal("120.00"),
+            },
+            {
+                "service_code": "MED001",
+                "monthly_limit": 1,
+                "unit_value": Decimal("250.00"),
+            },
         ]
 
         # Validações dos limites por serviço
@@ -242,7 +276,7 @@ class TestHomeCareBusinessRules:
                 "lives_count_before": 10,
                 "lives_count_after": 9,
                 "created_by": 10,
-                "created_at": datetime.now()
+                "created_at": datetime.now(),
             },
             {
                 "action_type": "ADDED",
@@ -251,8 +285,8 @@ class TestHomeCareBusinessRules:
                 "lives_count_before": 9,
                 "lives_count_after": 10,
                 "created_by": 10,
-                "created_at": datetime.now()
-            }
+                "created_at": datetime.now(),
+            },
         ]
 
         # Validações do audit trail
@@ -279,12 +313,9 @@ class TestHomeCareBusinessRules:
             "contract": {
                 "type": "CORPORATIVO",
                 "lives_contracted": 10,
-                "allows_substitution": True
+                "allows_substitution": True,
             },
-            "person": {
-                "name": "Maria Silva",
-                "condition": "Diabetes tipo 2"
-            },
+            "person": {"name": "Maria Silva", "condition": "Diabetes tipo 2"},
             "authorizations": [
                 {
                     "service": "ENF001",  # Aplicação insulina
@@ -292,7 +323,7 @@ class TestHomeCareBusinessRules:
                     "monthly_limit": 30,
                     "daily_limit": 2,
                     "medical_indication": "Insulina NPH e regular",
-                    "priority": "HIGH"
+                    "priority": "HIGH",
                 },
                 {
                     "service": "ENF003",  # Coleta sangue
@@ -300,14 +331,14 @@ class TestHomeCareBusinessRules:
                     "monthly_limit": 12,
                     "daily_limit": 1,
                     "medical_indication": "Controle glicêmico",
-                    "priority": "NORMAL"
-                }
+                    "priority": "NORMAL",
+                },
             ],
             "usage_simulation": [
                 {"day": 1, "service": "ENF001", "sessions": 2},  # Manhã e noite
                 {"day": 5, "service": "ENF003", "sessions": 1},  # Coleta mensal
-                {"day": 10, "service": "ENF001", "sessions": 2}  # Continuação
-            ]
+                {"day": 10, "service": "ENF001", "sessions": 2},  # Continuação
+            ],
         }
 
         # Validações de integração
@@ -323,7 +354,8 @@ class TestHomeCareBusinessRules:
 
         # Validação da simulação de uso
         total_sessions_enf001 = sum(
-            usage["sessions"] for usage in scenario["usage_simulation"]
+            usage["sessions"]
+            for usage in scenario["usage_simulation"]
             if usage["service"] == "ENF001"
         )
         assert total_sessions_enf001 <= 30  # Dentro do limite mensal
@@ -338,7 +370,7 @@ class TestHomeCareBusinessRules:
             "service_execution_logging": "< 100ms",
             "monthly_report_generation": "< 30s",
             "concurrent_users": 100,
-            "database_response_time": "< 100ms"
+            "database_response_time": "< 100ms",
         }
 
         # Validações dos requisitos (simulados)
@@ -356,20 +388,20 @@ class TestHomeCareBusinessRules:
         integrity_scenarios = [
             {
                 "scenario": "contract_without_client",
-                "expected": "FOREIGN_KEY_VIOLATION"
+                "expected": "FOREIGN_KEY_VIOLATION",
             },
             {
                 "scenario": "authorization_without_contract",
-                "expected": "FOREIGN_KEY_VIOLATION"
+                "expected": "FOREIGN_KEY_VIOLATION",
             },
             {
                 "scenario": "service_execution_without_authorization",
-                "expected": "BUSINESS_RULE_VIOLATION"
+                "expected": "BUSINESS_RULE_VIOLATION",
             },
             {
                 "scenario": "duplicate_contract_number",
-                "expected": "UNIQUE_CONSTRAINT_VIOLATION"
-            }
+                "expected": "UNIQUE_CONSTRAINT_VIOLATION",
+            },
         ]
 
         # Validações de integridade
@@ -377,7 +409,7 @@ class TestHomeCareBusinessRules:
             assert scenario["expected"] in [
                 "FOREIGN_KEY_VIOLATION",
                 "BUSINESS_RULE_VIOLATION",
-                "UNIQUE_CONSTRAINT_VIOLATION"
+                "UNIQUE_CONSTRAINT_VIOLATION",
             ]
 
     def test_compliance_requirements_validation(self):
@@ -390,7 +422,7 @@ class TestHomeCareBusinessRules:
             "data_encryption": "at_rest_and_transit",
             "access_control": "role_based",
             "backup_frequency": "daily",
-            "disaster_recovery": "RTO_4h_RPO_1h"
+            "disaster_recovery": "RTO_4h_RPO_1h",
         }
 
         # Validações de compliance

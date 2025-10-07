@@ -58,7 +58,7 @@ O CRUD de Clientes segue um padrão de **Arquitetura Limpa** com clara separaç�
 
 **Relacionamentos Chave:**
 - Client → Person (many-to-one)
-- Client → Establishment (many-to-one) 
+- Client → Establishment (many-to-one)
 - Client → Contracts (one-to-many)
 - Restrições únicas: (establishment_id, client_code), (establishment_id, person_id)
 

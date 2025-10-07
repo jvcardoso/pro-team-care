@@ -187,7 +187,7 @@ const Header = ({
 
           {/* Right Section */}
           <div className="flex items-center space-x-2">
-            {/* Theme Toggle */}
+             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
               className="p-2 rounded-lg text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -198,6 +198,15 @@ const Header = ({
               ) : (
                 <Moon className="h-5 w-5" />
               )}
+            </button>
+
+            {/* Command Palette Toggle */}
+            <button
+              onClick={onOpenCommandPalette}
+              className="p-2 rounded-lg text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              title="Abrir busca rápida (Ctrl + Alt + X)"
+            >
+              <Command className="h-5 w-5" />
             </button>
 
             {/* Notifications */}

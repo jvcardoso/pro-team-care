@@ -1,15 +1,17 @@
 """
 Schemas para sistema de cobrança B2B Pro Team Care
 """
+
 from datetime import date, datetime
 from decimal import Decimal
 from typing import List, Optional
-from pydantic import BaseModel, Field
 
+from pydantic import BaseModel, Field
 
 # ==========================================
 # SUBSCRIPTION PLAN SCHEMAS
 # ==========================================
+
 
 class SubscriptionPlanBase(BaseModel):
     name: str = Field(..., description="Nome do plano")
@@ -17,23 +19,29 @@ class SubscriptionPlanBase(BaseModel):
     monthly_price: Decimal = Field(..., description="Preço mensal")
     features: Optional[dict] = Field(None, description="Features do plano")
     max_users: Optional[int] = Field(None, description="Máximo de usuários")
-    max_establishments: Optional[int] = Field(None, description="Máximo de estabelecimentos")
+    max_establishments: Optional[int] = Field(
+        None, description="Máximo de estabelecimentos"
+    )
     is_active: bool = Field(default=True, description="Plano ativo")
 
 
 class SubscriptionPlanCreate(SubscriptionPlanBase):
     """Schema para criação de plano de assinatura"""
+
     pass
 
 
 class SubscriptionPlanUpdate(BaseModel):
     """Schema para atualização de plano de assinatura"""
+
     name: Optional[str] = Field(None, description="Nome do plano")
     description: Optional[str] = Field(None, description="Descrição do plano")
     monthly_price: Optional[Decimal] = Field(None, description="Preço mensal")
     features: Optional[dict] = Field(None, description="Features do plano")
     max_users: Optional[int] = Field(None, description="Máximo de usuários")
-    max_establishments: Optional[int] = Field(None, description="Máximo de estabelecimentos")
+    max_establishments: Optional[int] = Field(
+        None, description="Máximo de estabelecimentos"
+    )
     is_active: Optional[bool] = Field(None, description="Plano ativo")
 
 
@@ -49,6 +57,7 @@ class SubscriptionPlanResponse(SubscriptionPlanBase):
 # ==========================================
 # COMPANY SUBSCRIPTION SCHEMAS
 # ==========================================
+
 
 class CompanySubscriptionCreate(BaseModel):
     company_id: int = Field(..., description="ID da empresa")
@@ -90,20 +99,22 @@ class CompanySubscriptionResponse(BaseModel):
 
 class CompanySubscriptionsBatchRequest(BaseModel):
     """Schema para requisição batch de subscriptions"""
+
     company_ids: List[int] = Field(..., description="IDs das empresas")
 
 
 class CompanySubscriptionsBatchResponse(BaseModel):
     """Schema para resposta batch de subscriptions"""
+
     subscriptions: List[Optional[CompanySubscriptionResponse]] = Field(
-        ...,
-        description="Lista de subscriptions (None para empresas sem assinatura)"
+        ..., description="Lista de subscriptions (None para empresas sem assinatura)"
     )
 
 
 # ==========================================
 # PRO TEAM CARE INVOICE SCHEMAS
 # ==========================================
+
 
 class CreateProTeamCareInvoiceRequest(BaseModel):
     company_id: int = Field(..., description="ID da empresa")
@@ -156,6 +167,7 @@ class CheckoutSessionResponse(BaseModel):
 # DASHBOARD SCHEMAS
 # ==========================================
 
+
 class B2BBillingMetrics(BaseModel):
     total_companies: int
     active_subscriptions: int
@@ -189,11 +201,16 @@ class B2BDashboardResponse(BaseModel):
 # BULK OPERATION SCHEMAS
 # ==========================================
 
+
 class BulkInvoiceGenerationRequest(BaseModel):
     target_month: int = Field(..., description="Mês alvo", ge=1, le=12)
     target_year: int = Field(..., description="Ano alvo")
-    company_ids: Optional[List[int]] = Field(None, description="IDs específicas das empresas")
-    send_emails: bool = Field(default=False, description="Enviar emails automaticamente")
+    company_ids: Optional[List[int]] = Field(
+        None, description="IDs específicas das empresas"
+    )
+    send_emails: bool = Field(
+        default=False, description="Enviar emails automaticamente"
+    )
 
 
 class BulkInvoiceGenerationResponse(BaseModel):
@@ -209,11 +226,14 @@ class BulkInvoiceGenerationResponse(BaseModel):
 # PAYMENT TRACKING SCHEMAS
 # ==========================================
 
+
 class PaymentConfirmationRequest(BaseModel):
     invoice_id: int = Field(..., description="ID da fatura")
     payment_method: str = Field(..., description="Método de pagamento")
     payment_date: date = Field(..., description="Data do pagamento")
-    transaction_reference: Optional[str] = Field(None, description="Referência da transação")
+    transaction_reference: Optional[str] = Field(
+        None, description="Referência da transação"
+    )
     notes: Optional[str] = Field(None, description="Observações")
 
 

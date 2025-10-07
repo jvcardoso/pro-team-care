@@ -28,7 +28,7 @@ async def add_contract_permissions():
                     "module": "contracts",
                     "action": "create",
                     "resource": "contracts",
-                    "context_level": "company"
+                    "context_level": "company",
                 },
                 {
                     "name": "contracts_view",
@@ -37,7 +37,7 @@ async def add_contract_permissions():
                     "module": "contracts",
                     "action": "view",
                     "resource": "contracts",
-                    "context_level": "company"
+                    "context_level": "company",
                 },
                 {
                     "name": "contracts_update",
@@ -46,7 +46,7 @@ async def add_contract_permissions():
                     "module": "contracts",
                     "action": "update",
                     "resource": "contracts",
-                    "context_level": "company"
+                    "context_level": "company",
                 },
                 {
                     "name": "contracts_delete",
@@ -55,9 +55,8 @@ async def add_contract_permissions():
                     "module": "contracts",
                     "action": "delete",
                     "resource": "contracts",
-                    "context_level": "company"
+                    "context_level": "company",
                 },
-
                 # Contract Lives Management
                 {
                     "name": "contract_lives_create",
@@ -66,7 +65,7 @@ async def add_contract_permissions():
                     "module": "contracts",
                     "action": "create",
                     "resource": "contract_lives",
-                    "context_level": "company"
+                    "context_level": "company",
                 },
                 {
                     "name": "contract_lives_view",
@@ -75,7 +74,7 @@ async def add_contract_permissions():
                     "module": "contracts",
                     "action": "view",
                     "resource": "contract_lives",
-                    "context_level": "company"
+                    "context_level": "company",
                 },
                 {
                     "name": "contract_lives_update",
@@ -84,7 +83,7 @@ async def add_contract_permissions():
                     "module": "contracts",
                     "action": "update",
                     "resource": "contract_lives",
-                    "context_level": "company"
+                    "context_level": "company",
                 },
                 {
                     "name": "contract_lives_delete",
@@ -93,9 +92,8 @@ async def add_contract_permissions():
                     "module": "contracts",
                     "action": "delete",
                     "resource": "contract_lives",
-                    "context_level": "company"
+                    "context_level": "company",
                 },
-
                 # Medical Authorizations
                 {
                     "name": "medical_authorizations_create",
@@ -104,7 +102,7 @@ async def add_contract_permissions():
                     "module": "medical",
                     "action": "create",
                     "resource": "authorizations",
-                    "context_level": "company"
+                    "context_level": "company",
                 },
                 {
                     "name": "medical_authorizations_view",
@@ -113,7 +111,7 @@ async def add_contract_permissions():
                     "module": "medical",
                     "action": "view",
                     "resource": "authorizations",
-                    "context_level": "company"
+                    "context_level": "company",
                 },
                 {
                     "name": "medical_authorizations_update",
@@ -122,7 +120,7 @@ async def add_contract_permissions():
                     "module": "medical",
                     "action": "update",
                     "resource": "authorizations",
-                    "context_level": "company"
+                    "context_level": "company",
                 },
                 {
                     "name": "medical_authorizations_cancel",
@@ -131,9 +129,8 @@ async def add_contract_permissions():
                     "module": "medical",
                     "action": "cancel",
                     "resource": "authorizations",
-                    "context_level": "company"
+                    "context_level": "company",
                 },
-
                 # Service Executions
                 {
                     "name": "service_executions_create",
@@ -142,7 +139,7 @@ async def add_contract_permissions():
                     "module": "services",
                     "action": "create",
                     "resource": "executions",
-                    "context_level": "establishment"
+                    "context_level": "establishment",
                 },
                 {
                     "name": "service_executions_view",
@@ -151,7 +148,7 @@ async def add_contract_permissions():
                     "module": "services",
                     "action": "view",
                     "resource": "executions",
-                    "context_level": "establishment"
+                    "context_level": "establishment",
                 },
                 {
                     "name": "service_executions_update",
@@ -160,7 +157,7 @@ async def add_contract_permissions():
                     "module": "services",
                     "action": "update",
                     "resource": "executions",
-                    "context_level": "establishment"
+                    "context_level": "establishment",
                 },
                 {
                     "name": "service_executions_cancel",
@@ -169,9 +166,8 @@ async def add_contract_permissions():
                     "module": "services",
                     "action": "cancel",
                     "resource": "executions",
-                    "context_level": "establishment"
+                    "context_level": "establishment",
                 },
-
                 # Services Catalog
                 {
                     "name": "services_catalog_view",
@@ -180,7 +176,7 @@ async def add_contract_permissions():
                     "module": "services",
                     "action": "view",
                     "resource": "catalog",
-                    "context_level": "company"
+                    "context_level": "company",
                 },
                 {
                     "name": "services_catalog_manage",
@@ -189,9 +185,8 @@ async def add_contract_permissions():
                     "module": "services",
                     "action": "manage",
                     "resource": "catalog",
-                    "context_level": "company"
+                    "context_level": "company",
                 },
-
                 # Contract Reports
                 {
                     "name": "contract_reports_view",
@@ -200,7 +195,7 @@ async def add_contract_permissions():
                     "module": "reports",
                     "action": "view",
                     "resource": "contracts",
-                    "context_level": "company"
+                    "context_level": "company",
                 },
                 {
                     "name": "contract_reports_export",
@@ -209,9 +204,8 @@ async def add_contract_permissions():
                     "module": "reports",
                     "action": "export",
                     "resource": "contracts",
-                    "context_level": "company"
+                    "context_level": "company",
                 },
-
                 # Financial
                 {
                     "name": "contracts_financial_view",
@@ -220,7 +214,7 @@ async def add_contract_permissions():
                     "module": "financial",
                     "action": "view",
                     "resource": "contracts",
-                    "context_level": "company"
+                    "context_level": "company",
                 },
                 {
                     "name": "contracts_financial_manage",
@@ -229,7 +223,7 @@ async def add_contract_permissions():
                     "module": "financial",
                     "action": "manage",
                     "resource": "contracts",
-                    "context_level": "company"
+                    "context_level": "company",
                 },
             ]
 
@@ -269,6 +263,7 @@ async def add_contract_permissions():
     except Exception as e:
         print(f"❌ Erro: {e}")
         import traceback
+
         traceback.print_exc()
 
 
@@ -310,10 +305,10 @@ async def assign_permissions_to_admin_role():
                     WHERE role_id = :role_id AND permission_id = :permission_id
                     """
                 )
-                result = await db.execute(check_query, {
-                    "role_id": admin_role.id,
-                    "permission_id": permission.id
-                })
+                result = await db.execute(
+                    check_query,
+                    {"role_id": admin_role.id, "permission_id": permission.id},
+                )
                 existing = result.fetchone()
 
                 if not existing:
@@ -324,10 +319,10 @@ async def assign_permissions_to_admin_role():
                         VALUES (:role_id, :permission_id, NOW())
                         """
                     )
-                    await db.execute(assign_query, {
-                        "role_id": admin_role.id,
-                        "permission_id": permission.id
-                    })
+                    await db.execute(
+                        assign_query,
+                        {"role_id": admin_role.id, "permission_id": permission.id},
+                    )
                     assigned_count += 1
                     print(f"✅ Atribuída ao admin: {permission.name}")
                 else:
@@ -344,6 +339,7 @@ async def assign_permissions_to_admin_role():
     except Exception as e:
         print(f"❌ Erro: {e}")
         import traceback
+
         traceback.print_exc()
 
 

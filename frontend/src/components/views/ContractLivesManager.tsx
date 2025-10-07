@@ -8,6 +8,7 @@ import Card from "../ui/Card";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
 import { notify } from "../../utils/notifications.jsx";
+import LifeForm, { LifeFormData } from "../forms/LifeForm";
 import {
   Users,
   ArrowRightLeft,
@@ -28,14 +29,7 @@ import {
 } from "lucide-react";
 
 // ContractLife interface is now imported from config
-
-interface LifeFormData {
-  person_id: number;
-  person_name: string;
-  start_date: string;
-  end_date?: string;
-  notes?: string;
-}
+// LifeFormData is now imported from LifeForm component
 
 const ContractLivesManager: React.FC = () => {
   const { id: contractId } = useParams<{ id: string }>();
@@ -46,28 +40,55 @@ const ContractLivesManager: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
   const [showSubstituteForm, setShowSubstituteForm] = useState(false);
   const [selectedLife, setSelectedLife] = useState<ContractLife | null>(null);
   const [showTimeline, setShowTimeline] = useState(false);
   const [timelineLife, setTimelineLife] = useState<ContractLife | null>(null);
-  const [formData, setFormData] = useState<LifeFormData>({
-    person_id: 0,
-    person_name: "",
-    start_date: new Date().toISOString().split("T")[0],
-    end_date: "",
-    notes: "",
-  });
 
   // Handler functions defined before dataTable initialization
   const handleAddLife = () => {
-    setFormData({
-      person_id: 0,
-      person_name: "",
-      start_date: new Date().toISOString().split("T")[0],
-      end_date: "",
-      notes: "",
-    });
     setShowAddForm(true);
+  };
+
+  const handleAddLifeSubmit = async (data: LifeFormData) => {
+    try {
+      // Validate contract limits
+      const activeLives = lives.filter((l) => l.status === "active").length;
+
+      if (contract?.lives_maximum && activeLives >= contract.lives_maximum) {
+        notify.error(`Limite máximo de ${contract.lives_maximum} vidas atingido`);
+        return;
+      }
+
+      if (contract && activeLives >= contract.lives_contracted) {
+        notify.error(`Todas as ${contract.lives_contracted} vidas contratadas já estão em uso`);
+        return;
+      }
+
+      // TODO: Criar pessoa no backend primeiro, depois vincular ao contrato
+      // Por enquanto, usar API simplificada
+      await contractsService.addContractLife(parseInt(contractId!), {
+        person_name: data.person.name,
+        start_date: data.life.start_date,
+        end_date: data.life.end_date || null,
+        notes: data.life.notes,
+        relationship_type: data.life.relationship_type || "FUNCIONARIO",
+        allows_substitution: data.life.allows_substitution !== false,
+      });
+
+      notify.success(`${data.person.name} adicionado ao contrato com sucesso`);
+      setShowAddForm(false);
+      loadContractAndLives();
+    } catch (error) {
+      console.error("Erro ao adicionar vida:", error);
+      notify.error("Erro ao adicionar vida ao contrato");
+    }
+  };
+
+  const handleEditLife = (life: ContractLife) => {
+    setSelectedLife(life);
+    setShowEditForm(true);
   };
 
   const handleSubstituteLife = (life: ContractLife) => {
@@ -125,10 +146,7 @@ const ContractLivesManager: React.FC = () => {
     config: createContractLivesConfig({
       onViewTimeline: handleViewTimeline,
       onSubstitute: handleSubstituteLife,
-      onEdit: (life) => {
-        // For now, just show substitute form as edit
-        handleSubstituteLife(life);
-      },
+      onEdit: handleEditLife,
       onDelete: handleRemoveLife,
       onAdd: handleAddLife,
     }),
@@ -235,6 +253,31 @@ const ContractLivesManager: React.FC = () => {
     }
 
     return null;
+  };
+
+  const handleEditFormSubmit = async (data: LifeFormData) => {
+    if (!selectedLife) return;
+
+    try {
+      // Update life via API
+      await contractsService.updateContractLife(
+        parseInt(contractId!),
+        selectedLife.id,
+        {
+          start_date: data.life.start_date,
+          end_date: data.life.end_date || null,
+          notes: data.life.notes,
+        }
+      );
+
+      notify.success(`Vida de ${selectedLife.person_name} atualizada com sucesso`);
+      setShowEditForm(false);
+      setSelectedLife(null);
+      loadContractAndLives(); // Reload the list
+    } catch (error) {
+      console.error("Erro ao atualizar vida:", error);
+      notify.error("Erro ao atualizar vida no contrato");
+    }
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -416,78 +459,373 @@ const ContractLivesManager: React.FC = () => {
 
       {/* Add Life Form */}
       {showAddForm && (
+        <LifeForm
+          onSubmit={handleAddLifeSubmit}
+          onCancel={() => setShowAddForm(false)}
+          isLoading={loading}
+          mode="create"
+        />
+      )}
+
+      {/* Old Add Life Form - DEPRECATED, using new LifeForm component above */}
+      {false && showAddForm && (
         <Card>
           <div className="p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2 flex items-center">
               <UserPlus className="w-5 h-5 mr-2" />
-              Adicionar Nova Vida
+              Adicionar Nova Vida (Pessoa)
             </h3>
-            <form onSubmit={handleFormSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nome da Pessoa *
-                  </label>
-                  <Input
-                    value={formData.person_name}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        person_name: e.target.value,
-                      }))
-                    }
-                    placeholder="Digite o nome completo"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Data de Início *
-                  </label>
-                  <Input
-                    type="date"
-                    value={formData.start_date}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        start_date: e.target.value,
-                      }))
-                    }
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Data de Fim (opcional)
-                  </label>
-                  <Input
-                    type="date"
-                    value={formData.end_date}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        end_date: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Observações
-                  </label>
-                  <Input
-                    value={formData.notes}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        notes: e.target.value,
-                      }))
-                    }
-                    placeholder="Observações sobre a inclusão"
-                  />
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              Uma vida representa uma pessoa vinculada ao contrato. Preencha os dados pessoais obrigatórios e, opcionalmente, os contatos e endereço.
+            </p>
+
+            <form onSubmit={handleFormSubmit} className="space-y-6">
+              {/* Dados Pessoais - Obrigatórios */}
+              <div>
+                <h4 className="text-md font-medium text-gray-900 dark:text-white mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+                  Dados Pessoais (Obrigatórios)
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Nome Completo *
+                    </label>
+                    <Input
+                      value={formData.person_name}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          person_name: e.target.value,
+                        }))
+                      }
+                      placeholder="Nome completo da pessoa"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      CPF *
+                    </label>
+                    <Input
+                      value={formData.cpf}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          cpf: e.target.value,
+                        }))
+                      }
+                      placeholder="000.000.000-00"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      RG
+                    </label>
+                    <Input
+                      value={formData.rg}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          rg: e.target.value,
+                        }))
+                      }
+                      placeholder="00.000.000-0"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Data de Nascimento *
+                    </label>
+                    <Input
+                      type="date"
+                      value={formData.birth_date}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          birth_date: e.target.value,
+                        }))
+                      }
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Sexo
+                    </label>
+                    <select
+                      value={formData.gender}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          gender: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    >
+                      <option value="">Selecione...</option>
+                      <option value="M">Masculino</option>
+                      <option value="F">Feminino</option>
+                      <option value="O">Outro</option>
+                    </select>
+                  </div>
                 </div>
               </div>
-              <div className="flex justify-end space-x-3">
+
+              {/* Dados do Contrato */}
+              <div>
+                <h4 className="text-md font-medium text-gray-900 dark:text-white mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+                  Dados do Contrato
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Data de Início no Contrato *
+                    </label>
+                    <Input
+                      type="date"
+                      value={formData.start_date}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          start_date: e.target.value,
+                        }))
+                      }
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Data de Fim (opcional)
+                    </label>
+                    <Input
+                      type="date"
+                      value={formData.end_date}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          end_date: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="md:col-span-2 lg:col-span-3">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Observações
+                    </label>
+                    <Input
+                      value={formData.notes}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          notes: e.target.value,
+                        }))
+                      }
+                      placeholder="Observações sobre a inclusão no contrato"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Contatos - Opcionais */}
+              <div>
+                <h4 className="text-md font-medium text-gray-900 dark:text-white mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+                  Contatos (Opcionais)
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      E-mail
+                    </label>
+                    <Input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          email: e.target.value,
+                        }))
+                      }
+                      placeholder="email@exemplo.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Telefone Fixo
+                    </label>
+                    <Input
+                      value={formData.phone}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          phone: e.target.value,
+                        }))
+                      }
+                      placeholder="(00) 0000-0000"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Celular
+                    </label>
+                    <Input
+                      value={formData.mobile_phone}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          mobile_phone: e.target.value,
+                        }))
+                      }
+                      placeholder="(00) 00000-0000"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Endereço - Opcional */}
+              <div>
+                <h4 className="text-md font-medium text-gray-900 dark:text-white mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+                  Endereço (Opcional)
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      CEP
+                    </label>
+                    <Input
+                      value={formData.zip_code}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          zip_code: e.target.value,
+                        }))
+                      }
+                      placeholder="00000-000"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Logradouro
+                    </label>
+                    <Input
+                      value={formData.street}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          street: e.target.value,
+                        }))
+                      }
+                      placeholder="Rua, Avenida, etc."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Número
+                    </label>
+                    <Input
+                      value={formData.number}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          number: e.target.value,
+                        }))
+                      }
+                      placeholder="Nº"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Complemento
+                    </label>
+                    <Input
+                      value={formData.complement}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          complement: e.target.value,
+                        }))
+                      }
+                      placeholder="Apto, Sala, etc."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Bairro
+                    </label>
+                    <Input
+                      value={formData.neighborhood}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          neighborhood: e.target.value,
+                        }))
+                      }
+                      placeholder="Bairro"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Cidade
+                    </label>
+                    <Input
+                      value={formData.city}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          city: e.target.value,
+                        }))
+                      }
+                      placeholder="Cidade"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Estado
+                    </label>
+                    <select
+                      value={formData.state}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          state: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    >
+                      <option value="">Selecione...</option>
+                      <option value="AC">AC</option>
+                      <option value="AL">AL</option>
+                      <option value="AP">AP</option>
+                      <option value="AM">AM</option>
+                      <option value="BA">BA</option>
+                      <option value="CE">CE</option>
+                      <option value="DF">DF</option>
+                      <option value="ES">ES</option>
+                      <option value="GO">GO</option>
+                      <option value="MA">MA</option>
+                      <option value="MT">MT</option>
+                      <option value="MS">MS</option>
+                      <option value="MG">MG</option>
+                      <option value="PA">PA</option>
+                      <option value="PB">PB</option>
+                      <option value="PR">PR</option>
+                      <option value="PE">PE</option>
+                      <option value="PI">PI</option>
+                      <option value="RJ">RJ</option>
+                      <option value="RN">RN</option>
+                      <option value="RS">RS</option>
+                      <option value="RO">RO</option>
+                      <option value="RR">RR</option>
+                      <option value="SC">SC</option>
+                      <option value="SP">SP</option>
+                      <option value="SE">SE</option>
+                      <option value="TO">TO</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <Button
                   type="button"
                   variant="outline"
@@ -599,13 +937,133 @@ const ContractLivesManager: React.FC = () => {
         </Card>
       )}
 
+      {/* Edit Life Form */}
+      {showEditForm && selectedLife && (
+        <LifeForm
+          initialData={{
+            person: {
+              name: selectedLife.person_name,
+              tax_id: "", // TODO: Get from person data
+              birth_date: "", // TODO: Get from person data
+            },
+            life: {
+              start_date: selectedLife.start_date || new Date().toISOString().split("T")[0],
+              end_date: selectedLife.end_date || "",
+              notes: selectedLife.notes || "",
+            },
+            phones: [],
+            emails: [],
+            addresses: [],
+          }}
+          onSubmit={handleEditFormSubmit}
+          onCancel={() => {
+            setShowEditForm(false);
+            setSelectedLife(null);
+          }}
+          isLoading={loading}
+          mode="edit"
+          title={`Editar Vida: ${selectedLife.person_name}`}
+        />
+      )}
+
+      {/* Old Edit Life Form - DEPRECATED */}
+      {false && showEditForm && selectedLife && (
+        <Card>
+          <div className="p-6">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
+              <Edit className="w-5 h-5 mr-2" />
+              Editar Vida: {selectedLife.person_name}
+            </h3>
+            <form onSubmit={handleEditFormSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Nome da Pessoa
+                  </label>
+                  <Input
+                    value={formData.person_name}
+                    disabled
+                    className="bg-gray-100 dark:bg-gray-700"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    O nome não pode ser alterado. Use "Substituir" para trocar a pessoa.
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Data de Início *
+                  </label>
+                  <Input
+                    type="date"
+                    value={formData.start_date}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        start_date: e.target.value,
+                      }))
+                    }
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Data de Fim (opcional)
+                  </label>
+                  <Input
+                    type="date"
+                    value={formData.end_date}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        end_date: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Observações
+                  </label>
+                  <Input
+                    value={formData.notes}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        notes: e.target.value,
+                      }))
+                    }
+                    placeholder="Observações sobre a vida"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowEditForm(false);
+                    setSelectedLife(null);
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit">
+                  <Save className="w-4 h-4 mr-2" />
+                  Salvar Alterações
+                </Button>
+              </div>
+            </form>
+          </div>
+        </Card>
+      )}
+
       {/* Timeline Modal */}
       {showTimeline && timelineLife && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
+        <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-black dark:bg-opacity-70 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-gray-900 flex items-center">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white flex items-center">
                   <History className="w-5 h-5 mr-2" />
                   Histórico: {timelineLife.person_name}
                 </h3>
@@ -627,15 +1085,15 @@ const ContractLivesManager: React.FC = () => {
                 <div className="flex items-start space-x-3">
                   <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
                       Vida adicionada ao contrato
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {new Date(timelineLife.created_at).toLocaleString(
                         "pt-BR"
                       )}
                     </p>
-                    <p className="text-xs text-gray-600 mt-1">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                       Status inicial: Ativo
                     </p>
                   </div>
@@ -645,15 +1103,15 @@ const ContractLivesManager: React.FC = () => {
                   <div className="flex items-start space-x-3">
                     <div className="flex-shrink-0 w-2 h-2 bg-green-500 rounded-full mt-2"></div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
                         Informações atualizadas
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
                         {new Date(timelineLife.updated_at).toLocaleString(
                           "pt-BR"
                         )}
                       </p>
-                      <p className="text-xs text-gray-600 mt-1">
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                         Última modificação dos dados
                       </p>
                     </div>
@@ -665,15 +1123,15 @@ const ContractLivesManager: React.FC = () => {
                     <div className="flex items-start space-x-3">
                       <div className="flex-shrink-0 w-2 h-2 bg-red-500 rounded-full mt-2"></div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
                           Vida removida do contrato
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           {new Date(timelineLife.end_date).toLocaleString(
                             "pt-BR"
                           )}
                         </p>
-                        <p className="text-xs text-gray-600 mt-1">
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                           Status alterado para: Terminado
                         </p>
                       </div>

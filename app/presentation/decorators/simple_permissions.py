@@ -62,6 +62,7 @@ class SimplePermissionChecker:
             return True
 
         # TEMPORARY: Allow all access for debugging
+        """
         await logger.awarning(
             "TEMPORARY DEBUG: Allowing all access",
             user_id=user_id,
@@ -69,7 +70,7 @@ class SimplePermissionChecker:
             context_type=context_type,
         )
         return True
-
+        """
         # 🔍 VERIFICAÇÃO ÚNICA VIA BANCO - SEM FALLBACKS
         try:
             from sqlalchemy import text

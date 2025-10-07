@@ -3,8 +3,9 @@
 Testes básicos para autorizações médicas Home Care
 """
 
-import pytest
 from datetime import date
+
+import pytest
 
 
 class TestMedicalAuthorizationsBasic:
@@ -14,8 +15,13 @@ class TestMedicalAuthorizationsBasic:
     async def test_imports_work(self):
         """Teste simples para verificar se imports funcionam"""
         try:
-            from app.presentation.schemas.medical_authorization import MedicalAuthorizationCreate
-            from app.infrastructure.repositories.medical_authorization_repository import MedicalAuthorizationRepository
+            from app.infrastructure.repositories.medical_authorization_repository import (
+                MedicalAuthorizationRepository,
+            )
+            from app.presentation.schemas.medical_authorization import (
+                MedicalAuthorizationCreate,
+            )
+
             assert True  # Imports successful
         except ImportError as e:
             pytest.skip(f"Import failed: {e}")
@@ -24,7 +30,9 @@ class TestMedicalAuthorizationsBasic:
     async def test_schema_creation(self):
         """Teste para verificar se conseguimos criar schemas"""
         try:
-            from app.presentation.schemas.medical_authorization import MedicalAuthorizationCreate
+            from app.presentation.schemas.medical_authorization import (
+                MedicalAuthorizationCreate,
+            )
 
             # Create a simple authorization schema
             auth_data = MedicalAuthorizationCreate(
@@ -38,7 +46,7 @@ class TestMedicalAuthorizationsBasic:
                 sessions_authorized=10,
                 sessions_remaining=10,
                 monthly_limit=10,
-                daily_limit=2
+                daily_limit=2,
             )
 
             assert auth_data.contract_life_id == 1

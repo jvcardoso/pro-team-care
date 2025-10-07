@@ -79,7 +79,7 @@ medical_authorizations (
 
 **Relacionamentos:**
 - MedicalAuthorization → ContractLive (many-to-one)
-- MedicalAuthorization → ServicesCatalog (many-to-one) 
+- MedicalAuthorization → ServicesCatalog (many-to-one)
 - MedicalAuthorization → User (doctor, many-to-one)
 - AuthorizationRenewal → MedicalAuthorization (original/new, many-to-one)
 - AuthorizationHistory → MedicalAuthorization (many-to-one)
@@ -261,7 +261,7 @@ medical_authorizations (
 ```sql
 -- Índices de lookup primário
 medical_authorizations_contract_life_id_idx
-medical_authorizations_service_id_idx  
+medical_authorizations_service_id_idx
 medical_authorizations_doctor_id_idx
 medical_authorizations_status_idx
 medical_authorizations_date_range_idx

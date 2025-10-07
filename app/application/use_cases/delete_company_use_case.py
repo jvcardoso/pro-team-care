@@ -47,7 +47,9 @@ class DeleteCompanyUseCase:
             )
             return False
 
-        company_name = existing_company.people.name if existing_company.people else "Unknown"
+        company_name = (
+            existing_company.people.name if existing_company.people else "Unknown"
+        )
         logger.info(
             "Empresa encontrada, prosseguindo com exclusão",
             company_id=company_id,

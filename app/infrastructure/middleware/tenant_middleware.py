@@ -8,13 +8,13 @@ from typing import Optional
 
 from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse
+from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from jose import JWTError, jwt
-from config.settings import settings
 from app.infrastructure.database import async_session
 from app.infrastructure.services.tenant_context_service import get_tenant_context
+from config.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +77,9 @@ class TenantMiddleware(BaseHTTPMiddleware):
                 )
 
             if company_id is None:
-                logger.warning(f"Usuário {user_id} não possui empresa associada - permitindo acesso para debug")
+                logger.warning(
+                    f"Usuário {user_id} não possui empresa associada - permitindo acesso para debug"
+                )
                 # TEMPORARY: Allow access for debugging
                 # return JSONResponse(
                 #     status_code=status.HTTP_403_FORBIDDEN,

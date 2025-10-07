@@ -308,11 +308,11 @@ const MenusPageContent = () => {
     return (
       <form
         onSubmit={handleSubmit}
-        className="bg-gray-50 p-4 rounded-lg border-2 border-blue-200"
+        className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border-2 border-blue-200 dark:border-blue-800"
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Nome
             </label>
             <input
@@ -321,13 +321,13 @@ const MenusPageContent = () => {
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Slug
             </label>
             <input
@@ -336,13 +336,13 @@ const MenusPageContent = () => {
               onChange={(e) =>
                 setFormData({ ...formData, slug: e.target.value })
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               URL
             </label>
             <input
@@ -351,12 +351,12 @@ const MenusPageContent = () => {
               onChange={(e) =>
                 setFormData({ ...formData, url: e.target.value })
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Ícone
             </label>
             <input
@@ -365,12 +365,12 @@ const MenusPageContent = () => {
               onChange={(e) =>
                 setFormData({ ...formData, icon: e.target.value })
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Ordem
             </label>
             <input
@@ -382,12 +382,12 @@ const MenusPageContent = () => {
                   sort_order: parseInt(e.target.value),
                 })
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Permissão
             </label>
             <input
@@ -396,7 +396,7 @@ const MenusPageContent = () => {
               onChange={(e) =>
                 setFormData({ ...formData, permission_name: e.target.value })
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             />
           </div>
         </div>
@@ -410,7 +410,7 @@ const MenusPageContent = () => {
             }
             className="mr-2"
           />
-          <label className="text-sm font-medium text-gray-700">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Visível no menu
           </label>
         </div>
@@ -418,7 +418,7 @@ const MenusPageContent = () => {
         <div className="mt-4 flex flex-col sm:flex-row gap-2">
           <button
             type="submit"
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 dark:bg-green-700 text-white rounded hover:bg-green-700 dark:hover:bg-green-600 text-sm"
           >
             <Save size={16} />
             Salvar
@@ -426,7 +426,7 @@ const MenusPageContent = () => {
           <button
             type="button"
             onClick={onCancel}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 text-sm"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-600 dark:bg-gray-700 text-white rounded hover:bg-gray-700 dark:hover:bg-gray-600 text-sm"
           >
             <X size={16} />
             Cancelar
@@ -447,8 +447,8 @@ const MenusPageContent = () => {
         <div
           className={`p-2 sm:p-3 border rounded-lg ${
             isEditing
-              ? "border-blue-500 bg-blue-50"
-              : "border-gray-200 hover:border-gray-300"
+              ? "border-blue-500 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/30"
+              : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
           }`}
           style={{ marginLeft: level * (level > 0 ? 15 : 0) }}
         >
@@ -457,7 +457,7 @@ const MenusPageContent = () => {
               {hasChildren && (
                 <button
                   onClick={() => toggleExpanded(menu.id)}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                 >
                   {isExpanded ? (
                     <ChevronDown size={16} />
@@ -467,20 +467,20 @@ const MenusPageContent = () => {
                 </button>
               )}
 
-              <Menu size={16} className="text-gray-500" />
+              <Menu size={16} className="text-gray-500 dark:text-gray-400" />
 
               <div className="min-w-0 flex-1">
-                <div className="font-medium truncate">{menu.name}</div>
-                <div className="text-gray-500 text-sm truncate">
+                <div className="font-medium truncate text-gray-900 dark:text-white">{menu.name}</div>
+                <div className="text-gray-500 dark:text-gray-400 text-sm truncate">
                   ({menu.slug})
                   {menu.url && (
-                    <span className="text-blue-600 ml-2">{menu.url}</span>
+                    <span className="text-blue-600 dark:text-blue-400 ml-2">{menu.url}</span>
                   )}
                 </div>
               </div>
 
               {!menu.is_visible && (
-                <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs">
+                <span className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 px-2 py-1 rounded text-xs">
                   Oculto
                 </span>
               )}
@@ -488,7 +488,7 @@ const MenusPageContent = () => {
               {menu.badge_text && (
                 <span
                   className={`px-2 py-1 rounded text-xs text-white ${
-                    menu.badge_color || "bg-blue-500"
+                    menu.badge_color || "bg-blue-500 dark:bg-blue-600"
                   }`}
                 >
                   {menu.badge_text}
@@ -501,21 +501,21 @@ const MenusPageContent = () => {
               <div className="flex sm:hidden gap-1">
                 <button
                   onClick={() => toggleVisibility(menu)}
-                  className="p-1.5 hover:bg-gray-100 rounded"
+                  className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
                   title="Toggle visibilidade"
                 >
                   {menu.is_visible ? <Eye size={14} /> : <EyeOff size={14} />}
                 </button>
                 <button
                   onClick={() => setEditingMenu(menu)}
-                  className="p-1.5 hover:bg-gray-100 rounded"
+                  className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
                   title="Editar"
                 >
                   <Edit size={14} />
                 </button>
                 <button
                   onClick={() => deleteMenu(menu.id)}
-                  className="p-1.5 hover:bg-red-100 rounded text-red-600"
+                  className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-red-600 dark:text-red-500"
                   title="Deletar"
                 >
                   <Trash2 size={14} />
@@ -526,7 +526,7 @@ const MenusPageContent = () => {
               <div className="hidden sm:flex gap-1">
                 <button
                   onClick={() => toggleVisibility(menu)}
-                  className="p-2 hover:bg-gray-100 rounded"
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
                   title="Toggle visibilidade"
                 >
                   {menu.is_visible ? <Eye size={16} /> : <EyeOff size={16} />}
@@ -538,8 +538,8 @@ const MenusPageContent = () => {
                   disabled={!canMoveUp(0, flattenMenus(menus), menu)}
                   className={`p-2 rounded ${
                     canMoveUp(0, flattenMenus(menus), menu)
-                      ? "hover:bg-blue-100 text-blue-600"
-                      : "text-gray-300 cursor-not-allowed"
+                      ? "hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+                      : "text-gray-300 dark:text-gray-600 cursor-not-allowed"
                   }`}
                   title="Mover para cima"
                 >
@@ -551,8 +551,8 @@ const MenusPageContent = () => {
                   disabled={!canMoveDown(0, flattenMenus(menus), menu)}
                   className={`p-2 rounded ${
                     canMoveDown(0, flattenMenus(menus), menu)
-                      ? "hover:bg-blue-100 text-blue-600"
-                      : "text-gray-300 cursor-not-allowed"
+                      ? "hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+                      : "text-gray-300 dark:text-gray-600 cursor-not-allowed"
                   }`}
                   title="Mover para baixo"
                 >
@@ -561,7 +561,7 @@ const MenusPageContent = () => {
 
                 <button
                   onClick={() => setEditingMenu(menu)}
-                  className="p-2 hover:bg-gray-100 rounded"
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
                   title="Editar"
                 >
                   <Edit size={16} />
@@ -569,7 +569,7 @@ const MenusPageContent = () => {
 
                 <button
                   onClick={() => deleteMenu(menu.id)}
-                  className="p-2 hover:bg-red-100 rounded text-red-600"
+                  className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-red-600 dark:text-red-500"
                   title="Deletar"
                 >
                   <Trash2 size={16} />
@@ -607,7 +607,7 @@ const MenusPageContent = () => {
     return (
       <div className="p-6">
         <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500">Carregando menus...</div>
+          <div className="text-gray-500 dark:text-gray-400">Carregando menus...</div>
         </div>
       </div>
     );
@@ -619,14 +619,14 @@ const MenusPageContent = () => {
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2 flex-wrap">
-              <Menu className="text-red-600" />
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2 flex-wrap">
+              <Menu className="text-red-600 dark:text-red-500" />
               <span>Gerenciar Menus</span>
-              <span className="bg-red-500 text-white px-2 py-1 rounded text-xs sm:text-sm">
+              <span className="bg-red-500 dark:bg-red-600 text-white px-2 py-1 rounded text-xs sm:text-sm">
                 ROOT
               </span>
             </h1>
-            <p className="text-gray-600 mt-1 text-sm">
+            <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">
               Sistema completo de gerenciamento de menus dinâmicos
             </p>
           </div>
@@ -634,7 +634,7 @@ const MenusPageContent = () => {
           <div className="flex flex-col sm:flex-row gap-2">
             <button
               onClick={forceReloadMenus}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-600 dark:bg-gray-700 text-white rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 text-sm"
               title="Atualizar lista de menus (bypass cache)"
               disabled={loading}
             >
@@ -647,7 +647,7 @@ const MenusPageContent = () => {
 
             <button
               onClick={() => setShowAddForm(!showAddForm)}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 text-sm"
             >
               <Plus size={18} />
               <span className="hidden sm:inline">Novo Menu</span>
@@ -658,10 +658,10 @@ const MenusPageContent = () => {
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="text-red-600" size={20} />
-            <span className="text-red-800">{error}</span>
+            <AlertTriangle className="text-red-600 dark:text-red-500" size={20} />
+            <span className="text-red-800 dark:text-red-300">{error}</span>
           </div>
         </div>
       )}
@@ -669,7 +669,7 @@ const MenusPageContent = () => {
       {/* Formulário de novo menu */}
       {showAddForm && (
         <div className="mb-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-3">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
             Adicionar Novo Menu
           </h3>
           <MenuForm
@@ -682,16 +682,16 @@ const MenusPageContent = () => {
       )}
 
       {/* Lista de menus */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">
             Estrutura de Menus ({menus.length} itens)
           </h3>
         </div>
 
         <div className="p-4">
           {menus.length === 0 ? (
-            <div className="text-center text-gray-500 py-8">
+            <div className="text-center text-gray-500 dark:text-gray-400 py-8">
               Nenhum menu encontrado
             </div>
           ) : (

@@ -72,37 +72,4 @@ async def get_menu_tree():
     ]
 
 
-@router.get("/contextual")
-async def get_contextual_menu():
-    """Menu contextual (placeholder)"""
-    return {"message": "Contextual menu - coming soon"}
 
-
-@router.get("/breadcrumb")
-async def get_breadcrumb():
-    """Breadcrumb (placeholder)"""
-    return {"breadcrumb": [{"name": "Home", "url": "/"}]}
-
-
-@router.get("/shortcuts")
-async def get_user_shortcuts():
-    """User shortcuts (placeholder)"""
-    return {"shortcuts": []}
-
-
-@router.post("/shortcuts")
-async def add_user_shortcut():
-    """Add shortcut (placeholder)"""
-    return {"message": "Shortcut added"}
-
-
-@router.delete("/shortcuts/{menu_id}")
-async def remove_user_shortcut(menu_id: int):
-    """Remove shortcut (placeholder)"""
-    return {"message": f"Shortcut {menu_id} removed"}
-
-
-@router.get("/user-permissions")
-async def get_user_menu_permissions():
-    """User menu permissions (placeholder)"""
-    return {"permissions": ["menu.view"]}

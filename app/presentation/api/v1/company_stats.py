@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domain.entities.user import User
+from app.infrastructure.auth import get_current_user
 from app.infrastructure.database import get_db
 from app.infrastructure.orm.models import Client, Establishments, Professional
-from app.infrastructure.auth import get_current_user
-from app.domain.entities.user import User
 from app.presentation.decorators.simple_permissions import require_permission
 
 router = APIRouter()
@@ -35,7 +35,7 @@ async def get_company_stats(
         establishments_query = select(func.count(Establishments.id)).where(
             and_(
                 Establishments.company_id == company_id,
-                Establishments.deleted_at.is_(None)
+                Establishments.deleted_at.is_(None),
             )
         )
         establishments_result = await db.execute(establishments_query)
@@ -45,7 +45,7 @@ async def get_company_stats(
         establishments_ids_query = select(Establishments.id).where(
             and_(
                 Establishments.company_id == company_id,
-                Establishments.deleted_at.is_(None)
+                Establishments.deleted_at.is_(None),
             )
         )
 
@@ -53,7 +53,7 @@ async def get_company_stats(
             and_(
                 Client.establishment_id.in_(establishments_ids_query),
                 Client.deleted_at.is_(None),
-                Client.status == "active"  # Apenas ativos
+                Client.status == "active",  # Apenas ativos
             )
         )
         clients_result = await db.execute(clients_query)
@@ -64,7 +64,7 @@ async def get_company_stats(
             and_(
                 Professional.establishment_id.in_(establishments_ids_query),
                 Professional.deleted_at.is_(None),
-                Professional.status == "active"  # Apenas ativos
+                Professional.status == "active",  # Apenas ativos
             )
         )
         professionals_result = await db.execute(professionals_query)

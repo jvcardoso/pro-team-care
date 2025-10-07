@@ -1,6 +1,5 @@
-from typing import Optional
+from typing import Any, Optional
 
-from typing import Any
 from sqlalchemy import (
     JSON,
     BigInteger,
@@ -148,14 +147,20 @@ class Company(Base):
     # Relationships
     people = relationship("People", back_populates="company", foreign_keys=[person_id])
     establishments = relationship("Establishments", back_populates="company")
-    users = relationship("User", back_populates="company", foreign_keys="[User.company_id]")
+    users = relationship(
+        "User", back_populates="company", foreign_keys="[User.company_id]"
+    )
     activated_by_user = relationship(
         "User", foreign_keys=[activated_by_user_id], uselist=False
     )
 
     # B2B Billing relationships
-    subscriptions = relationship("CompanySubscription", back_populates="company", cascade="all, delete-orphan")
-    proteamcare_invoices = relationship("ProTeamCareInvoice", back_populates="company", cascade="all, delete-orphan")
+    subscriptions = relationship(
+        "CompanySubscription", back_populates="company", cascade="all, delete-orphan"
+    )
+    proteamcare_invoices = relationship(
+        "ProTeamCareInvoice", back_populates="company", cascade="all, delete-orphan"
+    )
 
 
 class Establishments(Base):
@@ -1891,18 +1896,27 @@ class ContractBillingSchedule(Base):
             "billing_method IN ('recurrent', 'manual')",
             name="billing_method_check",
         ),
-        UniqueConstraint("contract_id", name="contract_billing_schedules_contract_unique"),
+        UniqueConstraint(
+            "contract_id", name="contract_billing_schedules_contract_unique"
+        ),
         Index("contract_billing_schedules_contract_id_idx", "contract_id"),
         Index("contract_billing_schedules_next_billing_idx", "next_billing_date"),
         Index("contract_billing_schedules_is_active_idx", "is_active"),
         Index("contract_billing_schedules_billing_method_idx", "billing_method"),
-        Index("contract_billing_schedules_pagbank_subscription_idx", "pagbank_subscription_id"),
+        Index(
+            "contract_billing_schedules_pagbank_subscription_idx",
+            "pagbank_subscription_id",
+        ),
         Index("contract_billing_schedules_pagbank_customer_idx", "pagbank_customer_id"),
         {"schema": "master"},
     )
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    contract_id = Column(BigInteger, ForeignKey("master.contracts.id", ondelete="CASCADE"), nullable=False)
+    contract_id = Column(
+        BigInteger,
+        ForeignKey("master.contracts.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     billing_cycle = Column(String(20), nullable=False, default="MONTHLY")
     billing_day = Column(Integer, nullable=False, default=1)
     next_billing_date = Column(Date, nullable=False)
@@ -1918,7 +1932,9 @@ class ContractBillingSchedule(Base):
     attempt_count = Column(Integer, default=0)
 
     created_at = Column(DateTime, nullable=False, default=func.now())
-    updated_at = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        DateTime, nullable=False, default=func.now(), onupdate=func.now()
+    )
     created_by = Column(BigInteger, ForeignKey("master.users.id"))
 
     # Relationships
@@ -1952,13 +1968,21 @@ class ContractInvoice(Base):
         Index("contract_invoices_status_idx", "status"),
         Index("contract_invoices_due_date_idx", "due_date"),
         Index("contract_invoices_issued_date_idx", "issued_date"),
-        Index("contract_invoices_billing_period_idx", "billing_period_start", "billing_period_end"),
+        Index(
+            "contract_invoices_billing_period_idx",
+            "billing_period_start",
+            "billing_period_end",
+        ),
         Index("contract_invoices_number_idx", "invoice_number"),
         {"schema": "master"},
     )
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    contract_id = Column(BigInteger, ForeignKey("master.contracts.id", ondelete="CASCADE"), nullable=False)
+    contract_id = Column(
+        BigInteger,
+        ForeignKey("master.contracts.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     invoice_number = Column(String(50), nullable=False)
     billing_period_start = Column(Date, nullable=False)
     billing_period_end = Column(Date, nullable=False)
@@ -1977,14 +2001,20 @@ class ContractInvoice(Base):
     payment_notes = Column(Text)
     observations = Column(Text)
     created_at = Column(DateTime, nullable=False, default=func.now())
-    updated_at = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        DateTime, nullable=False, default=func.now(), onupdate=func.now()
+    )
     created_by = Column(BigInteger, ForeignKey("master.users.id"))
     updated_by = Column(BigInteger, ForeignKey("master.users.id"))
 
     # Relationships
     contract = relationship("Contract", back_populates="invoices")
-    receipts = relationship("PaymentReceipt", back_populates="invoice", cascade="all, delete-orphan")
-    pagbank_transactions = relationship("PagBankTransaction", back_populates="invoice", cascade="all, delete-orphan")
+    receipts = relationship(
+        "PaymentReceipt", back_populates="invoice", cascade="all, delete-orphan"
+    )
+    pagbank_transactions = relationship(
+        "PagBankTransaction", back_populates="invoice", cascade="all, delete-orphan"
+    )
     created_by_user = relationship("User", foreign_keys=[created_by])
     updated_by_user = relationship("User", foreign_keys=[updated_by])
 
@@ -2010,7 +2040,11 @@ class PaymentReceipt(Base):
     )
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    invoice_id = Column(BigInteger, ForeignKey("master.contract_invoices.id", ondelete="CASCADE"), nullable=False)
+    invoice_id = Column(
+        BigInteger,
+        ForeignKey("master.contract_invoices.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     file_name = Column(String(255), nullable=False)
     file_path = Column(String(500), nullable=False)
     file_type = Column(String(10))
@@ -2082,14 +2116,20 @@ class PagBankTransaction(Base):
         Index("pagbank_transactions_invoice_id_idx", "invoice_id"),
         Index("pagbank_transactions_status_idx", "status"),
         Index("pagbank_transactions_type_idx", "transaction_type"),
-        Index("pagbank_transactions_pagbank_transaction_id_idx", "pagbank_transaction_id"),
+        Index(
+            "pagbank_transactions_pagbank_transaction_id_idx", "pagbank_transaction_id"
+        ),
         Index("pagbank_transactions_pagbank_charge_id_idx", "pagbank_charge_id"),
         Index("pagbank_transactions_created_at_idx", "created_at"),
         {"schema": "master"},
     )
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    invoice_id = Column(BigInteger, ForeignKey("master.contract_invoices.id", ondelete="CASCADE"), nullable=False)
+    invoice_id = Column(
+        BigInteger,
+        ForeignKey("master.contract_invoices.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     transaction_type = Column(String(20), nullable=False)
     pagbank_transaction_id = Column(String(100))
     pagbank_charge_id = Column(String(100))
@@ -2099,7 +2139,9 @@ class PagBankTransaction(Base):
     error_message = Column(Text)
     webhook_data = Column(JSON)
     created_at = Column(DateTime, nullable=False, default=func.now())
-    updated_at = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        DateTime, nullable=False, default=func.now(), onupdate=func.now()
+    )
 
     # Relationships
     invoice = relationship("ContractInvoice", back_populates="pagbank_transactions")
@@ -2164,8 +2206,14 @@ class CompanySubscription(Base):
     )
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    company_id = Column(BigInteger, ForeignKey("master.companies.id", ondelete="CASCADE"), nullable=False)
-    plan_id = Column(BigInteger, ForeignKey("master.subscription_plans.id"), nullable=False)
+    company_id = Column(
+        BigInteger,
+        ForeignKey("master.companies.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    plan_id = Column(
+        BigInteger, ForeignKey("master.subscription_plans.id"), nullable=False
+    )
     status = Column(String(20), nullable=False, default="active")
     start_date = Column(Date, nullable=False)
     end_date = Column(Date)
@@ -2209,8 +2257,16 @@ class ProTeamCareInvoice(Base):
     )
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    company_id = Column(BigInteger, ForeignKey("master.companies.id", ondelete="CASCADE"), nullable=False)
-    subscription_id = Column(BigInteger, ForeignKey("master.company_subscriptions.id", ondelete="CASCADE"), nullable=False)
+    company_id = Column(
+        BigInteger,
+        ForeignKey("master.companies.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    subscription_id = Column(
+        BigInteger,
+        ForeignKey("master.company_subscriptions.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     invoice_number = Column(String(50), nullable=False)
     amount = Column(Numeric(10, 2), nullable=False)
     billing_period_start = Column(Date, nullable=False)

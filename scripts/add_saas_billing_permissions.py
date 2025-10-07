@@ -4,18 +4,19 @@ Script para adicionar permissões do sistema SaaS Billing
 Execução: python scripts/add_saas_billing_permissions.py
 """
 
-import sys
-import os
 import asyncio
+import os
+import sys
 from pathlib import Path
 
 # Adicionar o diretório raiz do projeto ao path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
+
 from config.settings import settings
 
 # Database URL
@@ -34,22 +35,69 @@ async def add_saas_billing_permissions():
             # Definir as novas permissões SaaS
             saas_permissions = [
                 # Visualização
-                ("saas_billing_view", "Visualizar SaaS Billing", "Visualizar faturas e assinaturas SaaS", "system"),
-                ("saas_billing_dashboard", "Dashboard SaaS Billing", "Acessar dashboard de métricas SaaS", "system"),
-                ("saas_billing_reports", "Relatórios SaaS Billing", "Gerar relatórios de receita SaaS", "system"),
-
+                (
+                    "saas_billing_view",
+                    "Visualizar SaaS Billing",
+                    "Visualizar faturas e assinaturas SaaS",
+                    "system",
+                ),
+                (
+                    "saas_billing_dashboard",
+                    "Dashboard SaaS Billing",
+                    "Acessar dashboard de métricas SaaS",
+                    "system",
+                ),
+                (
+                    "saas_billing_reports",
+                    "Relatórios SaaS Billing",
+                    "Gerar relatórios de receita SaaS",
+                    "system",
+                ),
                 # Gestão de Assinaturas
-                ("saas_billing_create", "Criar Assinaturas SaaS", "Criar novas assinaturas de empresas", "system"),
-                ("saas_billing_update", "Atualizar Assinaturas SaaS", "Atualizar assinaturas existentes", "system"),
-                ("saas_billing_cancel", "Cancelar Assinaturas SaaS", "Cancelar assinaturas de empresas", "system"),
-
+                (
+                    "saas_billing_create",
+                    "Criar Assinaturas SaaS",
+                    "Criar novas assinaturas de empresas",
+                    "system",
+                ),
+                (
+                    "saas_billing_update",
+                    "Atualizar Assinaturas SaaS",
+                    "Atualizar assinaturas existentes",
+                    "system",
+                ),
+                (
+                    "saas_billing_cancel",
+                    "Cancelar Assinaturas SaaS",
+                    "Cancelar assinaturas de empresas",
+                    "system",
+                ),
                 # Pagamentos
-                ("saas_billing_payment", "Processar Pagamentos SaaS", "Processar pagamentos de faturas SaaS", "system"),
-                ("saas_billing_recurrent", "Cobrança Recorrente SaaS", "Configurar e gerenciar cobrança recorrente", "system"),
-                ("saas_billing_automatic", "Faturamento Automático SaaS", "Executar faturamento automático", "system"),
-
+                (
+                    "saas_billing_payment",
+                    "Processar Pagamentos SaaS",
+                    "Processar pagamentos de faturas SaaS",
+                    "system",
+                ),
+                (
+                    "saas_billing_recurrent",
+                    "Cobrança Recorrente SaaS",
+                    "Configurar e gerenciar cobrança recorrente",
+                    "system",
+                ),
+                (
+                    "saas_billing_automatic",
+                    "Faturamento Automático SaaS",
+                    "Executar faturamento automático",
+                    "system",
+                ),
                 # Administração
-                ("saas_billing_admin", "Administrar SaaS Billing", "Administração completa do billing SaaS", "system"),
+                (
+                    "saas_billing_admin",
+                    "Administrar SaaS Billing",
+                    "Administração completa do billing SaaS",
+                    "system",
+                ),
             ]
 
             # Inserir permissões se não existirem
@@ -58,22 +106,24 @@ async def add_saas_billing_permissions():
                 # Verificar se a permissão já existe
                 result = await session.execute(
                     text("SELECT id FROM master.permissions WHERE code = :code"),
-                    {"code": code}
+                    {"code": code},
                 )
                 existing = result.scalar_one_or_none()
 
                 if not existing:
                     await session.execute(
-                        text("""
+                        text(
+                            """
                             INSERT INTO master.permissions (code, name, description, context, is_active, created_at)
                             VALUES (:code, :name, :description, :context, true, NOW())
-                        """),
+                        """
+                        ),
                         {
                             "code": code,
                             "name": name,
                             "description": description,
-                            "context": context
-                        }
+                            "context": context,
+                        },
                     )
                     permission_count += 1
                     print(f"  ✅ Permissão adicionada: {code}")
@@ -88,10 +138,12 @@ async def add_saas_billing_permissions():
 
             if not saas_admin_role:
                 await session.execute(
-                    text("""
+                    text(
+                        """
                         INSERT INTO master.roles (name, description, is_active, created_at)
                         VALUES ('saas_admin', 'Administrador SaaS Billing', true, NOW())
-                    """)
+                    """
+                    )
                 )
                 # Obter o ID da role criada
                 result = await session.execute(
@@ -108,27 +160,31 @@ async def add_saas_billing_permissions():
                 # Obter ID da permissão
                 result = await session.execute(
                     text("SELECT id FROM master.permissions WHERE code = :code"),
-                    {"code": code}
+                    {"code": code},
                 )
                 permission_id = result.scalar_one()
 
                 # Verificar se a associação já existe
                 result = await session.execute(
-                    text("""
+                    text(
+                        """
                         SELECT id FROM master.role_permissions
                         WHERE role_id = :role_id AND permission_id = :permission_id
-                    """),
-                    {"role_id": saas_admin_role, "permission_id": permission_id}
+                    """
+                    ),
+                    {"role_id": saas_admin_role, "permission_id": permission_id},
                 )
                 existing_association = result.scalar_one_or_none()
 
                 if not existing_association:
                     await session.execute(
-                        text("""
+                        text(
+                            """
                             INSERT INTO master.role_permissions (role_id, permission_id, created_at)
                             VALUES (:role_id, :permission_id, NOW())
-                        """),
-                        {"role_id": saas_admin_role, "permission_id": permission_id}
+                        """
+                        ),
+                        {"role_id": saas_admin_role, "permission_id": permission_id},
                     )
                     permissions_added += 1
 
@@ -136,28 +192,34 @@ async def add_saas_billing_permissions():
 
             # Dar permissões SaaS ao usuário admin (se existir)
             result = await session.execute(
-                text("SELECT id FROM master.users WHERE email = 'admin@proteamcare.com'"),
+                text(
+                    "SELECT id FROM master.users WHERE email = 'admin@proteamcare.com'"
+                ),
             )
             admin_user = result.scalar_one_or_none()
 
             if admin_user:
                 # Verificar se o usuário já tem a role saas_admin
                 result = await session.execute(
-                    text("""
+                    text(
+                        """
                         SELECT id FROM master.user_roles
                         WHERE user_id = :user_id AND role_id = :role_id
-                    """),
-                    {"user_id": admin_user, "role_id": saas_admin_role}
+                    """
+                    ),
+                    {"user_id": admin_user, "role_id": saas_admin_role},
                 )
                 existing_user_role = result.scalar_one_or_none()
 
                 if not existing_user_role:
                     await session.execute(
-                        text("""
+                        text(
+                            """
                             INSERT INTO master.user_roles (user_id, role_id, assigned_at, assigned_by)
                             VALUES (:user_id, :role_id, NOW(), :user_id)
-                        """),
-                        {"user_id": admin_user, "role_id": saas_admin_role}
+                        """
+                        ),
+                        {"user_id": admin_user, "role_id": saas_admin_role},
                     )
                     print("  ✅ Role 'saas_admin' atribuída ao usuário admin")
                 else:

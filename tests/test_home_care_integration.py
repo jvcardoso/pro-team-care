@@ -4,14 +4,17 @@ Testes de integração para cenários completos Home Care
 Cenários baseados no documento de análise
 """
 
+from datetime import date, datetime, timedelta
+from decimal import Decimal
+
 import pytest
 import pytest_asyncio
-from datetime import datetime, date, timedelta
-from decimal import Decimal
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.infrastructure.repositories.contract_repository import ContractRepository
-from app.infrastructure.repositories.medical_authorization_repository import MedicalAuthorizationRepository
+from app.infrastructure.repositories.medical_authorization_repository import (
+    MedicalAuthorizationRepository,
+)
 from app.presentation.schemas.contract import ContractCreate
 from app.presentation.schemas.medical_authorization import MedicalAuthorizationCreate
 
@@ -46,14 +49,16 @@ class TestHomeCareIntegration:
             plan_name="Plano Home Care Corporativo UNIMED",
             monthly_value=Decimal("15000.00"),
             start_date=date(2025, 1, 1),
-            service_addresses=[{
-                "street": "Rua da Saúde",
-                "number": "100",
-                "neighborhood": "Centro",
-                "city": "São Paulo",
-                "state": "SP",
-                "zip_code": "01234-567"
-            }]
+            service_addresses=[
+                {
+                    "street": "Rua da Saúde",
+                    "number": "100",
+                    "neighborhood": "Centro",
+                    "city": "São Paulo",
+                    "state": "SP",
+                    "zip_code": "01234-567",
+                }
+            ],
         )
 
         contract = await contract_repo.create(contract_data)
@@ -74,7 +79,7 @@ class TestHomeCareIntegration:
                 contract_id=contract.id,
                 person_id=person_id,
                 start_date=date(2025, 1, 1),
-                relationship_type="FUNCIONARIO"
+                relationship_type="FUNCIONARIO",
             )
             lives_added += 1
 
@@ -97,7 +102,7 @@ class TestHomeCareIntegration:
             daily_limit=2,
             start_date=date(2025, 1, 1),
             end_date=date(2025, 12, 31),
-            authorized_by=10  # Médico responsável
+            authorized_by=10,  # Médico responsável
         )
 
         maria_authorization = await auth_repo.create(maria_auth)
@@ -122,11 +127,13 @@ class TestHomeCareIntegration:
             contract_id=contract.id,
             person_id=202,  # Ana
             end_date=date(2025, 1, 15),
-            reason="Desligamento da empresa"
+            reason="Desligamento da empresa",
         )
 
         # Verificar que uma vida foi removida
-        active_lives_after_removal = await contract_repo.get_active_lives_count(contract.id)
+        active_lives_after_removal = await contract_repo.get_active_lives_count(
+            contract.id
+        )
         assert active_lives_after_removal == 9
 
         # Adicionar Pedro como substituto
@@ -134,7 +141,7 @@ class TestHomeCareIntegration:
             contract_id=contract.id,
             person_id=211,  # Pedro (novo funcionário)
             start_date=date(2025, 1, 16),
-            relationship_type="FUNCIONARIO"
+            relationship_type="FUNCIONARIO",
         )
 
         # Verificar que voltou a 10 vidas
@@ -162,7 +169,7 @@ class TestHomeCareIntegration:
             control_period="MONTHLY",
             plan_name="Plano Familiar Básico",
             monthly_value=Decimal("2500.00"),
-            start_date=date(2025, 1, 1)
+            start_date=date(2025, 1, 1),
         )
 
         contract = await contract_repo.create(contract_data)
@@ -177,8 +184,8 @@ class TestHomeCareIntegration:
         family_members = [
             (201, "João Silva", "TITULAR"),
             (202, "Maria Silva", "DEPENDENTE"),  # Esposa
-            (203, "Pedro Silva", "DEPENDENTE"),   # Filho
-            (204, "Ana Silva", "DEPENDENTE")      # Filha
+            (203, "Pedro Silva", "DEPENDENTE"),  # Filho
+            (204, "Ana Silva", "DEPENDENTE"),  # Filha
         ]
 
         for person_id, name, relationship in family_members:
@@ -186,7 +193,7 @@ class TestHomeCareIntegration:
                 contract_id=contract.id,
                 person_id=person_id,
                 start_date=date(2025, 1, 1),
-                relationship_type=relationship
+                relationship_type=relationship,
             )
 
         active_lives = await contract_repo.get_active_lives_count(contract.id)
@@ -205,7 +212,7 @@ class TestHomeCareIntegration:
             daily_limit=1,
             start_date=date(2025, 1, 1),
             end_date=date(2025, 12, 31),
-            authorized_by=10
+            authorized_by=10,
         )
 
         # Maria - Pós-cirúrgica
@@ -220,7 +227,7 @@ class TestHomeCareIntegration:
             daily_limit=1,
             start_date=date(2025, 1, 1),
             end_date=date(2025, 12, 31),
-            authorized_by=10
+            authorized_by=10,
         )
 
         joao_authorization = await auth_repo.create(joao_auth)
@@ -229,7 +236,9 @@ class TestHomeCareIntegration:
         # === FASE 4: Testar validações de limites ===
         # João tenta usar 2 aferições no mesmo dia (limite diário = 1)
         with pytest.raises(ValueError, match="Daily limit exceeded"):
-            await auth_repo.validate_session_usage(joao_authorization.id, sessions_to_use=2)
+            await auth_repo.validate_session_usage(
+                joao_authorization.id, sessions_to_use=2
+            )
 
         # João usa 1 aferição (dentro do limite)
         await auth_repo.validate_session_usage(joao_authorization.id, sessions_to_use=1)
@@ -254,7 +263,7 @@ class TestHomeCareIntegration:
             control_period="MONTHLY",
             plan_name="Plano Empresarial Saúde",
             monthly_value=Decimal("7500.00"),
-            start_date=date(2025, 1, 1)
+            start_date=date(2025, 1, 1),
         )
 
         contract = await contract_repo.create(contract_data)
@@ -268,7 +277,7 @@ class TestHomeCareIntegration:
             (302, "Enf. Ana", "FUNCIONARIO"),
             (303, "Enf. Pedro", "FUNCIONARIO"),
             (304, "Tec. Maria", "FUNCIONARIO"),
-            (305, "Aux. João", "FUNCIONARIO")
+            (305, "Aux. João", "FUNCIONARIO"),
         ]
 
         for person_id, name, relationship in clinical_staff:
@@ -276,7 +285,7 @@ class TestHomeCareIntegration:
                 contract_id=contract.id,
                 person_id=person_id,
                 start_date=date(2025, 1, 1),
-                relationship_type=relationship
+                relationship_type=relationship,
             )
 
         active_lives = await contract_repo.get_active_lives_count(contract.id)
@@ -295,7 +304,7 @@ class TestHomeCareIntegration:
             daily_limit=5,
             start_date=date(2025, 1, 1),
             end_date=date(2025, 12, 31),
-            authorized_by=301  # Auto-autorização
+            authorized_by=301,  # Auto-autorização
         )
 
         carlos_authorization = await auth_repo.create(carlos_auth)
@@ -324,7 +333,7 @@ class TestHomeCareIntegration:
             control_period="MONTHLY",
             plan_name="Teste de Limites",
             monthly_value=Decimal("5000.00"),
-            start_date=date(2025, 1, 1)
+            start_date=date(2025, 1, 1),
         )
 
         contract = await contract_repo.create(contract_data)
@@ -335,7 +344,7 @@ class TestHomeCareIntegration:
                 contract_id=contract.id,
                 person_id=400 + i,
                 start_date=date(2025, 1, 1),
-                relationship_type="FUNCIONARIO"
+                relationship_type="FUNCIONARIO",
             )
 
         # === FASE 3: Criar autorizações com limites ===
@@ -351,7 +360,7 @@ class TestHomeCareIntegration:
                 daily_limit=2,
                 start_date=date(2025, 1, 1),
                 end_date=date(2025, 12, 31),
-                authorized_by=10
+                authorized_by=10,
             )
             await auth_repo.create(auth_data)
 
@@ -366,7 +375,9 @@ class TestHomeCareIntegration:
 
         # Tentar usar mais que o limite diário
         with pytest.raises(ValueError, match="Daily limit exceeded"):
-            await auth_repo.validate_session_usage(first_auth.id, sessions_to_use=1)  # Já usou 2, limite é 2
+            await auth_repo.validate_session_usage(
+                first_auth.id, sessions_to_use=1
+            )  # Já usou 2, limite é 2
 
         # === FASE 5: Testar limites de contrato ===
         # Remover uma vida (ficar com 4)
@@ -374,7 +385,7 @@ class TestHomeCareIntegration:
             contract_id=contract.id,
             person_id=405,
             end_date=date(2025, 1, 15),
-            reason="Teste de limites"
+            reason="Teste de limites",
         )
 
         active_lives = await contract_repo.get_active_lives_count(contract.id)
@@ -386,7 +397,7 @@ class TestHomeCareIntegration:
                 contract_id=contract.id,
                 person_id=404,
                 end_date=date(2025, 1, 16),
-                reason="Teste abaixo do mínimo"
+                reason="Teste abaixo do mínimo",
             )
 
     @pytest.mark.asyncio
@@ -402,7 +413,7 @@ class TestHomeCareIntegration:
             allows_substitution=True,
             plan_name="Teste de Auditoria",
             monthly_value=Decimal("3000.00"),
-            start_date=date(2025, 1, 1)
+            start_date=date(2025, 1, 1),
         )
 
         contract = await contract_repo.create(contract_data)
@@ -413,7 +424,7 @@ class TestHomeCareIntegration:
                 contract_id=contract.id,
                 person_id=500 + i,
                 start_date=date(2025, 1, 1),
-                relationship_type="FUNCIONARIO"
+                relationship_type="FUNCIONARIO",
             )
 
         # === FASE 3: Operações que geram auditoria ===
@@ -422,7 +433,7 @@ class TestHomeCareIntegration:
             contract_id=contract.id,
             person_id=502,
             end_date=date(2025, 1, 10),
-            reason="Auditoria: Remoção teste"
+            reason="Auditoria: Remoção teste",
         )
 
         # Adicionar nova vida
@@ -430,7 +441,7 @@ class TestHomeCareIntegration:
             contract_id=contract.id,
             person_id=504,
             start_date=date(2025, 1, 11),
-            relationship_type="FUNCIONARIO"
+            relationship_type="FUNCIONARIO",
         )
 
         # === FASE 4: Criar e usar autorização ===
@@ -445,7 +456,7 @@ class TestHomeCareIntegration:
             daily_limit=2,
             start_date=date(2025, 1, 1),
             end_date=date(2025, 12, 31),
-            authorized_by=10
+            authorized_by=10,
         )
 
         authorization = await auth_repo.create(auth_data)
@@ -462,6 +473,6 @@ class TestHomeCareIntegration:
 
         # Verificar que todos os registros têm campos de auditoria
         for record in lives_history + auth_history:
-            assert hasattr(record, 'created_at')
-            assert hasattr(record, 'created_by')
+            assert hasattr(record, "created_at")
+            assert hasattr(record, "created_by")
             assert record.created_at is not None

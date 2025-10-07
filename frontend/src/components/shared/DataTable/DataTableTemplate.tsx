@@ -215,8 +215,8 @@ export function DataTableTemplate<T extends BaseEntity = any>({
         onToggle={callbacks.onToggleDetailedMetrics}
       />
 
-      {/* Main Table Container */}
-      <div className="bg-white dark:bg-gray-800 relative shadow-md sm:rounded-lg overflow-hidden w-full">
+        {/* Main Table Container */}
+        <div className={`${themeClasses.container} ${themeClasses.tableContainer}`}>
         {/* Table Header - Search and Filters */}
         <div className="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4">
           {/* Search */}
@@ -598,14 +598,14 @@ export function DataTableTemplate<T extends BaseEntity = any>({
           {/* Desktop Table View */}
           <div className="hidden md:block overflow-x-auto table-responsive">
             <table
-              className="w-full table-auto text-sm text-left text-gray-500 dark:text-gray-400 min-w-full"
+              className={themeClasses.table}
               role="table"
               aria-label={`Tabela de ${config.title}`}
               aria-rowcount={state.filteredData.length}
             >
-              <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+              <thead className={themeClasses.thead}>
                 <tr role="row">
-                  <th scope="col" className="p-4 w-12" role="columnheader">
+                   <th scope="col" className={`${themeClasses.headerCell} w-12`} role="columnheader">
                     <div className="flex items-center">
                       <input
                         id="checkbox-all-desktop"
@@ -643,32 +643,32 @@ export function DataTableTemplate<T extends BaseEntity = any>({
                       scope="col"
                       role="columnheader"
                       aria-sort={column.sortable ? "none" : undefined}
-                      className={`px-3 py-3 min-w-0 ${
-                        index === 0
-                          ? "w-32" // Contrato
-                          : index === 1
-                          ? "w-40" // Cliente
-                          : index === 2
-                          ? "w-24" // Tipo
-                          : index === 3
-                          ? "w-20" // Vidas
-                          : index === 4
-                          ? "w-32" // Valor
-                          : index === 5
-                          ? "w-36" // Período
-                          : index === 6
-                          ? "w-24" // Status
-                          : "w-24"
-                      }`}
+                       className={`${themeClasses.headerCell} ${
+                         index === 0
+                           ? "w-32" // Contrato
+                           : index === 1
+                           ? "w-40" // Cliente
+                           : index === 2
+                           ? "w-24" // Tipo
+                           : index === 3
+                           ? "w-20" // Vidas
+                           : index === 4
+                           ? "w-32" // Valor
+                           : index === 5
+                           ? "w-36" // Período
+                           : index === 6
+                           ? "w-24" // Status
+                           : "w-24"
+                       }`}
                     >
                       {column.label}
                     </th>
                   ))}
-                  <th
-                    scope="col"
-                    role="columnheader"
-                    className="px-4 py-3 w-16"
-                  >
+                   <th
+                     scope="col"
+                     role="columnheader"
+                     className={`${themeClasses.headerCell} w-16`}
+                   >
                     <span className="sr-only">
                       Ações disponíveis para cada item
                     </span>
@@ -676,13 +676,13 @@ export function DataTableTemplate<T extends BaseEntity = any>({
                   </th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className={themeClasses.tbody}>
                 {state.data.map((item: any) => (
-                  <tr
-                    key={item.id}
-                    className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-                  >
-                    <td className="w-4 p-4">
+                   <tr
+                     key={item.id}
+                     className={`${themeClasses.bodyRow} ${themeClasses.hover}`}
+                   >
+                     <td className={`${themeClasses.cell} w-4`}>
                       <div className="flex items-center">
                         <input
                           id={`checkbox-table-desktop-${item.id}`}
@@ -702,32 +702,32 @@ export function DataTableTemplate<T extends BaseEntity = any>({
                       </div>
                     </td>
                     {config.columns.map((column, index) => (
-                      <td
-                        key={String(column.key)}
-                        className={`px-3 py-4 min-w-0 ${
-                          index === 0
-                            ? "w-32" // Contrato
-                            : index === 1
-                            ? "w-40" // Cliente
-                            : index === 2
-                            ? "w-24" // Tipo
-                            : index === 3
-                            ? "w-20" // Vidas
-                            : index === 4
-                            ? "w-32" // Valor
-                            : index === 5
-                            ? "w-36" // Período
-                            : index === 6
-                            ? "w-24" // Status
-                            : "w-24"
-                        }`}
-                      >
+                       <td
+                         key={String(column.key)}
+                         className={`${themeClasses.cell} ${
+                           index === 0
+                             ? "w-32" // Contrato
+                             : index === 1
+                             ? "w-40" // Cliente
+                             : index === 2
+                             ? "w-24" // Tipo
+                             : index === 3
+                             ? "w-20" // Vidas
+                             : index === 4
+                             ? "w-32" // Valor
+                             : index === 5
+                             ? "w-36" // Período
+                             : index === 6
+                             ? "w-24" // Status
+                             : "w-24"
+                         }`}
+                       >
                         {column.render
                           ? column.render(item[column.key], item)
                           : item[column.key]}
                       </td>
                     ))}
-                    <td className="px-4 py-4 w-16">
+                     <td className={`${themeClasses.cell} w-16`}>
                       <ActionDropdown
                         actions={config.actions}
                         item={item}

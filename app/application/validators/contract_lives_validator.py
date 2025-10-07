@@ -1,6 +1,6 @@
-"""
-Validadores de regras de negócio para Contract Lives
-Centraliza lógica de validação complexa para reutilização
+"""Validadores de regras de negócio para Contract Lives.
+
+Centraliza lógica de validação complexa para reutilização.
 """
 
 from datetime import date
@@ -14,9 +14,10 @@ from app.infrastructure.orm.models import Contract, ContractLive
 
 
 class ContractLivesValidator:
-    """Validador de regras de negócio para vidas de contratos"""
+    """Validador de regras de negócio para vidas de contratos."""
 
     def __init__(self, db: AsyncSession):
+        """Inicializa o validador."""
         self.db = db
 
     async def validate_contract_exists(self, contract_id: int) -> Contract:

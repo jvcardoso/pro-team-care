@@ -1,15 +1,17 @@
-from typing import Optional, Dict, Any, List
-from datetime import datetime, date
+from datetime import date, datetime
 from decimal import Decimal
-from pydantic import BaseModel, Field, validator
+from typing import Any, Dict, List, Optional
 
+from pydantic import BaseModel, Field, validator
 
 # ==========================================
 # BASE SCHEMAS
 # ==========================================
 
+
 class PagBankBaseResponse(BaseModel):
     """Base response schema for PagBank operations"""
+
     success: bool
     message: Optional[str] = None
     error: Optional[str] = None
@@ -19,10 +21,16 @@ class PagBankBaseResponse(BaseModel):
 # BILLING METHOD SCHEMAS
 # ==========================================
 
+
 class BillingMethodUpdate(BaseModel):
     """Schema for updating billing method"""
-    billing_method: str = Field(..., description="Billing method: 'recurrent' or 'manual'")
-    auto_fallback_enabled: bool = Field(default=True, description="Enable automatic fallback")
+
+    billing_method: str = Field(
+        ..., description="Billing method: 'recurrent' or 'manual'"
+    )
+    auto_fallback_enabled: bool = Field(
+        default=True, description="Enable automatic fallback"
+    )
 
     @validator("billing_method")
     def validate_billing_method(cls, v):
@@ -33,6 +41,7 @@ class BillingMethodUpdate(BaseModel):
 
 class BillingMethodStatus(BaseModel):
     """Schema for billing method status response"""
+
     contract_id: int
     billing_method: str
     is_active: bool
@@ -47,8 +56,10 @@ class BillingMethodStatus(BaseModel):
 # RECURRENT BILLING SCHEMAS
 # ==========================================
 
+
 class CardData(BaseModel):
     """Schema for credit card data"""
+
     card_number: str = Field(..., description="Credit card number")
     card_expiry_month: str = Field(..., description="Card expiry month (MM)")
     card_expiry_year: str = Field(..., description="Card expiry year (YYYY)")
@@ -76,6 +87,7 @@ class CardData(BaseModel):
 
 class AddressData(BaseModel):
     """Schema for address data"""
+
     street: str = Field(..., description="Street name")
     number: str = Field(..., description="Street number")
     details: Optional[str] = Field(None, description="Additional address details")
@@ -95,6 +107,7 @@ class AddressData(BaseModel):
 
 class ClientDataForRecurrent(BaseModel):
     """Schema for client data required for recurrent billing setup"""
+
     client_id: int
     name: str = Field(..., description="Client full name")
     email: str = Field(..., description="Client email")
@@ -122,7 +135,9 @@ class ClientDataForRecurrent(BaseModel):
 
     @validator("phone_number")
     def validate_phone_number(cls, v):
-        phone_clean = v.replace("-", "").replace("(", "").replace(")", "").replace(" ", "")
+        phone_clean = (
+            v.replace("-", "").replace("(", "").replace(")", "").replace(" ", "")
+        )
         if not phone_clean.isdigit() or len(phone_clean) < 8:
             raise ValueError("Invalid phone number")
         return phone_clean
@@ -130,12 +145,14 @@ class ClientDataForRecurrent(BaseModel):
 
 class RecurrentBillingSetupRequest(BaseModel):
     """Schema for setting up recurrent billing"""
+
     contract_id: int
     client_data: ClientDataForRecurrent
 
 
 class RecurrentBillingSetupResponse(PagBankBaseResponse):
     """Schema for recurrent billing setup response"""
+
     contract_id: Optional[int] = None
     billing_method: Optional[str] = None
     pagbank_subscription_id: Optional[str] = None
@@ -148,13 +165,16 @@ class RecurrentBillingSetupResponse(PagBankBaseResponse):
 # CHECKOUT SCHEMAS
 # ==========================================
 
+
 class CheckoutSessionRequest(BaseModel):
     """Schema for creating checkout session"""
+
     invoice_id: int
 
 
 class CheckoutSessionResponse(PagBankBaseResponse):
     """Schema for checkout session response"""
+
     invoice_id: Optional[int] = None
     checkout_url: Optional[str] = None
     session_id: Optional[str] = None
@@ -167,8 +187,10 @@ class CheckoutSessionResponse(PagBankBaseResponse):
 # TRANSACTION SCHEMAS
 # ==========================================
 
+
 class PagBankTransactionSchema(BaseModel):
     """Schema for PagBank transaction"""
+
     id: int
     invoice_id: int
     transaction_type: str
@@ -188,6 +210,7 @@ class PagBankTransactionSchema(BaseModel):
 
 class TransactionsListResponse(BaseModel):
     """Schema for transactions list response"""
+
     transactions: List[PagBankTransactionSchema]
     total: int
     page: int
@@ -199,14 +222,17 @@ class TransactionsListResponse(BaseModel):
 # WEBHOOK SCHEMAS
 # ==========================================
 
+
 class WebhookRequest(BaseModel):
     """Schema for incoming webhook requests"""
+
     type: str = Field(..., description="Notification type")
     data: Dict[str, Any] = Field(..., description="Webhook data")
 
 
 class WebhookResponse(PagBankBaseResponse):
     """Schema for webhook processing response"""
+
     notification_type: Optional[str] = None
     processed_data: Optional[Dict[str, Any]] = None
 
@@ -215,14 +241,17 @@ class WebhookResponse(PagBankBaseResponse):
 # SUBSCRIPTION MANAGEMENT SCHEMAS
 # ==========================================
 
+
 class SubscriptionCancelRequest(BaseModel):
     """Schema for cancelling subscription"""
+
     contract_id: int
     reason: Optional[str] = Field(None, description="Cancellation reason")
 
 
 class SubscriptionCancelResponse(PagBankBaseResponse):
     """Schema for subscription cancellation response"""
+
     contract_id: Optional[int] = None
     cancelled_subscription_id: Optional[str] = None
     new_billing_method: Optional[str] = None
@@ -231,11 +260,13 @@ class SubscriptionCancelResponse(PagBankBaseResponse):
 
 class SubscriptionSyncRequest(BaseModel):
     """Schema for syncing subscription status"""
+
     subscription_id: str
 
 
 class SubscriptionSyncResponse(PagBankBaseResponse):
     """Schema for subscription sync response"""
+
     subscription_id: Optional[str] = None
     local_schedule_id: Optional[int] = None
     pagbank_status: Optional[str] = None
@@ -246,11 +277,17 @@ class SubscriptionSyncResponse(PagBankBaseResponse):
 # BILLING AUTOMATION SCHEMAS
 # ==========================================
 
+
 class AutomaticBillingRequest(BaseModel):
     """Schema for triggering automatic billing"""
+
     billing_date: Optional[str] = Field(None, description="Billing date (YYYY-MM-DD)")
-    force_regenerate: bool = Field(default=False, description="Force regenerate existing invoices")
-    contract_ids: Optional[List[int]] = Field(None, description="Specific contract IDs to process")
+    force_regenerate: bool = Field(
+        default=False, description="Force regenerate existing invoices"
+    )
+    contract_ids: Optional[List[int]] = Field(
+        None, description="Specific contract IDs to process"
+    )
 
     @validator("billing_date")
     def validate_billing_date(cls, v):
@@ -264,6 +301,7 @@ class AutomaticBillingRequest(BaseModel):
 
 class AutomaticBillingResponse(PagBankBaseResponse):
     """Schema for automatic billing response"""
+
     total_processed: Optional[int] = None
     successful: Optional[int] = None
     failed: Optional[int] = None
@@ -276,14 +314,17 @@ class AutomaticBillingResponse(PagBankBaseResponse):
 # FAILURE HANDLING SCHEMAS
 # ==========================================
 
+
 class BillingFailureRequest(BaseModel):
     """Schema for processing billing failure"""
+
     schedule_id: int
     error_details: Dict[str, Any]
 
 
 class BillingFailureResponse(PagBankBaseResponse):
     """Schema for billing failure processing response"""
+
     schedule_id: Optional[int] = None
     contract_id: Optional[int] = None
     attempt_count: Optional[int] = None
@@ -296,8 +337,10 @@ class BillingFailureResponse(PagBankBaseResponse):
 # ANALYTICS SCHEMAS
 # ==========================================
 
+
 class BillingMethodStats(BaseModel):
     """Schema for billing method statistics"""
+
     total_contracts: int
     recurrent_count: int
     manual_count: int
@@ -309,6 +352,7 @@ class BillingMethodStats(BaseModel):
 
 class PagBankDashboardResponse(BaseModel):
     """Schema for PagBank dashboard data"""
+
     billing_method_stats: BillingMethodStats
     recent_transactions: List[PagBankTransactionSchema]
     pending_checkouts: int
@@ -321,8 +365,10 @@ class PagBankDashboardResponse(BaseModel):
 # ERROR SCHEMAS
 # ==========================================
 
+
 class PagBankError(BaseModel):
     """Schema for PagBank API errors"""
+
     error_code: str
     error_message: str
     details: Optional[Dict[str, Any]] = None
@@ -331,6 +377,7 @@ class PagBankError(BaseModel):
 
 class ValidationErrorResponse(BaseModel):
     """Schema for validation errors"""
+
     field: str
     message: str
     value: Optional[Any] = None
@@ -338,6 +385,7 @@ class ValidationErrorResponse(BaseModel):
 
 class ErrorResponse(PagBankBaseResponse):
     """Schema for error responses"""
+
     error_code: Optional[str] = None
     validation_errors: Optional[List[ValidationErrorResponse]] = None
     details: Optional[Dict[str, Any]] = None

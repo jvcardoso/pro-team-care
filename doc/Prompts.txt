@@ -57,7 +57,7 @@ Prompt de Inicialização
       ser real e funcional.
    5. Corrija, Não Contorne: Se encontrar um erro que impede o funcionamento de uma feature, corrija a causa raiz. É expressamente proibido remover ou comentar funcionalidades,
       validações ou testes existentes apenas para fazer o código compilar ou passar sem erros.
-   6. Questionamento Crítico: Se uma solicitação minha parecer destrutiva, ambígua ou prejudicial à integridade do sistema (ex: "remova a validação de senha"), você deve me 
+   6. Questionamento Crítico: Se uma solicitação minha parecer destrutiva, ambígua ou prejudicial à integridade do sistema (ex: "remova a validação de senha"), você deve me
       questionar sobre o objetivo e os riscos antes de executar a ação.
    7. Consistência de Estilo: Siga os padrões de formatação e nomenclatura já presentes no código.
 

@@ -1,16 +1,17 @@
-from typing import Dict, Optional
-from datetime import datetime
 import asyncio
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
+from datetime import datetime
+from typing import Dict, Optional
 
-from app.infrastructure.services.pagbank_service import PagBankService
-from app.infrastructure.repositories.billing_repository import BillingRepository
+from sqlalchemy import select, update
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.infrastructure.orm.models import (
     ContractBillingSchedule,
     ContractInvoice,
-    PagBankTransaction
+    PagBankTransaction,
 )
+from app.infrastructure.repositories.billing_repository import BillingRepository
+from app.infrastructure.services.pagbank_service import PagBankService
 
 
 class PagBankWebhookService:
@@ -26,13 +27,12 @@ class PagBankWebhookService:
         try:
             # Verify webhook signature
             payload_str = str(payload)
-            is_valid = await self.pagbank_service.verify_webhook_signature(payload_str, signature)
+            is_valid = await self.pagbank_service.verify_webhook_signature(
+                payload_str, signature
+            )
 
             if not is_valid:
-                return {
-                    "success": False,
-                    "error": "Invalid webhook signature"
-                }
+                return {"success": False, "error": "Invalid webhook signature"}
 
             # Process notification based on type
             notification_type = payload.get("type")
@@ -46,14 +46,11 @@ class PagBankWebhookService:
             else:
                 return {
                     "success": False,
-                    "error": f"Unknown notification type: {notification_type}"
+                    "error": f"Unknown notification type: {notification_type}",
                 }
 
         except Exception as e:
-            return {
-                "success": False,
-                "error": f"Webhook processing failed: {str(e)}"
-            }
+            return {"success": False, "error": f"Webhook processing failed: {str(e)}"}
 
     async def handle_subscription_notification(self, payload: Dict) -> Dict:
         """Process subscription-related notifications"""
@@ -66,15 +63,17 @@ class PagBankWebhookService:
             if not subscription_id:
                 return {
                     "success": False,
-                    "error": "Missing subscription_id in notification"
+                    "error": "Missing subscription_id in notification",
                 }
 
             # Find billing schedule with this subscription
-            schedule = await self._find_billing_schedule_by_subscription(subscription_id)
+            schedule = await self._find_billing_schedule_by_subscription(
+                subscription_id
+            )
             if not schedule:
                 return {
                     "success": False,
-                    "error": f"Billing schedule not found for subscription {subscription_id}"
+                    "error": f"Billing schedule not found for subscription {subscription_id}",
                 }
 
             # Update schedule based on subscription status
@@ -94,14 +93,14 @@ class PagBankWebhookService:
                 "success": True,
                 "subscription_id": subscription_id,
                 "status": status,
-                "schedule_id": schedule.id
+                "schedule_id": schedule.id,
             }
 
         except Exception as e:
             await self.db.rollback()
             return {
                 "success": False,
-                "error": f"Subscription notification failed: {str(e)}"
+                "error": f"Subscription notification failed: {str(e)}",
             }
 
     async def handle_payment_notification(self, payload: Dict) -> Dict:
@@ -113,17 +112,14 @@ class PagBankWebhookService:
             reference_id = data.get("reference_id")
 
             if not charge_id:
-                return {
-                    "success": False,
-                    "error": "Missing charge_id in notification"
-                }
+                return {"success": False, "error": "Missing charge_id in notification"}
 
             # Find transaction by charge_id or reference
             transaction = await self._find_pagbank_transaction(charge_id, reference_id)
             if not transaction:
                 return {
                     "success": False,
-                    "error": f"Transaction not found for charge {charge_id}"
+                    "error": f"Transaction not found for charge {charge_id}",
                 }
 
             # Update transaction status
@@ -139,15 +135,12 @@ class PagBankWebhookService:
                 "success": True,
                 "charge_id": charge_id,
                 "status": status,
-                "transaction_id": transaction.id
+                "transaction_id": transaction.id,
             }
 
         except Exception as e:
             await self.db.rollback()
-            return {
-                "success": False,
-                "error": f"Payment notification failed: {str(e)}"
-            }
+            return {"success": False, "error": f"Payment notification failed: {str(e)}"}
 
     async def handle_checkout_notification(self, payload: Dict) -> Dict:
         """Process checkout/order notifications"""
@@ -158,17 +151,14 @@ class PagBankWebhookService:
             reference_id = data.get("reference_id")
 
             if not order_id:
-                return {
-                    "success": False,
-                    "error": "Missing order_id in notification"
-                }
+                return {"success": False, "error": "Missing order_id in notification"}
 
             # Extract invoice ID from reference
             invoice_id = self._extract_invoice_id_from_reference(reference_id)
             if not invoice_id:
                 return {
                     "success": False,
-                    "error": f"Could not extract invoice_id from reference {reference_id}"
+                    "error": f"Could not extract invoice_id from reference {reference_id}",
                 }
 
             # Find or create transaction
@@ -193,35 +183,37 @@ class PagBankWebhookService:
                 "success": True,
                 "order_id": order_id,
                 "status": status,
-                "transaction_id": transaction.id
+                "transaction_id": transaction.id,
             }
 
         except Exception as e:
             await self.db.rollback()
             return {
                 "success": False,
-                "error": f"Checkout notification failed: {str(e)}"
+                "error": f"Checkout notification failed: {str(e)}",
             }
 
     async def sync_subscription_status(self, subscription_id: str) -> Dict:
         """Manually sync subscription status with PagBank"""
         try:
             # Get current status from PagBank
-            pagbank_status = await self.pagbank_service.get_subscription_status(subscription_id)
+            pagbank_status = await self.pagbank_service.get_subscription_status(
+                subscription_id
+            )
 
             # Find local billing schedule
-            schedule = await self._find_billing_schedule_by_subscription(subscription_id)
+            schedule = await self._find_billing_schedule_by_subscription(
+                subscription_id
+            )
             if not schedule:
                 return {
                     "success": False,
-                    "error": f"Billing schedule not found for subscription {subscription_id}"
+                    "error": f"Billing schedule not found for subscription {subscription_id}",
                 }
 
             # Update local status
             await self._update_schedule_from_subscription_status(
-                schedule,
-                pagbank_status.get("status"),
-                pagbank_status
+                schedule, pagbank_status.get("status"), pagbank_status
             )
 
             await self.db.commit()
@@ -230,21 +222,20 @@ class PagBankWebhookService:
                 "success": True,
                 "subscription_id": subscription_id,
                 "local_schedule_id": schedule.id,
-                "pagbank_status": pagbank_status.get("status")
+                "pagbank_status": pagbank_status.get("status"),
             }
 
         except Exception as e:
             await self.db.rollback()
-            return {
-                "success": False,
-                "error": f"Sync failed: {str(e)}"
-            }
+            return {"success": False, "error": f"Sync failed: {str(e)}"}
 
     # ==========================================
     # PRIVATE HELPER METHODS
     # ==========================================
 
-    async def _find_billing_schedule_by_subscription(self, subscription_id: str) -> Optional[ContractBillingSchedule]:
+    async def _find_billing_schedule_by_subscription(
+        self, subscription_id: str
+    ) -> Optional[ContractBillingSchedule]:
         """Find billing schedule by PagBank subscription ID"""
         stmt = select(ContractBillingSchedule).where(
             ContractBillingSchedule.pagbank_subscription_id == subscription_id
@@ -252,30 +243,33 @@ class PagBankWebhookService:
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def _find_pagbank_transaction(self, charge_id: str, reference_id: str) -> Optional[PagBankTransaction]:
+    async def _find_pagbank_transaction(
+        self, charge_id: str, reference_id: str
+    ) -> Optional[PagBankTransaction]:
         """Find PagBank transaction by charge ID or reference"""
         stmt = select(PagBankTransaction).where(
-            (PagBankTransaction.pagbank_charge_id == charge_id) |
-            (PagBankTransaction.pagbank_transaction_id == reference_id)
+            (PagBankTransaction.pagbank_charge_id == charge_id)
+            | (PagBankTransaction.pagbank_transaction_id == reference_id)
         )
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
     async def _update_schedule_from_subscription_status(
-        self,
-        schedule: ContractBillingSchedule,
-        status: str,
-        data: Dict
+        self, schedule: ContractBillingSchedule, status: str, data: Dict
     ) -> None:
         """Update billing schedule based on subscription status"""
         # Map PagBank status to our internal status
-        internal_status = self.pagbank_service.map_pagbank_status_to_internal(status, "recurrent")
+        internal_status = self.pagbank_service.map_pagbank_status_to_internal(
+            status, "recurrent"
+        )
 
         # Update next billing date if provided
         next_billing = data.get("next_invoice_at")
         if next_billing:
             try:
-                next_billing_date = datetime.fromisoformat(next_billing.replace('Z', '+00:00')).date()
+                next_billing_date = datetime.fromisoformat(
+                    next_billing.replace("Z", "+00:00")
+                ).date()
                 schedule.next_billing_date = next_billing_date
             except:
                 pass  # Keep existing date if parsing fails
@@ -287,7 +281,9 @@ class PagBankWebhookService:
 
         await self.db.flush()
 
-    async def _handle_subscription_failure(self, schedule: ContractBillingSchedule, data: Dict) -> None:
+    async def _handle_subscription_failure(
+        self, schedule: ContractBillingSchedule, data: Dict
+    ) -> None:
         """Handle subscription payment failure"""
         max_attempts = 3  # Configure this in settings
 
@@ -307,15 +303,11 @@ class PagBankWebhookService:
         await self.db.flush()
 
     async def _update_transaction_status(
-        self,
-        transaction: PagBankTransaction,
-        status: str,
-        data: Dict
+        self, transaction: PagBankTransaction, status: str, data: Dict
     ) -> None:
         """Update PagBank transaction status"""
         internal_status = self.pagbank_service.map_pagbank_status_to_internal(
-            status,
-            transaction.transaction_type
+            status, transaction.transaction_type
         )
 
         # Update transaction attributes
@@ -332,20 +324,24 @@ class PagBankWebhookService:
 
     async def _mark_invoice_as_paid(self, invoice_id: int, payment_data: Dict) -> None:
         """Mark invoice as paid and update payment details"""
-        stmt = update(ContractInvoice).where(
-            ContractInvoice.id == invoice_id
-        ).values(
-            status="paga",
-            paid_date=datetime.now().date(),
-            payment_method="pagbank",
-            payment_reference=payment_data.get("id"),
-            payment_notes=f"Pagamento PagBank confirmado automaticamente",
-            updated_at=datetime.now()
+        stmt = (
+            update(ContractInvoice)
+            .where(ContractInvoice.id == invoice_id)
+            .values(
+                status="paga",
+                paid_date=datetime.now().date(),
+                payment_method="pagbank",
+                payment_reference=payment_data.get("id"),
+                payment_notes=f"Pagamento PagBank confirmado automaticamente",
+                updated_at=datetime.now(),
+            )
         )
 
         await self.db.execute(stmt)
 
-    async def _extract_invoice_id_from_reference(self, reference_id: str) -> Optional[int]:
+    async def _extract_invoice_id_from_reference(
+        self, reference_id: str
+    ) -> Optional[int]:
         """Extract invoice ID from PagBank reference"""
         if not reference_id:
             return None
@@ -362,16 +358,13 @@ class PagBankWebhookService:
         return None
 
     async def _find_or_create_checkout_transaction(
-        self,
-        invoice_id: int,
-        order_id: str,
-        data: Dict
+        self, invoice_id: int, order_id: str, data: Dict
     ) -> PagBankTransaction:
         """Find existing or create new checkout transaction"""
         # Try to find existing transaction
         stmt = select(PagBankTransaction).where(
             PagBankTransaction.invoice_id == invoice_id,
-            PagBankTransaction.pagbank_transaction_id == order_id
+            PagBankTransaction.pagbank_transaction_id == order_id,
         )
         result = await self.db.execute(stmt)
         transaction = result.scalar_one_or_none()
@@ -386,14 +379,16 @@ class PagBankWebhookService:
                 amount=self.pagbank_service.format_amount_from_cents(
                     data.get("amount", {}).get("value", 0)
                 ),
-                webhook_data=data
+                webhook_data=data,
             )
             self.db.add(transaction)
             await self.db.flush()
 
         return transaction
 
-    async def _send_fallback_notification(self, schedule: ContractBillingSchedule) -> None:
+    async def _send_fallback_notification(
+        self, schedule: ContractBillingSchedule
+    ) -> None:
         """Send notification about fallback to manual billing"""
         # TODO: Implement notification system
         # This could send email, SMS, or create in-app notification

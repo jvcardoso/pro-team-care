@@ -20,7 +20,9 @@ async def create_contract_menus_complete():
     try:
         async for db in get_db():
             # Get next available ID
-            next_id_query = text("SELECT COALESCE(MAX(id), 0) + 1 as next_id FROM master.menus")
+            next_id_query = text(
+                "SELECT COALESCE(MAX(id), 0) + 1 as next_id FROM master.menus"
+            )
             result = await db.execute(next_id_query)
             current_id = result.fetchone().next_id
 
@@ -40,7 +42,7 @@ async def create_contract_menus_complete():
                     "sort_order": 10,
                     "permission_name": "contracts_menu",
                     "icon": "FileText",
-                    "description": "Menu principal de gestão de contratos"
+                    "description": "Menu principal de gestão de contratos",
                 },
                 {
                     "id": current_id + 1,
@@ -52,7 +54,7 @@ async def create_contract_menus_complete():
                     "sort_order": 10,
                     "permission_name": "contracts_view",
                     "icon": "List",
-                    "description": "Listar todos os contratos"
+                    "description": "Listar todos os contratos",
                 },
                 {
                     "id": current_id + 2,
@@ -64,7 +66,7 @@ async def create_contract_menus_complete():
                     "sort_order": 20,
                     "permission_name": "contracts_create",
                     "icon": "Plus",
-                    "description": "Criar novo contrato"
+                    "description": "Criar novo contrato",
                 },
                 {
                     "id": current_id + 3,
@@ -76,9 +78,8 @@ async def create_contract_menus_complete():
                     "sort_order": 30,
                     "permission_name": "contract_dashboard_view",
                     "icon": "BarChart3",
-                    "description": "Dashboard executivo de contratos"
+                    "description": "Dashboard executivo de contratos",
                 },
-
                 # === GESTÃO DE VIDAS ===
                 {
                     "id": current_id + 4,
@@ -90,7 +91,7 @@ async def create_contract_menus_complete():
                     "sort_order": 20,
                     "permission_name": "contract_lives_menu",
                     "icon": "Users",
-                    "description": "Menu de gestão de vidas dos contratos"
+                    "description": "Menu de gestão de vidas dos contratos",
                 },
                 {
                     "id": current_id + 5,
@@ -102,9 +103,8 @@ async def create_contract_menus_complete():
                     "sort_order": 10,
                     "permission_name": "contract_lives_view",
                     "icon": "UserCheck",
-                    "description": "Visualizar vidas ativas dos contratos"
+                    "description": "Visualizar vidas ativas dos contratos",
                 },
-
                 # === CATÁLOGO DE SERVIÇOS ===
                 {
                     "id": current_id + 6,
@@ -116,7 +116,7 @@ async def create_contract_menus_complete():
                     "sort_order": 30,
                     "permission_name": "services_catalog_menu",
                     "icon": "Package",
-                    "description": "Menu do catálogo de serviços"
+                    "description": "Menu do catálogo de serviços",
                 },
                 {
                     "id": current_id + 7,
@@ -128,7 +128,7 @@ async def create_contract_menus_complete():
                     "sort_order": 10,
                     "permission_name": "services_catalog_view",
                     "icon": "Package",
-                    "description": "Visualizar catálogo de serviços disponíveis"
+                    "description": "Visualizar catálogo de serviços disponíveis",
                 },
                 {
                     "id": current_id + 8,
@@ -140,9 +140,8 @@ async def create_contract_menus_complete():
                     "sort_order": 20,
                     "permission_name": "medical_authorizations_view",
                     "icon": "ClipboardCheck",
-                    "description": "Gerenciar autorizações médicas"
+                    "description": "Gerenciar autorizações médicas",
                 },
-
                 # === RELATÓRIOS ===
                 {
                     "id": current_id + 9,
@@ -154,7 +153,7 @@ async def create_contract_menus_complete():
                     "sort_order": 40,
                     "permission_name": "contract_reports_menu",
                     "icon": "BarChart3",
-                    "description": "Menu de relatórios de contratos"
+                    "description": "Menu de relatórios de contratos",
                 },
                 {
                     "id": current_id + 10,
@@ -166,7 +165,7 @@ async def create_contract_menus_complete():
                     "sort_order": 10,
                     "permission_name": "executive_dashboard_view",
                     "icon": "TrendingUp",
-                    "description": "Dashboard executivo de contratos"
+                    "description": "Dashboard executivo de contratos",
                 },
                 {
                     "id": current_id + 11,
@@ -178,8 +177,8 @@ async def create_contract_menus_complete():
                     "sort_order": 20,
                     "permission_name": "custom_reports_view",
                     "icon": "FileSpreadsheet",
-                    "description": "Relatórios customizados de contratos"
-                }
+                    "description": "Relatórios customizados de contratos",
+                },
             ]
 
             added_count = 0
@@ -210,7 +209,9 @@ async def create_contract_menus_complete():
             if added_count > 0:
                 await db.commit()
                 print(f"\n🎉 {added_count} menus criados com sucesso!")
-                print(f"📊 IDs utilizados: {current_id} até {current_id + len(menus) - 1}")
+                print(
+                    f"📊 IDs utilizados: {current_id} até {current_id + len(menus) - 1}"
+                )
             else:
                 print("\n✅ Todos os menus já existem no sistema!")
 
@@ -219,6 +220,7 @@ async def create_contract_menus_complete():
     except Exception as e:
         print(f"❌ Erro: {e}")
         import traceback
+
         traceback.print_exc()
 
 

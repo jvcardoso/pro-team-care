@@ -36,7 +36,7 @@ async def create_contract_menus():
                     "company_specific": False,
                     "establishment_specific": True,
                     "icon": "Heart",
-                    "description": "Sistema de Home Care"
+                    "description": "Sistema de Home Care",
                 },
                 # Contracts submenu
                 {
@@ -54,7 +54,7 @@ async def create_contract_menus():
                     "company_specific": False,
                     "establishment_specific": False,
                     "icon": "FileText",
-                    "description": "Gerenciar contratos home care"
+                    "description": "Gerenciar contratos home care",
                 },
                 # Medical Authorizations submenu
                 {
@@ -72,7 +72,7 @@ async def create_contract_menus():
                     "company_specific": False,
                     "establishment_specific": False,
                     "icon": "ClipboardCheck",
-                    "description": "Gerenciar autorizações médicas"
+                    "description": "Gerenciar autorizações médicas",
                 },
                 # Service Executions submenu
                 {
@@ -90,7 +90,7 @@ async def create_contract_menus():
                     "company_specific": False,
                     "establishment_specific": True,
                     "icon": "Activity",
-                    "description": "Registrar e acompanhar execuções de serviços"
+                    "description": "Registrar e acompanhar execuções de serviços",
                 },
                 # Services Catalog submenu
                 {
@@ -108,7 +108,7 @@ async def create_contract_menus():
                     "company_specific": False,
                     "establishment_specific": False,
                     "icon": "Package",
-                    "description": "Catálogo de serviços disponíveis"
+                    "description": "Catálogo de serviços disponíveis",
                 },
                 # Contract Reports submenu
                 {
@@ -126,7 +126,7 @@ async def create_contract_menus():
                     "company_specific": False,
                     "establishment_specific": False,
                     "icon": "BarChart3",
-                    "description": "Relatórios e análises de contratos"
+                    "description": "Relatórios e análises de contratos",
                 },
             ]
 
@@ -145,7 +145,9 @@ async def create_contract_menus():
                         parent_query = text(
                             "SELECT id FROM master.menus WHERE slug = :slug AND deleted_at IS NULL"
                         )
-                        parent_result = await db.execute(parent_query, {"slug": menu["parent_slug"]})
+                        parent_result = await db.execute(
+                            parent_query, {"slug": menu["parent_slug"]}
+                        )
                         parent = parent_result.fetchone()
                         if parent:
                             parent_id = parent.id
@@ -189,7 +191,7 @@ async def create_contract_menus():
                         "company_specific": menu["company_specific"],
                         "establishment_specific": menu["establishment_specific"],
                         "icon": menu["icon"],
-                        "description": menu["description"]
+                        "description": menu["description"],
                     }
 
                     result = await db.execute(insert_query, menu_data)
@@ -212,6 +214,7 @@ async def create_contract_menus():
     except Exception as e:
         print(f"❌ Erro: {e}")
         import traceback
+
         traceback.print_exc()
 
 
@@ -239,7 +242,9 @@ async def update_existing_client_menu():
                 )
                 await db.execute(update_query, {"menu_id": clients_menu.id})
                 await db.commit()
-                print("✅ Menu de clientes atualizado para incluir referência aos contratos")
+                print(
+                    "✅ Menu de clientes atualizado para incluir referência aos contratos"
+                )
             else:
                 print("⚠️ Menu de clientes não encontrado")
 
@@ -248,6 +253,7 @@ async def update_existing_client_menu():
     except Exception as e:
         print(f"❌ Erro: {e}")
         import traceback
+
         traceback.print_exc()
 
 

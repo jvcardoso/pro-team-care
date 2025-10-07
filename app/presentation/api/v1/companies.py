@@ -100,10 +100,12 @@ async def create_company(
     try:
         # Set tenant context for multi-tenant isolation
         tenant_service = get_tenant_context()
-        db_company_id = 0 if getattr(current_user, "is_system_admin", False) else getattr(current_user, "company_id", None)
-        await tenant_service.set_database_context(
-            repository.db, db_company_id
+        db_company_id = (
+            0
+            if getattr(current_user, "is_system_admin", False)
+            else getattr(current_user, "company_id", None)
         )
+        await tenant_service.set_database_context(repository.db, db_company_id)
 
         logger.info("=== INÍCIO CRIAÇÃO EMPRESA ===")
         logger.info("Dados recebidos", company_data=company_data.model_dump())
@@ -245,7 +247,11 @@ async def get_companies(
     """
     # Set tenant context for multi-tenant isolation
     tenant_service = get_tenant_context()
-    company_id = 0 if getattr(current_user, "is_system_admin", False) else getattr(current_user, "company_id", None)
+    company_id = (
+        0
+        if getattr(current_user, "is_system_admin", False)
+        else getattr(current_user, "company_id", None)
+    )
     await tenant_service.set_database_context(repository.db, company_id)
 
     # Converter skip/limit para page/size
@@ -342,7 +348,11 @@ async def count_companies(
     """
     # Set tenant context for multi-tenant isolation
     tenant_service = get_tenant_context()
-    company_id = 0 if getattr(current_user, "is_system_admin", False) else getattr(current_user, "company_id", None)
+    company_id = (
+        0
+        if getattr(current_user, "is_system_admin", False)
+        else getattr(current_user, "company_id", None)
+    )
     await tenant_service.set_database_context(repository.db, company_id)
 
     total = await repository.count_companies(search=search, status=status)
@@ -402,7 +412,11 @@ async def get_company(
 ):
     # Set tenant context for multi-tenant isolation
     tenant_service = get_tenant_context()
-    db_company_id = 0 if getattr(current_user, "is_system_admin", False) else getattr(current_user, "company_id", None)
+    db_company_id = (
+        0
+        if getattr(current_user, "is_system_admin", False)
+        else getattr(current_user, "company_id", None)
+    )
     await tenant_service.set_database_context(repository.db, db_company_id)
 
     # 🔐 FILTRO MULTI-TENANT: ROOT vê qualquer empresa, usuário normal só a sua
@@ -473,10 +487,12 @@ async def update_company(
     try:
         # Set tenant context for multi-tenant isolation
         tenant_service = get_tenant_context()
-        db_company_id = 0 if getattr(current_user, "is_system_admin", False) else getattr(current_user, "company_id", None)
-        await tenant_service.set_database_context(
-            repository.db, db_company_id
+        db_company_id = (
+            0
+            if getattr(current_user, "is_system_admin", False)
+            else getattr(current_user, "company_id", None)
         )
+        await tenant_service.set_database_context(repository.db, db_company_id)
 
         company = await repository.update_company(company_id, company_data)
         if not company:
@@ -558,7 +574,11 @@ async def delete_company(
 ):
     # Set tenant context for multi-tenant isolation
     tenant_service = get_tenant_context()
-    db_company_id = 0 if getattr(current_user, "is_system_admin", False) else getattr(current_user, "company_id", None)
+    db_company_id = (
+        0
+        if getattr(current_user, "is_system_admin", False)
+        else getattr(current_user, "company_id", None)
+    )
     await tenant_service.set_database_context(repository.db, db_company_id)
 
     success = await repository.delete_company(company_id)
@@ -590,7 +610,11 @@ async def get_company_by_cnpj(
 
     # Set tenant context for multi-tenant isolation
     tenant_service = get_tenant_context()
-    db_company_id = 0 if getattr(current_user, "is_system_admin", False) else getattr(current_user, "company_id", None)
+    db_company_id = (
+        0
+        if getattr(current_user, "is_system_admin", False)
+        else getattr(current_user, "company_id", None)
+    )
     await tenant_service.set_database_context(repository.db, db_company_id)
 
     company = await repository.get_company_by_cnpj(clean_cnpj)
@@ -656,7 +680,11 @@ async def get_company_contacts(
 ):
     # Set tenant context for multi-tenant isolation
     tenant_service = get_tenant_context()
-    db_company_id = 0 if getattr(current_user, "is_system_admin", False) else getattr(current_user, "company_id", None)
+    db_company_id = (
+        0
+        if getattr(current_user, "is_system_admin", False)
+        else getattr(current_user, "company_id", None)
+    )
     await tenant_service.set_database_context(repository.db, db_company_id)
 
     company = await repository.get_company(company_id)

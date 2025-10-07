@@ -45,7 +45,6 @@ import {
   AutomaticBillingRequest,
   AutomaticBillingResponse,
   TransactionsListResponse,
-  PagBankDashboardResponse,
 } from '../types/pagbank.types';
 
 const BASE_URL = '/api/v1/billing';
@@ -447,15 +446,7 @@ class BillingService {
     return response.data;
   }
 
-  /**
-   * Get PagBank dashboard data
-   */
-  async getPagBankDashboard(): Promise<PagBankDashboardResponse> {
-    const response = await api.get<PagBankDashboardResponse>(
-      `${BASE_URL}/pagbank/dashboard`
-    );
-    return response.data;
-  }
+
 
   // ==========================================
   // PAGBANK UTILITY METHODS

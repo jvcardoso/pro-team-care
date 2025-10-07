@@ -5,9 +5,11 @@ Revises: 015_contract_billing_system
 Create Date: 2025-01-22 16:00:00.000000
 
 """
-from alembic import op
+
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "016_pagbank_integration"
@@ -23,32 +25,32 @@ def upgrade():
     op.add_column(
         "contract_billing_schedules",
         sa.Column("billing_method", sa.String(length=20), default="manual"),
-        schema="master"
+        schema="master",
     )
     op.add_column(
         "contract_billing_schedules",
         sa.Column("pagbank_subscription_id", sa.String(length=100)),
-        schema="master"
+        schema="master",
     )
     op.add_column(
         "contract_billing_schedules",
         sa.Column("pagbank_customer_id", sa.String(length=100)),
-        schema="master"
+        schema="master",
     )
     op.add_column(
         "contract_billing_schedules",
         sa.Column("auto_fallback_enabled", sa.Boolean(), default=True),
-        schema="master"
+        schema="master",
     )
     op.add_column(
         "contract_billing_schedules",
         sa.Column("last_attempt_date", sa.Date()),
-        schema="master"
+        schema="master",
     )
     op.add_column(
         "contract_billing_schedules",
         sa.Column("attempt_count", sa.Integer(), default=0),
-        schema="master"
+        schema="master",
     )
 
     # Add constraint for billing_method
@@ -56,7 +58,7 @@ def upgrade():
         "billing_method_check",
         "contract_billing_schedules",
         "billing_method IN ('recurrent', 'manual')",
-        schema="master"
+        schema="master",
     )
 
     # Create indexes for new fields
@@ -64,19 +66,19 @@ def upgrade():
         "contract_billing_schedules_billing_method_idx",
         "contract_billing_schedules",
         ["billing_method"],
-        schema="master"
+        schema="master",
     )
     op.create_index(
         "contract_billing_schedules_pagbank_subscription_idx",
         "contract_billing_schedules",
         ["pagbank_subscription_id"],
-        schema="master"
+        schema="master",
     )
     op.create_index(
         "contract_billing_schedules_pagbank_customer_idx",
         "contract_billing_schedules",
         ["pagbank_customer_id"],
-        schema="master"
+        schema="master",
     )
 
     # Create pagbank_transactions table
@@ -106,21 +108,54 @@ def upgrade():
             "amount >= 0",
             name="pagbank_amount_check",
         ),
-        sa.ForeignKeyConstraint(["invoice_id"], ["master.contract_invoices.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["invoice_id"], ["master.contract_invoices.id"], ondelete="CASCADE"
+        ),
         sa.PrimaryKeyConstraint("id"),
         schema="master",
     )
 
     # Create indexes for pagbank_transactions
-    op.create_index("pagbank_transactions_invoice_id_idx", "pagbank_transactions", ["invoice_id"], schema="master")
-    op.create_index("pagbank_transactions_status_idx", "pagbank_transactions", ["status"], schema="master")
-    op.create_index("pagbank_transactions_type_idx", "pagbank_transactions", ["transaction_type"], schema="master")
-    op.create_index("pagbank_transactions_pagbank_transaction_id_idx", "pagbank_transactions", ["pagbank_transaction_id"], schema="master")
-    op.create_index("pagbank_transactions_pagbank_charge_id_idx", "pagbank_transactions", ["pagbank_charge_id"], schema="master")
-    op.create_index("pagbank_transactions_created_at_idx", "pagbank_transactions", ["created_at"], schema="master")
+    op.create_index(
+        "pagbank_transactions_invoice_id_idx",
+        "pagbank_transactions",
+        ["invoice_id"],
+        schema="master",
+    )
+    op.create_index(
+        "pagbank_transactions_status_idx",
+        "pagbank_transactions",
+        ["status"],
+        schema="master",
+    )
+    op.create_index(
+        "pagbank_transactions_type_idx",
+        "pagbank_transactions",
+        ["transaction_type"],
+        schema="master",
+    )
+    op.create_index(
+        "pagbank_transactions_pagbank_transaction_id_idx",
+        "pagbank_transactions",
+        ["pagbank_transaction_id"],
+        schema="master",
+    )
+    op.create_index(
+        "pagbank_transactions_pagbank_charge_id_idx",
+        "pagbank_transactions",
+        ["pagbank_charge_id"],
+        schema="master",
+    )
+    op.create_index(
+        "pagbank_transactions_created_at_idx",
+        "pagbank_transactions",
+        ["created_at"],
+        schema="master",
+    )
 
     # Create trigger to update updated_at automatically
-    op.execute("""
+    op.execute(
+        """
         CREATE OR REPLACE FUNCTION master.update_pagbank_transaction_timestamp()
         RETURNS TRIGGER AS $$
         BEGIN
@@ -128,45 +163,70 @@ def upgrade():
             RETURN NEW;
         END;
         $$ LANGUAGE plpgsql;
-    """)
+    """
+    )
 
-    op.execute("""
+    op.execute(
+        """
         CREATE TRIGGER trigger_update_pagbank_transaction_timestamp
         BEFORE UPDATE ON master.pagbank_transactions
         FOR EACH ROW
         EXECUTE FUNCTION master.update_pagbank_transaction_timestamp();
-    """)
+    """
+    )
 
     # Update existing billing schedules to default manual method
-    op.execute("""
+    op.execute(
+        """
         UPDATE master.contract_billing_schedules
         SET billing_method = 'manual'
         WHERE billing_method IS NULL;
-    """)
+    """
+    )
 
 
 def downgrade():
     """Remove PagBank integration fields and tables."""
 
     # Drop trigger and function for pagbank_transactions
-    op.execute("DROP TRIGGER IF EXISTS trigger_update_pagbank_transaction_timestamp ON master.pagbank_transactions;")
+    op.execute(
+        "DROP TRIGGER IF EXISTS trigger_update_pagbank_transaction_timestamp ON master.pagbank_transactions;"
+    )
     op.execute("DROP FUNCTION IF EXISTS master.update_pagbank_transaction_timestamp();")
 
     # Drop pagbank_transactions table
     op.drop_table("pagbank_transactions", schema="master")
 
     # Drop indexes for contract_billing_schedules new fields
-    op.drop_index("contract_billing_schedules_pagbank_customer_idx", "contract_billing_schedules", schema="master")
-    op.drop_index("contract_billing_schedules_pagbank_subscription_idx", "contract_billing_schedules", schema="master")
-    op.drop_index("contract_billing_schedules_billing_method_idx", "contract_billing_schedules", schema="master")
+    op.drop_index(
+        "contract_billing_schedules_pagbank_customer_idx",
+        "contract_billing_schedules",
+        schema="master",
+    )
+    op.drop_index(
+        "contract_billing_schedules_pagbank_subscription_idx",
+        "contract_billing_schedules",
+        schema="master",
+    )
+    op.drop_index(
+        "contract_billing_schedules_billing_method_idx",
+        "contract_billing_schedules",
+        schema="master",
+    )
 
     # Drop constraint
-    op.drop_constraint("billing_method_check", "contract_billing_schedules", schema="master")
+    op.drop_constraint(
+        "billing_method_check", "contract_billing_schedules", schema="master"
+    )
 
     # Remove columns from contract_billing_schedules
     op.drop_column("contract_billing_schedules", "attempt_count", schema="master")
     op.drop_column("contract_billing_schedules", "last_attempt_date", schema="master")
-    op.drop_column("contract_billing_schedules", "auto_fallback_enabled", schema="master")
+    op.drop_column(
+        "contract_billing_schedules", "auto_fallback_enabled", schema="master"
+    )
     op.drop_column("contract_billing_schedules", "pagbank_customer_id", schema="master")
-    op.drop_column("contract_billing_schedules", "pagbank_subscription_id", schema="master")
+    op.drop_column(
+        "contract_billing_schedules", "pagbank_subscription_id", schema="master"
+    )
     op.drop_column("contract_billing_schedules", "billing_method", schema="master")

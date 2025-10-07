@@ -20,7 +20,8 @@ async def create_simple_views():
         async for db in get_db():
             # 1. CONTRACT BASIC DASHBOARD VIEW
             print("📊 Criando contract_basic_dashboard_view...")
-            basic_dashboard_sql = text("""
+            basic_dashboard_sql = text(
+                """
                 CREATE OR REPLACE VIEW contract_basic_dashboard_view AS
                 SELECT
                     c.id,
@@ -60,14 +61,16 @@ async def create_simple_views():
                 LEFT JOIN people p ON cl.person_id = p.id
                 WHERE c.deleted_at IS NULL
                 ORDER BY c.updated_at DESC;
-            """)
+            """
+            )
 
             await db.execute(basic_dashboard_sql)
             print("✅ contract_basic_dashboard_view criada com sucesso!")
 
             # 2. SERVICES BASIC VIEW
             print("📈 Criando services_basic_view...")
-            services_basic_sql = text("""
+            services_basic_sql = text(
+                """
                 CREATE OR REPLACE VIEW services_basic_view AS
                 SELECT
                     sc.id as service_id,
@@ -85,14 +88,16 @@ async def create_simple_views():
                 FROM services_catalog sc
                 WHERE sc.deleted_at IS NULL
                 ORDER BY sc.service_name;
-            """)
+            """
+            )
 
             await db.execute(services_basic_sql)
             print("✅ services_basic_view criada com sucesso!")
 
             # 3. CONTRACT SUMMARY VIEW
             print("👥 Criando contract_summary_view...")
-            contract_summary_sql = text("""
+            contract_summary_sql = text(
+                """
                 CREATE OR REPLACE VIEW contract_summary_view AS
                 SELECT
                     c.id as contract_id,
@@ -133,14 +138,16 @@ async def create_simple_views():
                 LEFT JOIN people p ON cl.person_id = p.id
                 WHERE c.deleted_at IS NULL
                 ORDER BY c.created_at DESC;
-            """)
+            """
+            )
 
             await db.execute(contract_summary_sql)
             print("✅ contract_summary_view criada com sucesso!")
 
             # 4. CONTRACTS BY STATUS VIEW
             print("📊 Criando contracts_by_status_view...")
-            status_summary_sql = text("""
+            status_summary_sql = text(
+                """
                 CREATE OR REPLACE VIEW contracts_by_status_view AS
                 SELECT
                     c.status,
@@ -156,14 +163,16 @@ async def create_simple_views():
                 WHERE c.deleted_at IS NULL
                 GROUP BY c.status
                 ORDER BY contract_count DESC;
-            """)
+            """
+            )
 
             await db.execute(status_summary_sql)
             print("✅ contracts_by_status_view criada com sucesso!")
 
             # 5. CONTRACTS BY TYPE VIEW
             print("📋 Criando contracts_by_type_view...")
-            type_summary_sql = text("""
+            type_summary_sql = text(
+                """
                 CREATE OR REPLACE VIEW contracts_by_type_view AS
                 SELECT
                     c.contract_type,
@@ -179,14 +188,16 @@ async def create_simple_views():
                 WHERE c.deleted_at IS NULL
                 GROUP BY c.contract_type
                 ORDER BY contract_count DESC;
-            """)
+            """
+            )
 
             await db.execute(type_summary_sql)
             print("✅ contracts_by_type_view criada com sucesso!")
 
             # 6. MONTHLY PERFORMANCE VIEW
             print("📈 Criando monthly_performance_view...")
-            monthly_performance_sql = text("""
+            monthly_performance_sql = text(
+                """
                 CREATE OR REPLACE VIEW monthly_performance_view AS
                 SELECT
                     DATE_TRUNC('month', c.created_at) as month_year,
@@ -202,7 +213,8 @@ async def create_simple_views():
                   AND c.created_at >= CURRENT_DATE - INTERVAL '12 months'
                 GROUP BY DATE_TRUNC('month', c.created_at)
                 ORDER BY month_year DESC;
-            """)
+            """
+            )
 
             await db.execute(monthly_performance_sql)
             print("✅ monthly_performance_view criada com sucesso!")
@@ -214,12 +226,30 @@ async def create_simple_views():
             print("\n🧪 Testando as views criadas...")
 
             test_queries = [
-                ("contract_basic_dashboard_view", "SELECT COUNT(*) as total FROM contract_basic_dashboard_view"),
-                ("services_basic_view", "SELECT COUNT(*) as total FROM services_basic_view"),
-                ("contract_summary_view", "SELECT COUNT(*) as total FROM contract_summary_view"),
-                ("contracts_by_status_view", "SELECT COUNT(*) as total FROM contracts_by_status_view"),
-                ("contracts_by_type_view", "SELECT COUNT(*) as total FROM contracts_by_type_view"),
-                ("monthly_performance_view", "SELECT COUNT(*) as total FROM monthly_performance_view"),
+                (
+                    "contract_basic_dashboard_view",
+                    "SELECT COUNT(*) as total FROM contract_basic_dashboard_view",
+                ),
+                (
+                    "services_basic_view",
+                    "SELECT COUNT(*) as total FROM services_basic_view",
+                ),
+                (
+                    "contract_summary_view",
+                    "SELECT COUNT(*) as total FROM contract_summary_view",
+                ),
+                (
+                    "contracts_by_status_view",
+                    "SELECT COUNT(*) as total FROM contracts_by_status_view",
+                ),
+                (
+                    "contracts_by_type_view",
+                    "SELECT COUNT(*) as total FROM contracts_by_type_view",
+                ),
+                (
+                    "monthly_performance_view",
+                    "SELECT COUNT(*) as total FROM monthly_performance_view",
+                ),
             ]
 
             for view_name, query in test_queries:
@@ -235,6 +265,7 @@ async def create_simple_views():
     except Exception as e:
         print(f"❌ Erro: {e}")
         import traceback
+
         traceback.print_exc()
 
 

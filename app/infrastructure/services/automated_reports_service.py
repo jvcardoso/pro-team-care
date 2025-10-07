@@ -3,12 +3,15 @@ Serviço para geração automática de relatórios mensais de contratos home car
 """
 
 import logging
-from datetime import datetime, date, timedelta
-from typing import Optional, Dict, Any, List
+from datetime import date, datetime, timedelta
+from typing import Any, Dict, List, Optional
+
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.infrastructure.services.contract_dashboard_service import ContractDashboardService
+from app.infrastructure.services.contract_dashboard_service import (
+    ContractDashboardService,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -21,11 +24,7 @@ class AutomatedReportsService:
         self.dashboard_service = ContractDashboardService(db_session)
 
     async def generate_monthly_contract_report(
-        self,
-        contract_id: int,
-        year: int,
-        month: int,
-        auto_save: bool = True
+        self, contract_id: int, year: int, month: int, auto_save: bool = True
     ) -> Dict[str, Any]:
         """Gerar relatório mensal completo para um contrato"""
         try:
@@ -36,13 +35,13 @@ class AutomatedReportsService:
             else:
                 end_date = date(year, month + 1, 1) - timedelta(days=1)
 
-            logger.info(f"Gerando relatório mensal para contrato {contract_id} - {year}/{month:02d}")
+            logger.info(
+                f"Gerando relatório mensal para contrato {contract_id} - {year}/{month:02d}"
+            )
 
             # Obter dados executivos do dashboard
             executive_data = await self.dashboard_service.get_executive_dashboard(
-                contract_id=contract_id,
-                start_date=start_date,
-                end_date=end_date
+                contract_id=contract_id, start_date=start_date, end_date=end_date
             )
 
             if not executive_data:
@@ -50,21 +49,17 @@ class AutomatedReportsService:
 
             # Obter métricas detalhadas
             financial_data = await self.dashboard_service.get_financial_metrics(
-                contract_id=contract_id,
-                start_date=start_date,
-                end_date=end_date
+                contract_id=contract_id, start_date=start_date, end_date=end_date
             )
 
             service_data = await self.dashboard_service.get_service_execution_metrics(
-                contract_id=contract_id,
-                start_date=start_date,
-                end_date=end_date
+                contract_id=contract_id, start_date=start_date, end_date=end_date
             )
 
-            quality_data = await self.dashboard_service.get_quality_satisfaction_metrics(
-                contract_id=contract_id,
-                start_date=start_date,
-                end_date=end_date
+            quality_data = (
+                await self.dashboard_service.get_quality_satisfaction_metrics(
+                    contract_id=contract_id, start_date=start_date, end_date=end_date
+                )
             )
 
             # Compilar relatório completo
@@ -75,19 +70,23 @@ class AutomatedReportsService:
                         "year": year,
                         "month": month,
                         "start_date": start_date.isoformat(),
-                        "end_date": end_date.isoformat()
+                        "end_date": end_date.isoformat(),
                     },
                     "generated_at": datetime.now().isoformat(),
                     "generated_by": "automated_system",
-                    "report_type": "monthly_contract"
+                    "report_type": "monthly_contract",
                 },
                 "executive_summary": executive_data,
                 "financial_metrics": financial_data,
                 "service_metrics": service_data,
                 "quality_metrics": quality_data,
                 "recommendations": await self._generate_recommendations(
-                    contract_id, executive_data, financial_data, service_data, quality_data
-                )
+                    contract_id,
+                    executive_data,
+                    financial_data,
+                    service_data,
+                    quality_data,
+                ),
             }
 
             # Salvar relatório se solicitado
@@ -95,7 +94,9 @@ class AutomatedReportsService:
                 report_id = await self._save_report(report)
                 report["report_info"]["saved_report_id"] = report_id
 
-            logger.info(f"Relatório mensal gerado com sucesso para contrato {contract_id}")
+            logger.info(
+                f"Relatório mensal gerado com sucesso para contrato {contract_id}"
+            )
             return report
 
         except Exception as e:
@@ -103,11 +104,7 @@ class AutomatedReportsService:
             raise
 
     async def generate_monthly_company_report(
-        self,
-        company_id: int,
-        year: int,
-        month: int,
-        auto_save: bool = True
+        self, company_id: int, year: int, month: int, auto_save: bool = True
     ) -> Dict[str, Any]:
         """Gerar relatório mensal consolidado para uma empresa"""
         try:
@@ -118,10 +115,13 @@ class AutomatedReportsService:
             else:
                 end_date = date(year, month + 1, 1) - timedelta(days=1)
 
-            logger.info(f"Gerando relatório mensal da empresa {company_id} - {year}/{month:02d}")
+            logger.info(
+                f"Gerando relatório mensal da empresa {company_id} - {year}/{month:02d}"
+            )
 
             # Obter contratos da empresa
-            contracts_query = text("""
+            contracts_query = text(
+                """
                 SELECT
                     c.id,
                     c.contract_number,
@@ -134,16 +134,18 @@ class AutomatedReportsService:
                 WHERE c.company_id = :company_id
                 AND c.status = 'active'
                 ORDER BY c.contract_number
-            """)
+            """
+            )
 
             result = await self.db_session.execute(
-                contracts_query,
-                {"company_id": company_id}
+                contracts_query, {"company_id": company_id}
             )
             contracts = result.fetchall()
 
             if not contracts:
-                raise ValueError(f"Nenhum contrato ativo encontrado para empresa {company_id}")
+                raise ValueError(
+                    f"Nenhum contrato ativo encontrado para empresa {company_id}"
+                )
 
             # Gerar relatórios individuais para cada contrato
             contract_reports = {}
@@ -153,16 +155,13 @@ class AutomatedReportsService:
                 "total_sessions": 0,
                 "total_revenue": 0,
                 "average_satisfaction": 0,
-                "total_violations": 0
+                "total_violations": 0,
             }
 
             for contract in contracts:
                 try:
                     contract_report = await self.generate_monthly_contract_report(
-                        contract_id=contract.id,
-                        year=year,
-                        month=month,
-                        auto_save=False
+                        contract_id=contract.id, year=year, month=month, auto_save=False
                     )
                     contract_reports[f"contract_{contract.id}"] = contract_report
 
@@ -170,12 +169,20 @@ class AutomatedReportsService:
                     exec_summary = contract_report.get("executive_summary", {})
                     financial = contract_report.get("financial_metrics", {})
 
-                    consolidated_metrics["total_executions"] += exec_summary.get("total_executions", 0)
-                    consolidated_metrics["total_sessions"] += exec_summary.get("total_sessions", 0)
-                    consolidated_metrics["total_revenue"] += financial.get("total_billing_amount", 0)
+                    consolidated_metrics["total_executions"] += exec_summary.get(
+                        "total_executions", 0
+                    )
+                    consolidated_metrics["total_sessions"] += exec_summary.get(
+                        "total_sessions", 0
+                    )
+                    consolidated_metrics["total_revenue"] += financial.get(
+                        "total_billing_amount", 0
+                    )
 
                 except Exception as e:
-                    logger.error(f"Erro ao gerar relatório do contrato {contract.id}: {e}")
+                    logger.error(
+                        f"Erro ao gerar relatório do contrato {contract.id}: {e}"
+                    )
                     contract_reports[f"contract_{contract.id}"] = {"error": str(e)}
 
             # Calcular métricas médias
@@ -189,7 +196,9 @@ class AutomatedReportsService:
                             satisfaction_scores.append(quality["average_satisfaction"])
 
                 if satisfaction_scores:
-                    consolidated_metrics["average_satisfaction"] = sum(satisfaction_scores) / len(satisfaction_scores)
+                    consolidated_metrics["average_satisfaction"] = sum(
+                        satisfaction_scores
+                    ) / len(satisfaction_scores)
 
             # Compilar relatório consolidado
             company_report = {
@@ -199,17 +208,17 @@ class AutomatedReportsService:
                         "year": year,
                         "month": month,
                         "start_date": start_date.isoformat(),
-                        "end_date": end_date.isoformat()
+                        "end_date": end_date.isoformat(),
                     },
                     "generated_at": datetime.now().isoformat(),
                     "generated_by": "automated_system",
-                    "report_type": "monthly_company"
+                    "report_type": "monthly_company",
                 },
                 "consolidated_metrics": consolidated_metrics,
                 "contract_reports": contract_reports,
                 "company_recommendations": await self._generate_company_recommendations(
                     company_id, consolidated_metrics, contract_reports
-                )
+                ),
             }
 
             # Salvar relatório se solicitado
@@ -225,8 +234,7 @@ class AutomatedReportsService:
             raise
 
     async def schedule_monthly_reports(
-        self,
-        target_date: Optional[date] = None
+        self, target_date: Optional[date] = None
     ) -> Dict[str, Any]:
         """Agendar geração de relatórios mensais para todas as empresas"""
         try:
@@ -241,10 +249,13 @@ class AutomatedReportsService:
             year = target_date.year
             month = target_date.month
 
-            logger.info(f"Iniciando geração automática de relatórios para {year}/{month:02d}")
+            logger.info(
+                f"Iniciando geração automática de relatórios para {year}/{month:02d}"
+            )
 
             # Obter todas as empresas ativas
-            companies_query = text("""
+            companies_query = text(
+                """
                 SELECT DISTINCT
                     c.company_id,
                     comp.company_name
@@ -252,22 +263,20 @@ class AutomatedReportsService:
                 INNER JOIN master.companies comp ON c.company_id = comp.id
                 WHERE c.status = 'active'
                 ORDER BY comp.company_name
-            """)
+            """
+            )
 
             result = await self.db_session.execute(companies_query)
             companies = result.fetchall()
 
             # Gerar relatórios para cada empresa
             generation_results = {
-                "target_period": {
-                    "year": year,
-                    "month": month
-                },
+                "target_period": {"year": year, "month": month},
                 "generated_at": datetime.now().isoformat(),
                 "total_companies": len(companies),
                 "successful_reports": 0,
                 "failed_reports": 0,
-                "results": {}
+                "results": {},
             }
 
             for company in companies:
@@ -276,22 +285,26 @@ class AutomatedReportsService:
                         company_id=company.company_id,
                         year=year,
                         month=month,
-                        auto_save=True
+                        auto_save=True,
                     )
 
                     generation_results["results"][f"company_{company.company_id}"] = {
                         "company_name": company.company_name,
                         "status": "success",
-                        "report_id": company_report["report_info"].get("saved_report_id")
+                        "report_id": company_report["report_info"].get(
+                            "saved_report_id"
+                        ),
                     }
                     generation_results["successful_reports"] += 1
 
                 except Exception as e:
-                    logger.error(f"Erro ao gerar relatório da empresa {company.company_id}: {e}")
+                    logger.error(
+                        f"Erro ao gerar relatório da empresa {company.company_id}: {e}"
+                    )
                     generation_results["results"][f"company_{company.company_id}"] = {
                         "company_name": company.company_name,
                         "status": "failed",
-                        "error": str(e)
+                        "error": str(e),
                     }
                     generation_results["failed_reports"] += 1
 
@@ -313,7 +326,7 @@ class AutomatedReportsService:
         year: Optional[int] = None,
         month: Optional[int] = None,
         page: int = 1,
-        size: int = 20
+        size: int = 20,
     ) -> Dict[str, Any]:
         """Listar relatórios salvos com filtros"""
         try:
@@ -337,14 +350,18 @@ class AutomatedReportsService:
                 where_conditions.append("r.report_month = :month")
                 params["month"] = month
 
-            where_clause = "WHERE " + " AND ".join(where_conditions) if where_conditions else ""
+            where_clause = (
+                "WHERE " + " AND ".join(where_conditions) if where_conditions else ""
+            )
 
             # Query para contar total
-            count_query = text(f"""
+            count_query = text(
+                f"""
                 SELECT COUNT(*)
                 FROM master.automated_reports r
                 {where_clause}
-            """)
+            """
+            )
 
             count_result = await self.db_session.execute(count_query, params)
             total = count_result.scalar()
@@ -353,7 +370,8 @@ class AutomatedReportsService:
             offset = (page - 1) * size
             params.update({"limit": size, "offset": offset})
 
-            reports_query = text(f"""
+            reports_query = text(
+                f"""
                 SELECT
                     r.id,
                     r.report_type,
@@ -371,7 +389,8 @@ class AutomatedReportsService:
                 {where_clause}
                 ORDER BY r.generated_at DESC
                 LIMIT :limit OFFSET :offset
-            """)
+            """
+            )
 
             result = await self.db_session.execute(reports_query, params)
             reports = result.fetchall()
@@ -387,8 +406,12 @@ class AutomatedReportsService:
                         "contract_name": report.contract_name,
                         "year": report.report_year,
                         "month": report.report_month,
-                        "generated_at": report.generated_at.isoformat() if report.generated_at else None,
-                        "has_data": report.report_data is not None
+                        "generated_at": (
+                            report.generated_at.isoformat()
+                            if report.generated_at
+                            else None
+                        ),
+                        "has_data": report.report_data is not None,
                     }
                     for report in reports
                 ],
@@ -396,8 +419,8 @@ class AutomatedReportsService:
                     "total": total,
                     "page": page,
                     "size": size,
-                    "pages": (total + size - 1) // size
-                }
+                    "pages": (total + size - 1) // size,
+                },
             }
 
         except Exception as e:
@@ -410,7 +433,7 @@ class AutomatedReportsService:
         executive_data: Dict[str, Any],
         financial_data: Dict[str, Any],
         service_data: Dict[str, Any],
-        quality_data: Dict[str, Any]
+        quality_data: Dict[str, Any],
     ) -> List[Dict[str, Any]]:
         """Gerar recomendações baseadas nos dados do relatório"""
         recommendations = []
@@ -419,65 +442,79 @@ class AutomatedReportsService:
             # Análise de uso de sessões
             usage_percentage = executive_data.get("session_usage_percentage", 0)
             if usage_percentage > 90:
-                recommendations.append({
-                    "type": "warning",
-                    "category": "usage",
-                    "message": "Alto uso de sessões (>90%). Considere revisar os limites do contrato.",
-                    "priority": "high"
-                })
+                recommendations.append(
+                    {
+                        "type": "warning",
+                        "category": "usage",
+                        "message": "Alto uso de sessões (>90%). Considere revisar os limites do contrato.",
+                        "priority": "high",
+                    }
+                )
             elif usage_percentage < 50:
-                recommendations.append({
-                    "type": "info",
-                    "category": "usage",
-                    "message": "Baixo uso de sessões (<50%). Oportunidade de aumentar utilização.",
-                    "priority": "medium"
-                })
+                recommendations.append(
+                    {
+                        "type": "info",
+                        "category": "usage",
+                        "message": "Baixo uso de sessões (<50%). Oportunidade de aumentar utilização.",
+                        "priority": "medium",
+                    }
+                )
 
             # Análise financeira
             billing_efficiency = financial_data.get("billing_efficiency_percentage", 0)
             if billing_efficiency < 80:
-                recommendations.append({
-                    "type": "alert",
-                    "category": "financial",
-                    "message": "Baixa eficiência de faturamento (<80%). Revisar processos de cobrança.",
-                    "priority": "high"
-                })
+                recommendations.append(
+                    {
+                        "type": "alert",
+                        "category": "financial",
+                        "message": "Baixa eficiência de faturamento (<80%). Revisar processos de cobrança.",
+                        "priority": "high",
+                    }
+                )
 
             # Análise de qualidade
             avg_satisfaction = quality_data.get("average_satisfaction", 0)
             if avg_satisfaction < 4.0:
-                recommendations.append({
-                    "type": "alert",
-                    "category": "quality",
-                    "message": "Satisfação abaixo do esperado (<4.0). Implementar plano de melhoria.",
-                    "priority": "high"
-                })
+                recommendations.append(
+                    {
+                        "type": "alert",
+                        "category": "quality",
+                        "message": "Satisfação abaixo do esperado (<4.0). Implementar plano de melhoria.",
+                        "priority": "high",
+                    }
+                )
             elif avg_satisfaction >= 4.5:
-                recommendations.append({
-                    "type": "success",
-                    "category": "quality",
-                    "message": "Excelente índice de satisfação (≥4.5). Manter padrão de qualidade.",
-                    "priority": "low"
-                })
+                recommendations.append(
+                    {
+                        "type": "success",
+                        "category": "quality",
+                        "message": "Excelente índice de satisfação (≥4.5). Manter padrão de qualidade.",
+                        "priority": "low",
+                    }
+                )
 
             # Análise de violações
             total_violations = executive_data.get("total_violations", 0)
             if total_violations > 0:
-                recommendations.append({
-                    "type": "warning",
-                    "category": "compliance",
-                    "message": f"{total_violations} violação(ões) detectada(s). Revisar processos de controle.",
-                    "priority": "medium"
-                })
+                recommendations.append(
+                    {
+                        "type": "warning",
+                        "category": "compliance",
+                        "message": f"{total_violations} violação(ões) detectada(s). Revisar processos de controle.",
+                        "priority": "medium",
+                    }
+                )
 
         except Exception as e:
             logger.error(f"Erro ao gerar recomendações: {e}")
-            recommendations.append({
-                "type": "error",
-                "category": "system",
-                "message": "Erro ao gerar recomendações automáticas.",
-                "priority": "low"
-            })
+            recommendations.append(
+                {
+                    "type": "error",
+                    "category": "system",
+                    "message": "Erro ao gerar recomendações automáticas.",
+                    "priority": "low",
+                }
+            )
 
         return recommendations
 
@@ -485,7 +522,7 @@ class AutomatedReportsService:
         self,
         company_id: int,
         consolidated_metrics: Dict[str, Any],
-        contract_reports: Dict[str, Any]
+        contract_reports: Dict[str, Any],
     ) -> List[Dict[str, Any]]:
         """Gerar recomendações para o nível da empresa"""
         recommendations = []
@@ -498,12 +535,14 @@ class AutomatedReportsService:
 
             # Recomendações baseadas na satisfação média
             if avg_satisfaction < 4.0:
-                recommendations.append({
-                    "type": "alert",
-                    "category": "quality",
-                    "message": f"Satisfação média da empresa baixa ({avg_satisfaction:.2f}). Programa de melhoria necessário.",
-                    "priority": "high"
-                })
+                recommendations.append(
+                    {
+                        "type": "alert",
+                        "category": "quality",
+                        "message": f"Satisfação média da empresa baixa ({avg_satisfaction:.2f}). Programa de melhoria necessário.",
+                        "priority": "high",
+                    }
+                )
 
             # Análise de contratos com problemas
             problematic_contracts = 0
@@ -515,12 +554,14 @@ class AutomatedReportsService:
 
             if problematic_contracts > 0:
                 percentage = (problematic_contracts / total_contracts) * 100
-                recommendations.append({
-                    "type": "warning",
-                    "category": "performance",
-                    "message": f"{problematic_contracts} de {total_contracts} contratos ({percentage:.1f}%) com indicadores abaixo do esperado.",
-                    "priority": "medium"
-                })
+                recommendations.append(
+                    {
+                        "type": "warning",
+                        "category": "performance",
+                        "message": f"{problematic_contracts} de {total_contracts} contratos ({percentage:.1f}%) com indicadores abaixo do esperado.",
+                        "priority": "medium",
+                    }
+                )
 
         except Exception as e:
             logger.error(f"Erro ao gerar recomendações da empresa: {e}")
@@ -533,7 +574,8 @@ class AutomatedReportsService:
             report_info = report_data["report_info"]
 
             # Inserir relatório na tabela
-            insert_query = text("""
+            insert_query = text(
+                """
                 INSERT INTO master.automated_reports (
                     report_type,
                     company_id,
@@ -553,7 +595,8 @@ class AutomatedReportsService:
                     :report_data,
                     NOW()
                 ) RETURNING id
-            """)
+            """
+            )
 
             result = await self.db_session.execute(
                 insert_query,
@@ -564,8 +607,8 @@ class AutomatedReportsService:
                     "report_year": report_info["period"]["year"],
                     "report_month": report_info["period"]["month"],
                     "generated_at": datetime.fromisoformat(report_info["generated_at"]),
-                    "report_data": report_data
-                }
+                    "report_data": report_data,
+                },
             )
 
             report_id = result.scalar()

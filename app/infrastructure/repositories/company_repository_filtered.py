@@ -6,22 +6,20 @@ Implementa isolamento de dados baseado no usuário logado
 from typing import List, Optional
 
 import structlog
-from sqlalchemy import and_, or_, select, func
-from sqlalchemy.orm import aliased
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import aliased, selectinload
 
 from app.domain.entities.user import User
 from app.infrastructure.filters.context_filters import get_auto_filter
-
 from app.infrastructure.orm.models import (
-    Company,
-    People,
-    Establishments,
     Client,
+    Company,
+    Establishments,
+    People,
     Professional,
-    User as UserModel,
 )
+from app.infrastructure.orm.models import User as UserModel
 from app.infrastructure.repositories.company_repository import CompanyRepository
 
 logger = structlog.get_logger()
@@ -59,10 +57,38 @@ class FilteredCompanyRepository(CompanyRepository):
             company_alias = aliased(Company)
 
             # Construir query base com contagens calculadas no banco usando subqueries correlacionadas
-            establishments_count_sub = select(func.count(Establishments.id)).where(Establishments.company_id == company_alias.id).correlate(company_alias).scalar_subquery().label('establishments_count')
-            clients_count_sub = select(func.count(func.distinct(Client.id))).select_from(Establishments).join(Client, Client.establishment_id == Establishments.id).where(Establishments.company_id == company_alias.id).correlate(company_alias).scalar_subquery().label('clients_count')
-            professionals_count_sub = select(func.count(func.distinct(Professional.id))).select_from(Establishments).join(Professional, Professional.establishment_id == Establishments.id).where(Establishments.company_id == company_alias.id).correlate(company_alias).scalar_subquery().label('professionals_count')
-            users_count_sub = select(func.count(UserModel.id)).where(UserModel.company_id == company_alias.id).correlate(company_alias).scalar_subquery().label('users_count')
+            establishments_count_sub = (
+                select(func.count(Establishments.id))
+                .where(Establishments.company_id == company_alias.id)
+                .correlate(company_alias)
+                .scalar_subquery()
+                .label("establishments_count")
+            )
+            clients_count_sub = (
+                select(func.count(func.distinct(Client.id)))
+                .select_from(Establishments)
+                .join(Client, Client.establishment_id == Establishments.id)
+                .where(Establishments.company_id == company_alias.id)
+                .correlate(company_alias)
+                .scalar_subquery()
+                .label("clients_count")
+            )
+            professionals_count_sub = (
+                select(func.count(func.distinct(Professional.id)))
+                .select_from(Establishments)
+                .join(Professional, Professional.establishment_id == Establishments.id)
+                .where(Establishments.company_id == company_alias.id)
+                .correlate(company_alias)
+                .scalar_subquery()
+                .label("professionals_count")
+            )
+            users_count_sub = (
+                select(func.count(UserModel.id))
+                .where(UserModel.company_id == company_alias.id)
+                .correlate(company_alias)
+                .scalar_subquery()
+                .label("users_count")
+            )
 
             query = (
                 select(company_alias)
@@ -70,10 +96,12 @@ class FilteredCompanyRepository(CompanyRepository):
                     establishments_count_sub,
                     clients_count_sub,
                     professionals_count_sub,
-                    users_count_sub
+                    users_count_sub,
                 )
                 .join(People, company_alias.person_id == People.id)
-                .where(company_alias.deleted_at.is_(None))  # Excluir registros deletados
+                .where(
+                    company_alias.deleted_at.is_(None)
+                )  # Excluir registros deletados
                 .options(selectinload(company_alias.people))
             )
 

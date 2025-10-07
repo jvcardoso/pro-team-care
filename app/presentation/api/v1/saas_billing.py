@@ -1,53 +1,43 @@
-from typing import List, Optional
 from datetime import date
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.infrastructure.database import get_db
-from app.infrastructure.repositories.saas_billing_repository import SaasBillingRepository
-from app.infrastructure.services.saas_billing_service import SaasBillingService
-from app.infrastructure.auth import get_current_user
 from app.domain.entities.user import User
+from app.infrastructure.auth import get_current_user
+from app.infrastructure.database import get_db
+from app.infrastructure.repositories.saas_billing_repository import (
+    SaasBillingRepository,
+)
+from app.infrastructure.services.saas_billing_service import SaasBillingService
 from app.presentation.decorators.simple_permissions import require_permission
-from app.presentation.schemas.saas_billing import (
-    # Subscription Schemas
+from app.presentation.schemas.pagbank import WebhookRequest, WebhookResponse
+from app.presentation.schemas.saas_billing import (  # Subscription Schemas; Invoice Schemas; Dashboard Schemas; Payment Schemas; Billing Management
+    AutomaticSaasBillingRequest,
+    AutomaticSaasBillingResponse,
     CompanySubscriptionCreate,
-    CompanySubscriptionUpdate,
     CompanySubscriptionResponse,
-    SubscriptionListParams,
-    SubscriptionListResponse,
-
-    # Invoice Schemas
+    CompanySubscriptionUpdate,
+    ManualPaymentRequest,
+    ManualPaymentResponse,
+    MonthlyRevenueReport,
+    PaymentLinkRequest,
+    PaymentLinkResponse,
+    RecurrentBillingSetupRequest,
+    RecurrentBillingSetupResponse,
+    SaasBillingDashboardResponse,
+    SaasBillingMetrics,
     SaasInvoiceCreate,
-    SaasInvoiceUpdate,
-    SaasInvoiceResponse,
     SaasInvoiceDetailed,
     SaasInvoiceListParams,
     SaasInvoiceListResponse,
-
-    # Dashboard Schemas
-    SaasBillingDashboardResponse,
-    SaasBillingMetrics,
-    MonthlyRevenueReport,
-
-    # Payment Schemas
-    PaymentLinkRequest,
-    PaymentLinkResponse,
-    ManualPaymentRequest,
-    ManualPaymentResponse,
-
-    # Billing Management
-    AutomaticSaasBillingRequest,
-    AutomaticSaasBillingResponse,
-    RecurrentBillingSetupRequest,
-    RecurrentBillingSetupResponse,
+    SaasInvoiceResponse,
+    SaasInvoiceUpdate,
     SubscriptionCancelRequest,
     SubscriptionCancelResponse,
-)
-from app.presentation.schemas.pagbank import (
-    WebhookRequest,
-    WebhookResponse,
+    SubscriptionListParams,
+    SubscriptionListResponse,
 )
 
 router = APIRouter()
@@ -56,6 +46,7 @@ router = APIRouter()
 # ==========================================
 # SUBSCRIPTION ENDPOINTS
 # ==========================================
+
 
 @router.get("/subscriptions", response_model=SubscriptionListResponse)
 @require_permission("saas_billing_view", context_type="system")
@@ -78,7 +69,9 @@ async def list_subscriptions(
     return SubscriptionListResponse(**result)
 
 
-@router.get("/subscriptions/{subscription_id}", response_model=CompanySubscriptionResponse)
+@router.get(
+    "/subscriptions/{subscription_id}", response_model=CompanySubscriptionResponse
+)
 @require_permission("saas_billing_view", context_type="system")
 async def get_subscription(
     subscription_id: int,
@@ -91,13 +84,15 @@ async def get_subscription(
     if not subscription:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Subscription {subscription_id} not found"
+            detail=f"Subscription {subscription_id} not found",
         )
 
     return CompanySubscriptionResponse.from_orm(subscription)
 
 
-@router.get("/subscriptions/company/{company_id}", response_model=CompanySubscriptionResponse)
+@router.get(
+    "/subscriptions/company/{company_id}", response_model=CompanySubscriptionResponse
+)
 @require_permission("saas_billing_view", context_type="company")
 async def get_subscription_by_company(
     company_id: int,
@@ -110,7 +105,7 @@ async def get_subscription_by_company(
     if not subscription:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No active subscription found for company {company_id}"
+            detail=f"No active subscription found for company {company_id}",
         )
 
     return CompanySubscriptionResponse.from_orm(subscription)
@@ -148,7 +143,9 @@ async def create_subscription(
     return CompanySubscriptionResponse.from_orm(subscription)
 
 
-@router.put("/subscriptions/{subscription_id}", response_model=CompanySubscriptionResponse)
+@router.put(
+    "/subscriptions/{subscription_id}", response_model=CompanySubscriptionResponse
+)
 @require_permission("saas_billing_update", context_type="system")
 async def update_subscription(
     subscription_id: int,
@@ -159,20 +156,21 @@ async def update_subscription(
     repository = SaasBillingRepository(db)
 
     subscription = await repository.update_subscription(
-        subscription_id,
-        update_data.dict(exclude_unset=True)
+        subscription_id, update_data.dict(exclude_unset=True)
     )
 
     if not subscription:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Subscription {subscription_id} not found"
+            detail=f"Subscription {subscription_id} not found",
         )
 
     return CompanySubscriptionResponse.from_orm(subscription)
 
 
-@router.post("/subscriptions/{subscription_id}/cancel", response_model=SubscriptionCancelResponse)
+@router.post(
+    "/subscriptions/{subscription_id}/cancel", response_model=SubscriptionCancelResponse
+)
 @require_permission("saas_billing_cancel", context_type="system")
 async def cancel_subscription(
     subscription_id: int,
@@ -184,25 +182,22 @@ async def cancel_subscription(
 
     try:
         subscription = await service.cancel_subscription(
-            subscription_id,
-            cancel_pagbank=cancel_data.cancel_pagbank
+            subscription_id, cancel_pagbank=cancel_data.cancel_pagbank
         )
 
         return SubscriptionCancelResponse(
             success=True,
             subscription_id=subscription_id,
-            message="Subscription cancelled successfully"
+            message="Subscription cancelled successfully",
         )
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 # ==========================================
 # INVOICE ENDPOINTS
 # ==========================================
+
 
 @router.get("/invoices", response_model=SaasInvoiceListResponse)
 @require_permission("saas_billing_view", context_type="system")
@@ -240,7 +235,7 @@ async def get_invoice(
     if not invoice:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Invoice {invoice_id} not found"
+            detail=f"Invoice {invoice_id} not found",
         )
 
     return SaasInvoiceDetailed.from_orm(invoice)
@@ -271,14 +266,13 @@ async def update_invoice(
     repository = SaasBillingRepository(db)
 
     invoice = await repository.update_saas_invoice(
-        invoice_id,
-        update_data.dict(exclude_unset=True)
+        invoice_id, update_data.dict(exclude_unset=True)
     )
 
     if not invoice:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Invoice {invoice_id} not found"
+            detail=f"Invoice {invoice_id} not found",
         )
 
     return SaasInvoiceResponse.from_orm(invoice)
@@ -287,6 +281,7 @@ async def update_invoice(
 # ==========================================
 # PAYMENT ENDPOINTS
 # ==========================================
+
 
 @router.post("/invoices/{invoice_id}/payment-link", response_model=PaymentLinkResponse)
 @require_permission("saas_billing_payment", context_type="system")
@@ -305,16 +300,15 @@ async def generate_payment_link(
             success=result["success"],
             invoice_id=result["invoice_id"],
             checkout_url=result["checkout_url"],
-            session_id=result["session_id"]
+            session_id=result["session_id"],
         )
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-@router.post("/invoices/{invoice_id}/manual-payment", response_model=ManualPaymentResponse)
+@router.post(
+    "/invoices/{invoice_id}/manual-payment", response_model=ManualPaymentResponse
+)
 @require_permission("saas_billing_payment", context_type="system")
 async def process_manual_payment(
     invoice_id: int,
@@ -329,26 +323,27 @@ async def process_manual_payment(
             invoice_id,
             payment_data.payment_method,
             payment_data.payment_reference,
-            payment_data.notes
+            payment_data.notes,
         )
 
         return ManualPaymentResponse(
             success=True,
             invoice_id=invoice_id,
-            message="Payment processed successfully"
+            message="Payment processed successfully",
         )
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 # ==========================================
 # RECURRENT BILLING ENDPOINTS
 # ==========================================
 
-@router.post("/subscriptions/{subscription_id}/setup-recurrent", response_model=RecurrentBillingSetupResponse)
+
+@router.post(
+    "/subscriptions/{subscription_id}/setup-recurrent",
+    response_model=RecurrentBillingSetupResponse,
+)
 @require_permission("saas_billing_recurrent", context_type="system")
 async def setup_recurrent_billing(
     subscription_id: int,
@@ -360,26 +355,23 @@ async def setup_recurrent_billing(
 
     try:
         result = await service.setup_recurrent_billing(
-            subscription_id,
-            setup_data.customer_data.dict()
+            subscription_id, setup_data.customer_data.dict()
         )
 
         return RecurrentBillingSetupResponse(
             success=result["success"],
             subscription_id=result["subscription_id"],
             pagbank_subscription_id=result["pagbank_subscription_id"],
-            pagbank_customer_id=result["pagbank_customer_id"]
+            pagbank_customer_id=result["pagbank_customer_id"],
         )
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 # ==========================================
 # AUTOMATIC BILLING ENDPOINTS
 # ==========================================
+
 
 @router.post("/billing/run-automatic", response_model=AutomaticSaasBillingResponse)
 @require_permission("saas_billing_automatic", context_type="system")
@@ -393,20 +385,21 @@ async def run_automatic_billing(
     try:
         result = await service.run_automatic_saas_billing(
             billing_date=billing_data.billing_date,
-            force_regenerate=billing_data.force_regenerate
+            force_regenerate=billing_data.force_regenerate,
         )
 
         return AutomaticSaasBillingResponse(**result)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Automatic billing failed: {str(e)}"
+            detail=f"Automatic billing failed: {str(e)}",
         )
 
 
 # ==========================================
 # DASHBOARD AND ANALYTICS ENDPOINTS
 # ==========================================
+
 
 @router.get("/dashboard", response_model=SaasBillingDashboardResponse)
 @require_permission("saas_billing_dashboard", context_type="system")
@@ -419,8 +412,7 @@ async def get_billing_dashboard(
     metrics = await service.get_saas_dashboard_metrics()
 
     return SaasBillingDashboardResponse(
-        metrics=SaasBillingMetrics(**metrics),
-        last_updated=date.today()
+        metrics=SaasBillingMetrics(**metrics), last_updated=date.today()
     )
 
 
@@ -443,6 +435,7 @@ async def get_monthly_revenue_report(
 # WEBHOOK ENDPOINTS
 # ==========================================
 
+
 @router.post("/webhooks/pagbank", response_model=WebhookResponse)
 async def pagbank_webhook(
     webhook_data: WebhookRequest,
@@ -456,10 +449,9 @@ async def pagbank_webhook(
 
         return WebhookResponse(
             success=result["success"],
-            message=result.get("error", "Webhook processed successfully")
+            message=result.get("error", "Webhook processed successfully"),
         )
     except Exception as e:
         return WebhookResponse(
-            success=False,
-            message=f"Webhook processing failed: {str(e)}"
+            success=False, message=f"Webhook processing failed: {str(e)}"
         )

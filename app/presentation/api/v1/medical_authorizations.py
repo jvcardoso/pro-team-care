@@ -2,31 +2,37 @@
 
 from datetime import date
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
 
-from app.infrastructure.database import get_db
-from app.infrastructure.repositories.medical_authorization_repository import MedicalAuthorizationRepository
 from app.infrastructure.auth import get_current_user
-from app.presentation.decorators.role_permissions import require_role_level_or_permission
-from app.presentation.schemas.user import UserDetailed as UserResponse
+from app.infrastructure.database import get_db
+from app.infrastructure.logging import logger
+from app.infrastructure.repositories.medical_authorization_repository import (
+    MedicalAuthorizationRepository,
+)
+from app.presentation.decorators.role_permissions import (
+    require_role_level_or_permission,
+)
 from app.presentation.schemas.medical_authorization import (
-    MedicalAuthorizationCreate,
-    MedicalAuthorizationUpdate,
-    MedicalAuthorizationResponse,
-    MedicalAuthorizationListParams,
-    MedicalAuthorizationListResponse,
-    MedicalAuthorizationCancel,
-    AuthorizationStatistics,
-    SessionUpdateRequest,
-    AuthorizationSuspendRequest,
-    AuthorizationRenewRequest,
     AuthorizationHistoryResponse,
     AuthorizationRenewalResponse,
+    AuthorizationRenewRequest,
+    AuthorizationStatistics,
+    AuthorizationStatusEnum,
+    AuthorizationSuspendRequest,
+    MedicalAuthorizationCancel,
+    MedicalAuthorizationCreate,
+    MedicalAuthorizationListParams,
+    MedicalAuthorizationListResponse,
+    MedicalAuthorizationResponse,
+    MedicalAuthorizationUpdate,
+    SessionUpdateRequest,
     UrgencyLevelEnum,
-    AuthorizationStatusEnum
 )
-from app.infrastructure.logging import logger
+from app.presentation.schemas.user import UserDetailed as UserResponse
+
 router = APIRouter(prefix="/medical-authorizations", tags=["medical-authorizations"])
 
 
@@ -36,15 +42,13 @@ async def create_authorization(
     authorization_data: MedicalAuthorizationCreate,
     db: Session = Depends(get_db),
     current_user: UserResponse = Depends(get_current_user),
-    company_id: Optional[int] = None
+    company_id: Optional[int] = None,
 ):
     """Criar nova autorização médica"""
     try:
         repo = MedicalAuthorizationRepository(db)
         authorization = await repo.create_authorization(
-            authorization_data,
-            created_by=current_user.id,
-            company_id=company_id
+            authorization_data, created_by=current_user.id, company_id=company_id
         )
 
         logger.info(
@@ -53,8 +57,8 @@ async def create_authorization(
                 "authorization_id": authorization.id,
                 "authorization_code": authorization.authorization_code,
                 "user_id": current_user.id,
-                "company_id": company_id
-            }
+                "company_id": company_id,
+            },
         )
 
         return authorization
@@ -63,7 +67,7 @@ async def create_authorization(
         logger.error(f"Erro ao criar autorização médica: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro interno do servidor"
+            detail="Erro interno do servidor",
         )
 
 
@@ -82,7 +86,7 @@ async def list_authorizations(
     size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: UserResponse = Depends(get_current_user),
-    company_id: Optional[int] = None
+    company_id: Optional[int] = None,
 ):
     """Listar autorizações médicas com filtros"""
     try:
@@ -96,7 +100,7 @@ async def list_authorizations(
             valid_until=valid_until,
             requires_supervision=requires_supervision,
             page=page,
-            size=size
+            size=size,
         )
 
         repo = MedicalAuthorizationRepository(db)
@@ -141,13 +145,26 @@ async def list_authorizations(
                 "updated_by": auth.updated_by,
                 # Related data
                 "service_name": auth.service.service_name if auth.service else None,
-                "service_category": auth.service.service_category if auth.service else None,
+                "service_category": (
+                    auth.service.service_category if auth.service else None
+                ),
                 "service_type": auth.service.service_type if auth.service else None,
-                "doctor_name": (auth.doctor.person.name if auth.doctor and auth.doctor.person
-                               else auth.doctor.email_address if auth.doctor else None),
+                "doctor_name": (
+                    auth.doctor.person.name
+                    if auth.doctor and auth.doctor.person
+                    else auth.doctor.email_address if auth.doctor else None
+                ),
                 "doctor_email": auth.doctor.email_address if auth.doctor else None,
-                "patient_name": auth.contract_life.person.name if auth.contract_life and auth.contract_life.person else None,
-                "contract_number": auth.contract_life.contract.contract_number if auth.contract_life and auth.contract_life.contract else None
+                "patient_name": (
+                    auth.contract_life.person.name
+                    if auth.contract_life and auth.contract_life.person
+                    else None
+                ),
+                "contract_number": (
+                    auth.contract_life.contract.contract_number
+                    if auth.contract_life and auth.contract_life.contract
+                    else None
+                ),
             }
             authorization_responses.append(MedicalAuthorizationResponse(**auth_dict))
 
@@ -156,14 +173,14 @@ async def list_authorizations(
             total=total,
             page=page,
             size=size,
-            pages=(total + size - 1) // size
+            pages=(total + size - 1) // size,
         )
 
     except Exception as e:
         logger.error(f"Erro ao listar autorizações médicas: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro interno do servidor"
+            detail="Erro interno do servidor",
         )
 
 
@@ -173,7 +190,7 @@ async def get_authorization(
     authorization_id: int,
     db: Session = Depends(get_db),
     current_user: UserResponse = Depends(get_current_user),
-    company_id: Optional[int] = None
+    company_id: Optional[int] = None,
 ):
     """Buscar autorização médica por ID"""
     try:
@@ -183,7 +200,7 @@ async def get_authorization(
         if not authorization:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Autorização não encontrada"
+                detail="Autorização não encontrada",
             )
 
         # Convert to response format
@@ -222,14 +239,37 @@ async def get_authorization(
             "created_by": authorization.created_by,
             "updated_by": authorization.updated_by,
             # Related data
-            "service_name": authorization.service.service_name if authorization.service else None,
-            "service_category": authorization.service.service_category if authorization.service else None,
-            "service_type": authorization.service.service_type if authorization.service else None,
-            "doctor_name": (authorization.doctor.person.name if authorization.doctor and authorization.doctor.person
-                           else authorization.doctor.email_address if authorization.doctor else None),
-            "doctor_email": authorization.doctor.email_address if authorization.doctor else None,
-            "patient_name": authorization.contract_life.person.name if authorization.contract_life and authorization.contract_life.person else None,
-            "contract_number": authorization.contract_life.contract.contract_number if authorization.contract_life and authorization.contract_life.contract else None
+            "service_name": (
+                authorization.service.service_name if authorization.service else None
+            ),
+            "service_category": (
+                authorization.service.service_category
+                if authorization.service
+                else None
+            ),
+            "service_type": (
+                authorization.service.service_type if authorization.service else None
+            ),
+            "doctor_name": (
+                authorization.doctor.person.name
+                if authorization.doctor and authorization.doctor.person
+                else (
+                    authorization.doctor.email_address if authorization.doctor else None
+                )
+            ),
+            "doctor_email": (
+                authorization.doctor.email_address if authorization.doctor else None
+            ),
+            "patient_name": (
+                authorization.contract_life.person.name
+                if authorization.contract_life and authorization.contract_life.person
+                else None
+            ),
+            "contract_number": (
+                authorization.contract_life.contract.contract_number
+                if authorization.contract_life and authorization.contract_life.contract
+                else None
+            ),
         }
 
         return MedicalAuthorizationResponse(**auth_dict)
@@ -240,7 +280,7 @@ async def get_authorization(
         logger.error(f"Erro ao buscar autorização médica: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro interno do servidor"
+            detail="Erro interno do servidor",
         )
 
 
@@ -251,7 +291,7 @@ async def update_authorization(
     update_data: MedicalAuthorizationUpdate,
     db: Session = Depends(get_db),
     current_user: UserResponse = Depends(get_current_user),
-    company_id: Optional[int] = None
+    company_id: Optional[int] = None,
 ):
     """Atualizar autorização médica"""
     try:
@@ -260,13 +300,13 @@ async def update_authorization(
             authorization_id,
             update_data,
             updated_by=current_user.id,
-            company_id=company_id
+            company_id=company_id,
         )
 
         if not authorization:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Autorização não encontrada"
+                detail="Autorização não encontrada",
             )
 
         logger.info(
@@ -274,8 +314,8 @@ async def update_authorization(
             extra={
                 "authorization_id": authorization_id,
                 "user_id": current_user.id,
-                "company_id": company_id
-            }
+                "company_id": company_id,
+            },
         )
 
         return authorization
@@ -286,7 +326,7 @@ async def update_authorization(
         logger.error(f"Erro ao atualizar autorização médica: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro interno do servidor"
+            detail="Erro interno do servidor",
         )
 
 
@@ -297,7 +337,7 @@ async def cancel_authorization(
     cancel_data: MedicalAuthorizationCancel,
     db: Session = Depends(get_db),
     current_user: UserResponse = Depends(get_current_user),
-    company_id: Optional[int] = None
+    company_id: Optional[int] = None,
 ):
     """Cancelar autorização médica"""
     try:
@@ -306,13 +346,13 @@ async def cancel_authorization(
             authorization_id,
             cancel_data.cancellation_reason,
             cancelled_by=current_user.id,
-            company_id=company_id
+            company_id=company_id,
         )
 
         if not authorization:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Autorização não encontrada"
+                detail="Autorização não encontrada",
             )
 
         logger.info(
@@ -321,8 +361,8 @@ async def cancel_authorization(
                 "authorization_id": authorization_id,
                 "reason": cancel_data.cancellation_reason,
                 "user_id": current_user.id,
-                "company_id": company_id
-            }
+                "company_id": company_id,
+            },
         )
 
         return authorization
@@ -333,7 +373,7 @@ async def cancel_authorization(
         logger.error(f"Erro ao cancelar autorização médica: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro interno do servidor"
+            detail="Erro interno do servidor",
         )
 
 
@@ -344,7 +384,7 @@ async def suspend_authorization(
     suspend_data: AuthorizationSuspendRequest,
     db: Session = Depends(get_db),
     current_user: UserResponse = Depends(get_current_user),
-    company_id: Optional[int] = None
+    company_id: Optional[int] = None,
 ):
     """Suspender autorização médica"""
     try:
@@ -353,13 +393,13 @@ async def suspend_authorization(
             authorization_id,
             suspend_data,
             suspended_by=current_user.id,
-            company_id=company_id
+            company_id=company_id,
         )
 
         if not authorization:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Autorização não encontrada"
+                detail="Autorização não encontrada",
             )
 
         logger.info(
@@ -368,8 +408,8 @@ async def suspend_authorization(
                 "authorization_id": authorization_id,
                 "reason": suspend_data.reason,
                 "user_id": current_user.id,
-                "company_id": company_id
-            }
+                "company_id": company_id,
+            },
         )
 
         return authorization
@@ -380,18 +420,20 @@ async def suspend_authorization(
         logger.error(f"Erro ao suspender autorização médica: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro interno do servidor"
+            detail="Erro interno do servidor",
         )
 
 
-@router.post("/{authorization_id}/update-sessions", response_model=MedicalAuthorizationResponse)
+@router.post(
+    "/{authorization_id}/update-sessions", response_model=MedicalAuthorizationResponse
+)
 @require_role_level_or_permission(3, "authorizations.use_sessions")
 async def update_sessions(
     authorization_id: int,
     session_update: SessionUpdateRequest,
     db: Session = Depends(get_db),
     current_user: UserResponse = Depends(get_current_user),
-    company_id: Optional[int] = None
+    company_id: Optional[int] = None,
 ):
     """Atualizar sessões utilizadas"""
     try:
@@ -400,13 +442,13 @@ async def update_sessions(
             authorization_id,
             session_update,
             updated_by=current_user.id,
-            company_id=company_id
+            company_id=company_id,
         )
 
         if not authorization:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Autorização não encontrada"
+                detail="Autorização não encontrada",
             )
 
         logger.info(
@@ -415,24 +457,21 @@ async def update_sessions(
                 "authorization_id": authorization_id,
                 "sessions_used": session_update.sessions_used,
                 "user_id": current_user.id,
-                "company_id": company_id
-            }
+                "company_id": company_id,
+            },
         )
 
         return authorization
 
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Erro ao atualizar sessões: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro interno do servidor"
+            detail="Erro interno do servidor",
         )
 
 
@@ -443,7 +482,7 @@ async def renew_authorization(
     renew_data: AuthorizationRenewRequest,
     db: Session = Depends(get_db),
     current_user: UserResponse = Depends(get_current_user),
-    company_id: Optional[int] = None
+    company_id: Optional[int] = None,
 ):
     """Renovar autorização médica"""
     try:
@@ -452,13 +491,13 @@ async def renew_authorization(
             authorization_id,
             renew_data,
             approved_by=current_user.id,
-            company_id=company_id
+            company_id=company_id,
         )
 
         if not result:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Autorização não encontrada"
+                detail="Autorização não encontrada",
             )
 
         new_authorization, renewal = result
@@ -469,15 +508,15 @@ async def renew_authorization(
                 "original_authorization_id": authorization_id,
                 "new_authorization_id": new_authorization.id,
                 "user_id": current_user.id,
-                "company_id": company_id
-            }
+                "company_id": company_id,
+            },
         )
 
         return {
             "message": "Autorização renovada com sucesso",
             "new_authorization_id": new_authorization.id,
             "new_authorization_code": new_authorization.authorization_code,
-            "renewal_id": renewal.id
+            "renewal_id": renewal.id,
         }
 
     except HTTPException:
@@ -486,17 +525,19 @@ async def renew_authorization(
         logger.error(f"Erro ao renovar autorização médica: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro interno do servidor"
+            detail="Erro interno do servidor",
         )
 
 
-@router.get("/{authorization_id}/history", response_model=List[AuthorizationHistoryResponse])
+@router.get(
+    "/{authorization_id}/history", response_model=List[AuthorizationHistoryResponse]
+)
 @require_role_level_or_permission(3, "authorizations.view_history")
 async def get_authorization_history(
     authorization_id: int,
     db: Session = Depends(get_db),
     current_user: UserResponse = Depends(get_current_user),
-    company_id: Optional[int] = None
+    company_id: Optional[int] = None,
 ):
     """Buscar histórico de uma autorização"""
     try:
@@ -516,8 +557,15 @@ async def get_authorization_history(
                 performed_at=h.performed_at,
                 ip_address=h.ip_address,
                 user_agent=h.user_agent,
-                performed_by_name=(h.performed_by_user.person.name if h.performed_by_user and h.performed_by_user.person
-                                  else h.performed_by_user.email_address if h.performed_by_user else None)
+                performed_by_name=(
+                    h.performed_by_user.person.name
+                    if h.performed_by_user and h.performed_by_user.person
+                    else (
+                        h.performed_by_user.email_address
+                        if h.performed_by_user
+                        else None
+                    )
+                ),
             )
             for h in history
         ]
@@ -526,7 +574,7 @@ async def get_authorization_history(
         logger.error(f"Erro ao buscar histórico da autorização: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro interno do servidor"
+            detail="Erro interno do servidor",
         )
 
 
@@ -537,15 +585,13 @@ async def get_authorization_statistics(
     end_date: Optional[date] = Query(None),
     db: Session = Depends(get_db),
     current_user: UserResponse = Depends(get_current_user),
-    company_id: Optional[int] = None
+    company_id: Optional[int] = None,
 ):
     """Obter estatísticas de autorizações"""
     try:
         repo = MedicalAuthorizationRepository(db)
         stats = await repo.get_authorization_statistics(
-            company_id=company_id,
-            start_date=start_date,
-            end_date=end_date
+            company_id=company_id, start_date=start_date, end_date=end_date
         )
 
         return AuthorizationStatistics(**stats)
@@ -554,7 +600,7 @@ async def get_authorization_statistics(
         logger.error(f"Erro ao obter estatísticas de autorizações: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro interno do servidor"
+            detail="Erro interno do servidor",
         )
 
 
@@ -564,7 +610,7 @@ async def get_expiring_authorizations(
     days: int = Query(7, ge=1, le=30),
     db: Session = Depends(get_db),
     current_user: UserResponse = Depends(get_current_user),
-    company_id: Optional[int] = None
+    company_id: Optional[int] = None,
 ):
     """Buscar autorizações que vencem em breve"""
     try:
@@ -607,13 +653,26 @@ async def get_expiring_authorizations(
                 created_by=auth.created_by,
                 updated_by=auth.updated_by,
                 service_name=auth.service.service_name if auth.service else None,
-                service_category=auth.service.service_category if auth.service else None,
+                service_category=(
+                    auth.service.service_category if auth.service else None
+                ),
                 service_type=auth.service.service_type if auth.service else None,
-                doctor_name=(auth.doctor.person.name if auth.doctor and auth.doctor.person
-                           else auth.doctor.email_address if auth.doctor else None),
+                doctor_name=(
+                    auth.doctor.person.name
+                    if auth.doctor and auth.doctor.person
+                    else auth.doctor.email_address if auth.doctor else None
+                ),
                 doctor_email=auth.doctor.email_address if auth.doctor else None,
-                patient_name=auth.contract_life.person.name if auth.contract_life and auth.contract_life.person else None,
-                contract_number=auth.contract_life.contract.contract_number if auth.contract_life and auth.contract_life.contract else None
+                patient_name=(
+                    auth.contract_life.person.name
+                    if auth.contract_life and auth.contract_life.person
+                    else None
+                ),
+                contract_number=(
+                    auth.contract_life.contract.contract_number
+                    if auth.contract_life and auth.contract_life.contract
+                    else None
+                ),
             )
             for auth in authorizations
         ]
@@ -622,5 +681,5 @@ async def get_expiring_authorizations(
         logger.error(f"Erro ao buscar autorizações expirando: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro interno do servidor"
+            detail="Erro interno do servidor",
         )

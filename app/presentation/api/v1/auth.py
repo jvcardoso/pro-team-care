@@ -22,6 +22,75 @@ async def test_endpoint():
     return {"message": "API is working", "timestamp": "2025-09-09"}
 
 
+@router.get("/debug-users", summary="Debug users (DEV ONLY)")
+async def debug_users(db=Depends(get_db)):
+    """Debug endpoint to check users in database"""
+    from sqlalchemy import text
+
+    query = text("""
+        SELECT
+            u.id,
+            u.email_address,
+            SUBSTRING(u.password, 1, 30) as password_preview,
+            u.is_active,
+            p.name as full_name
+        FROM master.users u
+        LEFT JOIN master.people p ON p.id = u.person_id
+        WHERE u.deleted_at IS NULL
+        LIMIT 5
+    """)
+
+    result = await db.execute(query)
+    users = result.fetchall()
+
+    return [
+        {
+            "id": u.id,
+            "email": u.email_address,
+            "password_preview": u.password_preview,
+            "is_active": u.is_active,
+            "full_name": u.full_name
+        }
+        for u in users
+    ]
+
+
+@router.post("/reset-admin-password", summary="Reset admin password (DEV ONLY)")
+async def reset_admin_password(db=Depends(get_db)):
+    """Reset admin@proteamcare.com password to 'admin123'"""
+    from sqlalchemy import text
+    from app.infrastructure.auth import get_password_hash
+
+    email = "admin@proteamcare.com"
+    new_password = "admin123"
+
+    # Generate bcrypt hash
+    hashed_password = get_password_hash(new_password)
+
+    # Update password
+    query = text("""
+        UPDATE master.users
+        SET password = :password, updated_at = NOW()
+        WHERE email_address = :email
+        RETURNING id, email_address
+    """)
+
+    result = await db.execute(query, {"password": hashed_password, "email": email})
+    await db.commit()
+
+    user = result.fetchone()
+
+    if user:
+        return {
+            "success": True,
+            "message": f"Password reset successfully for {email}",
+            "user_id": user.id,
+            "new_password": new_password
+        }
+    else:
+        raise HTTPException(status_code=404, detail="User not found")
+
+
 @router.post(
     "/login",
     response_model=Token,

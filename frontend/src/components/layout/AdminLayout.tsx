@@ -172,6 +172,19 @@ const AdminLayout: React.FC = React.memo(() => {
     }
   }, []);
 
+  // Atalho de teclado para abrir CommandPalette (Ctrl + Alt + X)
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if (event.ctrlKey && event.altKey && event.key === 'x') {
+        event.preventDefault();
+        setIsCommandPaletteOpen(true);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Mostrar loading enquanto verifica autenticação
   if (isLoading) {
     return (

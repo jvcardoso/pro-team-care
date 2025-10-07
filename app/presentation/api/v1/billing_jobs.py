@@ -1,17 +1,17 @@
-from typing import List, Optional
 from datetime import date, datetime
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
-from app.infrastructure.auth import get_current_user
 from app.domain.entities.user import User
-from app.presentation.decorators.simple_permissions import require_permission
+from app.infrastructure.auth import get_current_user
 from app.infrastructure.services.billing_scheduler_service import (
-    billing_scheduler,
     JobResult,
-    JobStatus
+    JobStatus,
+    billing_scheduler,
 )
+from app.presentation.decorators.simple_permissions import require_permission
 
 router = APIRouter()
 
@@ -20,14 +20,21 @@ router = APIRouter()
 # REQUEST/RESPONSE SCHEMAS
 # ==========================================
 
+
 class ScheduleAutoBillingRequest(BaseModel):
     billing_date: Optional[str] = Field(None, description="Billing date (YYYY-MM-DD)")
-    force_regenerate: bool = Field(default=False, description="Force regenerate existing invoices")
-    contract_ids: Optional[List[int]] = Field(None, description="Specific contract IDs to process")
+    force_regenerate: bool = Field(
+        default=False, description="Force regenerate existing invoices"
+    )
+    contract_ids: Optional[List[int]] = Field(
+        None, description="Specific contract IDs to process"
+    )
 
 
 class ScheduleFallbackRequest(BaseModel):
-    days_back: int = Field(default=7, description="Days to look back for failed billings", ge=1, le=30)
+    days_back: int = Field(
+        default=7, description="Days to look back for failed billings", ge=1, le=30
+    )
 
 
 class JobResponse(BaseModel):
@@ -57,6 +64,7 @@ class SchedulerMetricsResponse(BaseModel):
 # JOB SCHEDULING ENDPOINTS
 # ==========================================
 
+
 @router.post("/jobs/schedule-auto-billing")
 @require_permission("billing_admin", context_type="system")
 async def schedule_automatic_billing(
@@ -69,35 +77,34 @@ async def schedule_automatic_billing(
         billing_date = None
         if request.billing_date:
             try:
-                billing_date = datetime.strptime(request.billing_date, "%Y-%m-%d").date()
+                billing_date = datetime.strptime(
+                    request.billing_date, "%Y-%m-%d"
+                ).date()
             except ValueError:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Invalid billing_date format. Use YYYY-MM-DD"
+                    detail="Invalid billing_date format. Use YYYY-MM-DD",
                 )
 
         job_id = await billing_scheduler.schedule_automatic_billing(
             billing_date=billing_date,
             force_regenerate=request.force_regenerate,
-            contract_ids=request.contract_ids
+            contract_ids=request.contract_ids,
         )
 
         return {
             "success": True,
             "job_id": job_id,
             "message": "Automatic billing job scheduled successfully",
-            "billing_date": billing_date.isoformat() if billing_date else None
+            "billing_date": billing_date.isoformat() if billing_date else None,
         }
 
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error scheduling automatic billing: {str(e)}"
+            detail=f"Error scheduling automatic billing: {str(e)}",
         )
 
 
@@ -113,18 +120,15 @@ async def schedule_recurrent_billing(
         return {
             "success": True,
             "job_id": job_id,
-            "message": "Recurrent billing job scheduled successfully"
+            "message": "Recurrent billing job scheduled successfully",
         }
 
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error scheduling recurrent billing: {str(e)}"
+            detail=f"Error scheduling recurrent billing: {str(e)}",
         )
 
 
@@ -144,18 +148,15 @@ async def schedule_fallback_processing(
             "success": True,
             "job_id": job_id,
             "message": "Fallback processing job scheduled successfully",
-            "days_back": request.days_back
+            "days_back": request.days_back,
         }
 
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error scheduling fallback processing: {str(e)}"
+            detail=f"Error scheduling fallback processing: {str(e)}",
         )
 
 
@@ -171,24 +172,22 @@ async def schedule_status_sync(
         return {
             "success": True,
             "job_id": job_id,
-            "message": "Status sync job scheduled successfully"
+            "message": "Status sync job scheduled successfully",
         }
 
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error scheduling status sync: {str(e)}"
+            detail=f"Error scheduling status sync: {str(e)}",
         )
 
 
 # ==========================================
 # JOB MONITORING ENDPOINTS
 # ==========================================
+
 
 @router.get("/jobs/{job_id}", response_model=JobResponse)
 @require_permission("billing_view", context_type="system")
@@ -201,8 +200,7 @@ async def get_job_status(
 
     if not job_result:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Job not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
         )
 
     return JobResponse(
@@ -213,14 +211,16 @@ async def get_job_status(
         completed_at=job_result.completed_at,
         result_data=job_result.result_data,
         error_message=job_result.error_message,
-        metrics=job_result.metrics
+        metrics=job_result.metrics,
     )
 
 
 @router.get("/jobs", response_model=List[JobResponse])
 @require_permission("billing_view", context_type="system")
 async def list_job_history(
-    limit: int = Query(50, description="Maximum number of jobs to return", ge=1, le=200),
+    limit: int = Query(
+        50, description="Maximum number of jobs to return", ge=1, le=200
+    ),
     current_user: User = Depends(get_current_user),
 ):
     """List job execution history"""
@@ -235,7 +235,7 @@ async def list_job_history(
             completed_at=result.completed_at,
             result_data=result.result_data,
             error_message=result.error_message,
-            metrics=result.metrics
+            metrics=result.metrics,
         )
         for result in job_results
     ]
@@ -249,10 +249,7 @@ async def list_running_jobs(
     """List all currently running jobs"""
     running_jobs = await billing_scheduler.list_running_jobs()
 
-    return {
-        "running_jobs": running_jobs,
-        "total_running": len(running_jobs)
-    }
+    return {"running_jobs": running_jobs, "total_running": len(running_jobs)}
 
 
 @router.post("/jobs/{job_id}/cancel")
@@ -266,20 +263,16 @@ async def cancel_job(
 
     if not success:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Job not found or not running"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job not found or not running"
         )
 
-    return {
-        "success": True,
-        "job_id": job_id,
-        "message": "Job cancelled successfully"
-    }
+    return {"success": True, "job_id": job_id, "message": "Job cancelled successfully"}
 
 
 # ==========================================
 # SCHEDULER METRICS ENDPOINTS
 # ==========================================
+
 
 @router.get("/scheduler/metrics", response_model=SchedulerMetricsResponse)
 @require_permission("billing_view", context_type="system")
@@ -329,14 +322,15 @@ async def get_scheduler_health(
         "uptime_info": {
             "max_concurrent_jobs": metrics["max_concurrent_jobs"],
             "job_timeout_seconds": metrics["job_timeout_seconds"],
-            "jobs_last_24h": metrics["jobs_last_24h"]
-        }
+            "jobs_last_24h": metrics["jobs_last_24h"],
+        },
     }
 
 
 # ==========================================
 # CONVENIENCE ENDPOINTS
 # ==========================================
+
 
 @router.post("/quick-actions/run-daily-billing")
 @require_permission("billing_admin", context_type="system")
@@ -349,41 +343,29 @@ async def run_daily_billing_jobs(
 
         # 1. Schedule automatic billing
         auto_billing_job = await billing_scheduler.schedule_automatic_billing()
-        jobs_scheduled.append({
-            "type": "automatic_billing",
-            "job_id": auto_billing_job
-        })
+        jobs_scheduled.append({"type": "automatic_billing", "job_id": auto_billing_job})
 
         # 2. Schedule recurrent billing
         recurrent_job = await billing_scheduler.schedule_recurrent_billing()
-        jobs_scheduled.append({
-            "type": "recurrent_billing",
-            "job_id": recurrent_job
-        })
+        jobs_scheduled.append({"type": "recurrent_billing", "job_id": recurrent_job})
 
         # 3. Schedule fallback processing
         fallback_job = await billing_scheduler.schedule_fallback_processing(days_back=3)
-        jobs_scheduled.append({
-            "type": "fallback_processing",
-            "job_id": fallback_job
-        })
+        jobs_scheduled.append({"type": "fallback_processing", "job_id": fallback_job})
 
         # 4. Schedule status sync
         sync_job = await billing_scheduler.schedule_invoice_status_sync()
-        jobs_scheduled.append({
-            "type": "status_sync",
-            "job_id": sync_job
-        })
+        jobs_scheduled.append({"type": "status_sync", "job_id": sync_job})
 
         return {
             "success": True,
             "message": "Daily billing jobs scheduled successfully",
             "jobs_scheduled": jobs_scheduled,
-            "total_jobs": len(jobs_scheduled)
+            "total_jobs": len(jobs_scheduled),
         }
 
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error scheduling daily billing jobs: {str(e)}"
+            detail=f"Error scheduling daily billing jobs: {str(e)}",
         )

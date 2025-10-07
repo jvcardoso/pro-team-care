@@ -1,10 +1,11 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.main import app
 from app.infrastructure.orm.models import ContractBillingSchedule, ContractInvoice
+from app.main import app
 
 
 class TestBillingAPIPagBank:
@@ -25,20 +26,30 @@ class TestBillingAPIPagBank:
         """Mock authenticated user"""
         return MagicMock(id=1, company_id=1)
 
-    @patch('app.presentation.api.v1.billing.get_current_user')
-    @patch('app.presentation.api.v1.billing.get_db')
-    @patch('app.infrastructure.services.billing_service.BillingService')
-    async def test_setup_recurrent_billing_success(self, mock_billing_service_class, mock_get_db, mock_get_current_user, client, mock_user, mock_db):
+    @patch("app.presentation.api.v1.billing.get_current_user")
+    @patch("app.presentation.api.v1.billing.get_db")
+    @patch("app.infrastructure.services.billing_service.BillingService")
+    async def test_setup_recurrent_billing_success(
+        self,
+        mock_billing_service_class,
+        mock_get_db,
+        mock_get_current_user,
+        client,
+        mock_user,
+        mock_db,
+    ):
         """Test successful setup of recurrent billing"""
         mock_get_current_user.return_value = mock_user
         mock_get_db.return_value = mock_db
 
         mock_billing_service = MagicMock()
-        mock_billing_service.setup_recurrent_billing = AsyncMock(return_value={
-            "success": True,
-            "subscription_id": "SUB_123",
-            "message": "Recurrent billing setup successfully"
-        })
+        mock_billing_service.setup_recurrent_billing = AsyncMock(
+            return_value={
+                "success": True,
+                "subscription_id": "SUB_123",
+                "message": "Recurrent billing setup successfully",
+            }
+        )
         mock_billing_service_class.return_value = mock_billing_service
 
         request_data = {
@@ -52,8 +63,8 @@ class TestBillingAPIPagBank:
                 "number": "123",
                 "city": "São Paulo",
                 "state": "SP",
-                "zip_code": "01234-567"
-            }
+                "zip_code": "01234-567",
+            },
         }
 
         # Note: This endpoint doesn't exist yet, but we're testing what it should do
@@ -66,19 +77,29 @@ class TestBillingAPIPagBank:
         # Since endpoint doesn't exist, we'll just verify the service would be called correctly
         # This is a placeholder test for when the endpoint is implemented
 
-    @patch('app.presentation.api.v1.billing.get_current_user')
-    @patch('app.presentation.api.v1.billing.get_db')
-    @patch('app.infrastructure.services.billing_service.BillingService')
-    async def test_setup_manual_billing_success(self, mock_billing_service_class, mock_get_db, mock_get_current_user, client, mock_user, mock_db):
+    @patch("app.presentation.api.v1.billing.get_current_user")
+    @patch("app.presentation.api.v1.billing.get_db")
+    @patch("app.infrastructure.services.billing_service.BillingService")
+    async def test_setup_manual_billing_success(
+        self,
+        mock_billing_service_class,
+        mock_get_db,
+        mock_get_current_user,
+        client,
+        mock_user,
+        mock_db,
+    ):
         """Test successful setup of manual billing"""
         mock_get_current_user.return_value = mock_user
         mock_get_db.return_value = mock_db
 
         mock_billing_service = MagicMock()
-        mock_billing_service.setup_manual_billing = AsyncMock(return_value={
-            "success": True,
-            "message": "Manual billing setup successfully"
-        })
+        mock_billing_service.setup_manual_billing = AsyncMock(
+            return_value={
+                "success": True,
+                "message": "Manual billing setup successfully",
+            }
+        )
         mock_billing_service_class.return_value = mock_billing_service
 
         # Note: This endpoint doesn't exist yet
@@ -87,20 +108,30 @@ class TestBillingAPIPagBank:
         # assert response.status_code == 200
         # assert "Manual billing setup" in response.json()["message"]
 
-    @patch('app.presentation.api.v1.billing.get_current_user')
-    @patch('app.presentation.api.v1.billing.get_db')
-    @patch('app.infrastructure.services.billing_service.BillingService')
-    async def test_create_invoice_checkout_success(self, mock_billing_service_class, mock_get_db, mock_get_current_user, client, mock_user, mock_db):
+    @patch("app.presentation.api.v1.billing.get_current_user")
+    @patch("app.presentation.api.v1.billing.get_db")
+    @patch("app.infrastructure.services.billing_service.BillingService")
+    async def test_create_invoice_checkout_success(
+        self,
+        mock_billing_service_class,
+        mock_get_db,
+        mock_get_current_user,
+        client,
+        mock_user,
+        mock_db,
+    ):
         """Test successful invoice checkout creation"""
         mock_get_current_user.return_value = mock_user
         mock_get_db.return_value = mock_db
 
         mock_billing_service = MagicMock()
-        mock_billing_service.create_checkout_for_invoice = AsyncMock(return_value={
-            "checkout_url": "https://checkout.pagseguro.com/123",
-            "session_id": "CHECKOUT_123",
-            "expires_at": "2025-01-29T12:00:00Z"
-        })
+        mock_billing_service.create_checkout_for_invoice = AsyncMock(
+            return_value={
+                "checkout_url": "https://checkout.pagseguro.com/123",
+                "session_id": "CHECKOUT_123",
+                "expires_at": "2025-01-29T12:00:00Z",
+            }
+        )
         mock_billing_service_class.return_value = mock_billing_service
 
         # Note: This endpoint doesn't exist yet
@@ -109,21 +140,31 @@ class TestBillingAPIPagBank:
         # assert response.status_code == 200
         # assert "checkout.pagseguro.com" in response.json()["checkout_url"]
 
-    @patch('app.presentation.api.v1.billing.get_current_user')
-    @patch('app.presentation.api.v1.billing.get_db')
-    @patch('app.infrastructure.services.billing_service.BillingService')
-    async def test_run_recurrent_billing_admin_only(self, mock_billing_service_class, mock_get_db, mock_get_current_user, client, mock_user, mock_db):
+    @patch("app.presentation.api.v1.billing.get_current_user")
+    @patch("app.presentation.api.v1.billing.get_db")
+    @patch("app.infrastructure.services.billing_service.BillingService")
+    async def test_run_recurrent_billing_admin_only(
+        self,
+        mock_billing_service_class,
+        mock_get_db,
+        mock_get_current_user,
+        client,
+        mock_user,
+        mock_db,
+    ):
         """Test recurrent billing execution (admin only)"""
         mock_get_current_user.return_value = mock_user
         mock_get_db.return_value = mock_db
 
         mock_billing_service = MagicMock()
-        mock_billing_service.run_automatic_recurrent_billing = AsyncMock(return_value={
-            "processed_schedules": 5,
-            "successful_payments": 3,
-            "failed_payments": 2,
-            "fallback_triggers": 1
-        })
+        mock_billing_service.run_automatic_recurrent_billing = AsyncMock(
+            return_value={
+                "processed_schedules": 5,
+                "successful_payments": 3,
+                "failed_payments": 2,
+                "fallback_triggers": 1,
+            }
+        )
         mock_billing_service_class.return_value = mock_billing_service
 
         # Note: This endpoint doesn't exist yet
@@ -132,23 +173,22 @@ class TestBillingAPIPagBank:
         # assert response.status_code == 200
         # assert response.json()["result"]["processed_schedules"] == 5
 
-    @patch('app.infrastructure.services.pagbank_webhook_service.PagBankWebhookService')
+    @patch("app.infrastructure.services.pagbank_webhook_service.PagBankWebhookService")
     async def test_pagbank_webhook_processing(self, mock_webhook_service_class, client):
         """Test PagBank webhook endpoint processing"""
         mock_webhook_service = MagicMock()
-        mock_webhook_service.handle_webhook_notification = AsyncMock(return_value={
-            "success": True,
-            "type": "subscription",
-            "subscription_id": "SUB_123"
-        })
+        mock_webhook_service.handle_webhook_notification = AsyncMock(
+            return_value={
+                "success": True,
+                "type": "subscription",
+                "subscription_id": "SUB_123",
+            }
+        )
         mock_webhook_service_class.return_value = mock_webhook_service
 
         webhook_payload = {
             "type": "SUBSCRIPTION",
-            "data": {
-                "id": "SUB_123",
-                "status": "ACTIVE"
-            }
+            "data": {"id": "SUB_123", "status": "ACTIVE"},
         }
 
         # Note: This endpoint doesn't exist yet
@@ -163,10 +203,7 @@ class TestBillingAPIPagBank:
 
     async def test_pagbank_webhook_invalid_signature(self, client):
         """Test webhook with invalid signature"""
-        webhook_payload = {
-            "type": "SUBSCRIPTION",
-            "data": {"id": "SUB_123"}
-        }
+        webhook_payload = {"type": "SUBSCRIPTION", "data": {"id": "SUB_123"}}
 
         # Note: This endpoint doesn't exist yet
         # response = client.post(
@@ -181,10 +218,18 @@ class TestBillingAPIPagBank:
     # Integration tests for complete flows would go here
     # These would test the full integration between services
 
-    @patch('app.presentation.api.v1.billing.get_current_user')
-    @patch('app.presentation.api.v1.billing.get_db')
-    @patch('app.infrastructure.repositories.billing_repository.BillingRepository')
-    async def test_billing_method_update_via_api(self, mock_repo_class, mock_get_db, mock_get_current_user, client, mock_user, mock_db):
+    @patch("app.presentation.api.v1.billing.get_current_user")
+    @patch("app.presentation.api.v1.billing.get_db")
+    @patch("app.infrastructure.repositories.billing_repository.BillingRepository")
+    async def test_billing_method_update_via_api(
+        self,
+        mock_repo_class,
+        mock_get_db,
+        mock_get_current_user,
+        client,
+        mock_user,
+        mock_db,
+    ):
         """Test updating billing method through existing API"""
         mock_get_current_user.return_value = mock_user
         mock_get_db.return_value = mock_db
@@ -200,7 +245,7 @@ class TestBillingAPIPagBank:
         update_data = {
             "billing_method": "recurrent",
             "pagbank_subscription_id": "SUB_123",
-            "pagbank_customer_id": "CUST_123"
+            "pagbank_customer_id": "CUST_123",
         }
 
         # This uses existing endpoint but with new fields
@@ -237,7 +282,7 @@ class TestBillingAPIPagBank:
             "card_holder_name": "João Silva",
             "card_expiry_month": 12,
             "card_expiry_year": 2025,
-            "card_cvv": "123"
+            "card_cvv": "123",
         }
 
         # response = client.post("/api/v1/billing/schedules/999/setup-recurrent", json=valid_data)

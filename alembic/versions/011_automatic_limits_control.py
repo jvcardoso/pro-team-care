@@ -5,13 +5,14 @@ Revises: 010_medical_authorizations
 Create Date: 2025-09-18 21:45:00.000000
 
 """
-from alembic import op
+
 import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '011_automatic_limits_control'
-down_revision = '010_medical_authorizations'
+revision = "011_automatic_limits_control"
+down_revision = "010_medical_authorizations"
 branch_labels = None
 depends_on = None
 
@@ -24,13 +25,17 @@ def upgrade():
         "service_usage_tracking",
         sa.Column("id", sa.BigInteger(), autoincrement=True, nullable=False),
         sa.Column("authorization_id", sa.BigInteger(), nullable=False),
-        sa.Column("service_execution_id", sa.BigInteger(), nullable=True),  # Link to actual execution
+        sa.Column(
+            "service_execution_id", sa.BigInteger(), nullable=True
+        ),  # Link to actual execution
         sa.Column("execution_date", sa.Date(), nullable=False),
         sa.Column("execution_time", sa.Time(), nullable=False),
         sa.Column("professional_id", sa.BigInteger(), nullable=False),
         sa.Column("sessions_used", sa.Integer(), nullable=False, default=1),
         sa.Column("duration_minutes", sa.Integer(), nullable=True),
-        sa.Column("location_type", sa.String(20), nullable=False, default="HOME"),  # HOME, CLINIC, HOSPITAL
+        sa.Column(
+            "location_type", sa.String(20), nullable=False, default="HOME"
+        ),  # HOME, CLINIC, HOSPITAL
         sa.Column("patient_condition", sa.Text(), nullable=True),
         sa.Column("service_notes", sa.Text(), nullable=True),
         sa.Column("value_charged", sa.Numeric(10, 2), nullable=True),
@@ -49,7 +54,9 @@ def upgrade():
             "status IN ('completed', 'cancelled', 'pending_validation', 'rejected')",
             name="service_usage_status_check",
         ),
-        sa.ForeignKeyConstraint(["authorization_id"], ["master.medical_authorizations.id"]),
+        sa.ForeignKeyConstraint(
+            ["authorization_id"], ["master.medical_authorizations.id"]
+        ),
         sa.ForeignKeyConstraint(["professional_id"], ["master.users.id"]),
         sa.ForeignKeyConstraint(["validated_by"], ["master.users.id"]),
         sa.ForeignKeyConstraint(["created_by"], ["master.users.id"]),
@@ -62,16 +69,26 @@ def upgrade():
         "limits_configuration",
         sa.Column("id", sa.BigInteger(), autoincrement=True, nullable=False),
         sa.Column("contract_id", sa.BigInteger(), nullable=True),  # NULL = global rule
-        sa.Column("service_id", sa.BigInteger(), nullable=True),   # NULL = all services
+        sa.Column("service_id", sa.BigInteger(), nullable=True),  # NULL = all services
         sa.Column("rule_name", sa.String(100), nullable=False),
-        sa.Column("rule_type", sa.String(50), nullable=False),     # SESSION, FINANCIAL, FREQUENCY
-        sa.Column("limit_scope", sa.String(20), nullable=False),   # DAILY, WEEKLY, MONTHLY, YEARLY
+        sa.Column(
+            "rule_type", sa.String(50), nullable=False
+        ),  # SESSION, FINANCIAL, FREQUENCY
+        sa.Column(
+            "limit_scope", sa.String(20), nullable=False
+        ),  # DAILY, WEEKLY, MONTHLY, YEARLY
         sa.Column("limit_value", sa.Numeric(12, 2), nullable=False),
-        sa.Column("warning_threshold", sa.Numeric(5, 2), nullable=False, default=0.8),  # 80%
-        sa.Column("alert_threshold", sa.Numeric(5, 2), nullable=False, default=0.95),   # 95%
+        sa.Column(
+            "warning_threshold", sa.Numeric(5, 2), nullable=False, default=0.8
+        ),  # 80%
+        sa.Column(
+            "alert_threshold", sa.Numeric(5, 2), nullable=False, default=0.95
+        ),  # 95%
         sa.Column("auto_block", sa.Boolean(), nullable=False, default=True),
         sa.Column("override_allowed", sa.Boolean(), nullable=False, default=False),
-        sa.Column("priority", sa.Integer(), nullable=False, default=100),  # Lower = higher priority
+        sa.Column(
+            "priority", sa.Integer(), nullable=False, default=100
+        ),  # Lower = higher priority
         sa.Column("is_active", sa.Boolean(), nullable=False, default=True),
         sa.Column("valid_from", sa.Date(), nullable=False),
         sa.Column("valid_until", sa.Date(), nullable=True),
@@ -112,14 +129,20 @@ def upgrade():
         sa.Column("contract_id", sa.BigInteger(), nullable=True),
         sa.Column("authorization_id", sa.BigInteger(), nullable=True),
         sa.Column("usage_tracking_id", sa.BigInteger(), nullable=True),
-        sa.Column("violation_type", sa.String(20), nullable=False),  # WARNING, ALERT, EXCEEDED
-        sa.Column("violation_date", sa.DateTime(), nullable=False, default=sa.func.now()),
+        sa.Column(
+            "violation_type", sa.String(20), nullable=False
+        ),  # WARNING, ALERT, EXCEEDED
+        sa.Column(
+            "violation_date", sa.DateTime(), nullable=False, default=sa.func.now()
+        ),
         sa.Column("current_usage", sa.Numeric(12, 2), nullable=False),
         sa.Column("limit_value", sa.Numeric(12, 2), nullable=False),
         sa.Column("percentage_used", sa.Numeric(5, 2), nullable=False),
         sa.Column("period_start", sa.Date(), nullable=False),
         sa.Column("period_end", sa.Date(), nullable=False),
-        sa.Column("auto_action_taken", sa.String(50), nullable=True),  # BLOCKED, ALERT_SENT, etc.
+        sa.Column(
+            "auto_action_taken", sa.String(50), nullable=True
+        ),  # BLOCKED, ALERT_SENT, etc.
         sa.Column("override_requested", sa.Boolean(), nullable=False, default=False),
         sa.Column("override_approved", sa.Boolean(), nullable=True),
         sa.Column("override_reason", sa.Text(), nullable=True),
@@ -133,8 +156,12 @@ def upgrade():
         ),
         sa.ForeignKeyConstraint(["limit_rule_id"], ["master.limits_configuration.id"]),
         sa.ForeignKeyConstraint(["contract_id"], ["master.contracts.id"]),
-        sa.ForeignKeyConstraint(["authorization_id"], ["master.medical_authorizations.id"]),
-        sa.ForeignKeyConstraint(["usage_tracking_id"], ["master.service_usage_tracking.id"]),
+        sa.ForeignKeyConstraint(
+            ["authorization_id"], ["master.medical_authorizations.id"]
+        ),
+        sa.ForeignKeyConstraint(
+            ["usage_tracking_id"], ["master.service_usage_tracking.id"]
+        ),
         sa.ForeignKeyConstraint(["override_approved_by"], ["master.users.id"]),
         sa.PrimaryKeyConstraint("id"),
         schema="master",
@@ -145,13 +172,25 @@ def upgrade():
         "alerts_configuration",
         sa.Column("id", sa.BigInteger(), autoincrement=True, nullable=False),
         sa.Column("alert_name", sa.String(100), nullable=False),
-        sa.Column("alert_type", sa.String(50), nullable=False),  # LIMIT_WARNING, LIMIT_EXCEEDED, etc.
-        sa.Column("trigger_condition", sa.Text(), nullable=False),  # JSON with conditions
-        sa.Column("notification_channels", sa.Text(), nullable=False),  # JSON: email, sms, push
-        sa.Column("recipients", sa.Text(), nullable=False),  # JSON with user IDs and external contacts
+        sa.Column(
+            "alert_type", sa.String(50), nullable=False
+        ),  # LIMIT_WARNING, LIMIT_EXCEEDED, etc.
+        sa.Column(
+            "trigger_condition", sa.Text(), nullable=False
+        ),  # JSON with conditions
+        sa.Column(
+            "notification_channels", sa.Text(), nullable=False
+        ),  # JSON: email, sms, push
+        sa.Column(
+            "recipients", sa.Text(), nullable=False
+        ),  # JSON with user IDs and external contacts
         sa.Column("message_template", sa.Text(), nullable=False),
-        sa.Column("escalation_rules", sa.Text(), nullable=True),  # JSON with escalation logic
-        sa.Column("frequency_limit", sa.String(20), nullable=False, default="IMMEDIATE"),  # IMMEDIATE, HOURLY, DAILY
+        sa.Column(
+            "escalation_rules", sa.Text(), nullable=True
+        ),  # JSON with escalation logic
+        sa.Column(
+            "frequency_limit", sa.String(20), nullable=False, default="IMMEDIATE"
+        ),  # IMMEDIATE, HOURLY, DAILY
         sa.Column("is_active", sa.Boolean(), nullable=False, default=True),
         sa.Column("priority", sa.Integer(), nullable=False, default=100),
         sa.Column("created_at", sa.DateTime(), nullable=False, default=sa.func.now()),
@@ -180,8 +219,12 @@ def upgrade():
         sa.Column("violation_id", sa.BigInteger(), nullable=True),
         sa.Column("triggered_at", sa.DateTime(), nullable=False, default=sa.func.now()),
         sa.Column("trigger_data", sa.Text(), nullable=False),  # JSON with context data
-        sa.Column("recipients_contacted", sa.Text(), nullable=False),  # JSON with actual recipients
-        sa.Column("channels_used", sa.Text(), nullable=False),  # JSON with channels and status
+        sa.Column(
+            "recipients_contacted", sa.Text(), nullable=False
+        ),  # JSON with actual recipients
+        sa.Column(
+            "channels_used", sa.Text(), nullable=False
+        ),  # JSON with channels and status
         sa.Column("message_sent", sa.Text(), nullable=False),
         sa.Column("delivery_status", sa.String(20), nullable=False, default="PENDING"),
         sa.Column("delivery_attempts", sa.Integer(), nullable=False, default=0),
@@ -194,7 +237,9 @@ def upgrade():
             "delivery_status IN ('PENDING', 'SENT', 'DELIVERED', 'FAILED', 'ACKNOWLEDGED')",
             name="alerts_delivery_status_check",
         ),
-        sa.ForeignKeyConstraint(["alert_config_id"], ["master.alerts_configuration.id"]),
+        sa.ForeignKeyConstraint(
+            ["alert_config_id"], ["master.alerts_configuration.id"]
+        ),
         sa.ForeignKeyConstraint(["violation_id"], ["master.limits_violations.id"]),
         sa.ForeignKeyConstraint(["acknowledged_by"], ["master.users.id"]),
         sa.PrimaryKeyConstraint("id"),
@@ -202,24 +247,79 @@ def upgrade():
     )
 
     # Create indexes for performance
-    op.create_index("service_usage_auth_date_idx", "service_usage_tracking", ["authorization_id", "execution_date"], schema="master")
-    op.create_index("service_usage_professional_idx", "service_usage_tracking", ["professional_id", "execution_date"], schema="master")
-    op.create_index("service_usage_status_idx", "service_usage_tracking", ["status"], schema="master")
+    op.create_index(
+        "service_usage_auth_date_idx",
+        "service_usage_tracking",
+        ["authorization_id", "execution_date"],
+        schema="master",
+    )
+    op.create_index(
+        "service_usage_professional_idx",
+        "service_usage_tracking",
+        ["professional_id", "execution_date"],
+        schema="master",
+    )
+    op.create_index(
+        "service_usage_status_idx",
+        "service_usage_tracking",
+        ["status"],
+        schema="master",
+    )
 
-    op.create_index("limits_config_contract_service_idx", "limits_configuration", ["contract_id", "service_id"], schema="master")
-    op.create_index("limits_config_active_idx", "limits_configuration", ["is_active", "valid_from", "valid_until"], schema="master")
-    op.create_index("limits_config_type_scope_idx", "limits_configuration", ["rule_type", "limit_scope"], schema="master")
+    op.create_index(
+        "limits_config_contract_service_idx",
+        "limits_configuration",
+        ["contract_id", "service_id"],
+        schema="master",
+    )
+    op.create_index(
+        "limits_config_active_idx",
+        "limits_configuration",
+        ["is_active", "valid_from", "valid_until"],
+        schema="master",
+    )
+    op.create_index(
+        "limits_config_type_scope_idx",
+        "limits_configuration",
+        ["rule_type", "limit_scope"],
+        schema="master",
+    )
 
-    op.create_index("limits_violations_date_idx", "limits_violations", ["violation_date"], schema="master")
-    op.create_index("limits_violations_contract_idx", "limits_violations", ["contract_id", "violation_date"], schema="master")
-    op.create_index("limits_violations_type_idx", "limits_violations", ["violation_type"], schema="master")
+    op.create_index(
+        "limits_violations_date_idx",
+        "limits_violations",
+        ["violation_date"],
+        schema="master",
+    )
+    op.create_index(
+        "limits_violations_contract_idx",
+        "limits_violations",
+        ["contract_id", "violation_date"],
+        schema="master",
+    )
+    op.create_index(
+        "limits_violations_type_idx",
+        "limits_violations",
+        ["violation_type"],
+        schema="master",
+    )
 
-    op.create_index("alerts_log_triggered_idx", "alerts_log", ["triggered_at"], schema="master")
-    op.create_index("alerts_log_status_idx", "alerts_log", ["delivery_status"], schema="master")
-    op.create_index("alerts_log_config_idx", "alerts_log", ["alert_config_id", "triggered_at"], schema="master")
+    op.create_index(
+        "alerts_log_triggered_idx", "alerts_log", ["triggered_at"], schema="master"
+    )
+    op.create_index(
+        "alerts_log_status_idx", "alerts_log", ["delivery_status"], schema="master"
+    )
+    op.create_index(
+        "alerts_log_config_idx",
+        "alerts_log",
+        ["alert_config_id", "triggered_at"],
+        schema="master",
+    )
 
     # Create PostgreSQL functions for limits checking
-    op.execute("""
+    op.execute(
+        """
         CREATE OR REPLACE FUNCTION master.check_authorization_limits(
             p_authorization_id BIGINT,
             p_sessions_to_use INTEGER DEFAULT 1,
@@ -334,10 +434,12 @@ def upgrade():
             );
         END;
         $$ LANGUAGE plpgsql;
-    """)
+    """
+    )
 
     # Create function for automatic limits monitoring
-    op.execute("""
+    op.execute(
+        """
         CREATE OR REPLACE FUNCTION master.monitor_contract_limits(
             p_contract_id BIGINT DEFAULT NULL,
             p_check_date DATE DEFAULT CURRENT_DATE
@@ -475,10 +577,12 @@ def upgrade():
             );
         END;
         $$ LANGUAGE plpgsql;
-    """)
+    """
+    )
 
     # Insert default limit rules
-    op.execute("""
+    op.execute(
+        """
         INSERT INTO master.limits_configuration (
             rule_name, rule_type, limit_scope, limit_value, warning_threshold,
             alert_threshold, auto_block, override_allowed, priority, is_active, valid_from, description,
@@ -497,10 +601,12 @@ def upgrade():
          'Limite máximo de R$ 5.000 por dia por contrato', NOW(), NOW(), 1, 1),
         ('Limite Global Mensal Financeiro', 'FINANCIAL', 'MONTHLY', 100000.00, 0.8, 0.9, true, false, 50, true, CURRENT_DATE,
          'Limite máximo de R$ 100.000 por mês por contrato', NOW(), NOW(), 1, 1);
-    """)
+    """
+    )
 
     # Insert default alert configurations
-    op.execute("""
+    op.execute(
+        """
         INSERT INTO master.alerts_configuration (
             alert_name, alert_type, trigger_condition, notification_channels,
             recipients, message_template, frequency_limit, is_active, priority,
@@ -519,7 +625,8 @@ def upgrade():
          '{"user_roles": ["admin"], "emails": ["admin@proteamcare.com"]}',
          'CRÍTICO: Limite financeiro excedido! Contrato bloqueado. Uso atual: R$ {usage_amount} / Limite: R$ {limit_value}',
          'IMMEDIATE', true, 10, NOW(), NOW(), 1, 1);
-    """)
+    """
+    )
 
 
 def downgrade():
@@ -527,7 +634,9 @@ def downgrade():
 
     # Drop functions
     op.execute("DROP FUNCTION IF EXISTS master.monitor_contract_limits(BIGINT, DATE);")
-    op.execute("DROP FUNCTION IF EXISTS master.check_authorization_limits(BIGINT, INTEGER, DATE);")
+    op.execute(
+        "DROP FUNCTION IF EXISTS master.check_authorization_limits(BIGINT, INTEGER, DATE);"
+    )
 
     # Drop tables in reverse order
     op.drop_table("alerts_log", schema="master")

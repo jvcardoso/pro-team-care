@@ -5,13 +5,15 @@ Cria 10 empresas com dados realistas para testes
 """
 
 import asyncio
-import sys
 import os
+import sys
 from datetime import datetime
 from typing import List
 
 # Add the project root to Python path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(
+    0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,19 +21,18 @@ from app.infrastructure.database import async_session
 from app.infrastructure.repositories.company_repository import CompanyRepository
 from app.presentation.schemas.company import (
     AddressCreate,
+    AddressType,
     CompanyBase,
     CompanyCreate,
     EmailCreate,
-    PeopleCreate,
-    PhoneCreate,
-    PhoneType,
     EmailType,
-    AddressType,
+    PeopleCreate,
     PersonStatus,
     PersonType,
+    PhoneCreate,
+    PhoneType,
 )
 from config.settings import settings
-
 
 # Dados das empresas de home care
 COMPANIES_DATA = [

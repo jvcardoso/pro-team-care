@@ -42,8 +42,7 @@ class EstablishmentDashboardResponse(BaseModel):
 @router.get("/admin")
 @require_permission(permission="dashboard.admin", context_type="system")
 async def get_admin_dashboard(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ):
     """Dashboard principal para administradores com dados reais"""
     service = AdminDashboardService(db)

@@ -5,7 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.infrastructure.orm.models import Client, People, Establishments, Companies
+from app.infrastructure.orm.models import Client, Companies, Establishments, People
 from app.presentation.schemas.client import ClientStatus, PersonType
 
 

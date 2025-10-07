@@ -96,12 +96,12 @@ app = FastAPI(
     ],
 )
 
+from app.infrastructure.middleware.tenant_middleware import TenantMiddleware
 from app.infrastructure.monitoring.middleware import setup_monitoring_middleware
 from app.infrastructure.rate_limiting import setup_rate_limiting
 
 # Security middleware
 from app.infrastructure.security_middleware import SecurityHeadersMiddleware
-from app.infrastructure.middleware.tenant_middleware import TenantMiddleware
 
 
 # CORS configuration with validation - MUST be first
